@@ -1,0 +1,93 @@
+"use client";
+
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Play, ShieldCheck } from "lucide-react";
+import { AnimatedBackground } from "@/components/design-system/AnimatedBackground";
+import { Section } from "@/components/ui/section";
+import { HeroMockup } from "@/components/design-system/HeroMockup";
+import { Badge } from "@/components/ui/badge";
+
+export function Hero() {
+  return (
+    <Section className="min-h-screen flex items-center pt-24 pb-12 overflow-hidden !py-0 border-b border-white/5">
+      <AnimatedBackground />
+
+      <div className="grid lg:grid-cols-2 gap-12 lg:gap-8 items-center w-full relative z-10 pt-20 lg:pt-0">
+        
+        {/* Left Column: Text & CTA */}
+        <div className="flex flex-col items-center lg:items-start text-center lg:text-left">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-8"
+          >
+            <Badge variant="glass" className="px-4 py-1.5 text-sm">
+              <span className="relative flex h-2 w-2 mr-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+              </span>
+              AI-powered customer email support
+            </Badge>
+          </motion.div>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 text-white leading-[1.1]"
+          >
+            Your customer emails, <br className="hidden md:block lg:hidden xl:block" />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">answered faster</span>{" "}
+            with AI
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-lg md:text-xl text-muted-foreground mb-10 max-w-2xl leading-relaxed"
+          >
+            Connect Outlook, Gmail or IMAP. Mailmind drafts replies, summarizes long threads and organizes your inbox — while your team approves every response.
+          </motion.p>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="flex flex-col sm:flex-row items-center gap-4 mb-8 w-full sm:w-auto"
+          >
+            <Button size="lg" className="w-full sm:w-auto gap-2 text-base h-14 px-8">
+              Book a demo <ArrowRight size={18} />
+            </Button>
+            <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2 text-base h-14 px-8 border-white/10">
+              View product
+            </Button>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="flex items-center gap-2 text-sm text-muted-foreground"
+          >
+            <ShieldCheck size={16} className="text-primary/70 shrink-0" />
+            <span>Built for European teams. Human approval. GDPR-focused.</span>
+          </motion.div>
+        </div>
+
+        {/* Right Column: Interactive Mockup */}
+        <motion.div
+          initial={{ opacity: 0, x: 40 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, delay: 0.4 }}
+          className="w-full mt-10 lg:mt-0"
+        >
+          <HeroMockup />
+        </motion.div>
+
+      </div>
+    </Section>
+  );
+}
