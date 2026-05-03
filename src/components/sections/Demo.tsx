@@ -5,7 +5,7 @@ import { ProductMockup } from "@/components/design-system/ProductMockup";
 
 export function Demo() {
   return (
-    <Section className="bg-[#030614] overflow-hidden border-b border-white/5">
+    <Section id="demo" className="bg-[#030614] overflow-hidden border-b border-white/5">
       <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent pointer-events-none" />
       
       <div className="text-center max-w-4xl mx-auto mb-20 relative z-10">

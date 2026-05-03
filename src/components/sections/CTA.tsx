@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Section } from "@/components/ui/section";
@@ -28,11 +29,11 @@ export function CTA() {
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Button size="lg" className="w-full sm:w-auto gap-2 text-base h-14 px-10 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
-              Book a demo <ArrowRight size={18} />
+            <Button size="lg" className="w-full sm:w-auto gap-2 text-base h-14 px-10 shadow-[0_0_20px_rgba(6,182,212,0.3)]" asChild>
+              <Link href="#contact">Book a demo <ArrowRight size={18} /></Link>
             </Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2 text-base h-14 px-10 border-white/10 hover:bg-white/5">
-              Contact us
+            <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2 text-base h-14 px-10 border-white/10 hover:bg-white/5" asChild>
+              <Link href="#contact">Contact us</Link>
             </Button>
           </div>
         </motion.div>

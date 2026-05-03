@@ -96,7 +96,8 @@ export function ProductMockup() {
       }}
       className="w-full max-w-6xl mx-auto rounded-2xl border border-white/10 bg-[#030614]/90 backdrop-blur-3xl shadow-[0_30px_60px_rgba(0,0,0,0.6),0_0_40px_rgba(6,182,212,0.1)] overflow-hidden flex flex-col h-[700px] text-left relative z-10"
     >
-      <div className="w-full h-full overflow-x-auto custom-scrollbar flex flex-col">
+      {/* Desktop Layout */}
+      <div className="hidden md:flex w-full h-full overflow-x-auto custom-scrollbar flex-col">
         <div className="flex flex-col h-full min-w-[900px]">
           
           {/* Mac-like Header */}
@@ -273,21 +274,14 @@ export function ProductMockup() {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                       </span>
-                      <span className="text-[10px] font-bold uppercase tracking-wider">AI Draft Ready</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Draft ready for review</span>
                     </div>
                     
-                    {/* Confidence Bar */}
+                    {/* Safer Labels */}
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-muted-foreground font-medium">Confidence</span>
-                      <div className="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                        <motion.div 
-                          initial={{ width: 0 }}
-                          animate={{ width: "95%" }}
-                          transition={{ duration: 1, delay: 0.5 }}
-                          className="h-full bg-green-400 shadow-[0_0_10px_rgba(74,222,128,0.5)]"
-                        />
-                      </div>
-                      <span className="text-xs font-bold text-green-400">95%</span>
+                      <span className="text-[10px] text-muted-foreground font-medium">Context match: High</span>
+                      <span className="text-[10px] text-muted-foreground font-medium">•</span>
+                      <span className="text-[10px] text-muted-foreground font-medium">Human approval required</span>
                     </div>
                   </div>
 
@@ -357,6 +351,91 @@ export function ProductMockup() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Mobile Layout */}
+      <div className="flex md:hidden flex-col h-full overflow-y-auto p-4 gap-6 bg-[#050B1C]/30 relative">
+        <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
+
+        {/* Thread Header */}
+        <div className="flex items-center gap-3 relative z-10">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-white/10 to-white/5 border border-white/10 flex items-center justify-center text-sm font-bold text-white shrink-0">
+            {activeEmail.sender.split(' ').map(n => n[0]).join('')}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h2 className="text-sm font-bold text-white truncate">{activeEmail.subject}</h2>
+            <div className="text-xs text-muted-foreground truncate">{activeEmail.sender}</div>
+          </div>
+        </div>
+
+        {/* Customer Message */}
+        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4 text-xs text-foreground/90 leading-relaxed shadow-sm relative z-10">
+          <div className="text-[10px] text-muted-foreground mb-2">{activeEmail.time}</div>
+          {activeEmail.id === 1 ? (
+            <>
+              Hi team,<br/><br/>
+              I selected 3 PM for my store pickup today, but I am stuck at work. Can I change it to tomorrow morning around 10 AM instead?<br/><br/>
+              Thanks,<br/>
+              Sarah
+            </>
+          ) : (
+            <>{activeEmail.preview} <br/><br/>Please let me know how to proceed.</>
+          )}
+        </div>
+
+        {/* AI Summary */}
+        <div className="relative z-10">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Sparkles size={12} className="text-primary" />
+            <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">AI Summary</span>
+          </div>
+          <div className="glass-card rounded-xl p-3 text-xs text-foreground/80 shadow-md border-primary/20 bg-[#030614]/80">
+            <ul className="list-disc list-inside space-y-1">
+              {activeEmail.id === 1 ? (
+                <>
+                  <li>Customer wants to reschedule pickup to tomorrow 10 AM.</li>
+                  <li>Action: Confirm reschedule (no app changes needed).</li>
+                </>
+              ) : (
+                <li>Customer inquiry requires standard follow-up.</li>
+              )}
+            </ul>
+          </div>
+        </div>
+
+        {/* AI Draft */}
+        <div className="relative z-10 bg-[#030614] border border-white/10 rounded-xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+          <div className="flex flex-col gap-2 mb-4 pb-3 border-b border-white/5">
+            <div className="flex items-center gap-2 bg-primary/10 text-primary px-2 py-1 rounded-full border border-primary/20 w-fit">
+              <span className="text-[9px] font-bold uppercase tracking-wider">Draft ready for review</span>
+            </div>
+            <span className="text-[9px] text-muted-foreground font-medium">Context match: High • Approval required</span>
+          </div>
+          
+          <div className="text-xs text-foreground/90 leading-relaxed min-h-[100px]">
+            {activeEmail.id === 1 ? (
+              <>
+                Hi Sarah,<br/><br/>
+                No problem! I have updated your pickup time to tomorrow morning at 10 AM.<br/><br/>
+                You don't need to do anything in the app. See you tomorrow!<br/><br/>
+                Best,<br/>Support Team
+              </>
+            ) : (
+              <>
+                Hi {activeEmail.sender.split(' ')[0]},<br/><br/>
+                Thank you for reaching out. I'm currently looking into this for you.<br/><br/>
+                Best,<br/>Support Team
+              </>
+            )}
+          </div>
+
+          <div className="mt-4 pt-3 border-t border-white/5">
+            <Button size="sm" className="w-full text-xs font-semibold shadow-[0_0_20px_rgba(6,182,212,0.4)]">
+              <Send size={14} className="mr-2" /> Approve reply
+            </Button>
+          </div>
+        </div>
+
       </div>
     </motion.div>
   );

@@ -21,8 +21,8 @@ export function HeroMockup() {
       {/* Decorative background glow specific to mockup */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-primary/20 rounded-full blur-[100px] -z-10" />
 
-      <div className="w-full overflow-x-auto overflow-y-hidden custom-scrollbar pb-4 -mb-4">
-        <div className="rounded-2xl border border-white/10 bg-[#030614]/80 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_30px_rgba(6,182,212,0.15)] overflow-hidden flex flex-col h-[550px] text-left min-w-[600px]">
+      <div className="w-full pb-4 -mb-4">
+        <div className="rounded-2xl border border-white/10 bg-[#030614]/80 backdrop-blur-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5),0_0_30px_rgba(6,182,212,0.15)] overflow-hidden flex flex-col h-[550px] text-left">
         
         {/* Header */}
         <div className="h-12 border-b border-white/5 bg-white/[0.02] flex items-center justify-between px-4">
@@ -41,7 +41,7 @@ export function HeroMockup() {
         <div className="flex flex-1 overflow-hidden">
           
           {/* Email List (Sidebar) */}
-          <div className="w-1/3 border-r border-white/5 bg-black/20 flex flex-col">
+          <div className="hidden sm:flex w-1/3 border-r border-white/5 bg-black/20 flex-col">
             <div className="p-3 border-b border-white/5 flex items-center justify-between text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
               <span>Inbox</span>
               <Badge variant="glass" className="h-4 px-1.5 text-[9px] min-w-0">12</Badge>
@@ -89,7 +89,7 @@ export function HeroMockup() {
           </div>
 
           {/* Email Content & AI Reply */}
-          <div className="w-2/3 flex flex-col bg-[#050B1C]/40">
+          <div className="w-full sm:w-2/3 flex flex-col bg-[#050B1C]/40">
             {/* Email Header */}
             <div className="p-5 border-b border-white/5">
               <h2 className="text-lg font-bold text-white mb-4">Where is my order? (#8492)</h2>
@@ -112,12 +112,12 @@ export function HeroMockup() {
 
             {/* AI Reply Panel */}
             <div className="p-5 flex-1 flex flex-col justify-end">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
                 <div className="flex items-center gap-2 text-primary text-sm font-semibold">
-                  <Sparkles size={14} className="animate-pulse" /> AI Draft Ready
+                  <Sparkles size={14} className="animate-pulse" /> Draft ready for review
                 </div>
-                <div className="flex items-center gap-1.5 text-xs font-medium text-green-400 bg-green-400/10 px-2 py-0.5 rounded border border-green-400/20">
-                  <Check size={12} /> 98% Confidence
+                <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <Check size={12} className="text-green-400" /> Context match: High
                 </div>
               </div>
               

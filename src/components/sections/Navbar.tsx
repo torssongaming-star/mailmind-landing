@@ -54,7 +54,7 @@ export function Navbar() {
           <div className="flex items-center gap-4 z-50">
             <div className="hidden sm:flex items-center gap-6">
               <a href="#" className="text-sm font-medium hover:text-white transition-colors text-muted-foreground">Log in</a>
-              <Button size="default">Book a demo</Button>
+              <Button size="default" asChild><Link href="#contact">Book a demo</Link></Button>
             </div>
             
             {/* Mobile Menu Toggle */}
@@ -103,7 +103,9 @@ export function Navbar() {
               </a>
             </div>
             <div className="mt-8">
-              <Button className="w-full text-lg h-14" onClick={() => setIsOpen(false)}>Book a demo</Button>
+              <Button className="w-full text-lg h-14" asChild onClick={() => setIsOpen(false)}>
+                <Link href="#contact">Book a demo</Link>
+              </Button>
             </div>
           </motion.div>
         )}

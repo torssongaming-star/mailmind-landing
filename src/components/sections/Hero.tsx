@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Play, ShieldCheck } from "lucide-react";
 import { AnimatedBackground } from "@/components/design-system/AnimatedBackground";
@@ -58,11 +59,11 @@ export function Hero() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="flex flex-col sm:flex-row items-center gap-4 mb-8 w-full sm:w-auto"
           >
-            <Button size="lg" className="w-full sm:w-auto gap-2 text-base h-14 px-8">
-              Book a demo <ArrowRight size={18} />
+            <Button size="lg" className="w-full sm:w-auto gap-2 text-base h-14 px-8" asChild>
+              <Link href="#contact">Book a demo <ArrowRight size={18} /></Link>
             </Button>
-            <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2 text-base h-14 px-8 border-white/10">
-              View product
+            <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2 text-base h-14 px-8 border-white/10" asChild>
+              <Link href="#demo">View product</Link>
             </Button>
           </motion.div>
 

@@ -8,6 +8,7 @@ import { UseCases } from "@/components/sections/UseCases";
 import { Security } from "@/components/sections/Security";
 import { Pricing } from "@/components/sections/Pricing";
 import { FAQ } from "@/components/sections/FAQ";
+import { Contact } from "@/components/sections/Contact";
 import { CTA } from "@/components/sections/CTA";
 import { Footer } from "@/components/sections/Footer";
 
@@ -25,6 +26,7 @@ export default function Home() {
         <Security />
         <Pricing />
         <FAQ />
+        <Contact />
         <CTA />
       </main>
       <Footer />

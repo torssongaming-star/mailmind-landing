@@ -41,7 +41,7 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <Section className="bg-[#030614] border-b border-white/5 relative">
+    <Section id="faq" className="bg-[#030614] border-b border-white/5 relative">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-20">
           <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">Frequently Asked Questions</h2>
