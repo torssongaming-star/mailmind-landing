@@ -2,6 +2,7 @@ import { motion } from "framer-motion"
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import Link from "next/link"
 
 interface PricingCardProps {
   name: string
@@ -54,8 +55,9 @@ export function PricingCard({ name, price, description, features, popular, ctaTe
         variant={popular ? "default" : "outline"} 
         size="lg"
         className="w-full text-base font-semibold"
+        asChild
       >
-        {ctaText || (price === "Custom" ? "Contact Sales" : "Start Free Trial")}
+        <Link href="#contact">{ctaText || (price === "Custom" ? "Contact Sales" : "Start Free Trial")}</Link>
       </Button>
     </motion.div>
   )

@@ -1,7 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { UserCheck, Shield, Lock, History, Globe, BrainCircuit } from "lucide-react";
+import { Shield, Lock, UserCheck, History, Globe, BrainCircuit } from "lucide-react";
 import { Section } from "@/components/ui/section";
 import { FeatureCard } from "@/components/design-system/FeatureCard";
 

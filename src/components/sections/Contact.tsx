@@ -3,13 +3,22 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Section } from "@/components/ui/section";
-import { Send } from "lucide-react";
+import { Send, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
 
 export function Contact() {
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Placeholder submit handler
-    alert("Thanks for your interest! We'll be in touch soon.");
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData.entries());
+
+    if (process.env.NODE_ENV === "development") {
+      console.log("Form submitted:", data);
+    }
+
+    setIsSuccess(true);
   };
 
   return (
@@ -36,9 +45,10 @@ export function Contact() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label htmlFor="fullName" className="text-sm font-medium text-white/90">Full name</label>
-                <input 
-                  type="text" 
-                  id="fullName" 
+                <input
+                  type="text"
+                  id="fullName"
+                  name="fullName"
                   required
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                   placeholder="Jane Doe"
@@ -46,9 +56,10 @@ export function Contact() {
               </div>
               <div className="space-y-2">
                 <label htmlFor="workEmail" className="text-sm font-medium text-white/90">Work email</label>
-                <input 
-                  type="email" 
-                  id="workEmail" 
+                <input
+                  type="email"
+                  id="workEmail"
+                  name="workEmail"
                   required
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                   placeholder="jane@company.com"
@@ -59,9 +70,10 @@ export function Contact() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label htmlFor="companyName" className="text-sm font-medium text-white/90">Company name</label>
-                <input 
-                  type="text" 
-                  id="companyName" 
+                <input
+                  type="text"
+                  id="companyName"
+                  name="companyName"
                   required
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                   placeholder="Acme Corp"
@@ -69,9 +81,10 @@ export function Contact() {
               </div>
               <div className="space-y-2">
                 <label htmlFor="companyWebsite" className="text-sm font-medium text-white/90">Company website</label>
-                <input 
-                  type="url" 
-                  id="companyWebsite" 
+                <input
+                  type="url"
+                  id="companyWebsite"
+                  name="companyWebsite"
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
                   placeholder="https://acme.com"
                 />
@@ -80,8 +93,9 @@ export function Contact() {
 
             <div className="space-y-2">
               <label htmlFor="emailVolume" className="text-sm font-medium text-white/90">Approximate customer emails per week</label>
-              <select 
-                id="emailVolume" 
+              <select
+                id="emailVolume"
+                name="emailVolume"
                 className="w-full bg-[#050B1C] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all appearance-none"
               >
                 <option value="<100">Less than 100</option>
@@ -93,8 +107,9 @@ export function Contact() {
 
             <div className="space-y-2">
               <label htmlFor="currentSystem" className="text-sm font-medium text-white/90">Current email system</label>
-              <select 
-                id="currentSystem" 
+              <select
+                id="currentSystem"
+                name="currentSystem"
                 className="w-full bg-[#050B1C] border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all appearance-none"
               >
                 <option value="outlook">Outlook / Microsoft 365</option>
@@ -106,17 +121,28 @@ export function Contact() {
 
             <div className="space-y-2">
               <label htmlFor="message" className="text-sm font-medium text-white/90">Message (Optional)</label>
-              <textarea 
-                id="message" 
+              <textarea
+                id="message"
+                name="message"
                 rows={4}
                 className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all resize-none custom-scrollbar"
                 placeholder="Anything specific you'd like to see on the demo?"
               />
             </div>
 
-            <Button type="submit" size="lg" className="w-full h-14 text-base gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
-              Submit Request <Send size={18} />
+            <Button type="submit" size="lg" disabled={isSuccess} className="w-full h-14 text-base gap-2 shadow-[0_0_20px_rgba(6,182,212,0.3)]">
+              {isSuccess ? "Request Submitted" : "Submit Request"} {isSuccess ? <CheckCircle2 size={18} /> : <Send size={18} />}
             </Button>
+
+            {isSuccess && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 flex items-center justify-center gap-2 text-sm font-medium mt-4"
+              >
+                <CheckCircle2 size={16} /> Thanks for your interest! We'll be in touch soon.
+              </motion.div>
+            )}
           </form>
         </motion.div>
       </div>

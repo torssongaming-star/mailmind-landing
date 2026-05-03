@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Play, ShieldCheck } from "lucide-react";
+import { ArrowRight, ShieldCheck } from "lucide-react";
 import { AnimatedBackground } from "@/components/design-system/AnimatedBackground";
 import { Section } from "@/components/ui/section";
 import { HeroMockup } from "@/components/design-system/HeroMockup";

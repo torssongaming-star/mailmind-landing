@@ -11,7 +11,7 @@ export function Demo() {
       <div className="text-center max-w-4xl mx-auto mb-20 relative z-10">
         <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">See Mailmind in action</h2>
         <p className="text-muted-foreground text-xl leading-relaxed">
-          A beautiful, native-feeling dashboard that connects to your existing inbox and supercharges your team with AI.
+          See how Mailmind turns a customer email into a summarized thread, categorized request and AI-drafted reply ready for review.
         </p>
       </div>
 
