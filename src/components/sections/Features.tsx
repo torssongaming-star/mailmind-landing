@@ -49,17 +49,17 @@ export function Features() {
   ];
 
   return (
-    <Section id="features" className="bg-[#030614] border-b border-white/5 relative overflow-hidden">
+    <Section id="features" className="border-b border-white/5 relative overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[150px] pointer-events-none" />
       
-      <div className="text-center max-w-4xl mx-auto mb-20 relative z-10">
-        <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">Everything your team needs to answer faster</h2>
-        <p className="text-muted-foreground text-xl leading-relaxed">
+      <div className="text-center max-w-4xl mx-auto mb-10 md:mb-20 relative z-10">
+        <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 tracking-tight leading-snug">Everything your team needs to answer faster</h2>
+        <p className="text-muted-foreground text-base md:text-xl leading-relaxed">
           Powerful features designed specifically for modern customer support teams.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 relative z-10">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 relative z-10">
         {features.map((feature, index) => (
           <FeatureCard
             key={index}

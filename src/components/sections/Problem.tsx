@@ -25,15 +25,15 @@ export function Problem() {
   ];
 
   return (
-    <Section className="border-b border-white/5 bg-[#01030B]">
-      <div className="text-center max-w-4xl mx-auto mb-16">
-        <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">Customer email takes more time than it should</h2>
+    <Section className="border-b border-white/5">
+      <div className="text-center max-w-4xl mx-auto mb-8 md:mb-16">
+        <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 tracking-tight leading-snug">Customer email takes more time than it should</h2>
         <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-3xl mx-auto">
           Most teams answer the same questions every day: opening hours, order status, complaints, pricing, booking changes and delivery updates. The result is slower response times, stressed staff and inconsistent answers.
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-8 mb-20">
+      <div className="grid md:grid-cols-3 gap-5 md:gap-8 mb-10 md:mb-20">
         {problems.map((problem, index) => (
           <FeatureCard
             key={index}

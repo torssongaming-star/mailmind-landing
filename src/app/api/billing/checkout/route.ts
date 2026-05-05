@@ -1,0 +1,88 @@
+import { auth, currentUser } from "@clerk/nextjs/server";
+import { stripe, PRICE_IDS } from "@/lib/stripe";
+import { NextRequest, NextResponse } from "next/server";
+
+/**
+ * POST /api/billing/checkout
+ *
+ * Creates a Stripe Checkout Session for subscribing to a plan.
+ * Expects JSON body: { plan: "starter" | "team" | "business" }
+ *
+ * Flow:
+ * 1. Get authenticated Clerk user
+ * 2. Look up or create Stripe customer
+ * 3. Create a Checkout session with the selected price
+ * 4. Return the checkout URL
+ */
+export async function POST(req: NextRequest) {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await currentUser();
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const body = await req.json();
+    const plan = body.plan as keyof typeof PRICE_IDS;
+
+    const priceId = PRICE_IDS[plan];
+    if (!priceId || priceId === "price_replace_me") {
+      return NextResponse.json(
+        { error: `Price ID for plan "${plan}" is not configured.` },
+        { status: 400 }
+      );
+    }
+
+    // Retrieve or create the Stripe customer
+    let stripeCustomerId = user.publicMetadata?.stripeCustomerId as string | undefined;
+
+    if (!stripeCustomerId) {
+      const customer = await stripe.customers.create({
+        email: user.primaryEmailAddress?.emailAddress,
+        name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || undefined,
+        metadata: { clerkUserId: userId },
+      });
+      stripeCustomerId = customer.id;
+
+      const { clerkClient } = await import("@clerk/nextjs/server");
+      const client = await clerkClient();
+      await client.users.updateUserMetadata(userId, {
+        publicMetadata: {
+          ...user.publicMetadata,
+          stripeCustomerId,
+        },
+      });
+    }
+
+    // Create Stripe Checkout session
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer: stripeCustomerId,
+      line_items: [{ price: priceId, quantity: 1 }],
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing?checkout=success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing?checkout=cancelled`,
+      metadata: {
+        clerkUserId: userId,
+        plan,
+      },
+      subscription_data: {
+        metadata: {
+          clerkUserId: userId,
+          plan,
+        },
+      },
+    });
+
+    return NextResponse.json({ url: session.url });
+  } catch (err) {
+    console.error("[billing/checkout] Error:", err);
+    return NextResponse.json(
+      { error: "Failed to create checkout session" },
+      { status: 500 }
+    );
+  }
+}

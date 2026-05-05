@@ -52,19 +52,19 @@ export function Pricing() {
   ];
 
   return (
-    <Section id="pricing" className="bg-[#01030B] border-b border-white/5 relative overflow-hidden">
+    <Section id="pricing" className="border-b border-white/5 relative overflow-hidden">
       <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-primary/5 rounded-full blur-[150px] pointer-events-none" />
 
-      <div className="text-center max-w-4xl mx-auto mb-20 relative z-10">
-        <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">Simple pricing for teams that want to move faster</h2>
-        <p className="text-muted-foreground text-xl leading-relaxed">
+      <div className="text-center max-w-4xl mx-auto mb-10 md:mb-20 relative z-10">
+        <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 tracking-tight leading-snug">Simple pricing for teams that want to move faster</h2>
+        <p className="text-muted-foreground text-base md:text-xl leading-relaxed">
           Start small. Upgrade when your email volume grows.
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto relative z-10 mb-16 items-start">
+      <div className="grid lg:grid-cols-3 gap-5 md:gap-8 max-w-6xl mx-auto relative z-10 mb-10 md:mb-16 items-start">
         {plans.map((plan, index) => (
-          <div key={index} className={plan.popular ? "lg:-mt-4" : ""}>
+          <div key={index} className={plan.popular ? "mt-4 lg:mt-0 lg:-mt-4" : ""}>
             <PricingCard
               name={plan.name}
               price={plan.price}
@@ -79,7 +79,7 @@ export function Pricing() {
       </div>
       
       <div className="text-center relative z-10 max-w-2xl mx-auto">
-        <p className="text-sm text-muted-foreground bg-white/[0.02] border border-white/5 py-3 px-6 rounded-full inline-block">
+        <p className="text-xs md:text-sm text-muted-foreground bg-white/[0.02] border border-white/5 py-3 px-4 md:px-6 rounded-full inline-block leading-relaxed">
           No long contracts. Cancel anytime. Usage limits can be adjusted as your team grows.
         </p>
       </div>

@@ -41,16 +41,16 @@ export function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <Section id="faq" className="bg-[#030614] border-b border-white/5 relative">
+    <Section id="faq" className="border-b border-white/5 relative">
       <div className="max-w-3xl mx-auto">
-        <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">Frequently Asked Questions</h2>
-          <p className="text-muted-foreground text-xl leading-relaxed">
+        <div className="text-center mb-10 md:mb-20">
+          <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 tracking-tight leading-snug">Frequently Asked Questions</h2>
+          <p className="text-muted-foreground text-base md:text-xl leading-relaxed">
             Got questions? We've got answers.
           </p>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           {faqs.map((faq, index) => (
             <motion.div
               key={index}
@@ -61,10 +61,10 @@ export function FAQ() {
               className="border border-white/10 rounded-2xl overflow-hidden bg-white/[0.02] backdrop-blur-md hover:bg-white/[0.04] transition-colors shadow-[0_0_15px_rgba(0,0,0,0.2)]"
             >
               <button
-                className="w-full flex items-center justify-between p-8 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+                className="w-full flex items-center justify-between p-5 md:p-8 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
               >
-                <span className="font-semibold text-xl tracking-wide">{faq.question}</span>
+                <span className="font-semibold text-base md:text-xl tracking-wide pr-4">{faq.question}</span>
                 <div className={cn(
                   "w-8 h-8 rounded-full flex items-center justify-center border transition-all duration-300",
                   openIndex === index ? "bg-primary text-primary-foreground border-transparent shadow-[0_0_10px_rgba(6,182,212,0.5)] rotate-180" : "border-white/10 text-muted-foreground bg-white/5"
@@ -79,7 +79,7 @@ export function FAQ() {
                   openIndex === index ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
                 )}
               >
-                <div className="p-8 pt-0 text-muted-foreground text-lg leading-relaxed border-t border-white/5">
+                <div className="p-5 pt-0 md:p-8 md:pt-0 text-muted-foreground text-sm md:text-base leading-relaxed border-t border-white/5">
                   {faq.answer}
                 </div>
               </div>

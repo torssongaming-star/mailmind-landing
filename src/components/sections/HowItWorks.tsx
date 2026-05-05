@@ -28,12 +28,12 @@ export function HowItWorks() {
   ];
 
   return (
-    <Section id="how-it-works" className="bg-[#030614] border-b border-white/5 relative overflow-hidden">
+    <Section id="how-it-works" className="border-b border-white/5 relative overflow-hidden">
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[400px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
 
-      <div className="text-center max-w-4xl mx-auto mb-24 relative z-10">
-        <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">From customer email to approved reply in seconds</h2>
-        <p className="text-muted-foreground text-xl leading-relaxed">
+      <div className="text-center max-w-4xl mx-auto mb-10 md:mb-24 relative z-10">
+        <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 tracking-tight leading-snug">From customer email to approved reply in seconds</h2>
+        <p className="text-muted-foreground text-base md:text-xl leading-relaxed">
           Start saving hours every week with a seamless, automated workflow.
         </p>
       </div>
@@ -45,7 +45,7 @@ export function HowItWorks() {
         {/* Connecting line for mobile/tablet (vertical) */}
         <div className="block lg:hidden absolute top-12 bottom-12 left-12 w-[2px] bg-gradient-to-b from-transparent via-primary/30 to-transparent" />
 
-        <div className="grid lg:grid-cols-4 gap-12 lg:gap-8">
+        <div className="grid lg:grid-cols-4 gap-8 md:gap-12 lg:gap-8">
           {steps.map((step, index) => (
             <motion.div
               key={index}

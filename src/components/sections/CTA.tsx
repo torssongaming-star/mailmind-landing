@@ -8,7 +8,7 @@ import { Section } from "@/components/ui/section";
 
 export function CTA() {
   return (
-    <Section className="bg-[#030614] relative overflow-hidden border-b border-white/5 py-32">
+    <Section className="relative overflow-hidden border-b border-white/5 !py-14 md:!py-32">
       {/* Central glow behind CTA */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
       
@@ -18,13 +18,13 @@ export function CTA() {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="rounded-[2.5rem] border border-white/10 bg-[#050B1C]/80 backdrop-blur-xl p-12 md:p-20 shadow-[0_0_50px_rgba(0,0,0,0.5),inset_0_0_20px_rgba(6,182,212,0.05)]"
+          className="rounded-[2.5rem] border border-white/10 bg-[#050B1C]/80 backdrop-blur-xl p-8 md:p-20 shadow-[0_0_50px_rgba(0,0,0,0.5),inset_0_0_20px_rgba(6,182,212,0.05)]"
         >
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight leading-tight">
+          <h2 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 tracking-tight leading-snug md:leading-tight">
             Ready to answer customer emails faster?
           </h2>
           
-          <p className="text-muted-foreground text-lg md:text-xl mb-10 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-muted-foreground text-base md:text-xl mb-8 md:mb-10 max-w-2xl mx-auto leading-relaxed">
             Book a short demo and see how Mailmind can help your team save time on repeated customer questions.
           </p>
           

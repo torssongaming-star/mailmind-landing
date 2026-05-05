@@ -94,8 +94,9 @@ export function ProductMockup() {
         repeat: Infinity,
         ease: "easeInOut",
       }}
-      className="w-full max-w-6xl mx-auto rounded-2xl border border-white/10 bg-[#030614]/90 backdrop-blur-3xl shadow-[0_30px_60px_rgba(0,0,0,0.6),0_0_40px_rgba(6,182,212,0.1)] overflow-hidden flex flex-col h-[700px] text-left relative z-10"
+      className="w-full max-w-6xl mx-auto p-px rounded-2xl bg-gradient-to-b from-white/15 via-white/5 to-white/[0.02] shadow-[0_40px_80px_rgba(0,0,0,0.7),0_0_60px_rgba(6,182,212,0.12)] relative z-10"
     >
+      <div className="w-full rounded-2xl bg-[#030614]/95 backdrop-blur-3xl overflow-hidden flex flex-col h-[560px] md:h-[780px] text-left">
       {/* Desktop Layout */}
       <div className="hidden md:flex w-full h-full overflow-x-auto custom-scrollbar flex-col">
         <div className="flex flex-col h-full min-w-[900px]">
@@ -204,8 +205,6 @@ export function ProductMockup() {
 
             {/* Right Panel: Thread & AI */}
             <div className="flex-1 flex flex-col bg-[#050B1C]/30 relative overflow-hidden">
-              {/* Subtle background glow */}
-              <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
 
               {/* Thread Header */}
               <div className="p-5 border-b border-white/5 flex items-center justify-between bg-black/20 backdrop-blur-md relative z-10">
@@ -355,7 +354,6 @@ export function ProductMockup() {
 
       {/* Mobile Layout */}
       <div className="flex md:hidden flex-col h-full overflow-y-auto p-4 gap-6 bg-[#050B1C]/30 relative">
-        <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
 
         {/* Thread Header */}
         <div className="flex items-center gap-3 relative z-10">
@@ -436,6 +434,7 @@ export function ProductMockup() {
           </div>
         </div>
 
+      </div>
       </div>
     </motion.div>
   );

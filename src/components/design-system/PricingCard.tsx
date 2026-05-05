@@ -21,43 +21,67 @@ export function PricingCard({ name, price, description, features, popular, ctaTe
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay }}
-      className={`relative flex flex-col p-10 rounded-[2rem] glass-card transition-all duration-500 ${
-        popular ? "border-primary/50 shadow-[0_0_30px_rgba(6,182,212,0.15)] bg-[#050B1C]/90 scale-105 z-10" : "border-white/5 hover:border-white/10"
+      className={`relative flex flex-col p-6 md:p-10 rounded-2xl md:rounded-[2rem] glass-card transition-all duration-500 ${
+        popular
+          ? "border-primary/40 shadow-[0_0_30px_rgba(6,182,212,0.15)] bg-[#050B1C]/90"
+          : "border-white/5 hover:border-white/10"
       }`}
     >
+      {/* Top accent line on popular card (replaces scale-105 which causes mobile overflow) */}
       {popular && (
-        <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-          <Badge variant="glass" className="px-4 py-1 text-sm">Most Popular</Badge>
+        <div className="absolute top-0 inset-x-0 h-[2px] rounded-t-2xl md:rounded-t-[2rem] bg-gradient-to-r from-primary/0 via-primary to-primary/0" />
+      )}
+
+      {/* Most Popular badge */}
+      {popular && (
+        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
+          <Badge
+            variant="glass"
+            className="px-3 py-1 text-xs md:text-sm font-semibold shadow-[0_0_12px_rgba(6,182,212,0.4)] whitespace-nowrap"
+          >
+            ✦ Most Popular
+          </Badge>
         </div>
       )}
-      
-      <h3 className="text-2xl font-bold mb-3">{name}</h3>
-      <div className="mb-4">
-        <span className="text-5xl font-bold tracking-tight">{price}</span>
-        {price !== "Custom" && <span className="text-muted-foreground ml-2">/mo</span>}
+
+      {/* Plan name */}
+      <h3 className="text-lg md:text-2xl font-bold mb-2 md:mb-3">{name}</h3>
+
+      {/* Price */}
+      <div className="mb-3 md:mb-4 flex items-end gap-1.5">
+        <span className="text-4xl md:text-5xl font-bold tracking-tight">{price}</span>
+        {price !== "Custom" && (
+          <span className="text-muted-foreground text-sm md:text-base mb-1">/month</span>
+        )}
       </div>
-      <p className="text-muted-foreground mb-8 min-h-[48px] text-lg">
+
+      {/* Description */}
+      <p className="text-muted-foreground text-xs md:text-base mb-5 md:mb-8 leading-relaxed">
         {description}
       </p>
-      
-      <ul className="space-y-5 mb-10 flex-1">
+
+      {/* Feature list */}
+      <ul className="space-y-2.5 md:space-y-4 mb-6 md:mb-10 flex-1">
         {features.map((feature, i) => (
-          <li key={i} className="flex items-start gap-4">
-            <div className="mt-1 w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-              <Check className="w-4 h-4 text-primary" />
+          <li key={i} className="flex items-start gap-2.5 md:gap-3">
+            <div className="mt-0.5 w-5 h-5 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+              <Check className="w-3 h-3 text-primary" />
             </div>
-            <span className="text-base text-foreground/90">{feature}</span>
+            <span className="text-xs md:text-sm text-foreground/90 leading-relaxed">{feature}</span>
           </li>
         ))}
       </ul>
-      
-      <Button 
-        variant={popular ? "default" : "outline"} 
+
+      {/* CTA */}
+      <Button
+        variant={popular ? "default" : "outline"}
         size="lg"
-        className="w-full text-base font-semibold"
+        className={`w-full h-12 md:h-14 text-sm md:text-base font-semibold ${
+          popular ? "shadow-[0_0_20px_rgba(6,182,212,0.35)]" : "border-white/10 hover:bg-white/5"
+        }`}
         asChild
       >
-        <Link href="#contact">{ctaText || (price === "Custom" ? "Contact Sales" : "Start Free Trial")}</Link>
+        <Link href="#contact">{ctaText || "Book a demo"}</Link>
       </Button>
     </motion.div>
   )
