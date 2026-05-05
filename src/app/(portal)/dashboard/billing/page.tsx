@@ -1,8 +1,9 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { DashboardHeader } from "@/components/portal/DashboardHeader";
 import { CheckoutButton } from "@/components/portal/CheckoutButton";
-import { PLANS, getPlanFromPriceId } from "@/lib/stripe";
-import { CreditCard, ExternalLink, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { ManageBillingButton } from "@/components/portal/ManageBillingButton";
+import { PLANS } from "@/lib/stripe";
+import { CreditCard, AlertTriangle, CheckCircle2 } from "lucide-react";
 
 function formatDate(unixTimestamp: number | undefined): string {
   if (!unixTimestamp) return "—";
@@ -111,13 +112,7 @@ export default async function BillingPage({
           </div>
 
           {hasSubscription ? (
-            <a
-              href="/api/billing/portal"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors shadow-[0_0_15px_rgba(6,182,212,0.3)]"
-            >
-              Manage billing on Stripe
-              <ExternalLink size={14} />
-            </a>
+            <ManageBillingButton />
           ) : (
             <p className="text-sm text-muted-foreground">
               No active subscription. Choose a plan below to get started.
