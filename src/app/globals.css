@@ -79,3 +79,19 @@
   }
 }
 
+/*
+ * Override browser autofill background on Clerk's input fields.
+ * Browsers (Chrome/Edge) force a white or yellow bg on autofilled inputs;
+ * the only reliable cross-browser fix is the inset box-shadow trick.
+ */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0px 1000px #111d35 inset !important;
+  -webkit-text-fill-color: #f1f5f9 !important;
+  caret-color: #f1f5f9;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+
