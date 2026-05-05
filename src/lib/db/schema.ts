@@ -193,7 +193,10 @@ export const usageCounters = pgTable(
     updatedAt:        timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
-    index("usage_counters_org_month_idx").on(t.organizationId, t.month),
+    // Unique on (organization_id, month) — required by `onConflictDoUpdate`
+    // in queries.incrementAiDrafts. Without this constraint, concurrent draft
+    // generations could create duplicate counter rows for the same month.
+    uniqueIndex("usage_counters_org_month_idx").on(t.organizationId, t.month),
   ]
 );
 

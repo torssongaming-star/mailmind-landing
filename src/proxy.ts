@@ -4,6 +4,9 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 const isProtectedRoute = createRouteMatcher([
   "/dashboard(.*)",
   "/api/billing(.*)",
+  // Mailmind app — email triage UI + API
+  "/app(.*)",
+  "/api/app(.*)",
 ]);
 
 const proxy = clerkMiddleware(async (auth, req) => {
