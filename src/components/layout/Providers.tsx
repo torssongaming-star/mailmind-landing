@@ -57,7 +57,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
           // Misc
           identityPreviewText: "text-white",
-          identityPreviewEditButton: "text-cyan-400",
+          identityPreviewEditButton: "text-cyan-400 hover:text-cyan-300",
+          formFieldErrorText: "text-red-400",
+          formFieldSuccessText: "text-green-400",
+          alertText: "text-slate-200",
+          formFieldAction: "text-cyan-400 hover:text-cyan-300", // "Forgot password?"
         },
       }}
     >
