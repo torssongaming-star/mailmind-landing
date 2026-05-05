@@ -1,7 +1,8 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { DashboardHeader } from "@/components/portal/DashboardHeader";
 import { PLANS } from "@/lib/stripe";
-import { CreditCard, Zap, Users, Mail } from "lucide-react";
+import { getPortalData } from "@/lib/db/queries";
+import { CreditCard, Zap, Users, Mail, Database } from "lucide-react";
 
 function StatCard({
   label,
@@ -57,29 +58,24 @@ export default async function DashboardPage() {
 
   const firstName = user.firstName ?? "there";
 
-  // Read subscription state from Clerk publicMetadata (synced by Stripe webhook)
-  const meta = user.publicMetadata as {
-    plan?: string;
-    subscriptionStatus?: string;
-    currentPeriodEnd?: number;
-  };
+  // Fetch portal data (returns mock if DB not connected)
+  const { org, subscription, entitlements, usage, isMock } = await getPortalData(userId);
 
-  const planKey = meta.plan as keyof typeof PLANS | undefined;
+  const planKey = subscription?.plan as keyof typeof PLANS | undefined;
   const plan = planKey ? PLANS[planKey] : null;
-  const status = meta.subscriptionStatus;
+  const status = subscription?.status;
 
   // Format renewal date
-  const renewalDate = meta.currentPeriodEnd
-    ? new Date(meta.currentPeriodEnd * 1000).toLocaleDateString("en-IE", {
+  const renewalDate = subscription?.currentPeriodEnd
+    ? new Date(subscription.currentPeriodEnd).toLocaleDateString("en-IE", {
         month: "long",
         day: "numeric",
         year: "numeric",
       })
     : null;
 
-  // Mock usage (Phase 3 will pull real data from DB)
-  const draftsUsed = 0;
-  const inboxesActive = 0;
+  const draftsUsed = usage?.aiDraftsUsed ?? 0;
+  const inboxesActive = usage?.emailsProcessed ?? 0; // Mock mapping for now
   const seatsUsed = 1;
 
   return (
@@ -88,17 +84,25 @@ export default async function DashboardPage() {
 
       <main className="flex-1 p-6 space-y-6">
         {/* Welcome */}
-        <div>
-          <h2 className="text-xl font-bold text-white">
-            Welcome back{firstName ? `, ${firstName}` : ""}
-          </h2>
-          <p className="text-sm text-muted-foreground mt-1">
-            Here&apos;s an overview of your Mailmind account.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-white">
+              Welcome back{firstName ? `, ${firstName}` : ""}
+            </h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Here&apos;s an overview of your {org.name} account.
+            </p>
+          </div>
+          {isMock && (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-semibold uppercase tracking-wider">
+              <Database size={12} />
+              Preview Mode (Mock Data)
+            </div>
+          )}
         </div>
 
         {/* Plan badge */}
-        {plan && status === "active" ? (
+        {plan && (status === "active" || status === "trialing") ? (
           <div className="rounded-2xl border border-primary/20 bg-primary/5 p-5 flex items-center justify-between">
             <div>
               <p className="text-xs text-primary font-semibold uppercase tracking-widest mb-1">Current Plan</p>
@@ -136,17 +140,17 @@ export default async function DashboardPage() {
             value={`${draftsUsed.toLocaleString()}`}
             icon={Zap}
             used={draftsUsed}
-            limit={plan?.draftsLimit ?? 500}
+            limit={entitlements?.maxAiDraftsPerMonth ?? plan?.draftsLimit ?? 500}
           />
           <StatCard
             label="Inboxes"
-            value={`${inboxesActive} / ${plan?.inboxLimit ?? 1}`}
+            value={`${inboxesActive} / ${entitlements?.maxInboxes ?? plan?.inboxLimit ?? 1}`}
             sub="Active inboxes"
             icon={Mail}
           />
           <StatCard
             label="Seats"
-            value={`${seatsUsed} / ${plan?.seatLimit ?? 2}`}
+            value={`${seatsUsed} / ${entitlements?.maxUsers ?? plan?.seatLimit ?? 2}`}
             sub="Team members"
             icon={Users}
           />
@@ -158,14 +162,12 @@ export default async function DashboardPage() {
           />
         </div>
 
-        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4 text-xs text-muted-foreground">
-          Live usage tracking will be connected in the next update.
-          Contact{" "}
-          <a href="mailto:hello@mailmind.io" className="text-primary hover:underline">
-            hello@mailmind.io
-          </a>{" "}
-          for billing questions.
-        </div>
+        {isMock && (
+          <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4 text-xs text-muted-foreground">
+            Connect a database (Neon Postgres) and set <code className="text-primary">DATABASE_URL</code> to see real usage data.
+            Mock data is currently shown for demonstration purposes.
+          </div>
+        )}
       </main>
     </>
   );

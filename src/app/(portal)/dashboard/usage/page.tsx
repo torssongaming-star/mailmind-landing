@@ -1,5 +1,8 @@
+import { auth } from "@clerk/nextjs/server";
 import { DashboardHeader } from "@/components/portal/DashboardHeader";
-import { BarChart2 } from "lucide-react";
+import { PLANS } from "@/lib/stripe";
+import { getPortalData } from "@/lib/db/queries";
+import { BarChart2, Database } from "lucide-react";
 
 function UsageBar({ label, used, limit, unit }: { label: string; used: number; limit: number; unit: string }) {
   const pct = Math.min(Math.round((used / limit) * 100), 100);
@@ -26,14 +29,38 @@ function UsageBar({ label, used, limit, unit }: { label: string; used: number; l
   );
 }
 
-export default function UsagePage() {
-  const period = "May 2026";
+export default async function UsagePage() {
+  const { userId } = await auth();
+  if (!userId) return null;
+
+  const { subscription, entitlements, usage, isMock } = await getPortalData(userId);
+
+  const planKey = subscription?.plan as keyof typeof PLANS | undefined;
+  const plan = planKey ? PLANS[planKey] : null;
+
+  const period = new Date().toLocaleDateString("en-IE", { month: "long", year: "numeric" });
+  const resetDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1).toLocaleDateString("en-IE", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 
   return (
     <>
       <DashboardHeader title="Usage" description={`Current period: ${period}`} />
 
       <main className="flex-1 p-6 space-y-6">
+        {/* Mock/Preview Banner */}
+        {isMock && (
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm">
+            <Database size={16} className="shrink-0" />
+            <div>
+              <p className="font-semibold text-xs uppercase tracking-wider">Preview Mode</p>
+              <p className="text-xs opacity-80 mt-0.5">Showing mock usage data. Connect Neon Postgres to see live stats.</p>
+            </div>
+          </div>
+        )}
+
         <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 backdrop-blur-sm p-6 space-y-8">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -41,20 +68,35 @@ export default function UsagePage() {
             </div>
             <div>
               <h2 className="text-base font-semibold text-white">Usage this period</h2>
-              <p className="text-xs text-muted-foreground">Resets on June 1, 2026</p>
+              <p className="text-xs text-muted-foreground">Resets on {resetDate}</p>
             </div>
           </div>
 
-          {/* Mock usage bars — connected to DB in Phase 3 */}
-          <UsageBar label="AI Draft replies" used={847}  limit={2000} unit="drafts" />
-          <UsageBar label="Active inboxes"  used={2}    limit={3}    unit="inboxes" />
-          <UsageBar label="Team seats"      used={3}    limit={5}    unit="seats" />
+          <UsageBar
+            label="AI Draft replies"
+            used={usage?.aiDraftsUsed ?? 0}
+            limit={entitlements?.maxAiDraftsPerMonth ?? plan?.draftsLimit ?? 500}
+            unit="drafts"
+          />
+          <UsageBar
+            label="Active inboxes"
+            used={usage?.emailsProcessed ?? 0}
+            limit={entitlements?.maxInboxes ?? plan?.inboxLimit ?? 1}
+            unit="inboxes"
+          />
+          <UsageBar
+            label="Team seats"
+            used={1} // Static for now
+            limit={entitlements?.maxUsers ?? plan?.seatLimit ?? 2}
+            unit="seats"
+          />
         </div>
 
-        <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4 text-xs text-muted-foreground">
-          Live usage data will be tracked automatically in the next product update.
-          Contact <a href="mailto:hello@mailmind.io" className="text-primary hover:underline">hello@mailmind.io</a> to adjust limits.
-        </div>
+        {isMock && (
+          <div className="rounded-xl border border-white/5 bg-white/[0.02] p-4 text-xs text-muted-foreground">
+            Usage is tracked at the organization level. Admin roles can manage limits via the billing portal.
+          </div>
+        )}
       </main>
     </>
   );

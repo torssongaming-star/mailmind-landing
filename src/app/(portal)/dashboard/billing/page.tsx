@@ -3,11 +3,12 @@ import { DashboardHeader } from "@/components/portal/DashboardHeader";
 import { CheckoutButton } from "@/components/portal/CheckoutButton";
 import { ManageBillingButton } from "@/components/portal/ManageBillingButton";
 import { PLANS } from "@/lib/stripe";
-import { CreditCard, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { getPortalData } from "@/lib/db/queries";
+import { CreditCard, AlertTriangle, CheckCircle2, Database } from "lucide-react";
 
-function formatDate(unixTimestamp: number | undefined): string {
-  if (!unixTimestamp) return "—";
-  return new Date(unixTimestamp * 1000).toLocaleDateString("en-IE", {
+function formatDate(date: Date | string | number | undefined): string {
+  if (!date) return "—";
+  return new Date(date).toLocaleDateString("en-IE", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -41,20 +42,14 @@ export default async function BillingPage({
 
   if (!userId || !user) return null;
 
-  // Read subscription state from Clerk publicMetadata (synced by Stripe webhook)
-  const meta = user.publicMetadata as {
-    stripeCustomerId?: string;
-    stripeSubscriptionId?: string;
-    subscriptionStatus?: string;
-    plan?: string;
-    currentPeriodEnd?: number;
-  };
+  // Fetch portal data (returns mock if DB not connected)
+  const { subscription, isMock } = await getPortalData(userId);
 
-  const currentPlanKey = meta.plan ?? null;
+  const currentPlanKey = subscription?.plan ?? null;
   const currentPlan = currentPlanKey ? PLANS[currentPlanKey as keyof typeof PLANS] : null;
-  const status = meta.subscriptionStatus;
-  const periodEnd = meta.currentPeriodEnd;
-  const hasSubscription = !!meta.stripeSubscriptionId;
+  const status = subscription?.status;
+  const periodEnd = subscription?.currentPeriodEnd;
+  const hasSubscription = !!subscription?.stripeSubscriptionId;
 
   const checkoutSuccess = params.checkout === "success";
   const checkoutCancelled = params.checkout === "cancelled";
@@ -64,6 +59,17 @@ export default async function BillingPage({
       <DashboardHeader title="Billing" description="Manage your subscription and payment details" />
 
       <main className="flex-1 p-6 space-y-6 max-w-3xl">
+
+        {/* Mock/Preview Banner */}
+        {isMock && (
+          <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm">
+            <Database size={16} className="shrink-0" />
+            <div>
+              <p className="font-semibold">Preview Mode</p>
+              <p className="text-xs opacity-80 mt-0.5">Showing mock data. Connect your database to see live Stripe data.</p>
+            </div>
+          </div>
+        )}
 
         {/* Checkout feedback banners */}
         {checkoutSuccess && (
