@@ -32,7 +32,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
           // Social auth buttons — brighter border + explicit bg so Apple icon is visible
           socialButtonsBlockButton:
-            "bg-white/8 border border-white/20 hover:bg-white/15 hover:border-white/30 text-white transition-colors",
+            "bg-white/10 border border-white/25 hover:bg-white/15 hover:border-white/35 text-white transition-colors",
           socialButtonsBlockButtonText: "text-slate-100 font-medium",
           socialButtonsBlockButtonArrow: "text-slate-300",
 

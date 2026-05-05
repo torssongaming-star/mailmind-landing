@@ -97,11 +97,13 @@ input:-webkit-autofill:active {
 /*
  * Clerk — make the Apple logo white on dark backgrounds.
  * Clerk renders the Apple SVG as black; invert(1) flips it to white.
- * Only target Apple — Google/Microsoft are colour logos and must not be inverted.
+ * Target multiple possible class patterns for robustness.
  */
 .cl-socialButtonsBlockButton__apple img,
-.cl-socialButtonsBlockButton__apple svg {
-  filter: invert(1);
+.cl-socialButtonsBlockButton__apple svg,
+.cl-socialButtonsBlockButton[data-provider="apple"] img,
+.cl-socialButtonsBlockButton[data-provider="apple"] svg {
+  filter: invert(1) brightness(1.2) !important;
 }
 
 /*
