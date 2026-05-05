@@ -1,26 +1,15 @@
 import { stripe, getPlanFromPriceId } from "@/lib/stripe";
 import { NextRequest, NextResponse } from "next/server";
 import { clerkClient } from "@clerk/nextjs/server";
+import * as db from "@/lib/db/queries";
+import { PLANS } from "@/lib/plans";
+import Stripe from "stripe";
+import { Subscription as DbSubscription } from "@/lib/db/schema";
 
-/**
- * POST /api/webhooks/stripe
- *
- * Receives Stripe webhook events and syncs subscription state
- * back to Clerk's user publicMetadata.
- *
- * IMPORTANT: This route must receive the raw request body for
- * signature verification — do NOT use req.json() before verification.
- *
- * Handled events:
- * - checkout.session.completed        → subscription activated
- * - customer.subscription.updated     → plan changed / renewed
- * - customer.subscription.deleted     → cancelled
- * - invoice.payment_failed            → payment issue flag
- */
-export const runtime = "nodejs"; // stripe SDK requires Node.js runtime
+export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
-  const body = await req.text(); // raw body required for signature verification
+  const body = await req.text();
   const signature = req.headers.get("stripe-signature");
 
   if (!signature) {
@@ -32,7 +21,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true });
   }
 
-  let event: ReturnType<typeof stripe.webhooks.constructEvent>;
+  let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (err) {
@@ -45,104 +34,158 @@ export async function POST(req: NextRequest) {
   try {
     switch (event.type) {
       case "checkout.session.completed": {
-        const session = event.data.object;
+        const session = event.data.object as Stripe.Checkout.Session;
         const clerkUserId = session.metadata?.clerkUserId;
-        const plan = session.metadata?.plan;
+        const plan = (session.metadata?.plan as keyof typeof PLANS) || "starter";
 
-        if (!clerkUserId) break;
+        if (!clerkUserId) {
+          console.error("[webhook/stripe] checkout.session.completed missing clerkUserId");
+          break;
+        }
 
-        const user = await client.users.getUser(clerkUserId);
+        const clerkUser = await client.users.getUser(clerkUserId);
+        const email = clerkUser.primaryEmailAddress?.emailAddress || "";
+
+        // 1. Ensure user and org exist in DB
+        const syncResult = await db.syncUserAndOrganization({
+          clerkUserId,
+          email,
+          stripeCustomerId: session.customer as string,
+        });
+
+        if (!syncResult) break;
+
+        // 2. Resolve subscription details
+        const subscriptionId = session.subscription as string;
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId) as Stripe.Subscription;
+
+        // 3. Sync subscription to DB
+        await db.upsertSubscription({
+          organizationId: syncResult.organizationId,
+          stripeSubscriptionId: subscriptionId,
+          stripeCustomerId: session.customer as string,
+          plan,
+          status: subscription.status as DbSubscription["status"],
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
+        });
+
+        // 4. Audit Log
+        await db.writeAuditLog({
+          organizationId: syncResult.organizationId,
+          userId: syncResult.user.id,
+          action: "checkout_completed",
+          metadata: { plan, stripeSubscriptionId: subscriptionId },
+        });
+
+        // 5. Update Clerk (as cache)
         await client.users.updateUserMetadata(clerkUserId, {
           publicMetadata: {
-            ...user.publicMetadata,
             stripeCustomerId: session.customer as string,
-            stripeSubscriptionId: session.subscription as string,
+            stripeSubscriptionId: subscriptionId,
             subscriptionStatus: "active",
-            plan: plan ?? "starter",
+            plan,
           },
         });
 
-        console.log(`[webhook/stripe] checkout.session.completed → user ${clerkUserId} subscribed to ${plan}`);
         break;
       }
 
+      case "customer.subscription.created":
       case "customer.subscription.updated": {
-        const subscription = event.data.object;
-        const clerkUserId = subscription.metadata?.clerkUserId;
+        const subscription = event.data.object as Stripe.Subscription;
+        const stripeCustomerId = subscription.customer as string;
+        const orgId = await db.getOrgIdByStripeCustomer(stripeCustomerId);
 
-        if (!clerkUserId) break;
+        if (!orgId) {
+          console.warn(`[webhook/stripe] No organization found for customer ${stripeCustomerId}`);
+          break;
+        }
 
         const priceId = subscription.items.data[0]?.price.id;
         const plan = getPlanFromPriceId(priceId ?? "") ?? "starter";
 
-        // current_period_end exists at runtime; type cast for SDK version differences
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const periodEnd = (subscription as any).current_period_end as number | undefined;
-
-        const user = await client.users.getUser(clerkUserId);
-        await client.users.updateUserMetadata(clerkUserId, {
-          publicMetadata: {
-            ...user.publicMetadata,
-            stripeSubscriptionId: subscription.id,
-            subscriptionStatus: subscription.status,
-            plan,
-            currentPeriodEnd: periodEnd,
-          },
+        await db.upsertSubscription({
+          organizationId: orgId,
+          stripeSubscriptionId: subscription.id,
+          stripeCustomerId,
+          plan,
+          status: subscription.status as DbSubscription["status"],
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
         });
 
-        console.log(`[webhook/stripe] subscription.updated → user ${clerkUserId} plan=${plan} status=${subscription.status}`);
+        await db.writeAuditLog({
+          organizationId: orgId,
+          action: "subscription_updated",
+          metadata: { 
+            status: subscription.status, 
+            plan,
+            cancelAtPeriodEnd: subscription.cancel_at_period_end
+          },
+        });
         break;
       }
 
       case "customer.subscription.deleted": {
-        const subscription = event.data.object;
-        const clerkUserId = subscription.metadata?.clerkUserId;
+        const subscription = event.data.object as Stripe.Subscription;
+        const orgId = await db.getOrgIdByStripeCustomer(subscription.customer as string);
 
-        if (!clerkUserId) break;
+        if (orgId) {
+          await db.upsertSubscription({
+            organizationId: orgId,
+            stripeSubscriptionId: subscription.id,
+            stripeCustomerId: subscription.customer as string,
+            plan: "starter", // Fallback plan
+            status: "cancelled",
+            currentPeriodEnd: new Date(),
+            cancelAtPeriodEnd: false,
+          });
 
-        const user = await client.users.getUser(clerkUserId);
-        await client.users.updateUserMetadata(clerkUserId, {
-          publicMetadata: {
-            ...user.publicMetadata,
-            subscriptionStatus: "cancelled",
-            plan: null,
-          },
-        });
+          await db.writeAuditLog({
+            organizationId: orgId,
+            action: "subscription_canceled",
+            metadata: { stripeSubscriptionId: subscription.id },
+          });
+        }
+        break;
+      }
 
-        console.log(`[webhook/stripe] subscription.deleted → user ${clerkUserId} cancelled`);
+      case "invoice.payment_succeeded": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const orgId = await db.getOrgIdByStripeCustomer(invoice.customer as string);
+        if (orgId) {
+          await db.writeAuditLog({
+            organizationId: orgId,
+            action: "payment_succeeded",
+            metadata: { invoiceId: invoice.id, amount: invoice.amount_paid },
+          });
+        }
         break;
       }
 
       case "invoice.payment_failed": {
-        const invoice = event.data.object;
-        const customerId = invoice.customer as string;
-
-        // Find clerk user by stripe customer ID
-        const customers = await stripe.customers.list({ limit: 1 });
-        const customer = customers.data.find((c) => c.id === customerId);
-        const clerkUserId = customer?.metadata?.clerkUserId;
-
-        if (!clerkUserId) break;
-
-        const user = await client.users.getUser(clerkUserId);
-        await client.users.updateUserMetadata(clerkUserId, {
-          publicMetadata: {
-            ...user.publicMetadata,
-            subscriptionStatus: "past_due",
-          },
-        });
-
-        console.warn(`[webhook/stripe] invoice.payment_failed → user ${clerkUserId} is past_due`);
+        const invoice = event.data.object as Stripe.Invoice;
+        const orgId = await db.getOrgIdByStripeCustomer(invoice.customer as string);
+        if (orgId) {
+          await db.writeAuditLog({
+            organizationId: orgId,
+            action: "payment_failed",
+            metadata: { invoiceId: invoice.id, amount: invoice.amount_due },
+          });
+        }
         break;
       }
 
       default:
-        // Unhandled event type — acknowledge receipt without processing
         break;
     }
   } catch (err) {
     console.error(`[webhook/stripe] Error processing event ${event.type}:`, err);
-    // Return 200 anyway — Stripe retries on non-2xx, which can cause loops
     return NextResponse.json({ received: true, warning: "Processing error" });
   }
 

@@ -1,19 +1,8 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { stripe, PRICE_IDS } from "@/lib/stripe";
 import { NextRequest, NextResponse } from "next/server";
+import * as db from "@/lib/db/queries";
 
-/**
- * POST /api/billing/checkout
- *
- * Creates a Stripe Checkout Session for subscribing to a plan.
- * Expects JSON body: { plan: "starter" | "team" | "business" }
- *
- * Flow:
- * 1. Get authenticated Clerk user
- * 2. Look up or create Stripe customer
- * 3. Create a Checkout session with the selected price
- * 4. Return the checkout URL
- */
 export async function POST(req: NextRequest) {
   try {
     const { userId } = await auth();
@@ -37,10 +26,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Retrieve or create the Stripe customer
-    let stripeCustomerId = user.publicMetadata?.stripeCustomerId as string | undefined;
+    // 1. Resolve organization and Stripe Customer ID
+    const portalData = await db.getPortalData(userId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let stripeCustomerId: any = portalData.org?.stripeCustomerId || undefined;
 
     if (!stripeCustomerId) {
+      // Check if Clerk has it as a fallback
+      stripeCustomerId = (user.publicMetadata?.stripeCustomerId as string) || undefined;
+    }
+
+    if (!stripeCustomerId) {
+      // Create a new Stripe customer
       const customer = await stripe.customers.create({
         email: user.primaryEmailAddress?.emailAddress,
         name: `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim() || undefined,
@@ -48,6 +45,14 @@ export async function POST(req: NextRequest) {
       });
       stripeCustomerId = customer.id;
 
+      // Sync to database
+      await db.syncUserAndOrganization({
+        clerkUserId: userId,
+        email: user.primaryEmailAddress?.emailAddress || "",
+        stripeCustomerId: stripeCustomerId || undefined,
+      });
+
+      // Update Clerk (secondary cache)
       const { clerkClient } = await import("@clerk/nextjs/server");
       const client = await clerkClient();
       await client.users.updateUserMetadata(userId, {
@@ -58,7 +63,7 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Create Stripe Checkout session
+    // 2. Create Stripe Checkout session
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: stripeCustomerId,
