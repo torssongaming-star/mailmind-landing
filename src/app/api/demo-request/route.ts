@@ -15,9 +15,6 @@ const demoRequestSchema = z.object({
   // Honeypot field — should be empty
   websiteUrl: z.string().optional(),
 });
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 /**
  * POST /api/demo-request
  *
@@ -45,9 +42,12 @@ export async function POST(req: NextRequest) {
       console.warn("[api/demo-request] Honeypot triggered by:", data.workEmail);
       return NextResponse.json({ success: true });
     }
-
     // 3. Check environment variables
-    if (!process.env.RESEND_API_KEY || !process.env.DEMO_REQUEST_TO || !process.env.DEMO_REQUEST_FROM) {
+    const apiKey = process.env.RESEND_API_KEY;
+    const toEmail = process.env.DEMO_REQUEST_TO;
+    const fromEmail = process.env.DEMO_REQUEST_FROM;
+
+    if (!apiKey || !toEmail || !fromEmail) {
       console.error("[api/demo-request] Missing environment variables for Resend");
       return NextResponse.json(
         { error: "Email service not configured" },
@@ -56,9 +56,10 @@ export async function POST(req: NextRequest) {
     }
 
     // 4. Send email
+    const resend = new Resend(apiKey);
     const { error } = await resend.emails.send({
-      from: process.env.DEMO_REQUEST_FROM,
-      to: process.env.DEMO_REQUEST_TO,
+      from: fromEmail,
+      to: toEmail,
       subject: `New Demo Request: ${data.companyName}`,
       replyTo: data.workEmail,
       html: `
