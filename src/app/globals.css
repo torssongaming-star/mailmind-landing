@@ -94,4 +94,23 @@ input:-webkit-autofill:active {
   transition: background-color 9999s ease-in-out 0s;
 }
 
+/*
+ * Clerk — make the Apple logo white on dark backgrounds.
+ * Clerk renders the Apple SVG as black; invert(1) flips it to white.
+ * Only target Apple — Google/Microsoft are colour logos and must not be inverted.
+ */
+.cl-socialButtonsBlockButton__apple img,
+.cl-socialButtonsBlockButton__apple svg {
+  filter: invert(1);
+}
 
+/*
+ * Clerk — "Last used" badge is nearly invisible on dark cards.
+ * Bump contrast with a readable cyan-tinted chip style.
+ */
+.cl-badge {
+  color: #67e8f9 !important;           /* cyan-300 */
+  background-color: rgba(6,182,212,0.15) !important;
+  border: 1px solid rgba(6,182,212,0.3) !important;
+  font-weight: 600 !important;
+}
