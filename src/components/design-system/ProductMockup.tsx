@@ -68,7 +68,7 @@ const emails = [
     subject: "Opening hours this weekend?",
     preview: "Are you open on Sunday during the public holiday?",
     time: "Mon",
-    tags: [{ label: "General", color: "bg-gray-500/10 text-gray-400 border-gray-500/20" }],
+    tags: [{ label: "General", color: "bg-slate-500/10 text-slate-400 border-slate-500/20" }],
     status: "read"
   }
 ];

@@ -7,7 +7,7 @@ import { Send, CheckCircle2, AlertCircle, ChevronDown, Loader2 } from "lucide-re
 import { useState } from "react";
 
 const inputClass =
-  "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm md:text-base placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all";
+  "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm md:text-base placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all";
 
 const selectClass =
   "w-full bg-[#050B1C] border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all appearance-none";
@@ -131,7 +131,7 @@ function ContactForm({
         </div>
         <div>
           <label htmlFor="companyWebsite" className={labelClass}>
-            Website <span className="text-white/30 font-normal">(optional)</span>
+            Website <span className="text-white/50 font-normal">(optional)</span>
           </label>
           <input
             type="url"
@@ -175,7 +175,7 @@ function ContactForm({
       {/* Message */}
       <div>
         <label htmlFor="message" className={labelClass}>
-          Message <span className="text-white/30 font-normal">(optional)</span>
+          Message <span className="text-white/50 font-normal">(optional)</span>
         </label>
         <textarea
           id="message"
