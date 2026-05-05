@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Menu, X } from "lucide-react";
+import { Mail, Menu, X, ArrowRight, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -51,7 +51,7 @@ export function Navbar() {
           </Link>
 
           {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-10 text-sm text-muted-foreground font-medium" role="list">
+          <div className="hidden lg:flex items-center gap-10 text-sm text-muted-foreground font-medium" role="list">
             {navLinks.map((link) => (
               <a
                 key={link.href}
@@ -64,33 +64,46 @@ export function Navbar() {
             ))}
           </div>
 
-          {/* Desktop CTA + Mobile toggle */}
+          {/* Actions */}
           <div className="flex items-center gap-3 z-50">
-            {isSignedIn ? (
-              // Signed in: show avatar + dashboard link
-              <div className="hidden sm:flex items-center gap-3">
+            {/* Desktop Auth Actions */}
+            <div className="hidden sm:flex items-center gap-4 mr-2">
+              {isSignedIn ? (
+                <>
+                  <Link
+                    href="/dashboard"
+                    className="text-sm text-muted-foreground hover:text-white transition-colors flex items-center gap-2"
+                  >
+                    <LayoutDashboard size={14} />
+                    Dashboard
+                  </Link>
+                  <UserButton
+                    appearance={{
+                      elements: {
+                        avatarBox: "w-8 h-8 ring-1 ring-primary/30 hover:ring-primary/60 transition-all",
+                      },
+                    }}
+                  />
+                </>
+              ) : (
                 <Link
-                  href="/dashboard"
-                  className="text-sm text-muted-foreground hover:text-white transition-colors"
+                  href="/sign-in"
+                  className="text-sm text-muted-foreground hover:text-white transition-colors font-medium"
                 >
-                  Dashboard
+                  Login
                 </Link>
-                <UserButton
-                  appearance={{
-                    elements: {
-                      avatarBox: "w-8 h-8 ring-1 ring-primary/30",
-                    },
-                  }}
-                />
-              </div>
-            ) : (
-              // Signed out: show Book a demo
-              <div className="hidden sm:block">
-                <Button size="default" asChild>
-                  <Link href="#contact">Book a demo</Link>
-                </Button>
-              </div>
-            )}
+              )}
+            </div>
+
+            {/* Always show Book a demo (except maybe on small screens if crowded) */}
+            <div className="hidden sm:block">
+              <Button size="default" asChild className="gap-2">
+                <Link href="#contact">
+                  Book a demo
+                  <ArrowRight size={14} className="opacity-60" />
+                </Link>
+              </Button>
+            </div>
 
             {/* Mobile hamburger */}
             <button
@@ -164,13 +177,29 @@ export function Navbar() {
                     </a>
                   </motion.li>
                 ))}
+                
+                {/* Mobile Auth Link */}
+                <motion.li
+                  initial={{ opacity: 0, x: -16 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.06 + navLinks.length * 0.05, duration: 0.2 }}
+                >
+                  <Link
+                    href={isSignedIn ? "/dashboard" : "/sign-in"}
+                    onClick={close}
+                    className="flex items-center justify-between w-full py-4 border-b border-white/8 text-lg font-medium text-white/80 hover:text-white active:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded"
+                  >
+                    <span>{isSignedIn ? "Dashboard" : "Login"}</span>
+                    {isSignedIn ? <LayoutDashboard size={18} className="text-primary/60" /> : <ArrowRight size={18} className="text-white/20" />}
+                  </Link>
+                </motion.li>
               </ul>
 
               {/* Primary CTA — visually strong */}
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.28, duration: 0.2 }}
+                transition={{ delay: 0.35, duration: 0.2 }}
                 className="mt-8"
               >
                 <Button
@@ -189,7 +218,7 @@ export function Navbar() {
               <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 0.36, duration: 0.2 }}
+                transition={{ delay: 0.45, duration: 0.2 }}
                 className="text-center text-xs text-muted-foreground mt-4"
               >
                 No commitment. 30-minute session.
