@@ -1,7 +1,10 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 /** Routes that require authentication */
-const isProtectedRoute = createRouteMatcher(["/dashboard(.*)"]);
+const isProtectedRoute = createRouteMatcher([
+  "/dashboard(.*)",
+  "/api/billing(.*)",
+]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
@@ -18,6 +21,7 @@ export const config = {
      * - favicon.ico   (favicon)
      * - public folder files (images, fonts, etc.)
      * - api/webhooks  (Stripe + Clerk webhooks — unauthenticated)
+     * - api/db-test   (Database health check — unauthenticated)
      */
     "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],

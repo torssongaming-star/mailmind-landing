@@ -2,9 +2,11 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { DashboardHeader } from "@/components/portal/DashboardHeader";
 import { CheckoutButton } from "@/components/portal/CheckoutButton";
 import { ManageBillingButton } from "@/components/portal/ManageBillingButton";
-import { PLANS } from "@/lib/stripe";
+import { PLANS } from "@/lib/plans";
 import { getPortalData } from "@/lib/db/queries";
 import { CreditCard, AlertTriangle, CheckCircle2, Database } from "lucide-react";
+
+import { siteConfig } from "@/config/site";
 
 function formatDate(date: Date | string | number | undefined): string {
   if (!date) return "—";
@@ -99,7 +101,7 @@ export default async function BillingPage({
             </div>
             <div>
               <h2 className="text-base font-semibold text-white">Subscription</h2>
-              <p className="text-xs text-muted-foreground">Your current Mailmind plan</p>
+              <p className="text-xs text-muted-foreground">Your current {siteConfig.siteName} plan</p>
             </div>
           </div>
 
@@ -176,8 +178,8 @@ export default async function BillingPage({
 
         <p className="text-xs text-muted-foreground">
           Billing questions?{" "}
-          <a href="mailto:billing@mailmind.io" className="text-primary hover:underline">
-            billing@mailmind.io
+          <a href={`mailto:${siteConfig.billingEmail}`} className="text-primary hover:underline">
+            {siteConfig.billingEmail}
           </a>
         </p>
       </main>

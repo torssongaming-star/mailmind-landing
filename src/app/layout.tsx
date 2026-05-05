@@ -7,23 +7,38 @@ import { Providers } from "@/components/layout/Providers";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
+import { siteConfig } from "@/config/site";
+
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Mailmind | AI Email Support for European B2B Teams",
-  description: "Connect your existing inbox. Let AI draft replies, summarize threads and organize customer emails with human-in-the-loop control.",
+  title: {
+    default: `${siteConfig.siteName} | AI Email Support for European B2B Teams`,
+    template: `%s | ${siteConfig.siteName}`,
+  },
+  description: siteConfig.description,
+  metadataBase: new URL(siteConfig.siteUrl),
   openGraph: {
-    title: "Mailmind | AI Email Support for B2B",
-    description: "Designed for European businesses. Answer customer emails faster with AI-assisted drafting, categorization, and human-in-the-loop workflows.",
-    url: "https://mailmind.io",
-    siteName: "Mailmind",
+    title: `${siteConfig.siteName} | AI Email Support for B2B`,
+    description: siteConfig.description,
+    url: siteConfig.siteUrl,
+    siteName: siteConfig.siteName,
     locale: "en_IE",
     type: "website",
+    images: [
+      {
+        url: siteConfig.ogImage,
+        width: 1200,
+        height: 630,
+        alt: siteConfig.siteName,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Mailmind | Premium AI Email Support",
-    description: "Connect Outlook or Gmail. Draft replies, summarize long threads, and organize your inbox—while your team approves every response.",
+    title: `${siteConfig.siteName} | Premium AI Email Support`,
+    description: siteConfig.description,
+    creator: siteConfig.twitterHandle || undefined,
   },
 };
 

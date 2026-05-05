@@ -8,7 +8,7 @@ interface PricingCardProps {
   name: string
   price: string
   description: string
-  features: string[]
+  features: readonly string[]
   popular?: boolean
   ctaText?: string
   delay?: number

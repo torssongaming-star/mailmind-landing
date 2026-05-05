@@ -7,6 +7,8 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth, UserButton } from "@clerk/nextjs";
 
+import { siteConfig } from "@/config/site";
+
 const navLinks = [
   { href: "#how-it-works", label: "How it works" },
   { href: "#features",     label: "Features"      },
@@ -42,12 +44,12 @@ export function Navbar() {
           <Link
             href="/"
             className="flex items-center gap-2.5 z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-lg"
-            aria-label="Mailmind — go to homepage"
+            aria-label={`${siteConfig.siteName} — go to homepage`}
           >
             <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary border border-primary/30 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
               <Mail size={18} />
             </div>
-            <span className="text-xl md:text-2xl font-bold tracking-tight text-white">Mailmind</span>
+            <span className="text-xl md:text-2xl font-bold tracking-tight text-white">{siteConfig.siteName}</span>
           </Link>
 
           {/* Desktop links */}
@@ -87,7 +89,7 @@ export function Navbar() {
                 </>
               ) : (
                 <Link
-                  href="/sign-in"
+                  href="/login"
                   className="text-sm text-muted-foreground hover:text-white transition-colors font-medium"
                 >
                   Login
@@ -185,7 +187,7 @@ export function Navbar() {
                   transition={{ delay: 0.06 + navLinks.length * 0.05, duration: 0.2 }}
                 >
                   <Link
-                    href={isSignedIn ? "/dashboard" : "/sign-in"}
+                    href={isSignedIn ? "/dashboard" : "/login"}
                     onClick={close}
                     className="flex items-center justify-between w-full py-4 border-b border-white/8 text-lg font-medium text-white/80 hover:text-white active:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded"
                   >

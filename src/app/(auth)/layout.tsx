@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
-  title: "Sign in — Mailmind",
-  description: "Sign in to your Mailmind account.",
+  title: {
+    default: `Auth | ${siteConfig.siteName}`,
+    template: `%s | ${siteConfig.siteName}`,
+  },
+  description: `Securely access your ${siteConfig.siteName} account.`,
 };
 
 /**

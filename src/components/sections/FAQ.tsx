@@ -5,11 +5,12 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Section } from "@/components/ui/section";
+import { siteConfig } from "@/config/site";
 
 const faqs = [
   {
     question: "Is this a replacement for Outlook or Gmail?",
-    answer: "No. Mailmind connects to your existing email setup and adds an AI-assisted workspace on top."
+    answer: `No. ${siteConfig.siteName} connects to your existing email setup and adds an AI-assisted workspace on top.`
   },
   {
     question: "Does AI send emails automatically?",

@@ -1,5 +1,6 @@
 import { DashboardHeader } from "@/components/portal/DashboardHeader";
 import { Users } from "lucide-react";
+import { siteConfig } from "@/config/site";
 
 export default function TeamPage() {
   return (
@@ -16,7 +17,7 @@ export default function TeamPage() {
             Invite team members, assign roles and manage access. This feature will be available in the next update.
           </p>
           <a
-            href="mailto:hello@mailmind.io"
+            href={`mailto:${siteConfig.contactEmail}`}
             className="mt-6 text-sm text-primary hover:text-cyan-300 transition-colors"
           >
             Contact us to add team members →

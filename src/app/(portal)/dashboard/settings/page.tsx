@@ -11,7 +11,7 @@ export default function SettingsPage() {
       <main className="flex-1 p-6">
         {/*
           Clerk's UserProfile component — heavily styled for high contrast
-          in the Mailmind dark theme.
+          in the dark theme.
         */}
         <UserProfile
           appearance={{

@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { Check, Search, Sparkles, Send, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { siteConfig } from "@/config/site";
 
 export function HeroMockup() {
   const [floatY, setFloatY] = React.useState(-15);
@@ -36,7 +37,7 @@ export function HeroMockup() {
               <Search size={12} /> Search emails...
             </div>
             {/* Mobile: label */}
-            <span className="md:hidden text-xs font-medium text-muted-foreground">Mailmind Inbox</span>
+            <span className="md:hidden text-xs font-medium text-muted-foreground">{siteConfig.siteName} Inbox</span>
             <div className="w-10" />
           </div>
 
@@ -180,7 +181,7 @@ export function HeroMockup() {
                   <div className="w-8 h-8 rounded-full bg-gradient-to-br from-white/20 to-white/5 flex items-center justify-center text-xs font-bold text-white shrink-0">SJ</div>
                   <div className="min-w-0">
                     <div className="text-sm font-medium text-white truncate">Sarah Jenkins <span className="text-muted-foreground text-xs font-normal">&lt;sarah.j@example.com&gt;</span></div>
-                    <div className="text-xs text-muted-foreground">To: support@mailmind.io</div>
+                    <div className="text-xs text-muted-foreground">To: {siteConfig.supportEmail}</div>
                   </div>
                 </div>
                 <div className="mt-4 text-sm text-foreground/80 leading-relaxed">
@@ -203,7 +204,7 @@ export function HeroMockup() {
                   I&apos;ve checked order #8492. There was a slight delay at our warehouse, but I&apos;ve personally expedited the fulfillment. Your package has just been handed over to the courier and the tracking link will update shortly.<br /><br />
                   It is scheduled to arrive tomorrow afternoon, well in time for your event.<br /><br />
                   Apologies for the initial delay!<br /><br />
-                  Best,<br />Mailmind Support
+                  Best,<br />{siteConfig.siteName} Support
                 </div>
                 <div className="flex items-center justify-between">
                   <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-white h-8 px-3 text-xs">Edit draft</Button>

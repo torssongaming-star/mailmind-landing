@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Section } from "@/components/ui/section";
+import { siteConfig } from "@/config/site";
 
 export function CTA() {
   return (
@@ -25,7 +26,7 @@ export function CTA() {
           </h2>
           
           <p className="text-muted-foreground text-base md:text-xl mb-8 md:mb-10 max-w-2xl mx-auto leading-relaxed">
-            Book a short demo and see how Mailmind can help your team save time on repeated customer questions.
+            Book a short demo and see how {siteConfig.siteName} can help your team save time on repeated customer questions.
           </p>
           
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">

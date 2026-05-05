@@ -19,6 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { siteConfig } from "@/config/site";
 
 const emails = [
   {
@@ -120,10 +121,10 @@ export function ProductMockup() {
             <div className="w-60 border-r border-white/5 bg-black/40 hidden md:flex flex-col">
               <div className="p-4 flex items-center gap-3 border-b border-white/5">
                 <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                  M
+                  {siteConfig.siteName[0]}
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-white">Mailmind Team</div>
+                  <div className="text-sm font-semibold text-white">{siteConfig.siteName} Team</div>
                   <div className="text-[10px] text-muted-foreground">Pro Plan</div>
                 </div>
               </div>

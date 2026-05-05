@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import { Sidebar } from "@/components/portal/Sidebar";
+import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
-  title: "Dashboard — Mailmind",
-  description: "Manage your Mailmind account, plan and usage.",
+  title: {
+    default: `Dashboard | ${siteConfig.siteName}`,
+    template: `%s | ${siteConfig.siteName}`,
+  },
+  description: `Manage your ${siteConfig.siteName} account, plan and usage.`,
 };
 
 /**

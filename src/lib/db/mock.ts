@@ -47,7 +47,7 @@ export const MOCK_USER: User = {
   id:             MOCK_USER_ID,
   clerkUserId:    "mock_clerk_user",
   organizationId: MOCK_ORG_ID,
-  email:          "demo@mailmind.io",
+  email:          "demo@mailmind.se",
   role:           "owner",
   createdAt:      new Date("2025-01-15T09:00:00Z"),
   updatedAt:      new Date(),
@@ -101,7 +101,7 @@ export const MOCK_AUDIT_LOGS: AuditLog[] = [
     organizationId: MOCK_ORG_ID,
     userId:         MOCK_USER_ID,
     action:         "seat_added",
-    metadata:       { email: "colleague@mailmind.io", role: "admin" },
+    metadata:       { email: "colleague@mailmind.se", role: "admin" },
     createdAt:      new Date("2025-02-03T14:22:00Z"),
   },
   {

@@ -4,6 +4,8 @@ import { Shield, Lock, UserCheck, History, Globe, BrainCircuit } from "lucide-re
 import { Section } from "@/components/ui/section";
 import { FeatureCard } from "@/components/design-system/FeatureCard";
 
+import { siteConfig } from "@/config/site";
+
 export function Security() {
   const securityFeatures = [
     {
@@ -46,7 +48,7 @@ export function Security() {
       <div className="text-center max-w-4xl mx-auto mb-8 md:mb-16 relative z-10">
         <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 tracking-tight leading-snug">Designed for European businesses</h2>
         <p className="text-muted-foreground text-lg md:text-xl leading-relaxed max-w-3xl mx-auto">
-          Customer emails often contain personal data. Mailmind is designed with European data protection expectations in mind, with clear controls, human approval and transparent AI usage.
+          Customer emails often contain personal data. {siteConfig.siteName} is designed with European data protection expectations in mind, with clear controls, human approval and transparent AI usage.
         </p>
       </div>
 

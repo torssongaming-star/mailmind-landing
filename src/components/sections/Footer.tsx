@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Mail } from "lucide-react";
+import { siteConfig } from "@/config/site";
 
 const productLinks = [
   { href: "#features",    label: "Features"    },
@@ -51,16 +52,16 @@ export function Footer() {
             <Link
               href="/"
               className="flex items-center gap-2.5 mb-4 w-fit focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-lg"
-              aria-label="Mailmind homepage"
+              aria-label={`${siteConfig.siteName} homepage`}
             >
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary border border-primary/30 shadow-[0_0_12px_rgba(6,182,212,0.2)]">
                 <Mail size={15} />
               </div>
-              <span className="font-bold text-lg tracking-tight text-white">Mailmind</span>
+              <span className="font-bold text-lg tracking-tight text-white">{siteConfig.siteName}</span>
             </Link>
 
             <p className="text-sm text-muted-foreground leading-relaxed max-w-xs">
-              AI-assisted customer email support for European businesses. Human approval, always.
+              {siteConfig.description}
             </p>
           </div>
 
@@ -74,7 +75,7 @@ export function Footer() {
         {/* ── Copyright ── */}
         <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Mailmind. All rights reserved.
+            © {new Date().getFullYear()} {siteConfig.siteName}. All rights reserved.
           </p>
           <p className="text-xs text-muted-foreground/60">
             Built for European teams.

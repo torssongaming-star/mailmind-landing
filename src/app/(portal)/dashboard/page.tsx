@@ -1,6 +1,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { DashboardHeader } from "@/components/portal/DashboardHeader";
-import { PLANS } from "@/lib/stripe";
+import { PLANS } from "@/lib/plans";
 import { getPortalData } from "@/lib/db/queries";
 import { CreditCard, Zap, Users, Mail, Database } from "lucide-react";
 

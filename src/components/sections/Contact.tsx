@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Section } from "@/components/ui/section";
 import { Send, CheckCircle2, AlertCircle, ChevronDown, Loader2 } from "lucide-react";
 import { useState } from "react";
+import { siteConfig } from "@/config/site";
 
 const inputClass =
   "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm md:text-base placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all";
@@ -30,7 +31,7 @@ function SuccessPanel({ onReset }: { onReset: () => void }) {
       <div>
         <h3 className="text-xl md:text-2xl font-bold text-white mb-2">Request received!</h3>
         <p className="text-muted-foreground text-sm md:text-base leading-relaxed max-w-sm">
-          Thanks for your interest in Mailmind. We&apos;ll be in touch within one business day to schedule your demo.
+          Thanks for your interest in {siteConfig.siteName}. We&apos;ll be in touch within one business day to schedule your demo.
         </p>
       </div>
       <button
@@ -62,14 +63,20 @@ function ContactForm({
     const formData = new FormData(e.currentTarget);
     const data = Object.fromEntries(formData.entries());
 
-    if (process.env.NODE_ENV === "development") {
-      console.log("Form submitted:", data);
-    }
-
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      const response = await fetch("/api/demo-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to send request");
+      }
+
       onSuccess();
-    } catch {
+    } catch (err) {
+      console.error("[ContactForm] Submission error:", err);
       setIsError(true);
     } finally {
       setIsLoading(false);
@@ -87,6 +94,9 @@ function ContactForm({
       className="space-y-5"
       noValidate
     >
+      {/* Honeypot field — hidden from users */}
+      <input type="text" name="websiteUrl" className="hidden" aria-hidden="true" tabIndex={-1} />
+
       {/* Row 1: Name + Email */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>

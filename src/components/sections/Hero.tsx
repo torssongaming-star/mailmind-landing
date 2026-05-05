@@ -8,6 +8,7 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 import { Section } from "@/components/ui/section";
 import { HeroMockup } from "@/components/design-system/HeroMockup";
 import { Badge } from "@/components/ui/badge";
+import { siteConfig } from "@/config/site";
 
 export function Hero() {
   return (
@@ -49,7 +50,7 @@ export function Hero() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-base md:text-xl text-muted-foreground mb-6 md:mb-10 max-w-2xl leading-relaxed"
           >
-            Connect Outlook, Gmail or IMAP. Mailmind drafts replies, summarizes long threads and organizes your inbox — while your team approves every response.
+            Connect Outlook, Gmail or IMAP. {siteConfig.siteName} drafts replies, summarizes long threads and organizes your inbox — while your team approves every response.
           </motion.p>
 
           <motion.div

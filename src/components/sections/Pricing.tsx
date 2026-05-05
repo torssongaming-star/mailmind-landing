@@ -2,54 +2,10 @@
 
 import { Section } from "@/components/ui/section";
 import { PricingCard } from "@/components/design-system/PricingCard";
+import { PLAN_LIST } from "@/lib/plans";
 
 export function Pricing() {
-  const plans = [
-    {
-      name: "Starter",
-      price: "€19",
-      description: "For small teams testing AI email support",
-      features: [
-        "1 inbox",
-        "2 users",
-        "500 AI drafts/month",
-        "Email categorization",
-        "Basic templates"
-      ],
-      ctaText: "Start with Starter"
-    },
-    {
-      name: "Team",
-      price: "€49",
-      description: "For companies handling customer emails every day",
-      features: [
-        "3 inboxes",
-        "5 users",
-        "2,000 AI drafts/month",
-        "Thread summaries",
-        "Company tone of voice",
-        "Shared inbox",
-        "Basic analytics"
-      ],
-      popular: true,
-      ctaText: "Book a demo"
-    },
-    {
-      name: "Business",
-      price: "€99",
-      description: "For growing teams with higher volume",
-      features: [
-        "5 inboxes",
-        "10 users",
-        "5,000 AI drafts/month",
-        "Advanced workflows",
-        "Knowledge base",
-        "Access control",
-        "Audit history"
-      ],
-      ctaText: "Talk to sales"
-    }
-  ];
+  const plans = PLAN_LIST;
 
   return (
     <Section id="pricing" className="border-b border-white/5 relative overflow-hidden">

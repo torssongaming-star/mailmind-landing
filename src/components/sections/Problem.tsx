@@ -5,6 +5,8 @@ import { Clock, Inbox, Repeat } from "lucide-react";
 import { Section } from "@/components/ui/section";
 import { FeatureCard } from "@/components/design-system/FeatureCard";
 
+import { siteConfig } from "@/config/site";
+
 export function Problem() {
   const problems = [
     {
@@ -53,7 +55,7 @@ export function Problem() {
         className="text-center max-w-3xl mx-auto"
       >
         <p className="text-2xl md:text-3xl font-semibold tracking-tight text-white/90 leading-snug">
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">Mailmind</span> turns your inbox into an AI-assisted customer support workspace.
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">{siteConfig.siteName}</span> turns your inbox into an AI-assisted customer support workspace.
         </p>
       </motion.div>
     </Section>

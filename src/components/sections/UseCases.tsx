@@ -5,6 +5,7 @@ import { Shirt, ShoppingBag, Building, Wrench, Stethoscope, Store, Headset, Truc
 import { Section } from "@/components/ui/section";
 import { GradientCard } from "@/components/design-system/GradientCard";
 import { Badge } from "@/components/ui/badge";
+import { siteConfig } from "@/config/site";
 
 export function UseCases() {
   const industries = [
@@ -63,7 +64,7 @@ export function UseCases() {
       <div className="text-center max-w-4xl mx-auto mb-10 md:mb-20">
         <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 tracking-tight leading-snug">Built for companies that handle real customer questions</h2>
         <p className="text-muted-foreground text-base md:text-xl leading-relaxed">
-          Mailmind adapts to your industry workflow and learns from your responses.
+          {siteConfig.siteName} adapts to your industry workflow and learns from your responses.
         </p>
       </div>
 

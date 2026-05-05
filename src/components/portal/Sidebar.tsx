@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { siteConfig } from "@/config/site";
+
 const navItems = [
   { href: "/dashboard",          label: "Overview",  icon: LayoutDashboard },
   { href: "/dashboard/billing",  label: "Billing",   icon: CreditCard },
@@ -32,7 +34,7 @@ export function Sidebar() {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary border border-primary/30 shadow-[0_0_12px_rgba(6,182,212,0.2)] group-hover:shadow-[0_0_16px_rgba(6,182,212,0.35)] transition-shadow">
             <Mail size={15} />
           </div>
-          <span className="font-bold text-lg tracking-tight text-white">Mailmind</span>
+          <span className="font-bold text-lg tracking-tight text-white">{siteConfig.siteName}</span>
         </Link>
       </div>
 
@@ -66,7 +68,7 @@ export function Sidebar() {
           className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-muted-foreground hover:text-white transition-colors rounded-xl hover:bg-white/[0.04]"
         >
           <ArrowLeft size={14} />
-          Back to Mailmind.io
+          Back to {siteConfig.domain}
         </Link>
       </div>
     </aside>
