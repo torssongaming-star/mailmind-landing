@@ -8,6 +8,7 @@ export const siteConfig = {
   billingEmail: "billing@mailmind.se",
   demoEmail: "demo@mailmind.se",
   contactEmail: "hello@mailmind.se",
+  securityEmail: "security@mailmind.se",
   ogImage: "https://mailmind.se/og-image.png",
   twitterHandle: "",
 } as const;

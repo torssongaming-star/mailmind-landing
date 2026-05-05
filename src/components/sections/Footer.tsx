@@ -15,6 +15,12 @@ const companyLinks = [
   { href: "#contact", label: "Contact"     },
 ];
 
+const legalLinks = [
+  { href: "/privacy",  label: "Privacy"  },
+  { href: "/terms",    label: "Terms"    },
+  { href: "/security", label: "Security" },
+];
+
 function FooterLinkGroup({ title, links }: { title: string; links: { href: string; label: string }[] }) {
   return (
     <div>
@@ -65,10 +71,11 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Link groups — 2-col on mobile, 1-col each on desktop */}
-          <div className="grid grid-cols-2 lg:grid-cols-2 lg:col-span-2 gap-8">
+          {/* Link groups — 3-col on mobile, 1-col each on desktop */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 lg:col-span-2 gap-8">
             <FooterLinkGroup title="Product" links={productLinks} />
             <FooterLinkGroup title="Company" links={companyLinks} />
+            <FooterLinkGroup title="Legal" links={legalLinks} />
           </div>
         </div>
 
