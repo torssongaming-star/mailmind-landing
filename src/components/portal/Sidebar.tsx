@@ -10,13 +10,15 @@ import {
   BarChart2,
   Mail,
   ArrowLeft,
+  AppWindow,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { siteConfig } from "@/config/site";
 
 const navItems = [
-  { href: "/dashboard",          label: "Overview",  icon: LayoutDashboard },
+  { href: "/app",                label: "App",       icon: AppWindow },
+  { href: "/dashboard/overview", label: "Overview",  icon: LayoutDashboard },
   { href: "/dashboard/billing",  label: "Billing",   icon: CreditCard },
   { href: "/dashboard/usage",    label: "Usage",     icon: BarChart2 },
   { href: "/dashboard/team",     label: "Team",      icon: Users },
@@ -27,7 +29,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 w-64 flex flex-col border-r border-white/5 bg-[#030614]/95 backdrop-blur-md">
+    <aside className="fixed inset-y-0 left-0 z-30 w-64 hidden lg:flex flex-col border-r border-white/5 bg-[#030614]/95 backdrop-blur-md">
       {/* Logo */}
       <div className="h-16 flex items-center px-6 border-b border-white/5 shrink-0">
         <Link href="/" className="flex items-center gap-2.5 group">
@@ -41,8 +43,7 @@ export function Sidebar() {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
         {navItems.map(({ href, label, icon: Icon }) => {
-          const isActive =
-            href === "/dashboard" ? pathname === href : pathname.startsWith(href);
+          const isActive = pathname.startsWith(href);
           return (
             <Link
               key={href}

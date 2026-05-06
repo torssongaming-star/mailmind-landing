@@ -16,6 +16,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { PLANS } from "@/lib/plans";
+import { DashboardHeader } from "@/components/portal/DashboardHeader";
 
 export const dynamic = "force-dynamic";
 
@@ -38,23 +39,12 @@ export default async function AppHomePage() {
   const plan = planKey ? PLANS[planKey] : null;
 
   return (
-    <main className="max-w-4xl mx-auto p-6 md:p-10 space-y-8">
-
-      {/* Header */}
-      <header className="flex items-center justify-between">
-        <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
-            Mailmind App
-          </p>
-          <h1 className="text-2xl font-bold text-white">{account.organization.name}</h1>
-        </div>
-        <Link
-          href="/dashboard"
-          className="text-xs text-muted-foreground hover:text-white transition-colors"
-        >
-          ← Back to portal
-        </Link>
-      </header>
+    <>
+      <DashboardHeader
+        title="App"
+        description={`Welcome back to ${account.organization.name}`}
+      />
+      <main className="flex-1 p-6 space-y-8">
 
       {/* Mock-data warning */}
       {account.isMock && (
@@ -168,6 +158,7 @@ export default async function AppHomePage() {
         </div>
       )}
     </main>
+    </>
   );
 }
 

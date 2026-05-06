@@ -2,10 +2,9 @@ import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
 /** Routes that require authentication */
 const isProtectedRoute = createRouteMatcher([
+  "/app(.*)",
   "/dashboard(.*)",
   "/api/billing(.*)",
-  // Mailmind app — email triage UI + API
-  "/app(.*)",
   "/api/app(.*)",
 ]);
 

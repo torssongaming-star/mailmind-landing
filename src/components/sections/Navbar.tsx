@@ -73,11 +73,11 @@ export function Navbar() {
               {isSignedIn ? (
                 <>
                   <Link
-                    href="/dashboard"
+                    href="/app"
                     className="text-sm text-muted-foreground hover:text-white transition-colors flex items-center gap-2"
                   >
                     <LayoutDashboard size={14} />
-                    Dashboard
+                    App
                   </Link>
                   <UserButton
                     appearance={{
@@ -187,11 +187,11 @@ export function Navbar() {
                   transition={{ delay: 0.06 + navLinks.length * 0.05, duration: 0.2 }}
                 >
                   <Link
-                    href={isSignedIn ? "/dashboard" : "/login"}
+                    href={isSignedIn ? "/app" : "/login"}
                     onClick={close}
                     className="flex items-center justify-between w-full py-4 border-b border-white/8 text-lg font-medium text-white/80 hover:text-white active:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded"
                   >
-                    <span>{isSignedIn ? "Dashboard" : "Login"}</span>
+                    <span>{isSignedIn ? "App" : "Login"}</span>
                     {isSignedIn ? <LayoutDashboard size={18} className="text-primary/60" /> : <ArrowRight size={18} className="text-white/20" />}
                   </Link>
                 </motion.li>
