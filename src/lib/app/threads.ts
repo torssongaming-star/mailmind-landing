@@ -238,6 +238,7 @@ export async function getInboxByEmail(email: string): Promise<Inbox | null> {
   return rows[0] ?? null;
 }
 
+/** Throws on DB error so callers can surface the actual reason. */
 export async function createMailmindInbox(input: {
   organizationId: string;
   slug: string;
@@ -246,7 +247,7 @@ export async function createMailmindInbox(input: {
 }): Promise<Inbox | null> {
   if (!isDbConnected()) return null;
   const email = `${input.slug}@mail.mailmind.se`.toLowerCase();
-  const [row] = await db
+  const rows = await db
     .insert(inboxes)
     .values({
       organizationId: input.organizationId,
@@ -257,7 +258,7 @@ export async function createMailmindInbox(input: {
       config:         { forwardedFrom: input.forwardedFrom ?? null },
     })
     .returning();
-  return row ?? null;
+  return rows[0] ?? null;
 }
 
 export async function deleteInbox(organizationId: string, inboxId: string) {

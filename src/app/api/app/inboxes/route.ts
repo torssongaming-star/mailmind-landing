@@ -87,15 +87,30 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const inbox = await createMailmindInbox({
-    organizationId: account.organization.id,
-    slug,
-    displayName:    parsed.data.displayName,
-    forwardedFrom:  parsed.data.forwardedFrom,
-  });
+  let inbox;
+  try {
+    inbox = await createMailmindInbox({
+      organizationId: account.organization.id,
+      slug,
+      displayName:    parsed.data.displayName,
+      forwardedFrom:  parsed.data.forwardedFrom,
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown DB error";
+    console.error("[inboxes] create failed:", msg);
+    // Common case: invalid input value for enum — happens if `mailmind` enum
+    // value wasn't added to inbox_provider type. Run `ALTER TYPE inbox_provider
+    // ADD VALUE 'mailmind';` directly in Neon if drizzle-kit push skipped it.
+    if (/invalid input value for enum/i.test(msg)) {
+      return NextResponse.json({
+        error: "Database enum is missing the 'mailmind' value. Run: ALTER TYPE inbox_provider ADD VALUE 'mailmind'; in Neon SQL editor.",
+      }, { status: 500 });
+    }
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
 
   if (!inbox) {
-    return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
+    return NextResponse.json({ error: "DB unavailable (DATABASE_URL not set)" }, { status: 503 });
   }
 
   await writeAuditLog({
