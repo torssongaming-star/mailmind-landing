@@ -6,6 +6,25 @@ import { PLANS } from "@/lib/plans";
 import Stripe from "stripe";
 import { Subscription as DbSubscription } from "@/lib/db/schema";
 
+/**
+ * Map Stripe subscription status → our DB enum.
+ * Stripe has `unpaid`, `incomplete_expired`, and uses American spelling
+ * (`canceled`); our DB uses `cancelled` and a smaller value set.
+ */
+function mapStripeStatus(s: Stripe.Subscription.Status): DbSubscription["status"] {
+  switch (s) {
+    case "active":             return "active";
+    case "trialing":           return "trialing";
+    case "past_due":           return "past_due";
+    case "canceled":           return "cancelled";
+    case "incomplete":         return "incomplete";
+    case "incomplete_expired": return "cancelled"; // expired = effectively cancelled
+    case "unpaid":             return "past_due";  // closest match
+    case "paused":             return "paused";
+    default:                   return "cancelled"; // safe fallback
+  }
+}
+
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
@@ -65,7 +84,7 @@ export async function POST(req: NextRequest) {
           stripeSubscriptionId: subscriptionId,
           stripeCustomerId: session.customer as string,
           plan,
-          status: subscription.status as DbSubscription["status"],
+          status: mapStripeStatus(subscription.status),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -112,7 +131,7 @@ export async function POST(req: NextRequest) {
           stripeSubscriptionId: subscription.id,
           stripeCustomerId,
           plan,
-          status: subscription.status as DbSubscription["status"],
+          status: mapStripeStatus(subscription.status),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any

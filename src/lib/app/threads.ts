@@ -16,11 +16,13 @@ import {
   aiDrafts,
   aiSettings,
   caseTypes,
+  inboxes,
   type EmailThread,
   type EmailMessage,
   type AiDraft,
   type AiSettings,
   type CaseType,
+  type Inbox,
 } from "@/lib/db";
 
 // ── Threads ──────────────────────────────────────────────────────────────────
@@ -213,6 +215,76 @@ export async function listCaseTypes(organizationId: string): Promise<CaseType[]>
     .from(caseTypes)
     .where(eq(caseTypes.organizationId, organizationId))
     .orderBy(asc(caseTypes.sortOrder), asc(caseTypes.label));
+}
+
+// ── Inboxes ──────────────────────────────────────────────────────────────────
+
+export async function listInboxes(organizationId: string): Promise<Inbox[]> {
+  if (!isDbConnected()) return [];
+  return db
+    .select()
+    .from(inboxes)
+    .where(eq(inboxes.organizationId, organizationId))
+    .orderBy(asc(inboxes.createdAt));
+}
+
+export async function getInboxByEmail(email: string): Promise<Inbox | null> {
+  if (!isDbConnected()) return null;
+  const rows = await db
+    .select()
+    .from(inboxes)
+    .where(eq(inboxes.email, email.toLowerCase()))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function createMailmindInbox(input: {
+  organizationId: string;
+  slug: string;
+  displayName: string;
+  forwardedFrom?: string | null;
+}): Promise<Inbox | null> {
+  if (!isDbConnected()) return null;
+  const email = `${input.slug}@mail.mailmind.se`.toLowerCase();
+  const [row] = await db
+    .insert(inboxes)
+    .values({
+      organizationId: input.organizationId,
+      provider:       "mailmind",
+      email,
+      displayName:    input.displayName,
+      status:         "active",
+      config:         { forwardedFrom: input.forwardedFrom ?? null },
+    })
+    .returning();
+  return row ?? null;
+}
+
+export async function deleteInbox(organizationId: string, inboxId: string) {
+  if (!isDbConnected()) return;
+  await db
+    .delete(inboxes)
+    .where(and(
+      eq(inboxes.id, inboxId),
+      eq(inboxes.organizationId, organizationId),
+    ));
+}
+
+/** Find existing thread by external thread id within an org */
+export async function findThreadByExternalId(
+  organizationId: string,
+  externalThreadId: string
+): Promise<EmailThread | null> {
+  if (!isDbConnected()) return null;
+  const rows = await db
+    .select()
+    .from(emailThreads)
+    .where(and(
+      eq(emailThreads.organizationId, organizationId),
+      eq(emailThreads.externalThreadId, externalThreadId),
+    ))
+    .limit(1);
+  return rows[0] ?? null;
 }
 
 /** Sane defaults when an org hasn't customised settings yet. */

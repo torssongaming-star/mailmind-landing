@@ -65,7 +65,12 @@ export const subscriptionStatusEnum = pgEnum("subscription_status", [
 export const aiToneEnum = pgEnum("ai_tone", ["formal", "friendly", "neutral"]);
 
 /** Email inbox provider type */
-export const inboxProviderEnum = pgEnum("inbox_provider", ["imap", "gmail", "outlook"]);
+export const inboxProviderEnum = pgEnum("inbox_provider", [
+  "mailmind", // hosted forwarder — customer forwards to <slug>@mail.mailmind.se
+  "imap",
+  "gmail",
+  "outlook",
+]);
 
 /** Inbox connection lifecycle */
 export const inboxStatusEnum = pgEnum("inbox_status", [
@@ -370,7 +375,9 @@ export const inboxes = pgTable(
     updatedAt:       timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
-    uniqueIndex("inboxes_org_email_idx").on(t.organizationId, t.email),
+    // Globally unique — a single email address can only belong to one inbox
+    // across the platform (so the SendGrid webhook can resolve org from `to`).
+    uniqueIndex("inboxes_email_idx").on(t.email),
     index("inboxes_org_idx").on(t.organizationId),
   ]
 );

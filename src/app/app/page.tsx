@@ -146,12 +146,18 @@ export default async function AppHomePage() {
 
       {/* Quick actions */}
       {account.access.canUseApp && (
-        <div className="flex justify-center gap-3 pt-2">
+        <div className="flex flex-wrap justify-center gap-3 pt-2">
           <Link
             href="/app/inbox"
             className="px-5 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors"
           >
             Open inbox →
+          </Link>
+          <Link
+            href="/app/inboxes"
+            className="px-5 py-2.5 rounded-xl border border-white/10 text-white text-sm font-semibold hover:bg-white/5 transition-colors"
+          >
+            Connect inbox
           </Link>
           <Link
             href="/app/settings"
