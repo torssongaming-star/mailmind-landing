@@ -162,6 +162,34 @@ export async function createDraft(input: {
   return row ?? null;
 }
 
+export async function getDraft(organizationId: string, draftId: string) {
+  if (!isDbConnected()) return null;
+  const rows = await db
+    .select()
+    .from(aiDrafts)
+    .where(and(
+      eq(aiDrafts.id, draftId),
+      eq(aiDrafts.organizationId, organizationId),
+    ))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function updateDraft(
+  organizationId: string,
+  draftId: string,
+  patch: Partial<Pick<AiDraft, "status" | "bodyText" | "approvedAt" | "sentAt">>
+) {
+  if (!isDbConnected()) return;
+  await db
+    .update(aiDrafts)
+    .set({ ...patch, updatedAt: new Date() })
+    .where(and(
+      eq(aiDrafts.id, draftId),
+      eq(aiDrafts.organizationId, organizationId),
+    ));
+}
+
 // ── AI settings + case types (per org) ───────────────────────────────────────
 
 /**

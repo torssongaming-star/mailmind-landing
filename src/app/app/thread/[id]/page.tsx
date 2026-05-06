@@ -11,6 +11,7 @@ import Link from "next/link";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { getThread, listMessages, listDraftsForThread } from "@/lib/app/threads";
 import { GenerateDraftButton } from "./GenerateDraftButton";
+import { DraftActions } from "./DraftActions";
 
 export const dynamic = "force-dynamic";
 
@@ -158,8 +159,17 @@ export default async function ThreadPage({
                 </p>
               )}
 
+              <DraftActions
+                draftId={d.id}
+                action={d.action}
+                status={d.status}
+                initialBody={d.bodyText}
+              />
+
               <p className="text-[10px] text-muted-foreground border-t border-white/5 pt-2">
-                {d.aiModel} · approve / send actions coming in next iteration
+                {d.aiModel}
+                {d.status === "sent" && d.sentAt && <> · sent {new Date(d.sentAt).toLocaleString("sv-SE")}</>}
+                {d.status === "rejected" && <> · rejected</>}
               </p>
             </div>
           ))}

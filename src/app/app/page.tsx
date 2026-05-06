@@ -153,6 +153,12 @@ export default async function AppHomePage() {
           >
             Open inbox →
           </Link>
+          <Link
+            href="/app/settings"
+            className="px-5 py-2.5 rounded-xl border border-white/10 text-white text-sm font-semibold hover:bg-white/5 transition-colors"
+          >
+            Settings
+          </Link>
         </div>
       )}
     </main>
