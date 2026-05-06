@@ -36,7 +36,16 @@ export type SendEmailInput = {
   replyTo?: string;
   /** Override the from address — defaults to MAILMIND_FROM_EMAIL or noreply */
   from?: string;
+  /** Custom headers (Message-ID, In-Reply-To, References, etc.) */
+  headers?: Record<string, string>;
 };
+
+/** Append a signature to the body if one is provided. Pure helper. */
+export function appendSignature(body: string, signature?: string | null): string {
+  if (!signature?.trim()) return body;
+  // Two newlines before, then signature with no leading whitespace
+  return body.replace(/\s+$/, "") + "\n\n" + signature.trim();
+}
 
 export type SendEmailResult =
   | { ok: true; id: string }
@@ -58,6 +67,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
       subject: input.subject,
       text:    input.text,
       replyTo: input.replyTo,
+      headers: input.headers,
     });
 
     if (result.error) {

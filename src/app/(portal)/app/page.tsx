@@ -155,6 +155,12 @@ export default async function AppHomePage() {
           >
             Settings
           </Link>
+          <Link
+            href="/app/activity"
+            className="px-5 py-2.5 rounded-xl border border-white/10 text-white text-sm font-semibold hover:bg-white/5 transition-colors"
+          >
+            Activity
+          </Link>
         </div>
       )}
     </main>

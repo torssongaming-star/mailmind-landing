@@ -25,8 +25,12 @@ import {
   updateDraft,
   updateThread,
   appendMessage,
+  getAiSettings,
+  listMessages,
 } from "@/lib/app/threads";
-import { sendEmail, replySubject } from "@/lib/app/email";
+import { eq } from "drizzle-orm";
+import { db, isDbConnected, inboxes as inboxesTable } from "@/lib/db";
+import { sendEmail, replySubject, appendSignature } from "@/lib/app/email";
 import { writeAuditLog } from "@/lib/app/audit";
 
 export const runtime = "nodejs";
@@ -113,10 +117,43 @@ export async function PATCH(
       return NextResponse.json({ error: "Draft has no body to send" }, { status: 400 });
     }
 
+    // Resolve inbox so we can set Reply-To. When the customer replies, it lands
+    // back at our SendGrid Inbound Parse endpoint and we can thread it.
+    let replyTo: string | undefined;
+    if (thread.inboxId && isDbConnected()) {
+      const inboxRows = await db
+        .select()
+        .from(inboxesTable)
+        .where(eq(inboxesTable.id, thread.inboxId))
+        .limit(1);
+      replyTo = inboxRows[0]?.email ?? undefined;
+    }
+
+    // Threading headers — In-Reply-To = last customer message id;
+    // References = chain of all prior message ids in the thread.
+    const messages = await listMessages(draft.threadId);
+    const priorIds = messages
+      .map(m => m.externalMessageId)
+      .filter((x): x is string => !!x);
+    const headers: Record<string, string> = {};
+    const lastCustomerMsg = [...messages].reverse().find(m => m.role === "customer");
+    if (lastCustomerMsg?.externalMessageId) {
+      headers["In-Reply-To"] = lastCustomerMsg.externalMessageId;
+    }
+    if (priorIds.length > 0) {
+      headers["References"] = priorIds.join(" ");
+    }
+
+    // Append signature from the org's AI settings (if any)
+    const settings = await getAiSettings(orgId);
+    const finalBody = appendSignature(draft.bodyText, settings?.signature);
+
     const result = await sendEmail({
       to:      thread.fromEmail,
       subject: replySubject(thread.subject),
-      text:    draft.bodyText,
+      text:    finalBody,
+      replyTo,
+      headers: Object.keys(headers).length > 0 ? headers : undefined,
     });
 
     if (!result.ok) {
@@ -127,7 +164,7 @@ export async function PATCH(
     await appendMessage({
       threadId:           draft.threadId,
       role:               "assistant",
-      bodyText:           draft.bodyText,
+      bodyText:           finalBody,
       externalMessageId:  result.id || null,
       sentAt:             now,
     });
