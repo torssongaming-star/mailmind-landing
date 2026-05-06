@@ -31,6 +31,7 @@ import {
   timestamp,
   date,
   jsonb,
+  text,
   index,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
@@ -56,6 +57,53 @@ export const subscriptionStatusEnum = pgEnum("subscription_status", [
   "cancelled",
   "incomplete",
   "paused",
+]);
+
+// ── App enums (Phase 2 — email triage) ────────────────────────────────────────
+
+/** AI reply tone */
+export const aiToneEnum = pgEnum("ai_tone", ["formal", "friendly", "neutral"]);
+
+/** Email inbox provider type */
+export const inboxProviderEnum = pgEnum("inbox_provider", ["imap", "gmail", "outlook"]);
+
+/** Inbox connection lifecycle */
+export const inboxStatusEnum = pgEnum("inbox_status", [
+  "connecting",
+  "active",
+  "error",
+  "paused",
+]);
+
+/** Email thread lifecycle */
+export const threadStatusEnum = pgEnum("thread_status", [
+  "open",       // new, no AI action yet
+  "waiting",    // AI replied, awaiting customer
+  "escalated",  // routed to human
+  "resolved",   // closed
+]);
+
+/** Who sent a given message */
+export const messageRoleEnum = pgEnum("message_role", [
+  "customer", // inbound from external sender
+  "assistant", // AI-generated reply
+  "agent",    // sent by team member manually
+]);
+
+/** AI's chosen action for a draft */
+export const draftActionEnum = pgEnum("draft_action", [
+  "ask",       // ask customer for more info
+  "summarize", // all info collected, route to team
+  "escalate",  // unclear / out of scope
+]);
+
+/** AI draft review state */
+export const draftStatusEnum = pgEnum("draft_status", [
+  "pending",   // generated, awaiting review
+  "approved",  // human approved as-is
+  "edited",    // human approved with edits
+  "sent",      // dispatched to customer
+  "rejected",  // human rejected — won't be sent
 ]);
 
 // ── Tables ────────────────────────────────────────────────────────────────────
@@ -230,6 +278,208 @@ export const auditLogs = pgTable(
   ]
 );
 
+// ── App tables (Phase 2 — email triage) ───────────────────────────────────────
+
+/**
+ * ai_settings
+ * Per-organization AI behaviour. One row per org. Created on first AI use,
+ * with sensible defaults.
+ */
+export const aiSettings = pgTable(
+  "ai_settings",
+  {
+    id:               uuid("id").primaryKey().defaultRandom(),
+    organizationId:   uuid("organization_id").notNull().unique().references(() => organizations.id, {
+      onDelete: "cascade",
+    }),
+    tone:             aiToneEnum("tone").notNull().default("friendly"),
+    /** ISO 639-1 code: sv, en, no, da, fi, etc. */
+    language:         varchar("language", { length: 10 }).notNull().default("sv"),
+    /** Max follow-up questions before escalating */
+    maxInteractions:  integer("max_interactions").notNull().default(2),
+    /** Optional signature appended to AI replies (Markdown supported) */
+    signature:        text("signature"),
+    createdAt:        timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:        timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("ai_settings_org_id_idx").on(t.organizationId),
+  ]
+);
+
+/**
+ * case_types
+ * User-defined categorisation for incoming requests. AI matches inbound emails
+ * to one of these and collects required fields before routing.
+ *
+ * `slug` is unique within an organisation (not globally).
+ */
+export const caseTypes = pgTable(
+  "case_types",
+  {
+    id:              uuid("id").primaryKey().defaultRandom(),
+    organizationId:  uuid("organization_id").notNull().references(() => organizations.id, {
+      onDelete: "cascade",
+    }),
+    /** lowercase, no spaces — used in AI prompt + routing */
+    slug:            varchar("slug", { length: 100 }).notNull(),
+    /** Human-readable label shown in UI and email subjects */
+    label:           varchar("label", { length: 255 }).notNull(),
+    /** Array of field names AI should collect, e.g. ["address","start_date"] */
+    requiredFields:  jsonb("required_fields").$type<string[]>().notNull().default([]),
+    /** Email address that finished cases of this type are routed to */
+    routeToEmail:    varchar("route_to_email", { length: 320 }),
+    /** Fallback when AI can't classify (one per org) */
+    isDefault:       boolean("is_default").notNull().default(false),
+    sortOrder:       integer("sort_order").notNull().default(0),
+    createdAt:       timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:       timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("case_types_org_slug_idx").on(t.organizationId, t.slug),
+    index("case_types_org_idx").on(t.organizationId),
+  ]
+);
+
+/**
+ * inboxes
+ * Connected mailboxes (IMAP / Gmail / Outlook). One per email address.
+ *
+ * `config` is provider-specific JSON:
+ *   - imap:   { host, port, username, password_encrypted, tls }
+ *   - gmail:  { access_token_encrypted, refresh_token_encrypted, expires_at }
+ *   - outlook: same as gmail
+ *
+ * Tokens MUST be encrypted at rest before insertion. Encryption helper TBD.
+ */
+export const inboxes = pgTable(
+  "inboxes",
+  {
+    id:              uuid("id").primaryKey().defaultRandom(),
+    organizationId:  uuid("organization_id").notNull().references(() => organizations.id, {
+      onDelete: "cascade",
+    }),
+    provider:        inboxProviderEnum("provider").notNull(),
+    email:           varchar("email", { length: 320 }).notNull(),
+    displayName:     varchar("display_name", { length: 255 }),
+    status:          inboxStatusEnum("status").notNull().default("connecting"),
+    /** Provider-specific connection details (must be encrypted before insert) */
+    config:          jsonb("config").$type<Record<string, unknown>>(),
+    lastSyncedAt:    timestamp("last_synced_at", { withTimezone: true }),
+    createdAt:       timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:       timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("inboxes_org_email_idx").on(t.organizationId, t.email),
+    index("inboxes_org_idx").on(t.organizationId),
+  ]
+);
+
+/**
+ * email_threads
+ * One conversation = one thread. Maps to a provider thread (Gmail threadId,
+ * IMAP message references, etc.) where possible. inboxId is nullable so
+ * threads can be created manually for testing without a connected inbox.
+ */
+export const emailThreads = pgTable(
+  "email_threads",
+  {
+    id:                uuid("id").primaryKey().defaultRandom(),
+    organizationId:    uuid("organization_id").notNull().references(() => organizations.id, {
+      onDelete: "cascade",
+    }),
+    inboxId:           uuid("inbox_id").references(() => inboxes.id, {
+      onDelete: "cascade",
+    }),
+    /** Provider thread/conversation id (Gmail threadId, etc.) */
+    externalThreadId:  varchar("external_thread_id", { length: 255 }),
+    subject:           varchar("subject", { length: 500 }),
+    fromEmail:         varchar("from_email", { length: 320 }).notNull(),
+    fromName:          varchar("from_name", { length: 255 }),
+    status:            threadStatusEnum("status").notNull().default("open"),
+    /** Slug from case_types — denormalised for fast filtering */
+    caseTypeSlug:      varchar("case_type_slug", { length: 100 }),
+    /** Structured data extracted by AI, e.g. { address: "...", start_date: "..." } */
+    collectedInfo:     jsonb("collected_info").$type<Record<string, unknown>>().notNull().default({}),
+    /** Number of AI responses sent on this thread */
+    interactionCount:  integer("interaction_count").notNull().default(0),
+    lastMessageAt:     timestamp("last_message_at", { withTimezone: true }),
+    createdAt:         timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:         timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("email_threads_org_status_idx").on(t.organizationId, t.status),
+    index("email_threads_org_updated_idx").on(t.organizationId, t.lastMessageAt),
+    index("email_threads_external_idx").on(t.externalThreadId),
+  ]
+);
+
+/**
+ * email_messages
+ * Individual messages in a thread. Append-only — never edited after insert.
+ */
+export const emailMessages = pgTable(
+  "email_messages",
+  {
+    id:                 uuid("id").primaryKey().defaultRandom(),
+    threadId:           uuid("thread_id").notNull().references(() => emailThreads.id, {
+      onDelete: "cascade",
+    }),
+    role:               messageRoleEnum("role").notNull(),
+    /** Provider message id (Gmail messageId / IMAP UID) */
+    externalMessageId:  varchar("external_message_id", { length: 255 }),
+    bodyText:           text("body_text"),
+    bodyHtml:           text("body_html"),
+    sentAt:             timestamp("sent_at", { withTimezone: true }).notNull(),
+    createdAt:          timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("email_messages_thread_idx").on(t.threadId, t.sentAt),
+  ]
+);
+
+/**
+ * ai_drafts
+ * AI-generated reply drafts pending human approval. The brief mandates
+ * "human approval before replies are sent" — this table is the queue.
+ *
+ * For status='ask': bodyText is the question to send to customer
+ * For status='summarize': bodyText is the confirmation to customer; metadata.summary is the routed summary
+ * For status='escalate': bodyText is null; metadata.reason explains why
+ */
+export const aiDrafts = pgTable(
+  "ai_drafts",
+  {
+    id:              uuid("id").primaryKey().defaultRandom(),
+    threadId:        uuid("thread_id").notNull().references(() => emailThreads.id, {
+      onDelete: "cascade",
+    }),
+    /** Denormalised for fast org-level queries (e.g. "all pending drafts for org X") */
+    organizationId:  uuid("organization_id").notNull().references(() => organizations.id, {
+      onDelete: "cascade",
+    }),
+    /** User who triggered generation; null if generated by an automation */
+    userId:          uuid("user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    action:          draftActionEnum("action").notNull(),
+    bodyText:        text("body_text"),
+    /** Raw AI metadata: { case_type, summary, collected_info, reason, raw } */
+    metadata:        jsonb("metadata").$type<Record<string, unknown>>(),
+    status:          draftStatusEnum("status").notNull().default("pending"),
+    aiModel:         varchar("ai_model", { length: 100 }).notNull(),
+    generatedAt:     timestamp("generated_at", { withTimezone: true }).defaultNow().notNull(),
+    approvedAt:      timestamp("approved_at", { withTimezone: true }),
+    sentAt:          timestamp("sent_at", { withTimezone: true }),
+    createdAt:       timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:       timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("ai_drafts_thread_idx").on(t.threadId, t.generatedAt),
+    index("ai_drafts_org_status_idx").on(t.organizationId, t.status),
+  ]
+);
+
 // ── Relations ─────────────────────────────────────────────────────────────────
 
 export const organizationsRelations = relations(organizations, ({ many, one }) => ({
@@ -283,6 +533,65 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
   }),
 }));
 
+// ── App relations (Phase 2) ──────────────────────────────────────────────────
+
+export const aiSettingsRelations = relations(aiSettings, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [aiSettings.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
+export const caseTypesRelations = relations(caseTypes, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [caseTypes.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
+export const inboxesRelations = relations(inboxes, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [inboxes.organizationId],
+    references: [organizations.id],
+  }),
+  threads: many(emailThreads),
+}));
+
+export const emailThreadsRelations = relations(emailThreads, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [emailThreads.organizationId],
+    references: [organizations.id],
+  }),
+  inbox: one(inboxes, {
+    fields: [emailThreads.inboxId],
+    references: [inboxes.id],
+  }),
+  messages: many(emailMessages),
+  drafts:   many(aiDrafts),
+}));
+
+export const emailMessagesRelations = relations(emailMessages, ({ one }) => ({
+  thread: one(emailThreads, {
+    fields: [emailMessages.threadId],
+    references: [emailThreads.id],
+  }),
+}));
+
+export const aiDraftsRelations = relations(aiDrafts, ({ one }) => ({
+  thread: one(emailThreads, {
+    fields: [aiDrafts.threadId],
+    references: [emailThreads.id],
+  }),
+  organization: one(organizations, {
+    fields: [aiDrafts.organizationId],
+    references: [organizations.id],
+  }),
+  user: one(users, {
+    fields: [aiDrafts.userId],
+    references: [users.id],
+  }),
+}));
+
 // ── Inferred types ────────────────────────────────────────────────────────────
 
 export type Organization      = typeof organizations.$inferSelect;
@@ -297,3 +606,17 @@ export type UsageCounter      = typeof usageCounters.$inferSelect;
 export type NewUsageCounter   = typeof usageCounters.$inferInsert;
 export type AuditLog          = typeof auditLogs.$inferSelect;
 export type NewAuditLog       = typeof auditLogs.$inferInsert;
+
+// App tables (Phase 2)
+export type AiSettings        = typeof aiSettings.$inferSelect;
+export type NewAiSettings     = typeof aiSettings.$inferInsert;
+export type CaseType          = typeof caseTypes.$inferSelect;
+export type NewCaseType       = typeof caseTypes.$inferInsert;
+export type Inbox             = typeof inboxes.$inferSelect;
+export type NewInbox          = typeof inboxes.$inferInsert;
+export type EmailThread       = typeof emailThreads.$inferSelect;
+export type NewEmailThread    = typeof emailThreads.$inferInsert;
+export type EmailMessage      = typeof emailMessages.$inferSelect;
+export type NewEmailMessage   = typeof emailMessages.$inferInsert;
+export type AiDraft           = typeof aiDrafts.$inferSelect;
+export type NewAiDraft        = typeof aiDrafts.$inferInsert;

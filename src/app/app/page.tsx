@@ -144,9 +144,17 @@ export default async function AppHomePage() {
         <Row k="Reason"                 v={account.access.reason} />
       </section>
 
-      <p className="text-[11px] text-muted-foreground text-center">
-        This page is the integration foundation. AI / inbox features arrive in the next phase.
-      </p>
+      {/* Quick actions */}
+      {account.access.canUseApp && (
+        <div className="flex justify-center gap-3 pt-2">
+          <Link
+            href="/app/inbox"
+            className="px-5 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors"
+          >
+            Open inbox →
+          </Link>
+        </div>
+      )}
     </main>
   );
 }
