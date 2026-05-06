@@ -53,6 +53,12 @@ export default async function AppHomePage() {
         </div>
       )}
 
+      {/* Trial countdown */}
+      <TrialBanner
+        status={account.subscription?.status ?? null}
+        currentPeriodEnd={account.subscription?.currentPeriodEnd ?? null}
+      />
+
       {/* Access banner */}
       <AccessBanner reason={account.access.reason} />
 
@@ -169,6 +175,49 @@ export default async function AppHomePage() {
 }
 
 // ── Subcomponents ─────────────────────────────────────────────────────────────
+
+function TrialBanner({
+  status,
+  currentPeriodEnd,
+}: {
+  status: string | null;
+  currentPeriodEnd: Date | null;
+}) {
+  if (status !== "trialing" || !currentPeriodEnd) return null;
+  const end = new Date(currentPeriodEnd);
+  const daysLeft = Math.max(0, Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+  const ending = daysLeft <= 3;
+
+  return (
+    <div className={`rounded-xl border px-5 py-3.5 flex items-center justify-between gap-4 ${
+      ending
+        ? "border-amber-500/30 bg-amber-500/5"
+        : "border-blue-500/20 bg-blue-500/5"
+    }`}>
+      <div>
+        <p className={`text-sm font-semibold ${ending ? "text-amber-200" : "text-blue-200"}`}>
+          {daysLeft === 0
+            ? "Your trial ends today"
+            : `${daysLeft} day${daysLeft === 1 ? "" : "s"} left in your free trial`}
+        </p>
+        <p className={`text-xs mt-0.5 ${ending ? "text-amber-200/70" : "text-blue-200/70"}`}>
+          Trial ends {end.toLocaleDateString("en-IE", { month: "long", day: "numeric", year: "numeric" })}.
+          Upgrade to continue using Mailmind without interruption.
+        </p>
+      </div>
+      <Link
+        href="/dashboard/billing"
+        className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+          ending
+            ? "bg-amber-400 text-[#030614] hover:bg-amber-300"
+            : "bg-white/10 text-white hover:bg-white/20"
+        }`}
+      >
+        Upgrade
+      </Link>
+    </div>
+  );
+}
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
