@@ -11,6 +11,7 @@ import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { listThreads, createThread, appendMessage, updateThread } from "@/lib/app/threads";
+import { autoTriageNewMessage } from "@/lib/app/autoTriage";
 import { writeAuditLog } from "@/lib/app/audit";
 
 export const runtime = "nodejs";
@@ -88,5 +89,18 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  return NextResponse.json({ thread });
+  // Auto-trigger AI draft, exactly like the inbound webhook does. This makes
+  // test threads behave like real ones — the agent lands on the thread page
+  // and a draft is already waiting for review.
+  const triageResult = await autoTriageNewMessage({
+    organizationId: orgId,
+    threadId:       thread.id,
+    newEmailBody:   parsed.data.body,
+  });
+
+  return NextResponse.json({
+    thread,
+    draftId: triageResult.ok ? triageResult.draftId : null,
+    triage:  triageResult.ok ? "generated" : `skipped: ${triageResult.reason}`,
+  });
 }

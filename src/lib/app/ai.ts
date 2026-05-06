@@ -226,12 +226,24 @@ export async function generateDraft(input: GenerateDraftInput): Promise<Generate
 
   try {
     const client = getClient();
+    // The system prompt is identical across every AI call for the same org
+    // (depends only on company name + case_types + tone + language + max_interactions).
+    // Marking it cache_control: ephemeral lets Anthropic cache it — 90% discount
+    // on cached input tokens + lower latency on the second+ call within the
+    // 5-minute TTL window. Saves real money once a customer is processing
+    // multiple emails per day.
     const response = await retryWithBackoff(() =>
       withTimeout(
         client.messages.create({
           model:      AI_MODEL,
           max_tokens: 1000,
-          system:     systemPrompt,
+          system: [
+            {
+              type: "text",
+              text: systemPrompt,
+              cache_control: { type: "ephemeral" },
+            },
+          ],
           messages: [{ role: "user", content: userMessage }],
         }),
         TIMEOUT_MS
