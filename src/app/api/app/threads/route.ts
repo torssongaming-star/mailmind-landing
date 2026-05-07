@@ -25,7 +25,7 @@ export async function GET() {
     return NextResponse.json({ error: "Account not provisioned" }, { status: 400 });
   }
 
-  const threads = await listThreads(account.organization.id, 100);
+  const threads = await listThreads(account.organization.id, { limit: 100 });
   return NextResponse.json({ threads });
 }
 

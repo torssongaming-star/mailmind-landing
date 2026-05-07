@@ -12,6 +12,7 @@ type Thread = {
   status:         string;
   caseTypeSlug:   string | null;
   lastMessageAt:  Date | null;
+  snoozedUntil:   Date | null;
 };
 
 const STATUS_CLASSES: Record<string, string> = {
@@ -172,6 +173,14 @@ export function InboxList({ threads }: { threads: Thread[] }) {
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
+                  {t.snoozedUntil && new Date(t.snoozedUntil) > new Date() && (
+                    <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-amber-500/15 text-amber-400 border-amber-500/30 inline-flex items-center gap-1">
+                      <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                      </svg>
+                      Snoozad
+                    </span>
+                  )}
                   <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                     STATUS_CLASSES[t.status] ?? STATUS_CLASSES.resolved
                   }`}>

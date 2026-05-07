@@ -7,7 +7,7 @@
  * the resolved orgId here.
  */
 
-import { eq, and, desc, asc } from "drizzle-orm";
+import { eq, and, desc, asc, lte, isNotNull } from "drizzle-orm";
 import {
   db,
   isDbConnected,
@@ -27,12 +27,46 @@ import {
 
 // ── Threads ──────────────────────────────────────────────────────────────────
 
-export async function listThreads(organizationId: string, limit = 50) {
+export async function listThreads(
+  organizationId: string,
+  opts: { limit?: number; showSnoozed?: boolean } = {}
+) {
+  const { limit = 50, showSnoozed = false } = opts;
   if (!isDbConnected()) return [] as EmailThread[];
+
+  const where = showSnoozed
+    ? and(
+        eq(emailThreads.organizationId, organizationId),
+        isNotNull(emailThreads.snoozedUntil),
+      )
+    : and(
+        eq(emailThreads.organizationId, organizationId),
+        // NULL = not snoozed; future date = still snoozed (exclude)
+        // We use: snoozedUntil IS NULL OR snoozedUntil <= now()
+        // Drizzle doesn't have a clean or() for this, so we run a raw condition
+        // via: exclude rows where snoozedUntil > now (i.e. actively snoozed)
+        // Done via subfilter below — see note.
+      );
+
+  // We need: WHERE org_id = ? AND (snoozed_until IS NULL OR snoozed_until <= now())
+  // Drizzle approach: use sql template for the OR condition
+  const { sql: sqlTag } = await import("drizzle-orm");
+  const activeFilter = sqlTag`(${emailThreads.snoozedUntil} IS NULL OR ${emailThreads.snoozedUntil} <= NOW())`;
+
   return db
     .select()
     .from(emailThreads)
-    .where(eq(emailThreads.organizationId, organizationId))
+    .where(
+      showSnoozed
+        ? and(
+            eq(emailThreads.organizationId, organizationId),
+            isNotNull(emailThreads.snoozedUntil),
+          )
+        : and(
+            eq(emailThreads.organizationId, organizationId),
+            activeFilter,
+          )
+    )
     .orderBy(desc(emailThreads.lastMessageAt))
     .limit(limit);
 }
@@ -80,7 +114,7 @@ export async function createThread(input: {
 export async function updateThread(
   organizationId: string,
   threadId: string,
-  patch: Partial<Pick<EmailThread, "status" | "caseTypeSlug" | "collectedInfo" | "interactionCount" | "lastMessageAt">>
+  patch: Partial<Pick<EmailThread, "status" | "caseTypeSlug" | "collectedInfo" | "interactionCount" | "lastMessageAt" | "snoozedUntil">>
 ) {
   if (!isDbConnected()) return;
   await db
@@ -89,6 +123,22 @@ export async function updateThread(
     .where(and(
       eq(emailThreads.id, threadId),
       eq(emailThreads.organizationId, organizationId),
+    ));
+}
+
+/**
+ * Wake up threads whose snoozedUntil has passed — sets snoozedUntil = NULL.
+ * Call this at the start of listThreads so the inbox is always fresh.
+ */
+export async function wakeUpSnoozedThreads(organizationId: string) {
+  if (!isDbConnected()) return;
+  await db
+    .update(emailThreads)
+    .set({ snoozedUntil: null, updatedAt: new Date() })
+    .where(and(
+      eq(emailThreads.organizationId, organizationId),
+      isNotNull(emailThreads.snoozedUntil),
+      lte(emailThreads.snoozedUntil, new Date()),
     ));
 }
 

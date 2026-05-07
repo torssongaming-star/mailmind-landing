@@ -14,6 +14,7 @@ import { listNotes } from "@/lib/app/notes";
 import { GenerateDraftButton } from "./GenerateDraftButton";
 import { DraftActions } from "./DraftActions";
 import { InternalNotes } from "./InternalNotes";
+import { SnoozeButton } from "./SnoozeButton";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,10 @@ export default async function ThreadPage({
           {" · "}
           <span>{thread.interactionCount} interaction{thread.interactionCount === 1 ? "" : "s"}</span>
         </p>
+        <SnoozeButton
+          threadId={thread.id}
+          snoozedUntil={thread.snoozedUntil ?? null}
+        />
       </header>
 
       {/* Conversation */}

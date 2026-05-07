@@ -9,7 +9,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentAccount } from "@/lib/app/entitlements";
-import { listThreads } from "@/lib/app/threads";
+import { listThreads, wakeUpSnoozedThreads } from "@/lib/app/threads";
 import { NewThreadButton } from "./NewThreadButton";
 import { InboxFilters } from "./InboxFilters";
 import { InboxList } from "./InboxList";
@@ -36,7 +36,10 @@ export default async function InboxPage({
     : null;
   const query = (params.q ?? "").trim().toLowerCase();
 
-  const all = await listThreads(account.organization.id, 200);
+  // Wake up any threads whose snooze has expired before listing
+  await wakeUpSnoozedThreads(account.organization.id);
+
+  const all = await listThreads(account.organization.id, { limit: 200 });
 
   // Filter on the server so the count + list always agree
   const threads = all.filter(t => {
@@ -115,6 +118,7 @@ export default async function InboxPage({
             status:         t.status,
             caseTypeSlug:   t.caseTypeSlug,
             lastMessageAt:  t.lastMessageAt,
+            snoozedUntil:   t.snoozedUntil ?? null,
           }))}
         />
       )}

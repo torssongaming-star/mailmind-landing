@@ -411,6 +411,8 @@ export const emailThreads = pgTable(
     /** Number of AI responses sent on this thread */
     interactionCount:  integer("interaction_count").notNull().default(0),
     lastMessageAt:     timestamp("last_message_at", { withTimezone: true }),
+    /** When snoozed, thread is hidden from inbox until this timestamp */
+    snoozedUntil:      timestamp("snoozed_until", { withTimezone: true }),
     createdAt:         timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt:         timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -418,6 +420,7 @@ export const emailThreads = pgTable(
     index("email_threads_org_status_idx").on(t.organizationId, t.status),
     index("email_threads_org_updated_idx").on(t.organizationId, t.lastMessageAt),
     index("email_threads_external_idx").on(t.externalThreadId),
+    index("email_threads_snoozed_idx").on(t.snoozedUntil),
   ]
 );
 
