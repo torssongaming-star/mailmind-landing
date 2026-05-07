@@ -21,13 +21,24 @@ export async function POST(req: NextRequest) {
     const priceId = PRICE_IDS[plan];
     if (!priceId || priceId === "price_replace_me") {
       return NextResponse.json(
-        { error: `Price ID for plan "${plan}" is not configured.` },
+        { error: "Den här planen är inte tillgänglig för tillfället. Kontakta support om problemet kvarstår." },
         { status: 400 }
       );
     }
 
     // 1. Resolve organization and Stripe Customer ID
     const portalData = await db.getPortalData(userId);
+
+    // Check if user already has an active subscription
+    if (portalData.subscription?.status === "active" || portalData.subscription?.status === "trialing") {
+      // If it's the SAME plan, block it. If it's a DIFFERENT plan, we should 
+      // ideally redirect to the customer portal instead of checkout.
+      return NextResponse.json(
+        { error: "Du har redan en aktiv plan. Vill du ändra din plan? Gör det via 'Manage billing'." },
+        { status: 400 }
+      );
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let stripeCustomerId: any = portalData.org?.stripeCustomerId || undefined;
 

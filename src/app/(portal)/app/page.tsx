@@ -184,14 +184,13 @@ export default async function AppHomePage() {
         />
       </section>
 
-      {/* Access state debug card (server-side computed) */}
       <section className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-6 text-xs text-muted-foreground space-y-1">
-        <p className="font-semibold text-white mb-2 text-sm">Access state</p>
-        <Row k="Can use app"            v={account.access.canUseApp} />
-        <Row k="Can generate AI drafts" v={account.access.canGenerateAiDraft} />
-        <Row k="Can add inbox"          v={account.access.canAddInbox} />
-        <Row k="Can invite users"       v={account.access.canInviteUser} />
-        <Row k="Reason"                 v={account.access.reason} />
+        <p className="font-semibold text-white mb-2 text-sm">Status för din plan</p>
+        <Row k="Du kan använda appen"            v={account.access.canUseApp ? "Ja" : "Nej"} />
+        <Row k="Du kan generera AI-innehåll"    v={account.access.canGenerateAiDraft ? "Ja" : "Nej"} />
+        <Row k="Du kan lägga till inkorgar"     v={account.access.canAddInbox ? "Ja" : "Nej"} />
+        <Row k="Du har tillgång till team"       v={account.access.canInviteUser ? "Ja" : "Nej"} />
+        <Row k="Statuskod"                       v={account.access.reason} />
       </section>
 
       {/* Quick actions */}

@@ -44,6 +44,15 @@
     @apply bg-background text-foreground selection:bg-primary/30 selection:text-primary-foreground;
   }
   
+  /* Prevent text selection on UI elements for an 'app-like' feel */
+  button, 
+  nav, 
+  [role="button"],
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
   /* Smooth scrolling */
   html {
     scroll-behavior: smooth;

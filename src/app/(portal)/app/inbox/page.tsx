@@ -82,11 +82,6 @@ export default async function InboxPage({
           </p>
         </div>
         <div className="flex gap-2">
-          {!isOutlook && (
-            <Link href="/app" className="text-xs text-muted-foreground hover:text-white px-3 py-1.5 transition-colors">
-              ← App home
-            </Link>
-          )}
           <NewThreadButton compact={isOutlook} />
         </div>
       </header>

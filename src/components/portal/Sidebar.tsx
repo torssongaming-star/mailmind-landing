@@ -11,18 +11,23 @@ import {
   Mail,
   ArrowLeft,
   AppWindow,
+  UserCircle,
+  HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { siteConfig } from "@/config/site";
 
 const navItems = [
-  { href: "/app",                label: "App",       icon: AppWindow },
+  { href: "/app",                label: "Home",      icon: AppWindow },
   { href: "/dashboard/overview", label: "Overview",  icon: LayoutDashboard },
+  { href: "/app/inbox",          label: "Inbox",     icon: Mail },
   { href: "/dashboard/billing",  label: "Billing",   icon: CreditCard },
-  { href: "/dashboard/usage",    label: "Usage",     icon: BarChart2 },
+  { href: "/app/settings/account", label: "Account", icon: UserCircle },
+  { href: "/app/settings",       label: "Settings",  icon: Settings },
   { href: "/dashboard/team",     label: "Team",      icon: Users },
-  { href: "/dashboard/settings", label: "Settings",  icon: Settings },
+  { href: "/dashboard/usage",    label: "Usage",     icon: BarChart2 },
+  { href: "mailto:support@mailmind.se", label: "Support", icon: HelpCircle },
 ];
 
 export function Sidebar() {

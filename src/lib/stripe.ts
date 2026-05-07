@@ -21,6 +21,7 @@ export const PRICE_IDS = {
   starter:  process.env.STRIPE_PRICE_ID_STARTER  ?? "",
   team:     process.env.STRIPE_PRICE_ID_TEAM      ?? "",
   business: process.env.STRIPE_PRICE_ID_BUSINESS  ?? "",
+  enterprise: process.env.STRIPE_PRICE_ID_ENTERPRISE ?? "",
 } as const;
 
 /**

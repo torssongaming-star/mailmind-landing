@@ -163,7 +163,16 @@ export default async function BillingPage({
                     <li>{plan.seatLimit} seats</li>
                   </ul>
                   <div className="mt-auto">
-                    <CheckoutButton plan={key} label={`Subscribe to ${plan.name}`} isCurrent={isCurrent} />
+                    {key === "enterprise" ? (
+                      <a
+                        href={`mailto:${siteConfig.supportEmail}?subject=Enterprise Plan Inquiry`}
+                        className="mt-3 block w-full py-2 rounded-lg text-xs font-semibold text-center bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all active:scale-[0.98]"
+                      >
+                        Talk to sales
+                      </a>
+                    ) : (
+                      <CheckoutButton plan={key} label={`Subscribe to ${plan.name}`} isCurrent={isCurrent} />
+                    )}
                   </div>
                 </div>
               );
@@ -171,7 +180,7 @@ export default async function BillingPage({
           </div>
           {hasSubscription && (
             <p className="text-xs text-muted-foreground mt-4">
-              Plan changes take effect at the next billing cycle. Managed via Stripe.
+              Uppgraderingar sker direkt. Nedgraderingar träder i kraft vid nästa faktureringsperiod.
             </p>
           )}
         </div>
