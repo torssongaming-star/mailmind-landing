@@ -12,8 +12,9 @@ const proxy = clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
     const { userId } = await auth();
     if (!userId) {
-      // Force redirect to /login if not authenticated
+      // Force redirect to /login if not authenticated, preserving search params
       const loginUrl = new URL("/login", req.url);
+      loginUrl.search = req.nextUrl.search;
       return Response.redirect(loginUrl);
     }
   }
