@@ -4,7 +4,7 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        source: "/addins/outlook/:path*",
+        source: "/(addins|app)/:path*",
         headers: [
           {
             key: "Content-Security-Policy",

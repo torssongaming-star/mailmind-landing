@@ -96,7 +96,23 @@ export default function OutlookTaskpane() {
     );
   };
 
-  if (!isLoaded || loading) {
+  // Redirect to inbox if signed in
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      window.location.href = "/app/inbox?source=outlook";
+    }
+  }, [isLoaded, isSignedIn]);
+
+  if (!isLoaded || (isSignedIn && !userData)) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#030614] text-white p-6 space-y-4">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        <p className="text-sm text-muted-foreground font-medium">Opening Inbox...</p>
+      </div>
+    );
+  }
+
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#030614] text-white p-6 space-y-4">
         <Loader2 className="w-8 h-8 text-primary animate-spin" />
