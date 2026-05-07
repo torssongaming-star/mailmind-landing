@@ -41,19 +41,19 @@
   </Rule>
   
   <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
-    <Description DefaultValue="Open your Mailmind inbox from Outlook" />
+    <Description resid="appDescription" />
     <Hosts>
       <Host xsi:type="MailHost">
         <DesktopFormFactor>
           <ExtensionPoint xsi:type="MessageReadCommandSurface">
             <OfficeTab id="TabDefault">
               <Group id="msgReadGroup">
-                <Label DefaultValue="Mailmind" />
+                <Label resid="groupLabel" />
                 <Control xsi:type="Button" id="msgReadOpenPaneButton">
-                  <Label DefaultValue="Open Mailmind" />
+                  <Label resid="buttonLabel" />
                   <Supertip>
-                    <Title DefaultValue="Mailmind" />
-                    <Description DefaultValue="Open the Mailmind taskpane to manage your email with AI." />
+                    <Title resid="supertipTitle" />
+                    <Description resid="supertipDescription" />
                   </Supertip>
                   <Icon>
                     <bt:Image size="16" resid="icon16" />
@@ -79,6 +79,15 @@
       <bt:Urls>
         <bt:Url id="taskpaneUrl" DefaultValue="https://mailmind.se/addins/outlook" />
       </bt:Urls>
+      <bt:ShortStrings>
+        <bt:String id="groupLabel" DefaultValue="Mailmind" />
+        <bt:String id="buttonLabel" DefaultValue="Open Mailmind" />
+        <bt:String id="supertipTitle" DefaultValue="Mailmind" />
+      </bt:ShortStrings>
+      <bt:LongStrings>
+        <bt:String id="appDescription" DefaultValue="Open your Mailmind inbox from Outlook" />
+        <bt:String id="supertipDescription" DefaultValue="Open the Mailmind taskpane to manage your email with AI." />
+      </bt:LongStrings>
     </Resources>
   </VersionOverrides>
 </OfficeApp>
