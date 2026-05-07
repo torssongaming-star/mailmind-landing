@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ForwardingGuide } from "./ForwardingGuide";
 
 type InboxRow = {
   id: string;
@@ -126,6 +127,9 @@ export function InboxesEditor({
                 {copiedId === inbox.id ? "Copied!" : "Copy"}
               </button>
             </div>
+
+            {/* Forwarding setup guide — expandable */}
+            <ForwardingGuide mailmindAddress={inbox.email} />
           </div>
         ))}
       </div>
