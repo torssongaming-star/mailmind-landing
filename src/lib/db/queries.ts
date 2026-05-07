@@ -203,67 +203,114 @@ export async function syncUserAndOrganization(params: {
   if (!isDbConnected()) return null;
   const db = await getDb();
 
-  // 1. Resolve organization
-  let orgId: string;
-  
-  if (params.clerkOrgId) {
-    const [existingOrg] = await db
+  // ── Resolution priority ────────────────────────────────────────────────────
+  //
+  // 1. If the user is ALREADY in the DB, prefer their existing org. This stops
+  //    Stripe checkout from creating a duplicate org for users who already went
+  //    through /app/onboarding (which created an org with no stripeCustomerId).
+  //    Without this guard, the user gets migrated to a new org on first
+  //    checkout — orphaning all their trial threads, settings, and inboxes.
+  //
+  // 2. Else if a Clerk organization id is given, upsert by it (Phase 3+).
+  //
+  // 3. Else if a Stripe customer id is given, look up by it.
+  //
+  // 4. Else create a brand-new solo org. (NEVER `findFirst` with no filter —
+  //    that returned the first org in the entire DB, a multi-tenant disaster.)
+  //
+  // After resolving the org, opportunistically update its stripeCustomerId
+  // when one is provided and the org's slot is still empty. Same for name.
+  let orgId: string | null = null;
+
+  // (1) Existing user → reuse their org
+  const existingUser = await db.query.users.findFirst({
+    where: eq(users.clerkUserId, params.clerkUserId),
+    columns: { id: true, organizationId: true },
+  });
+  if (existingUser?.organizationId) {
+    orgId = existingUser.organizationId;
+  }
+
+  // (2) Clerk organisation id → upsert
+  if (!orgId && params.clerkOrgId) {
+    const [row] = await db
       .insert(organizations)
       .values({
-        clerkOrgId: params.clerkOrgId,
-        name: params.orgName || "Team Space",
+        clerkOrgId:       params.clerkOrgId,
+        name:             params.orgName || "Team Space",
         stripeCustomerId: params.stripeCustomerId,
       })
       .onConflictDoUpdate({
         target: organizations.clerkOrgId,
-        set: { 
+        set: {
           stripeCustomerId: params.stripeCustomerId,
-          updatedAt: new Date()
+          updatedAt:        new Date(),
         },
       })
       .returning({ id: organizations.id });
-    orgId = existingOrg.id;
-  } else {
-    // Solo user — try to find org by stripe customer ID or create one for the user
-    const existingOrg = await db.query.organizations.findFirst({
-      where: params.stripeCustomerId 
-        ? eq(organizations.stripeCustomerId, params.stripeCustomerId)
-        : undefined,
-    });
-
-    if (existingOrg) {
-      orgId = existingOrg.id;
-    } else {
-      const [newOrg] = await db
-        .insert(organizations)
-        .values({
-          name: params.orgName || `${params.email.split("@")[0]}'s Space`,
-          stripeCustomerId: params.stripeCustomerId,
-        })
-        .returning({ id: organizations.id });
-      orgId = newOrg.id;
-    }
+    orgId = row?.id ?? null;
   }
 
-  // 2. Sync user
+  // (3) Stripe customer id → look up
+  if (!orgId && params.stripeCustomerId) {
+    const found = await db.query.organizations.findFirst({
+      where: eq(organizations.stripeCustomerId, params.stripeCustomerId),
+      columns: { id: true },
+    });
+    if (found) orgId = found.id;
+  }
+
+  // (4) None of the above — new solo org
+  if (!orgId) {
+    const [row] = await db
+      .insert(organizations)
+      .values({
+        name:             params.orgName || `${params.email.split("@")[0]}'s Space`,
+        stripeCustomerId: params.stripeCustomerId,
+      })
+      .returning({ id: organizations.id });
+    if (!row) return null;
+    orgId = row.id;
+  }
+
+  // Patch org with newly-arrived data (stripeCustomerId from a checkout webhook,
+  // or an updated name from settings). Only fill empty fields — don't overwrite
+  // a customer-set workspace name with the default fallback.
+  if (params.stripeCustomerId) {
+    await db
+      .update(organizations)
+      .set({ stripeCustomerId: params.stripeCustomerId, updatedAt: new Date() })
+      .where(and(
+        eq(organizations.id, orgId),
+        // only set if currently null (don't override a real customer id)
+        sql`${organizations.stripeCustomerId} IS NULL`,
+      ));
+  }
+
+  // ── Sync user row ──────────────────────────────────────────────────────────
+  // Insert with organizationId on first call. On conflict (user exists), only
+  // update email — KEEP whatever organizationId they already have. This stops
+  // Stripe checkout from silently migrating a user from their trial org to a
+  // freshly-created one. (Legacy users with organizationId=NULL get back-filled
+  // by step 1's existingUser.organizationId branch above.)
   const [userRow] = await db
     .insert(users)
     .values({
-      clerkUserId: params.clerkUserId,
-      email: params.email,
+      clerkUserId:    params.clerkUserId,
+      email:          params.email,
       organizationId: orgId,
-      role: "owner", // Default to owner if they are the one setting up billing
+      role:           "owner",
     })
     .onConflictDoUpdate({
       target: users.clerkUserId,
-      set: { 
-        organizationId: orgId,
-        updatedAt: new Date() 
+      set: {
+        email:     params.email,
+        updatedAt: new Date(),
       },
     })
     .returning();
 
-  return { user: userRow, organizationId: orgId };
+  return { user: userRow, organizationId: userRow.organizationId ?? orgId };
 }
 
 /**
