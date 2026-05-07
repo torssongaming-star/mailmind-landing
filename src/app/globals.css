@@ -125,3 +125,23 @@ input:-webkit-autofill:active {
   border: 1px solid rgba(6,182,212,0.3) !important;
   font-weight: 600 !important;
 }
+
+/*
+ * Clerk — Global text contrast fixes for Profile/Account views.
+ * Force white text on elements that are often too dark in the dark theme.
+ */
+.cl-developmentMode,
+.cl-headerSubtitle,
+.cl-profileSectionTitle,
+.cl-profileSectionSubtitle,
+.cl-profileSectionItem,
+.cl-navbarButton,
+.cl-sidebarItem,
+.cl-breadcrumbsItem,
+.cl-userButtonPopoverActionButtonText,
+.cl-userButtonPopoverFooter,
+.cl-identityPreviewText,
+.cl-formFieldLabel {
+  color: #ffffff !important;
+}
+

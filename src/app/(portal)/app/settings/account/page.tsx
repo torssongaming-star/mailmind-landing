@@ -16,8 +16,16 @@ export default function AccountPage() {
               elements: {
                 rootBox: "w-full",
                 card: "w-full shadow-none border-none bg-transparent",
-                navbar: "hidden lg:flex",
+                navbar: "hidden lg:flex border-r border-white/10",
                 pageScrollBox: "p-0",
+                headerTitle: "text-white",
+                headerSubtitle: "text-white/70",
+                profileSectionTitleText: "text-white",
+                profileSectionSubtitleText: "text-white/70",
+                navbarButton: "text-white hover:text-cyan-400",
+                sidebarItem: "text-white",
+                userPreviewMainIdentifier: "text-white",
+                userPreviewSecondaryIdentifier: "text-white/70",
               }
             }}
           />

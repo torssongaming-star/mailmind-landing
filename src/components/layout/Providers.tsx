@@ -19,8 +19,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
           colorInputBackground: "#0d1f3c", // lighter navy for inputs
           colorInputText: "#ffffff",
           colorText: "#ffffff",
-          colorTextSecondary: "#cbd5e1",   // slate-300 (was 400)
-          colorNeutral: "#94a3b8",         // slate-400 (was 700)
+          colorTextSecondary: "#ffffff",   // white (was slate-300)
+          colorNeutral: "#cbd5e1",         // slate-300 (was 400)
           borderRadius: "1rem",
           fontFamily: "Inter, sans-serif",
         },
