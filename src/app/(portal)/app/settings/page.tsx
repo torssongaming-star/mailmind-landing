@@ -9,9 +9,11 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { getAiSettings, listCaseTypes, defaultAiSettings } from "@/lib/app/threads";
+import { listTemplates } from "@/lib/app/notes";
 import { AiSettingsEditor } from "./AiSettingsEditor";
 import { CaseTypesEditor } from "./CaseTypesEditor";
 import { OrganizationEditor } from "./OrganizationEditor";
+import { TemplatesEditor } from "./TemplatesEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -23,9 +25,10 @@ export default async function SettingsPage() {
   if (!account.user) redirect("/app/onboarding");
   if (!account.access.canUseApp) redirect("/app");
 
-  const [settings, caseTypes] = await Promise.all([
+  const [settings, caseTypes, templates] = await Promise.all([
     getAiSettings(account.organization.id),
     listCaseTypes(account.organization.id),
+    listTemplates(account.organization.id),
   ]);
 
   // Settings dates are not serialisable — pass strings to the client component
@@ -74,6 +77,15 @@ export default async function SettingsPage() {
           which fields the AI must collect from the customer before routing the case.
         </p>
         <CaseTypesEditor initial={caseTypes} />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-white">Reply templates</h2>
+        <p className="text-xs text-muted-foreground">
+          Saved canned responses your team can quickly insert. Useful for common
+          replies like &quot;Quote received&quot;, &quot;Booking confirmed&quot;, etc.
+        </p>
+        <TemplatesEditor initial={templates} />
       </section>
 
     </main>

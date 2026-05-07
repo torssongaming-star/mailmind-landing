@@ -10,8 +10,10 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { getThread, listMessages, listDraftsForThread } from "@/lib/app/threads";
+import { listNotes } from "@/lib/app/notes";
 import { GenerateDraftButton } from "./GenerateDraftButton";
 import { DraftActions } from "./DraftActions";
+import { InternalNotes } from "./InternalNotes";
 
 export const dynamic = "force-dynamic";
 
@@ -30,9 +32,10 @@ export default async function ThreadPage({
   const thread = await getThread(account.organization.id, id);
   if (!thread) notFound();
 
-  const [messages, drafts] = await Promise.all([
+  const [messages, drafts, notes] = await Promise.all([
     listMessages(id),
     listDraftsForThread(id),
+    listNotes(account.organization.id, id),
   ]);
 
   const canGenerate = account.access.canGenerateAiDraft;
@@ -81,6 +84,17 @@ export default async function ThreadPage({
           </div>
         ))}
       </section>
+
+      {/* Internal notes (agent-only) */}
+      <InternalNotes
+        threadId={thread.id}
+        initial={notes.map(n => ({
+          id:          n.id,
+          bodyText:    n.bodyText,
+          authorEmail: n.authorEmail,
+          createdAt:   n.createdAt,
+        }))}
+      />
 
       {/* Action area */}
       <section className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-3">

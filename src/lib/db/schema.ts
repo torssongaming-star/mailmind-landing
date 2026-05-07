@@ -446,6 +446,58 @@ export const emailMessages = pgTable(
 );
 
 /**
+ * internal_notes
+ * Agent-only commentary attached to a thread. Customers never see these.
+ * Useful for handoff between agents, internal context, decisions made offline.
+ */
+export const internalNotes = pgTable(
+  "internal_notes",
+  {
+    id:              uuid("id").primaryKey().defaultRandom(),
+    threadId:        uuid("thread_id").notNull().references(() => emailThreads.id, {
+      onDelete: "cascade",
+    }),
+    /** Author of the note. Null when the user has been deleted but the note kept for context. */
+    userId:          uuid("user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    bodyText:        text("body_text").notNull(),
+    createdAt:       timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:       timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("internal_notes_thread_idx").on(t.threadId, t.createdAt),
+  ]
+);
+
+/**
+ * reply_templates
+ * Saved canned responses agents can quickly insert into a draft. Per-org.
+ * Optional `slug` for keyboard shortcuts later (`/quote-thanks` etc.).
+ */
+export const replyTemplates = pgTable(
+  "reply_templates",
+  {
+    id:              uuid("id").primaryKey().defaultRandom(),
+    organizationId:  uuid("organization_id").notNull().references(() => organizations.id, {
+      onDelete: "cascade",
+    }),
+    title:           varchar("title", { length: 255 }).notNull(),
+    /** Optional shortcut slug for keyboard insertion */
+    slug:            varchar("slug", { length: 100 }),
+    bodyText:        text("body_text").notNull(),
+    /** Counter for analytics on which templates are most used */
+    useCount:        integer("use_count").notNull().default(0),
+    createdAt:       timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:       timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("reply_templates_org_slug_idx").on(t.organizationId, t.slug),
+    index("reply_templates_org_idx").on(t.organizationId),
+  ]
+);
+
+/**
  * ai_drafts
  * AI-generated reply drafts pending human approval. The brief mandates
  * "human approval before replies are sent" — this table is the queue.
@@ -584,6 +636,24 @@ export const emailMessagesRelations = relations(emailMessages, ({ one }) => ({
   }),
 }));
 
+export const internalNotesRelations = relations(internalNotes, ({ one }) => ({
+  thread: one(emailThreads, {
+    fields: [internalNotes.threadId],
+    references: [emailThreads.id],
+  }),
+  user: one(users, {
+    fields: [internalNotes.userId],
+    references: [users.id],
+  }),
+}));
+
+export const replyTemplatesRelations = relations(replyTemplates, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [replyTemplates.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
 export const aiDraftsRelations = relations(aiDrafts, ({ one }) => ({
   thread: one(emailThreads, {
     fields: [aiDrafts.threadId],
@@ -627,3 +697,7 @@ export type EmailMessage      = typeof emailMessages.$inferSelect;
 export type NewEmailMessage   = typeof emailMessages.$inferInsert;
 export type AiDraft           = typeof aiDrafts.$inferSelect;
 export type NewAiDraft        = typeof aiDrafts.$inferInsert;
+export type InternalNote      = typeof internalNotes.$inferSelect;
+export type NewInternalNote   = typeof internalNotes.$inferInsert;
+export type ReplyTemplate     = typeof replyTemplates.$inferSelect;
+export type NewReplyTemplate  = typeof replyTemplates.$inferInsert;
