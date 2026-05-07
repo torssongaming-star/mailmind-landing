@@ -27,6 +27,7 @@ import {
   appendMessage,
   getAiSettings,
   listMessages,
+  setThreadExternalId,
 } from "@/lib/app/threads";
 import { eq } from "drizzle-orm";
 import { db, isDbConnected, inboxes as inboxesTable } from "@/lib/db";
@@ -168,6 +169,14 @@ export async function PATCH(
       externalMessageId:  result.id || null,
       sentAt:             now,
     });
+
+    // If the thread has no externalThreadId yet, set it to the outgoing
+    // Message-ID. When the customer replies, their In-Reply-To header will
+    // reference this ID, allowing the inbound webhook to thread the reply
+    // into the existing conversation instead of creating a new thread.
+    if (!thread.externalThreadId && result.id) {
+      await setThreadExternalId(orgId, draft.threadId, result.id);
+    }
   }
 
   // Update draft + thread status atomically (best effort — no real txn)

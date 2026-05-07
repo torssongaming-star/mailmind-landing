@@ -111,6 +111,22 @@ export async function createThread(input: {
   return row ?? null;
 }
 
+/** Set externalThreadId on a thread — used after first outbound send so replies thread correctly. */
+export async function setThreadExternalId(
+  organizationId: string,
+  threadId: string,
+  externalThreadId: string,
+) {
+  if (!isDbConnected()) return;
+  await db
+    .update(emailThreads)
+    .set({ externalThreadId, updatedAt: new Date() })
+    .where(and(
+      eq(emailThreads.id, threadId),
+      eq(emailThreads.organizationId, organizationId),
+    ));
+}
+
 export async function updateThread(
   organizationId: string,
   threadId: string,
