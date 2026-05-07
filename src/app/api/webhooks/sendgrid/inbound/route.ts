@@ -57,6 +57,43 @@ async function readPayload(req: NextRequest): Promise<Record<string, string>> {
   return readForm(req);
 }
 
+/**
+ * Decode RFC 2047 encoded-words, e.g.:
+ *   =?utf-8?B?SMOkbGxv?=   (base64)
+ *   =?iso-8859-1?Q?H=E4llo?= (quoted-printable)
+ * Also handles plain ISO-8859-1 text by re-encoding via latin1 → utf-8.
+ */
+function decodeMimeWords(str: string): string {
+  if (!str) return str;
+
+  // Replace all RFC 2047 encoded-word tokens
+  const decoded = str.replace(
+    /=\?([^?]+)\?([BbQq])\?([^?]*)\?=/g,
+    (_, charset: string, encoding: string, text: string) => {
+      try {
+        if (encoding.toUpperCase() === "B") {
+          // Base64
+          const buf = Buffer.from(text, "base64");
+          return buf.toString(charset.toLowerCase().replace("-", "") === "iso88591" ? "latin1" : "utf8");
+        } else {
+          // Quoted-printable: replace _ with space, =XX with char
+          const qp = text.replace(/_/g, " ").replace(/=([0-9A-Fa-f]{2})/g, (__, hex) =>
+            String.fromCharCode(parseInt(hex, 16))
+          );
+          if (charset.toLowerCase().startsWith("iso")) {
+            return Buffer.from(qp, "latin1").toString("utf8");
+          }
+          return qp;
+        }
+      } catch {
+        return text;
+      }
+    }
+  );
+
+  return decoded;
+}
+
 /** Extract the first email address from a header value like "Name <a@b.com>". */
 function extractEmail(headerValue: string): string | null {
   if (!headerValue) return null;
@@ -87,11 +124,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "bad payload" }, { status: 400 });
   }
 
-  const fromHeader     = payload.from ?? "";
+  const fromHeader     = decodeMimeWords(payload.from ?? "");
   const toHeader       = payload.to ?? "";
-  const subject        = payload.subject ?? "";
+  const subject        = decodeMimeWords(payload.subject ?? "");
   // SendGrid provides plain text + HTML; prefer text. `email` is the raw MIME.
-  const bodyText       = (payload.text ?? payload.body ?? "").trim();
+  const bodyText       = decodeMimeWords((payload.text ?? payload.body ?? "").trim());
   const messageHeaders = payload.headers ?? "";
 
   if (!toHeader || !bodyText) {
