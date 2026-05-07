@@ -172,9 +172,9 @@ export default async function AppHomePage() {
         />
         <UsageCard
           label="Inboxes"
-          used={0}
+          used={inboxes.length}
           limit={account.entitlements?.maxInboxes ?? 0}
-          sub="Connect inboxes coming soon"
+          sub={inboxes.length === 0 ? "Connect inboxes coming soon" : undefined}
         />
         <UsageCard
           label="Team members"
