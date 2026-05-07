@@ -15,6 +15,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentAccount } from "@/lib/app/entitlements";
+import { listThreads, listInboxes, listCaseTypes } from "@/lib/app/threads";
 import { PLANS } from "@/lib/plans";
 import { DashboardHeader } from "@/components/portal/DashboardHeader";
 
@@ -37,6 +38,20 @@ export default async function AppHomePage() {
 
   const planKey = account.subscription?.plan;
   const plan = planKey ? PLANS[planKey] : null;
+
+  // Setup state for the getting-started checklist
+  const [threads, inboxes, caseTypeRows] = await Promise.all([
+    listThreads(account.organization.id, 1),
+    listInboxes(account.organization.id),
+    listCaseTypes(account.organization.id),
+  ]);
+  const setup = {
+    accountReady:    !!account.user,
+    inboxConnected:  inboxes.length > 0,
+    caseTypesReady:  caseTypeRows.length > 0,
+    firstThread:     threads.length > 0,
+  };
+  const setupComplete = Object.values(setup).every(Boolean);
 
   return (
     <>
@@ -61,6 +76,45 @@ export default async function AppHomePage() {
 
       {/* Access banner */}
       <AccessBanner reason={account.access.reason} />
+
+      {/* Getting-started checklist — only when not all done */}
+      {!setupComplete && account.access.canUseApp && (
+        <section className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
+          <h2 className="text-sm font-semibold text-white mb-1">Get started</h2>
+          <p className="text-xs text-muted-foreground mb-4">
+            A few quick steps to start triaging emails with AI.
+          </p>
+          <ul className="space-y-2.5">
+            <ChecklistItem
+              done={setup.accountReady}
+              label="Account created"
+              hint="Done — welcome aboard"
+              href={null}
+            />
+            <ChecklistItem
+              done={setup.caseTypesReady}
+              label="Case types configured"
+              hint="Default categories are seeded; customise them under Settings"
+              href="/app/settings"
+              cta="Edit case types"
+            />
+            <ChecklistItem
+              done={setup.inboxConnected}
+              label="Inbox connected"
+              hint="Forward your existing support@yourcompany.com to a Mailmind inbox"
+              href="/app/inboxes"
+              cta="Connect inbox"
+            />
+            <ChecklistItem
+              done={setup.firstThread}
+              label="First thread processed"
+              hint="Send a test email or wait for the first real customer message"
+              href="/app/inbox"
+              cta="Open inbox"
+            />
+          </ul>
+        </section>
+      )}
 
       {/* Plan + subscription */}
       <section className="rounded-2xl border border-white/8 bg-[#050B1C]/60 backdrop-blur-sm p-6">
@@ -181,6 +235,48 @@ export default async function AppHomePage() {
 }
 
 // ── Subcomponents ─────────────────────────────────────────────────────────────
+
+function ChecklistItem({
+  done,
+  label,
+  hint,
+  href,
+  cta,
+}: {
+  done: boolean;
+  label: string;
+  hint: string;
+  href: string | null;
+  cta?: string;
+}) {
+  return (
+    <li className="flex items-start gap-3">
+      <span
+        className={`shrink-0 w-5 h-5 rounded-full border flex items-center justify-center text-[10px] font-bold mt-0.5 ${
+          done
+            ? "bg-green-500/20 border-green-500/40 text-green-400"
+            : "border-white/20 text-muted-foreground"
+        }`}
+      >
+        {done ? "✓" : ""}
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm font-medium ${done ? "text-muted-foreground line-through" : "text-white"}`}>
+          {label}
+        </p>
+        <p className="text-[11px] text-muted-foreground/80 mt-0.5">{hint}</p>
+      </div>
+      {!done && href && cta && (
+        <Link
+          href={href}
+          className="shrink-0 px-3 py-1 rounded-lg text-[11px] font-semibold bg-white/10 text-white hover:bg-white/20 transition-colors"
+        >
+          {cta}
+        </Link>
+      )}
+    </li>
+  );
+}
 
 function TrialBanner({
   status,

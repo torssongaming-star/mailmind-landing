@@ -11,6 +11,7 @@ import { getCurrentAccount } from "@/lib/app/entitlements";
 import { getAiSettings, listCaseTypes, defaultAiSettings } from "@/lib/app/threads";
 import { AiSettingsEditor } from "./AiSettingsEditor";
 import { CaseTypesEditor } from "./CaseTypesEditor";
+import { OrganizationEditor } from "./OrganizationEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +43,14 @@ export default async function SettingsPage() {
           ← App home
         </Link>
       </header>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-white">Workspace</h2>
+        <p className="text-xs text-muted-foreground">
+          Your workspace name appears in the app and on emails sent from Mailmind.
+        </p>
+        <OrganizationEditor initialName={account.organization.name} />
+      </section>
 
       <section className="space-y-3">
         <h2 className="text-sm font-semibold text-white">AI tone &amp; language</h2>
