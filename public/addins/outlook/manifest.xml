@@ -3,7 +3,7 @@
   xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" 
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
   xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" 
-  xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides/1.0" 
+  xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides" 
   xsi:type="MailApp">
   
   <Id>d3b1a2c3-4e5f-6a7b-8c9d-0e1f2a3b4c5d</Id>
@@ -12,7 +12,6 @@
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Mailmind" />
   <Description DefaultValue="Open your Mailmind inbox from Outlook" />
-  
   <IconUrl DefaultValue="https://mailmind.se/addins/outlook/icon-32.png" />
   <HighResolutionIconUrl DefaultValue="https://mailmind.se/addins/outlook/icon-80.png" />
   
@@ -41,7 +40,7 @@
     <Rule xsi:type="ItemIs" ItemType="Message" FormType="Read" />
   </Rule>
   
-  <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides/1.0" xsi:type="VersionOverridesV1_0">
+  <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
     <Description DefaultValue="Open your Mailmind inbox from Outlook" />
     <Hosts>
       <Host xsi:type="MailHost">
