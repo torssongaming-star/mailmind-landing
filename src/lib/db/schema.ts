@@ -442,6 +442,8 @@ export const emailMessages = pgTable(
   },
   (t) => [
     index("email_messages_thread_idx").on(t.threadId, t.sentAt),
+    // For SendGrid Inbound idempotency: dedupe webhook retries by external id
+    index("email_messages_external_id_idx").on(t.externalMessageId),
   ]
 );
 

@@ -271,6 +271,17 @@ export async function deleteInbox(organizationId: string, inboxId: string) {
     ));
 }
 
+/** Find an already-stored message by its external id (for webhook idempotency). */
+export async function findMessageByExternalId(externalMessageId: string): Promise<EmailMessage | null> {
+  if (!isDbConnected()) return null;
+  const rows = await db
+    .select()
+    .from(emailMessages)
+    .where(eq(emailMessages.externalMessageId, externalMessageId))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 /** Find existing thread by external thread id within an org */
 export async function findThreadByExternalId(
   organizationId: string,

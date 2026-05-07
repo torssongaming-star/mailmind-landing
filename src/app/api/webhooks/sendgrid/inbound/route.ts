@@ -28,6 +28,7 @@ import { NextRequest, NextResponse } from "next/server";
 import {
   getInboxByEmail,
   findThreadByExternalId,
+  findMessageByExternalId,
   createThread,
   appendMessage,
   updateThread,
@@ -111,6 +112,19 @@ export async function POST(req: NextRequest) {
     console.warn("[inbound] no inbox registered for", toEmail);
     // Return 200 to prevent SendGrid retries (the email is "accepted" but not processed)
     return NextResponse.json({ status: "no_inbox", to: toEmail });
+  }
+
+  // Idempotency check — if SendGrid retries the same email (e.g. our handler
+  // was slow), skip duplicate processing. We dedupe on Message-ID since that's
+  // globally unique per RFC 5322. Also handles cases where the customer sends
+  // the exact same email twice.
+  const messageIdEarly = extractHeader(payload.headers ?? "", "Message-ID");
+  if (messageIdEarly) {
+    const dup = await findMessageByExternalId(messageIdEarly);
+    if (dup) {
+      console.log(`[inbound] duplicate Message-ID ${messageIdEarly} — skipping`);
+      return NextResponse.json({ status: "duplicate", existingMessageId: dup.id });
+    }
   }
 
   // Try to thread the email. SendGrid passes the Message-ID and References
