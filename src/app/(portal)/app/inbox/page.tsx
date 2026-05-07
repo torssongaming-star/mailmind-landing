@@ -22,7 +22,7 @@ type ThreadStatus = (typeof VALID_STATUSES)[number];
 export default async function InboxPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; q?: string }>;
+  searchParams: Promise<{ status?: string; q?: string; source?: string }>;
 }) {
   const { userId } = await auth();
   if (!userId) redirect("/login");
@@ -31,6 +31,7 @@ export default async function InboxPage({
   if (!account.user) redirect("/app/onboarding");
 
   const params = await searchParams;
+  const isOutlook = params.source === "outlook";
   const filterStatus = VALID_STATUSES.includes(params.status as ThreadStatus)
     ? (params.status as ThreadStatus)
     : null;
@@ -66,22 +67,27 @@ export default async function InboxPage({
   };
 
   return (
-    <main className="max-w-4xl mx-auto p-6 md:p-10 space-y-6">
+    <main className={isOutlook 
+      ? "max-w-full p-4 space-y-4" 
+      : "max-w-4xl mx-auto p-6 md:p-10 space-y-6"
+    }>
       <header className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Inbox</p>
-          <h1 className="text-2xl font-bold text-white">Threads</h1>
-          <p className="text-xs text-muted-foreground mt-1">
-            {threads.length} of {all.length} thread{all.length === 1 ? "" : "s"}
-            {filterStatus && <> · filtered by <span className="text-white/70">{filterStatus}</span></>}
-            {query && <> · matching <span className="text-white/70">&quot;{query}&quot;</span></>}
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">Inbox</p>
+          <h1 className={isOutlook ? "text-xl font-bold text-white" : "text-2xl font-bold text-white"}>
+            Threads
+          </h1>
+          <p className="text-[10px] text-muted-foreground mt-0.5">
+            {threads.length} of {all.length} {isOutlook ? "items" : "threads"}
           </p>
         </div>
         <div className="flex gap-2">
-          <Link href="/app" className="text-xs text-muted-foreground hover:text-white px-3 py-1.5 transition-colors">
-            ← App home
-          </Link>
-          <NewThreadButton />
+          {!isOutlook && (
+            <Link href="/app" className="text-xs text-muted-foreground hover:text-white px-3 py-1.5 transition-colors">
+              ← App home
+            </Link>
+          )}
+          <NewThreadButton compact={isOutlook} />
         </div>
       </header>
 
@@ -89,6 +95,7 @@ export default async function InboxPage({
         currentStatus={filterStatus}
         currentQuery={query}
         counts={counts}
+        compact={isOutlook}
       />
 
       {threads.length === 0 ? (

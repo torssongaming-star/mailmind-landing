@@ -24,10 +24,12 @@ export function InboxFilters({
   currentStatus,
   currentQuery,
   counts,
+  compact,
 }: {
   currentStatus: string | null;
   currentQuery: string;
   counts: Counts;
+  compact?: boolean;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -56,7 +58,7 @@ export function InboxFilters({
   const activeStatus = currentStatus ?? "all";
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3">
+    <div className={compact ? "flex flex-col gap-2" : "flex flex-col sm:flex-row gap-3"}>
       {/* Status tabs */}
       <div className="flex flex-wrap gap-1">
         {TABS.map(tab => {
@@ -66,14 +68,14 @@ export function InboxFilters({
             <Link
               key={tab.value}
               href={buildHref(tab.value)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-2 ${
+              className={`${compact ? "px-2 py-1" : "px-3 py-1.5"} rounded-lg text-[10px] font-medium transition-colors flex items-center gap-1.5 ${
                 isActive
                   ? "bg-primary text-[#030614]"
                   : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white"
               }`}
             >
               <span>{tab.label}</span>
-              <span className={`text-[10px] tabular-nums ${isActive ? "opacity-70" : "opacity-50"}`}>
+              <span className={`text-[9px] tabular-nums ${isActive ? "opacity-70" : "opacity-50"}`}>
                 {count}
               </span>
             </Link>

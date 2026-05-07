@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function NewThreadButton() {
+export function NewThreadButton({ compact }: { compact?: boolean }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -43,9 +43,9 @@ export function NewThreadButton() {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="px-3 py-1.5 rounded-lg bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors"
+        className="px-3 py-1.5 rounded-lg bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors whitespace-nowrap"
       >
-        New test thread
+        {compact ? "New" : "New test thread"}
       </button>
 
       {open && (
