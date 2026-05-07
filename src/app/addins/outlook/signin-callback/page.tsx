@@ -15,9 +15,11 @@ export default function OutlookSigninCallbackPage() {
     if (typeof window !== "undefined" && (window as any).Office) {
       (window as any).Office.onReady(() => {
         try {
-          (window as any).Office.context.ui.messageParent(
-            JSON.stringify({ status: "success" })
-          );
+          if ((window as any).Office?.context?.ui) {
+            (window as any).Office.context.ui.messageParent(
+              JSON.stringify({ status: "success" })
+            );
+          }
         } catch (err) {
           console.error("Error messaging parent:", err);
         }
@@ -32,7 +34,12 @@ export default function OutlookSigninCallbackPage() {
         strategy="beforeInteractive" 
       />
       <Loader2 className="w-8 h-8 text-primary animate-spin" />
-      <p className="text-sm text-white font-medium">Finalizing sign-in...</p>
+      <div className="text-center space-y-2">
+        <p className="text-sm text-white font-medium">Finalizing sign-in...</p>
+        <p className="text-xs text-muted-foreground">
+          You can close this window and return to Outlook.
+        </p>
+      </div>
     </div>
   );
 }

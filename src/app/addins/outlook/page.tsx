@@ -52,7 +52,11 @@ export default function OutlookTaskpane() {
 
   // Handle Login via Office Dialog API
   const handleLogin = () => {
-    if (!(window as any).Office?.context?.ui) return;
+    // Fallback if Office is not available (e.g. opened in a standalone browser)
+    if (!(window as any).Office?.context?.ui) {
+      window.location.href = "/login";
+      return;
+    }
 
     const host = window.location.origin;
     const signInUrl = `${host}/addins/outlook/signin`;
@@ -63,14 +67,28 @@ export default function OutlookTaskpane() {
       (asyncResult: any) => {
         if (asyncResult.status === (window as any).Office.AsyncResultStatus.Failed) {
           console.error("Dialog failed:", asyncResult.error.message);
+          // Optional: fallback to redirect if dialog fails
+          window.location.href = "/login";
         } else {
           const dialog = asyncResult.value;
           dialog.addEventHandler((window as any).Office.EventType.DialogMessageReceived, (arg: any) => {
-            const message = JSON.parse(arg.message);
-            if (message.status === "success") {
-              dialog.close();
-              // Reload to pick up Clerk session
-              window.location.reload();
+            try {
+              const message = JSON.parse(arg.message);
+              if (message && message.status === "success") {
+                dialog.close();
+                // Reload to pick up Clerk session
+                window.location.reload();
+              }
+            } catch (e) {
+              console.error("Invalid message from dialog:", e);
+            }
+          });
+
+          // Handle user closing the dialog
+          dialog.addEventHandler((window as any).Office.EventType.DialogEventReceived, (arg: any) => {
+            if (arg.error === 12006) {
+              // User closed the dialog - no action needed, but we could show a hint
+              console.log("User closed the login dialog");
             }
           });
         }
@@ -184,7 +202,7 @@ export default function OutlookTaskpane() {
             {/* Quick Actions */}
             <div className="space-y-2 pt-4">
               <Button asChild className="w-full justify-between group h-11 bg-white/5 border border-white/10 hover:bg-white/10 text-white transition-all">
-                <a href="/app/inbox" target="_blank" rel="noopener noreferrer">
+                <a href="/app/inbox?source=outlook" target="_blank" rel="noopener noreferrer">
                   <div className="flex items-center gap-3">
                     <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center text-primary">
                       <Mail size={12} />

@@ -11,10 +11,10 @@
   <ProviderName>Mailmind</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Mailmind" />
-  <Description DefaultValue="AI-powered email triage and drafting for Outlook." />
+  <Description DefaultValue="Open your Mailmind inbox from Outlook" />
   
-  <IconUrl DefaultValue="https://localhost:3000/addins/outlook/icon-32.png" />
-  <HighResolutionIconUrl DefaultValue="https://localhost:3000/addins/outlook/icon-80.png" />
+  <IconUrl DefaultValue="https://mailmind.se/addins/outlook/icon-32.png" />
+  <HighResolutionIconUrl DefaultValue="https://mailmind.se/addins/outlook/icon-80.png" />
   
   <Hosts>
     <Host Name="Mailbox" />
@@ -29,7 +29,7 @@
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
-        <SourceLocation DefaultValue="https://localhost:3000/addins/outlook" />
+        <SourceLocation DefaultValue="https://mailmind.se/addins/outlook" />
         <RequestedHeight>250</RequestedHeight>
       </DesktopSettings>
     </Form>
@@ -42,7 +42,7 @@
   </Rule>
   
   <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides/1.0" xsi:type="VersionOverridesV1_0">
-    <Description DefaultValue="AI-powered email triage and drafting for Outlook." />
+    <Description DefaultValue="Open your Mailmind inbox from Outlook" />
     <Hosts>
       <Host xsi:type="MailHost">
         <DesktopFormFactor>
@@ -73,12 +73,12 @@
     </Hosts>
     <Resources>
       <bt:Images>
-        <bt:Image id="icon16" DefaultValue="https://localhost:3000/addins/outlook/icon-16.png" />
-        <bt:Image id="icon32" DefaultValue="https://localhost:3000/addins/outlook/icon-32.png" />
-        <bt:Image id="icon80" DefaultValue="https://localhost:3000/addins/outlook/icon-80.png" />
+        <bt:Image id="icon16" DefaultValue="https://mailmind.se/addins/outlook/icon-16.png" />
+        <bt:Image id="icon32" DefaultValue="https://mailmind.se/addins/outlook/icon-32.png" />
+        <bt:Image id="icon80" DefaultValue="https://mailmind.se/addins/outlook/icon-80.png" />
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="taskpaneUrl" DefaultValue="https://localhost:3000/addins/outlook" />
+        <bt:Url id="taskpaneUrl" DefaultValue="https://mailmind.se/addins/outlook" />
       </bt:Urls>
     </Resources>
   </VersionOverrides>
