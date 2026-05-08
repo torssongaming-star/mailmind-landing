@@ -11,6 +11,12 @@ import { dark } from "@clerk/themes";
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider
+      localization={{
+        errors: {
+          user_exists_with_different_provider: "Den här e-postadressen används redan av ett annat konto.",
+          email_address_claimed: "Den här e-postadressen används redan av ett annat konto.",
+        }
+      }}
       appearance={{
         baseTheme: dark,
         variables: {
