@@ -3,14 +3,21 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function OnboardingForm({
+type Step = "workspace" | "knowledge" | "done";
+
+type KnowledgeEntry = { question: string; answer: string; category: string };
+
+// ── Step 1: Workspace name ─────────────────────────────────────────────────────
+
+function WorkspaceStep({
   email,
   suggestedOrgName,
+  onNext,
 }: {
   email: string;
   suggestedOrgName: string;
+  onNext: (orgName: string) => void;
 }) {
-  const router = useRouter();
   const [orgName, setOrgName] = useState(suggestedOrgName);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -18,24 +25,19 @@ export function OnboardingForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orgName.trim() || submitting) return;
-
     setSubmitting(true);
     setError(null);
-
     try {
       const res = await fetch("/api/app/onboarding", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orgName: orgName.trim() }),
       });
-
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || "Could not create your account");
       }
-
-      router.push("/app");
-      router.refresh();
+      onNext(orgName.trim());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setSubmitting(false);
@@ -45,9 +47,7 @@ export function OnboardingForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-          Your email
-        </label>
+        <label className="block text-xs font-medium text-muted-foreground mb-1.5">Din e-post</label>
         <input
           type="email"
           value={email}
@@ -55,38 +55,240 @@ export function OnboardingForm({
           className="w-full bg-white/5 text-muted-foreground text-sm rounded-lg px-4 py-2.5 border border-white/8 cursor-not-allowed"
         />
       </div>
-
       <div>
-        <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-          Workspace name
-        </label>
+        <label className="block text-xs font-medium text-muted-foreground mb-1.5">Företagets namn</label>
         <input
           type="text"
           value={orgName}
-          onChange={(e) => setOrgName(e.target.value)}
-          placeholder="e.g. Acme AB"
+          onChange={e => setOrgName(e.target.value)}
+          placeholder="t.ex. Acme AB"
           required
           maxLength={120}
           className="w-full bg-white/5 text-white text-sm rounded-lg px-4 py-2.5 border border-white/10 focus:border-primary/50 focus:outline-none placeholder:text-muted-foreground/40"
         />
-        <p className="text-[10px] text-muted-foreground mt-1">
-          Shown in the app and on invoices.
-        </p>
+        <p className="text-[10px] text-muted-foreground mt-1">Visas i appen och på fakturor.</p>
       </div>
-
       {error && (
-        <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
-          {error}
-        </p>
+        <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>
       )}
-
       <button
         type="submit"
         disabled={submitting || !orgName.trim()}
-        className="w-full px-4 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        className="w-full px-4 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40"
       >
-        {submitting ? "Setting up your workspace…" : "Continue"}
+        {submitting ? "Skapar ditt konto…" : "Fortsätt →"}
       </button>
     </form>
+  );
+}
+
+// ── Step 2: Knowledge base ─────────────────────────────────────────────────────
+
+function KnowledgeStep({ onFinish }: { onFinish: () => void }) {
+  const [websiteUrl, setWebsiteUrl]     = useState("");
+  const [scraping, setScraping]         = useState(false);
+  const [scrapeMsg, setScrapeMsg]       = useState<string | null>(null);
+  const [entries, setEntries]           = useState<KnowledgeEntry[]>([]);
+  const [newQ, setNewQ]                 = useState("");
+  const [newA, setNewA]                 = useState("");
+  const [saving, setSaving]             = useState(false);
+  const [error, setError]               = useState<string | null>(null);
+
+  const scrape = async () => {
+    if (!websiteUrl.trim() || scraping) return;
+    setScraping(true);
+    setScrapeMsg(null);
+    setError(null);
+    try {
+      const res = await fetch("/api/app/knowledge/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: websiteUrl.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? "Scrape failed");
+      if (data.inserted > 0) {
+        setScrapeMsg(`✓ Hittade ${data.inserted} svar från din hemsida.`);
+        setEntries(prev => [...prev, ...(data.entries ?? [])]);
+      } else {
+        setScrapeMsg("Hittade ingen tydlig info. Lägg till manuellt nedan.");
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setScraping(false);
+    }
+  };
+
+  const addManual = async () => {
+    if (!newQ.trim() || !newA.trim() || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/app/knowledge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: newQ.trim(), answer: newA.trim(), category: "faq" }),
+      });
+      if (!res.ok) throw new Error("Could not save");
+      setEntries(prev => [...prev, { question: newQ.trim(), answer: newA.trim(), category: "faq" }]);
+      setNewQ("");
+      setNewA("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Website scrape */}
+      <div>
+        <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+          Din hemsida (valfritt)
+        </label>
+        <p className="text-[11px] text-muted-foreground mb-2 leading-relaxed">
+          Vi läser av din hemsida och fyller i vanliga frågor &amp; priser automatiskt.
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={websiteUrl}
+            onChange={e => setWebsiteUrl(e.target.value)}
+            placeholder="https://dittforetag.se"
+            className="flex-1 bg-white/5 text-white text-sm rounded-lg px-3 py-2 border border-white/10 focus:border-primary/50 focus:outline-none placeholder:text-muted-foreground/40"
+          />
+          <button
+            onClick={scrape}
+            disabled={scraping || !websiteUrl.trim()}
+            className="px-3 py-2 rounded-lg bg-primary/20 text-primary text-xs font-semibold hover:bg-primary/30 transition-colors disabled:opacity-40 shrink-0"
+          >
+            {scraping ? "Läser…" : "Hämta info"}
+          </button>
+        </div>
+        {scrapeMsg && <p className="text-xs text-green-400 mt-1.5">{scrapeMsg}</p>}
+        {error && <p className="text-xs text-red-400 mt-1.5">{error}</p>}
+      </div>
+
+      {/* Extracted / manual entries preview */}
+      {entries.length > 0 && (
+        <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3 space-y-2 max-h-40 overflow-y-auto">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{entries.length} svar sparade</p>
+          {entries.map((e, i) => (
+            <div key={i} className="text-xs">
+              <span className="text-white/80 font-medium">{e.question}</span>
+              <span className="text-muted-foreground"> — {e.answer.slice(0, 80)}{e.answer.length > 80 ? "…" : ""}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Manual entry */}
+      <div className="space-y-2 border-t border-white/8 pt-4">
+        <p className="text-xs font-medium text-white/70">Lägg till manuellt</p>
+        <input
+          type="text"
+          value={newQ}
+          onChange={e => setNewQ(e.target.value)}
+          placeholder="Fråga, t.ex. Vad kostar parkering?"
+          className="w-full bg-white/5 text-white text-sm rounded-lg px-3 py-2 border border-white/10 focus:border-primary/50 focus:outline-none placeholder:text-muted-foreground/40"
+        />
+        <textarea
+          value={newA}
+          onChange={e => setNewA(e.target.value)}
+          placeholder="Svar, t.ex. Parkering kostar 500 kr/mån. Kontakta receptionen."
+          rows={2}
+          className="w-full bg-white/5 text-white text-sm rounded-lg px-3 py-2 border border-white/10 focus:border-primary/50 focus:outline-none placeholder:text-muted-foreground/40 resize-none"
+        />
+        <button
+          onClick={addManual}
+          disabled={saving || !newQ.trim() || !newA.trim()}
+          className="text-xs px-3 py-1.5 rounded-lg bg-white/8 text-white hover:bg-white/15 transition-colors disabled:opacity-40"
+        >
+          {saving ? "Sparar…" : "+ Lägg till"}
+        </button>
+      </div>
+
+      {/* Skip / finish */}
+      <div className="flex justify-between items-center pt-2 border-t border-white/8">
+        <button
+          onClick={onFinish}
+          className="text-xs text-muted-foreground hover:text-white transition-colors"
+        >
+          Hoppa över →
+        </button>
+        <button
+          onClick={onFinish}
+          className="px-4 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors"
+        >
+          {entries.length > 0 ? "Klart, gå till appen →" : "Fortsätt utan kunskapsbas →"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Stepper shell ──────────────────────────────────────────────────────────────
+
+const STEPS = [
+  { id: "workspace", label: "Konto" },
+  { id: "knowledge", label: "Kunskapsbas" },
+];
+
+export function OnboardingForm({
+  email,
+  suggestedOrgName,
+}: {
+  email: string;
+  suggestedOrgName: string;
+}) {
+  const router = useRouter();
+  const [step, setStep] = useState<Step>("workspace");
+
+  const currentIdx = STEPS.findIndex(s => s.id === step);
+
+  const finish = () => {
+    router.push("/app");
+    router.refresh();
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Progress indicator */}
+      <div className="flex items-center gap-2">
+        {STEPS.map((s, i) => (
+          <div key={s.id} className="flex items-center gap-2 flex-1">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors ${
+              i < currentIdx
+                ? "bg-primary text-[#030614]"
+                : i === currentIdx
+                  ? "bg-primary/20 text-primary border border-primary/50"
+                  : "bg-white/8 text-muted-foreground"
+            }`}>
+              {i < currentIdx ? "✓" : i + 1}
+            </div>
+            <span className={`text-xs transition-colors ${i === currentIdx ? "text-white" : "text-muted-foreground"}`}>
+              {s.label}
+            </span>
+            {i < STEPS.length - 1 && (
+              <div className={`flex-1 h-px ${i < currentIdx ? "bg-primary/40" : "bg-white/10"}`} />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Step content */}
+      {step === "workspace" && (
+        <WorkspaceStep
+          email={email}
+          suggestedOrgName={suggestedOrgName}
+          onNext={() => setStep("knowledge")}
+        />
+      )}
+      {step === "knowledge" && (
+        <KnowledgeStep onFinish={finish} />
+      )}
+    </div>
   );
 }

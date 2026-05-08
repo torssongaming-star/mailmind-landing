@@ -25,6 +25,7 @@ import type {
   CaseType,
   EmailMessage,
   EmailThread,
+  KnowledgeEntry,
 } from "@/lib/db/schema";
 
 // ── Public types ──────────────────────────────────────────────────────────────
@@ -93,8 +94,9 @@ export function buildSystemPrompt(opts: {
   organizationName: string;
   settings: AiSettings;
   caseTypes: CaseType[];
+  knowledge?: KnowledgeEntry[];
 }): string {
-  const { organizationName, settings, caseTypes } = opts;
+  const { organizationName, settings, caseTypes, knowledge = [] } = opts;
 
   const caseTypesList = caseTypes.length > 0
     ? caseTypes
@@ -105,10 +107,15 @@ export function buildSystemPrompt(opts: {
   const toneText = TONE_INSTRUCTIONS[settings.tone] ?? TONE_INSTRUCTIONS.neutral;
   const langName = LANG_NAMES[settings.language] ?? settings.language;
 
+  const knowledgeSection = knowledge.length > 0
+    ? `\nFÖRETAGSINFORMATION (använd detta för att svara direkt utan att fråga kunden):\n` +
+      knowledge.map(k => `- ${k.question}: ${k.answer}`).join("\n")
+    : "";
+
   return `Du är en AI-ärendehanterare för ${organizationName}.
 ${toneText}
 Svara ALLTID på ${langName}.
-
+${knowledgeSection}
 DINA ÄRENDETYPER:
 ${caseTypesList}
 
@@ -194,6 +201,7 @@ export type GenerateDraftInput = {
   organizationName: string;
   settings: AiSettings;
   caseTypes: CaseType[];
+  knowledge?: KnowledgeEntry[];
   thread: EmailThread;
   messages: EmailMessage[];
   newEmailBody: string;
@@ -218,6 +226,7 @@ export async function generateDraft(input: GenerateDraftInput): Promise<Generate
     organizationName: input.organizationName,
     settings:         input.settings,
     caseTypes:        input.caseTypes,
+    knowledge:        input.knowledge ?? [],
   });
   const userMessage = buildUserMessage({
     thread:       input.thread,

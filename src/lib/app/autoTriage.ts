@@ -28,6 +28,7 @@ import {
   createDraft,
   defaultAiSettings,
 } from "./threads";
+import { listActiveKnowledge } from "./knowledge";
 import { generateDraft } from "./ai";
 import { writeAuditLog } from "./audit";
 import { computeAccess } from "./entitlements";
@@ -83,10 +84,11 @@ export async function autoTriageNewMessage(input: {
   const thread = await getThread(organizationId, threadId);
   if (!thread) return { ok: false, reason: "thread_missing" };
 
-  const [messages, settings, caseTypesList] = await Promise.all([
+  const [messages, settings, caseTypesList, knowledge] = await Promise.all([
     listMessages(threadId),
     getAiSettings(organizationId),
     listCaseTypes(organizationId),
+    listActiveKnowledge(organizationId),
   ]);
 
   // Generate
@@ -94,6 +96,7 @@ export async function autoTriageNewMessage(input: {
     organizationName: orgRow.name,
     settings:         settings ?? defaultAiSettings(organizationId),
     caseTypes:        caseTypesList,
+    knowledge,
     thread,
     messages,
     newEmailBody,

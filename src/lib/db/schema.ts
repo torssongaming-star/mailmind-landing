@@ -852,6 +852,34 @@ export type NewInternalNote   = typeof internalNotes.$inferInsert;
 export type ReplyTemplate     = typeof replyTemplates.$inferSelect;
 export type NewReplyTemplate  = typeof replyTemplates.$inferInsert;
 
+/**
+ * knowledge_entries
+ * Per-org FAQ / company knowledge injected into AI system prompt.
+ * Examples: pricing, opening hours, contact info, policies.
+ * Seeded during onboarding (manual or website-scraped), editable in Settings.
+ */
+export const knowledgeEntries = pgTable(
+  "knowledge_entries",
+  {
+    id:             uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    question:       text("question").notNull(),
+    answer:         text("answer").notNull(),
+    category:       varchar("category", { length: 100 }),
+    isActive:       boolean("is_active").notNull().default(true),
+    sortOrder:      integer("sort_order").notNull().default(0),
+    createdAt:      timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:      timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("knowledge_entries_org_idx").on(t.organizationId),
+    index("knowledge_entries_org_active_idx").on(t.organizationId, t.isActive),
+  ]
+);
+
+export type KnowledgeEntry    = typeof knowledgeEntries.$inferSelect;
+export type NewKnowledgeEntry = typeof knowledgeEntries.$inferInsert;
+
 // Admin tables
 export type AdminCustomerProfile = typeof adminCustomerProfiles.$inferSelect;
 export type NewAdminCustomerProfile = typeof adminCustomerProfiles.$inferInsert;
