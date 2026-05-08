@@ -8,18 +8,47 @@ export default function AccountPage() {
         title="Account"
         description="Manage your profile and security settings"
       />
-      <main className="flex-1 p-6">
+
+      <main className="flex-1 p-6 md:p-8">
         <div className="mx-auto w-full max-w-5xl mailmind-account-profile">
-          <UserProfile 
+          <UserProfile
             routing="hash"
             appearance={{
-              // We still use appearance for basics, but heavy lifting moves to CSS
+              variables: {
+                colorPrimary: "#06b6d4",
+                colorBackground: "#050B1C",
+                colorText: "#ffffff",
+                colorTextSecondary: "#cbd5e1",
+                colorInputBackground: "#0A1025",
+                colorInputText: "#ffffff",
+                borderRadius: "1rem",
+              },
               elements: {
                 rootBox: "w-full",
-                card: "w-full",
-                navbar: "hidden lg:flex",
-                pageScrollBox: "p-0",
-              }
+                cardBox: "w-full shadow-none",
+                card: "w-full shadow-none bg-transparent border-none",
+                headerTitle: "text-white",
+                headerSubtitle: "text-slate-300",
+                navbar: "bg-transparent border-r border-white/5",
+                navbarButton: "text-slate-300 hover:text-white hover:bg-white/5",
+                navbarButtonActive: "text-cyan-400 bg-cyan-400/10 font-bold",
+                profileSectionTitleText: "text-white font-bold",
+                profileSectionSubtitleText: "text-slate-300",
+                userPreviewMainIdentifier: "text-white font-semibold",
+                userPreviewSecondaryIdentifier: "text-slate-300",
+                badge: "bg-cyan-400/15 text-cyan-300 border border-cyan-400/30",
+                scrollBox: "bg-transparent",
+                pageScrollBox: "bg-transparent",
+                profileSectionContent: "bg-transparent",
+                formFieldLabel: "text-slate-200",
+                formFieldInput: "bg-[#0A1025] border-white/10 text-white focus:border-cyan-400/50",
+                formButtonPrimary: "bg-cyan-400 text-black hover:bg-cyan-300 font-bold",
+                formButtonReset: "text-slate-400 hover:text-white",
+                socialButtonsBlockButton: "bg-white/5 border-white/10 text-white hover:bg-white/10",
+                socialButtonsBlockButtonText: "text-white font-medium",
+                socialButtonsBlockButtonArrow: "text-white/30",
+                developmentMode: "hidden",
+              },
             }}
           />
         </div>

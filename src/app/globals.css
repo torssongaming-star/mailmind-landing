@@ -165,9 +165,10 @@ input:-webkit-autofill:active {
   background: rgba(255, 255, 255, 0.05) !important;
 }
 
-.mailmind-account-profile .cl-navbarButton[data-active="true"] {
+.mailmind-account-profile .cl-navbarButton[data-active="true"],
+.mailmind-account-profile .cl-navbarButtonActive {
   color: #06b6d4 !important;
-  background: rgba(6,182,212,0.1) !important;
+  background: rgba(6,182,212,0.12) !important;
   font-weight: 600 !important;
 }
 
@@ -179,13 +180,15 @@ input:-webkit-autofill:active {
 
 .mailmind-account-profile .cl-headerSubtitle,
 .mailmind-account-profile .cl-profileSectionSubtitleText,
-.mailmind-account-profile .cl-userPreviewSecondaryIdentifier {
-  color: rgba(255, 255, 255, 0.55) !important;
+.mailmind-account-profile .cl-userPreviewSecondaryIdentifier,
+.mailmind-account-profile .cl-profileSectionSubtitle {
+  color: rgba(255, 255, 255, 0.6) !important;
 }
 
 .mailmind-account-profile .cl-userPreviewMainIdentifier,
 .mailmind-account-profile .cl-formFieldLabel,
-.mailmind-account-profile .cl-accordionTriggerButton {
+.mailmind-account-profile .cl-accordionTriggerButton,
+.mailmind-account-profile .cl-profileSectionTitle {
   color: rgba(255, 255, 255, 0.9) !important;
 }
 
@@ -198,27 +201,28 @@ input:-webkit-autofill:active {
 .mailmind-account-profile .cl-profileSectionItem,
 .mailmind-account-profile .cl-accordionContent,
 .mailmind-account-profile .cl-pageScrollBox {
-  border-color: rgba(255, 255, 255, 0.06) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .mailmind-account-profile .cl-badge {
   color: #67e8f9 !important;
-  background: rgba(6, 182, 212, 0.15) !important;
-  border: 1px solid rgba(6, 182, 212, 0.3) !important;
+  background: rgba(6, 182, 212, 0.16) !important;
+  border: 1px solid rgba(6, 182, 212, 0.35) !important;
   text-transform: uppercase !important;
   font-size: 10px !important;
   letter-spacing: 0.05em !important;
 }
 
 .mailmind-account-profile .cl-developmentMode,
-.mailmind-account-profile [class*="developmentMode"] {
+.mailmind-account-profile [class*="developmentMode"],
+.mailmind-account-profile .cl-internal-b3fm6y {
   display: none !important;
 }
 
 /* Fix for OAuth providers visibility */
 .mailmind-account-profile .cl-socialButtonsBlockButton {
   background: rgba(255, 255, 255, 0.03) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
 .mailmind-account-profile .cl-socialButtonsBlockButtonText {
@@ -238,10 +242,11 @@ input:-webkit-autofill:active {
 /* User friendly error message handling if needed via CSS content injection 
    (only if localization doesn't pick up) */
 .mailmind-account-profile .cl-alert__error {
-  background: rgba(239, 68, 68, 0.1) !important;
-  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+  background: rgba(239, 68, 68, 0.12) !important;
+  border: 1px solid rgba(239, 68, 68, 0.25) !important;
   color: #fecaca !important;
   border-radius: 12px !important;
 }
+
 
 

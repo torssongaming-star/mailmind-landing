@@ -15,6 +15,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         errors: {
           user_exists_with_different_provider: "Den här e-postadressen används redan av ett annat konto.",
           email_address_claimed: "Den här e-postadressen används redan av ett annat konto.",
+          user_exists_with_different_password: "Den här e-postadressen används redan av ett annat konto.",
+          identifier_already_exists: "Den här e-postadressen används redan av ett annat konto.",
         }
       } as any}
       appearance={{
