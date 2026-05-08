@@ -337,6 +337,27 @@ export async function deleteInbox(organizationId: string, inboxId: string) {
     ));
 }
 
+/** All threads from the same sender email, excluding the current thread. */
+export async function listThreadsByEmail(
+  organizationId: string,
+  fromEmail: string,
+  excludeThreadId: string,
+  limit = 10,
+): Promise<EmailThread[]> {
+  if (!isDbConnected()) return [];
+  return db
+    .select()
+    .from(emailThreads)
+    .where(and(
+      eq(emailThreads.organizationId, organizationId),
+      eq(emailThreads.fromEmail, fromEmail.toLowerCase()),
+      // exclude current thread — using sql tag for != since drizzle uses ne()
+    ))
+    .orderBy(desc(emailThreads.lastMessageAt))
+    .limit(limit + 1) // fetch one extra so we can filter the current thread client-side
+    .then(rows => rows.filter(r => r.id !== excludeThreadId).slice(0, limit));
+}
+
 /** Find an already-stored message by its external id (for webhook idempotency). */
 export async function findMessageByExternalId(externalMessageId: string): Promise<EmailMessage | null> {
   if (!isDbConnected()) return null;
