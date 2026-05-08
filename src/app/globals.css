@@ -128,20 +128,19 @@ input:-webkit-autofill:active {
 
 /*
  * Clerk — Global text contrast fixes for Profile/Account views.
- * Force white text on elements that are often too dark in the dark theme.
+ * Use softer whites for subtitles and labels to improve hierarchy.
  */
-.cl-developmentMode,
 .cl-headerSubtitle,
-.cl-profileSectionTitle,
 .cl-profileSectionSubtitle,
-.cl-profileSectionItem,
-.cl-navbarButton,
-.cl-sidebarItem,
-.cl-breadcrumbsItem,
-.cl-userButtonPopoverActionButtonText,
-.cl-userButtonPopoverFooter,
-.cl-identityPreviewText,
+.cl-userPreviewSecondaryIdentifier,
 .cl-formFieldLabel {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.cl-headerTitle,
+.cl-profileSectionTitle,
+.cl-userPreviewMainIdentifier {
   color: #ffffff !important;
 }
+
 

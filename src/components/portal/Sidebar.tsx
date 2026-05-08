@@ -19,8 +19,7 @@ import { cn } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
 
 const navItems = [
-  { href: "/app",                label: "Home",      icon: AppWindow },
-  { href: "/dashboard/overview", label: "Overview",  icon: LayoutDashboard },
+  { href: "/app",                label: "Home",      icon: LayoutDashboard },
   { href: "/app/inbox",          label: "Inbox",     icon: Mail },
   { href: "/dashboard/billing",  label: "Billing",   icon: CreditCard },
   { href: "/app/settings/account", label: "Account", icon: UserCircle },

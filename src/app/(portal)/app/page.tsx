@@ -18,6 +18,7 @@ import { getCurrentAccount } from "@/lib/app/entitlements";
 import { listThreads, listInboxes, listCaseTypes } from "@/lib/app/threads";
 import { PLANS } from "@/lib/plans";
 import { DashboardHeader } from "@/components/portal/DashboardHeader";
+import { Zap, Mail, Users, CreditCard, Database } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -56,10 +57,28 @@ export default async function AppHomePage() {
   return (
     <>
       <DashboardHeader
-        title="App"
-        description={`Welcome back to ${account.organization.name}`}
+        title="Home"
+        description="Your plan and usage at a glance"
       />
       <main className="flex-1 p-6 space-y-8">
+
+      {/* Welcome */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-white">
+            Welcome back{clerkUser.firstName ? `, ${clerkUser.firstName}` : ""}
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Here&apos;s an overview of your {account.organization.name} account.
+          </p>
+        </div>
+        {account.isMock && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-semibold uppercase tracking-wider">
+            <Database size={12} />
+            Preview Mode (Mock Data)
+          </div>
+        )}
+      </div>
 
       {/* Mock-data warning */}
       {account.isMock && (
@@ -163,26 +182,34 @@ export default async function AppHomePage() {
         )}
       </section>
 
-      {/* Usage */}
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <UsageCard
-          label="AI drafts this month"
+      {/* Stats grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatCard
+          label="AI Drafts"
+          value={`${(account.usage?.aiDraftsUsed ?? 0).toLocaleString()}`}
+          icon={Zap}
           used={account.usage?.aiDraftsUsed ?? 0}
-          limit={account.entitlements?.maxAiDraftsPerMonth ?? 0}
+          limit={account.entitlements?.maxAiDraftsPerMonth ?? plan?.draftsLimit ?? 500}
         />
-        <UsageCard
+        <StatCard
           label="Inboxes"
-          used={inboxes.length}
-          limit={account.entitlements?.maxInboxes ?? 0}
-          sub={inboxes.length === 0 ? "Connect inboxes coming soon" : undefined}
+          value={`${inboxes.length} / ${account.entitlements?.maxInboxes ?? plan?.inboxLimit ?? 1}`}
+          sub="Connected inboxes"
+          icon={Mail}
         />
-        <UsageCard
-          label="Team members"
-          used={1}
-          limit={account.entitlements?.maxUsers ?? 0}
-          sub="Invite team coming soon"
+        <StatCard
+          label="Seats"
+          value={`1 / ${account.entitlements?.maxUsers ?? plan?.seatLimit ?? 2}`}
+          sub="Team members"
+          icon={Users}
         />
-      </section>
+        <StatCard
+          label="Plan"
+          value={plan?.name ?? "—"}
+          sub={plan ? `${plan.price}/month` : "No active plan"}
+          icon={CreditCard}
+        />
+      </div>
 
       <section className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-6 text-xs text-muted-foreground space-y-1">
         <p className="font-semibold text-white mb-2 text-sm">Status för din plan</p>
@@ -404,36 +431,47 @@ function AccessBanner({ reason }: { reason: string }) {
   );
 }
 
-function UsageCard({
+function StatCard({
   label,
+  value,
+  sub,
+  icon: Icon,
   used,
   limit,
-  sub,
 }: {
   label: string;
-  used: number;
-  limit: number;
+  value: string;
   sub?: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+  used?: number;
+  limit?: number;
 }) {
-  const pct = limit > 0 ? Math.min(100, Math.round((used / limit) * 100)) : 0;
-  const warn = pct >= 80;
+  const pct = used !== undefined && limit ? Math.round((used / limit) * 100) : null;
+  const isWarning = pct !== null && pct >= 80;
 
   return (
-    <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5">
-      <p className="text-xs text-muted-foreground uppercase tracking-widest mb-3">{label}</p>
-      <p className="text-2xl font-bold text-white">
-        {used.toLocaleString()}
-        <span className="text-sm font-normal text-muted-foreground"> / {limit.toLocaleString()}</span>
-      </p>
-      {limit > 0 && (
-        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden mt-3">
-          <div
-            className={`h-full rounded-full ${warn ? "bg-amber-400" : "bg-gradient-to-r from-primary to-cyan-300"}`}
-            style={{ width: `${pct}%` }}
-          />
+    <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 backdrop-blur-sm p-5">
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">{label}</span>
+        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+          <Icon size={15} className="text-primary" />
+        </div>
+      </div>
+      <p className="text-2xl font-bold text-white mb-1">{value}</p>
+      {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
+      {pct !== null && (
+        <div className="mt-3">
+          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${isWarning ? "bg-amber-400" : "bg-gradient-to-r from-primary to-cyan-300"}`}
+              style={{ width: `${Math.min(pct, 100)}%` }}
+            />
+          </div>
+          <p className={`text-xs mt-1.5 ${isWarning ? "text-amber-400" : "text-muted-foreground"}`}>
+            {used?.toLocaleString()} / {limit?.toLocaleString()} used
+          </p>
         </div>
       )}
-      {sub && <p className="text-[10px] text-muted-foreground mt-2">{sub}</p>}
     </div>
   );
 }
