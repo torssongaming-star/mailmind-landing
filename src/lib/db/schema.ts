@@ -111,6 +111,98 @@ export const draftStatusEnum = pgEnum("draft_status", [
   "rejected",  // human rejected — won't be sent
 ]);
 
+/** Internal Mailmind admin customer status */
+export const adminCustomerStatusEnum = pgEnum("admin_customer_status", [
+  "internal_test",
+  "pilot",
+  "active_customer",
+  "enterprise_lead",
+  "enterprise_customer",
+  "churned",
+]);
+
+/** Type of subject an admin note is attached to */
+export const adminNoteSubjectTypeEnum = pgEnum("admin_note_subject_type", [
+  "user",
+  "organization",
+  "enterprise",
+  "general",
+]);
+
+// ── Tables ────────────────────────────────────────────────────────────────────
+
+/**
+ * admin_customer_profiles
+ * Internal tracking for pilots, enterprise leads, and testing accounts.
+ * Separated from core org data to avoid cluttering the customer experience.
+ */
+export const adminCustomerProfiles = pgTable(
+  "admin_customer_profiles",
+  {
+    id:                 uuid("id").primaryKey().defaultRandom(),
+    organizationId:     uuid("organization_id").references(() => organizations.id, { onDelete: "set null" }),
+    clerkUserId:        varchar("clerk_user_id", { length: 255 }),
+    status:             adminCustomerStatusEnum("status").notNull().default("internal_test"),
+    ownerName:          varchar("owner_name", { length: 255 }),
+    contactName:        varchar("contact_name", { length: 255 }),
+    contactEmail:       varchar("contact_email", { length: 320 }),
+    startDate:          timestamp("start_date", { withTimezone: true }),
+    nextFollowUpAt:     timestamp("next_follow_up_at", { withTimezone: true }),
+    summary:            text("summary"),
+    createdAt:          timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:          timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("admin_customer_profiles_org_id_idx").on(t.organizationId),
+    index("admin_customer_profiles_status_idx").on(t.status),
+  ]
+);
+
+/**
+ * admin_notes
+ * Internal team commentary on users, organizations, or enterprise leads.
+ */
+export const adminNotes = pgTable(
+  "admin_notes",
+  {
+    id:                   uuid("id").primaryKey().defaultRandom(),
+    subjectType:          adminNoteSubjectTypeEnum("subject_type").notNull(),
+    targetClerkUserId:    varchar("target_clerk_user_id", { length: 255 }),
+    targetOrganizationId: uuid("target_organization_id").references(() => organizations.id, { onDelete: "cascade" }),
+    authorClerkUserId:    varchar("author_clerk_user_id", { length: 255 }).notNull(),
+    content:              text("content").notNull(),
+    createdAt:            timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:            timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("admin_notes_target_user_idx").on(t.targetClerkUserId),
+    index("admin_notes_target_org_idx").on(t.targetOrganizationId),
+  ]
+);
+
+/**
+ * admin_audit_logs
+ * Dedicated append-only log for all administrative actions.
+ */
+export const adminAuditLogs = pgTable(
+  "admin_audit_logs",
+  {
+    id:                   uuid("id").primaryKey().defaultRandom(),
+    actorClerkUserId:     varchar("actor_clerk_user_id", { length: 255 }).notNull(),
+    actorEmail:           varchar("actor_email", { length: 320 }).notNull(),
+    action:               varchar("action", { length: 100 }).notNull(),
+    targetType:           varchar("target_type", { length: 50 }),
+    targetClerkUserId:    varchar("target_clerk_user_id", { length: 255 }),
+    targetOrganizationId: uuid("target_organization_id"),
+    metadata:             jsonb("metadata"),
+    createdAt:            timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("admin_audit_logs_actor_idx").on(t.actorClerkUserId),
+    index("admin_audit_logs_created_at_idx").on(t.createdAt),
+  ]
+);
+
 // ── Tables ────────────────────────────────────────────────────────────────────
 
 /**
@@ -706,3 +798,11 @@ export type InternalNote      = typeof internalNotes.$inferSelect;
 export type NewInternalNote   = typeof internalNotes.$inferInsert;
 export type ReplyTemplate     = typeof replyTemplates.$inferSelect;
 export type NewReplyTemplate  = typeof replyTemplates.$inferInsert;
+
+// Admin tables
+export type AdminCustomerProfile = typeof adminCustomerProfiles.$inferSelect;
+export type NewAdminCustomerProfile = typeof adminCustomerProfiles.$inferInsert;
+export type AdminNote = typeof adminNotes.$inferSelect;
+export type NewAdminNote = typeof adminNotes.$inferInsert;
+export type AdminAuditLog = typeof adminAuditLogs.$inferSelect;
+export type NewAdminAuditLog = typeof adminAuditLogs.$inferInsert;
