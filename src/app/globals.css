@@ -128,9 +128,120 @@ input:-webkit-autofill:active {
 
 /*
  * Clerk — Global text contrast fixes for Profile/Account views.
- * Use softer whites for subtitles and labels to improve hierarchy.
+ * Scoped to .mailmind-account-profile to avoid affecting other Clerk components.
  */
 
+.mailmind-account-profile .cl-rootBox {
+  width: 100% !important;
+  max-width: none !important;
+}
 
+.mailmind-account-profile .cl-card {
+  width: 100% !important;
+  max-width: none !important;
+  min-height: auto !important;
+  background: #050B1C !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 24px !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+}
+
+.mailmind-account-profile .cl-navbar {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 24px 0 !important;
+}
+
+.mailmind-account-profile .cl-navbarButton {
+  color: rgba(255, 255, 255, 0.6) !important;
+  border-radius: 12px !important;
+  margin: 0 12px !important;
+  transition: all 0.2s !important;
+}
+
+.mailmind-account-profile .cl-navbarButton:hover {
+  color: #ffffff !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.mailmind-account-profile .cl-navbarButton[data-active="true"] {
+  color: #06b6d4 !important;
+  background: rgba(6,182,212,0.1) !important;
+  font-weight: 600 !important;
+}
+
+.mailmind-account-profile .cl-headerTitle,
+.mailmind-account-profile .cl-profileSectionTitleText {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.mailmind-account-profile .cl-headerSubtitle,
+.mailmind-account-profile .cl-profileSectionSubtitleText,
+.mailmind-account-profile .cl-userPreviewSecondaryIdentifier {
+  color: rgba(255, 255, 255, 0.55) !important;
+}
+
+.mailmind-account-profile .cl-userPreviewMainIdentifier,
+.mailmind-account-profile .cl-formFieldLabel,
+.mailmind-account-profile .cl-accordionTriggerButton {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+.mailmind-account-profile .cl-formFieldInput {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+.mailmind-account-profile .cl-profileSectionItem,
+.mailmind-account-profile .cl-accordionContent,
+.mailmind-account-profile .cl-pageScrollBox {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+.mailmind-account-profile .cl-badge {
+  color: #67e8f9 !important;
+  background: rgba(6, 182, 212, 0.15) !important;
+  border: 1px solid rgba(6, 182, 212, 0.3) !important;
+  text-transform: uppercase !important;
+  font-size: 10px !important;
+  letter-spacing: 0.05em !important;
+}
+
+.mailmind-account-profile .cl-developmentMode,
+.mailmind-account-profile [class*="developmentMode"] {
+  display: none !important;
+}
+
+/* Fix for OAuth providers visibility */
+.mailmind-account-profile .cl-socialButtonsBlockButton {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.mailmind-account-profile .cl-socialButtonsBlockButtonText {
+  color: #ffffff !important;
+}
+
+.mailmind-account-profile .cl-identityPreviewText {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+}
+
+.mailmind-account-profile .cl-formFieldAction {
+  color: #06b6d4 !important;
+  font-weight: 600 !important;
+}
+
+/* User friendly error message handling if needed via CSS content injection 
+   (only if localization doesn't pick up) */
+.mailmind-account-profile .cl-alert__error {
+  background: rgba(239, 68, 68, 0.1) !important;
+  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+  color: #fecaca !important;
+  border-radius: 12px !important;
+}
 
 
