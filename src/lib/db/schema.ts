@@ -121,6 +121,28 @@ export const adminCustomerStatusEnum = pgEnum("admin_customer_status", [
   "churned",
 ]);
 
+/** Status for internal knowledge base articles */
+export const adminKnowledgeStatusEnum = pgEnum("admin_knowledge_status", [
+  "draft",
+  "published",
+  "archived",
+]);
+
+/** Categories for internal knowledge base articles */
+export const adminKnowledgeCategoryEnum = pgEnum("admin_knowledge_category", [
+  "enterprise",
+  "gdpr",
+  "security",
+  "dpa",
+  "ai_policy",
+  "pilot",
+  "support",
+  "billing",
+  "onboarding",
+  "internal_process",
+  "other",
+]);
+
 /** Type of subject an admin note is attached to */
 export const adminNoteSubjectTypeEnum = pgEnum("admin_note_subject_type", [
   "user",
@@ -130,6 +152,37 @@ export const adminNoteSubjectTypeEnum = pgEnum("admin_note_subject_type", [
 ]);
 
 // ── Tables ────────────────────────────────────────────────────────────────────
+
+/**
+ * admin_knowledge_articles
+ * Internal CMS for Mailmind team knowledge base.
+ */
+export const adminKnowledgeArticles = pgTable(
+  "admin_knowledge_articles",
+  {
+    id:                     uuid("id").primaryKey().defaultRandom(),
+    title:                  varchar("title", { length: 255 }).notNull(),
+    slug:                   varchar("slug", { length: 255 }).notNull().unique(),
+    summary:                text("summary"),
+    content:                text("content").notNull(),
+    category:               adminKnowledgeCategoryEnum("category").notNull().default("other"),
+    status:                 adminKnowledgeStatusEnum("status").notNull().default("draft"),
+    tags:                   jsonb("tags").$type<string[]>().default([]),
+    authorClerkUserId:      varchar("author_clerk_user_id", { length: 255 }).notNull(),
+    authorEmail:            varchar("author_email", { length: 320 }),
+    updatedByClerkUserId:   varchar("updated_by_clerk_user_id", { length: 255 }),
+    updatedByEmail:         varchar("updated_by_email", { length: 320 }),
+    publishedAt:            timestamp("published_at", { withTimezone: true }),
+    archivedAt:             timestamp("archived_at", { withTimezone: true }),
+    createdAt:              timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:              timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("admin_knowledge_articles_slug_idx").on(t.slug),
+    index("admin_knowledge_articles_category_idx").on(t.category),
+    index("admin_knowledge_articles_status_idx").on(t.status),
+  ]
+);
 
 /**
  * admin_customer_profiles
@@ -806,3 +859,5 @@ export type AdminNote = typeof adminNotes.$inferSelect;
 export type NewAdminNote = typeof adminNotes.$inferInsert;
 export type AdminAuditLog = typeof adminAuditLogs.$inferSelect;
 export type NewAdminAuditLog = typeof adminAuditLogs.$inferInsert;
+export type AdminKnowledgeArticle = typeof adminKnowledgeArticles.$inferSelect;
+export type NewAdminKnowledgeArticle = typeof adminKnowledgeArticles.$inferInsert;

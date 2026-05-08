@@ -1,10 +1,155 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { adminNotes, adminCustomerProfiles, adminAuditLogs } from "@/lib/db/schema";
+import { adminNotes, adminCustomerProfiles, adminAuditLogs, adminKnowledgeArticles } from "@/lib/db/schema";
 import { getAdminIdentity, requireAdminApi } from "@/lib/admin/auth";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
+
+/**
+ * Creates or updates a knowledge article.
+ */
+export async function upsertKnowledgeArticleAction(data: {
+  id?: string;
+  title: string;
+  slug: string;
+  summary?: string;
+  content: string;
+  category: any;
+  status?: "draft" | "published" | "archived";
+  tags?: string[];
+}) {
+  await requireAdminApi();
+  const admin = await getAdminIdentity();
+  if (!admin) throw new Error("No admin session");
+
+  try {
+    let articleId = data.id;
+
+    if (articleId) {
+      // Update
+      await db.update(adminKnowledgeArticles)
+        .set({
+          title: data.title,
+          slug: data.slug,
+          summary: data.summary,
+          content: data.content,
+          category: data.category,
+          status: data.status,
+          tags: data.tags,
+          updatedByClerkUserId: admin.clerkUserId,
+          updatedByEmail: admin.email,
+          updatedAt: new Date(),
+          publishedAt: data.status === "published" ? new Date() : undefined,
+        })
+        .where(eq(adminKnowledgeArticles.id, articleId));
+      
+      await db.insert(adminAuditLogs).values({
+        actorClerkUserId: admin.clerkUserId,
+        actorEmail: admin.email!,
+        action: "knowledge_article_updated",
+        targetType: "knowledge_article",
+        metadata: { articleId, title: data.title },
+      });
+    } else {
+      // Create
+      const [newArticle] = await db.insert(adminKnowledgeArticles).values({
+        title: data.title,
+        slug: data.slug,
+        summary: data.summary,
+        content: data.content,
+        category: data.category,
+        status: data.status || "draft",
+        tags: data.tags,
+        authorClerkUserId: admin.clerkUserId,
+        authorEmail: admin.email,
+        publishedAt: data.status === "published" ? new Date() : undefined,
+      }).returning({ id: adminKnowledgeArticles.id });
+      
+      articleId = newArticle.id;
+
+      await db.insert(adminAuditLogs).values({
+        actorClerkUserId: admin.clerkUserId,
+        actorEmail: admin.email!,
+        action: "knowledge_article_created",
+        targetType: "knowledge_article",
+        metadata: { articleId, title: data.title },
+      });
+    }
+
+    revalidatePath("/admin/knowledge");
+    return { success: true, id: articleId };
+  } catch (error) {
+    console.error("Failed to upsert knowledge article:", error);
+    return { success: false, error: "Failed to save article" };
+  }
+}
+
+/**
+ * Publishes a knowledge article.
+ */
+export async function publishKnowledgeArticleAction(id: string) {
+  await requireAdminApi();
+  const admin = await getAdminIdentity();
+  if (!admin) throw new Error("No admin session");
+
+  try {
+    await db.update(adminKnowledgeArticles)
+      .set({ 
+        status: "published", 
+        publishedAt: new Date(), 
+        updatedAt: new Date() 
+      })
+      .where(eq(adminKnowledgeArticles.id, id));
+
+    await db.insert(adminAuditLogs).values({
+      actorClerkUserId: admin.clerkUserId,
+      actorEmail: admin.email!,
+      action: "knowledge_article_published",
+      targetType: "knowledge_article",
+      metadata: { articleId: id },
+    });
+
+    revalidatePath("/admin/knowledge");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to publish knowledge article:", error);
+    return { success: false, error: "Failed to publish article" };
+  }
+}
+
+/**
+ * Archives a knowledge article.
+ */
+export async function archiveKnowledgeArticleAction(id: string) {
+  await requireAdminApi();
+  const admin = await getAdminIdentity();
+  if (!admin) throw new Error("No admin session");
+
+  try {
+    await db.update(adminKnowledgeArticles)
+      .set({ 
+        status: "archived", 
+        archivedAt: new Date(), 
+        updatedAt: new Date() 
+      })
+      .where(eq(adminKnowledgeArticles.id, id));
+
+    await db.insert(adminAuditLogs).values({
+      actorClerkUserId: admin.clerkUserId,
+      actorEmail: admin.email!,
+      action: "knowledge_article_archived",
+      targetType: "knowledge_article",
+      metadata: { articleId: id },
+    });
+
+    revalidatePath("/admin/knowledge");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to archive knowledge article:", error);
+    return { success: false, error: "Failed to archive article" };
+  }
+}
 
 /**
  * Creates an internal admin note.

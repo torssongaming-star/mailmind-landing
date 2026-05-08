@@ -1,15 +1,17 @@
 import { listAdminAuditLogs } from "@/lib/admin/queries";
-import { History, User as UserIcon, Building2, ShieldCheck, Mail, Lock } from "lucide-react";
+import { History, User as UserIcon, Building2, ShieldCheck, Mail, Lock, BookOpen, Activity } from "lucide-react";
 import { format } from "date-fns";
+import { AdminAuditLog } from "@/lib/db/schema";
 
 export default async function AdminAuditLogPage() {
-  const logs = await listAdminAuditLogs();
+  const logs: AdminAuditLog[] = await listAdminAuditLogs();
 
   const getActionIcon = (action: string) => {
     if (action.includes("password")) return <Lock className="w-3 h-3" />;
     if (action.includes("note")) return <History className="w-3 h-3" />;
     if (action.includes("status")) return <ShieldCheck className="w-3 h-3" />;
     if (action.includes("verification")) return <Mail className="w-3 h-3" />;
+    if (action.includes("knowledge")) return <BookOpen className="w-3 h-3" />;
     return <Activity className="w-3 h-3" />;
   };
 
@@ -33,7 +35,7 @@ export default async function AdminAuditLogPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {logs.map((log) => (
+              {logs.map((log: any) => (
                 <tr key={log.id} className="hover:bg-white/[0.01] transition-colors group">
                   <td className="px-6 py-4 text-slate-500 text-xs font-mono">
                     {format(new Date(log.createdAt), "yyyy-MM-dd HH:mm:ss")}
@@ -92,5 +94,3 @@ export default async function AdminAuditLogPage() {
     </div>
   );
 }
-
-import { Activity } from "lucide-react";

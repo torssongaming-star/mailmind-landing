@@ -88,7 +88,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
               </div>
 
               <div className="space-y-4 mt-8 pt-8 border-t border-white/5">
-                {notes.map((note) => (
+                {notes.map((note: any) => (
                   <div key={note.id} className="p-4 bg-white/[0.02] rounded-xl border border-white/5 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Admin Action</span>

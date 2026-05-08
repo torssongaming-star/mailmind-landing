@@ -29,7 +29,7 @@ export default async function AdminPilotsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {profiles.map(({ profile, org }) => (
+        {profiles.map(({ profile, org }: any) => (
           <div key={profile.id} className="bg-[#050B1C] border border-white/5 rounded-2xl p-8 hover:border-primary/20 transition-all group shadow-xl">
             <div className="flex flex-col lg:flex-row lg:items-start gap-8">
               <div className="flex-1 space-y-4">

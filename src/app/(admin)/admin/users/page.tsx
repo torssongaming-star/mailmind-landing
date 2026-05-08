@@ -37,7 +37,7 @@ export default async function AdminUsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {users.map((user) => (
+              {users.map((user: any) => (
                 <tr key={user.id} className="hover:bg-white/[0.01] transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">

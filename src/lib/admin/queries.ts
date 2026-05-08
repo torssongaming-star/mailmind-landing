@@ -5,9 +5,10 @@ import {
   subscriptions, 
   adminCustomerProfiles, 
   adminNotes, 
-  adminAuditLogs 
+  adminAuditLogs,
+  adminKnowledgeArticles
 } from "@/lib/db/schema";
-import { desc, eq, count, sql } from "drizzle-orm";
+import { desc, eq, count, sql, and, or, ilike } from "drizzle-orm";
 
 /**
  * Gets overview statistics for the admin dashboard.
@@ -36,6 +37,84 @@ export async function getAdminStats() {
     return null;
   }
 }
+
+/**
+ * Lists knowledge articles.
+ */
+export async function listKnowledgeArticles(options?: {
+  status?: "draft" | "published" | "archived";
+  category?: string;
+}) {
+  if (!isDbConnected()) return [];
+
+  try {
+    let query = db.select().from(adminKnowledgeArticles);
+    
+    const filters = [];
+    if (options?.status) filters.push(eq(adminKnowledgeArticles.status, options.status));
+    if (options?.category) filters.push(eq(adminKnowledgeArticles.category, options.category as any));
+
+    if (filters.length > 0) {
+      // @ts-ignore
+      query = query.where(and(...filters));
+    }
+
+    return await query.orderBy(desc(adminKnowledgeArticles.updatedAt));
+  } catch (error) {
+    console.error("Failed to list knowledge articles:", error);
+    return [];
+  }
+}
+
+/**
+ * Gets a single knowledge article by ID or slug.
+ */
+export async function getKnowledgeArticle(idOrSlug: string) {
+  if (!isDbConnected()) return null;
+
+  try {
+    const [article] = await db.select()
+      .from(adminKnowledgeArticles)
+      .where(
+        or(
+          eq(adminKnowledgeArticles.id, idOrSlug as any),
+          eq(adminKnowledgeArticles.slug, idOrSlug)
+        )
+      )
+      .limit(1);
+    
+    return article || null;
+  } catch (error) {
+    console.error("Failed to get knowledge article:", error);
+    return null;
+  }
+}
+
+/**
+ * Searches knowledge articles.
+ */
+export async function searchKnowledgeArticles(query: string) {
+  if (!isDbConnected()) return [];
+
+  try {
+    return await db.select()
+      .from(adminKnowledgeArticles)
+      .where(
+        or(
+          ilike(adminKnowledgeArticles.title, `%${query}%`),
+          ilike(adminKnowledgeArticles.content, `%${query}%`),
+          ilike(adminKnowledgeArticles.summary, `%${query}%`)
+        )
+      )
+      .orderBy(desc(adminKnowledgeArticles.updatedAt));
+  } catch (error) {
+    console.error("Failed to search knowledge articles:", error);
+    return [];
+  }
+}
+
+/**
+ * Lists users for the admin dashboard.
 
 /**
  * Lists users for the admin dashboard.

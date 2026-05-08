@@ -38,7 +38,7 @@ export default async function AdminOrganizationsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {orgs.map((org) => {
+              {orgs.map((org: any) => {
                 const sub = org.subscriptions[0];
                 return (
                   <tr key={org.id} className="hover:bg-white/[0.01] transition-colors group">
