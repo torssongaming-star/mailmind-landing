@@ -71,8 +71,8 @@ export async function GET(req: NextRequest) {
       const used = counter.aiDraftsUsed;
       const pct = limit > 0 ? used / limit : 0;
 
-      // Only notify at >= 99%
-      if (pct < 0.99) return;
+      // Only notify at >= 80%
+      if (pct < 0.80) return;
 
       // Find org owner
       const ownerRow = await db
