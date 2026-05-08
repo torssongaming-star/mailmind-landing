@@ -8,37 +8,75 @@ export default function AccountPage() {
         title="Account"
         description="Manage your profile and security settings"
       />
-      <main className="flex-1 p-6 space-y-6">
-        <div className="max-w-5xl mx-auto">
-          <div className="glass-card rounded-2xl overflow-hidden border border-white/5">
-            <UserProfile 
-              routing="hash"
-              appearance={{
-                elements: {
-                  rootBox: "w-full",
-                  card: "w-full shadow-none border-none bg-transparent",
-                  navbar: "hidden lg:flex border-r border-white/5 bg-white/[0.01]",
-                  pageScrollBox: "p-0",
-                  headerTitle: "text-white text-xl font-bold",
-                  headerSubtitle: "text-white/60 text-sm",
-                  profileSectionTitleText: "text-white text-base font-semibold border-b border-white/5 pb-2 mb-4",
-                  profileSectionSubtitleText: "text-white/50 text-xs mt-1",
-                  profileSectionContent: "gap-6",
-                  formFieldLabel: "text-white/70 text-xs font-medium mb-1.5",
-                  formFieldInput: "bg-white/[0.03] border-white/10 text-white rounded-xl focus:border-primary/50 focus:ring-primary/20 transition-all",
-                  formButtonPrimary: "bg-primary text-[#030614] hover:bg-cyan-300 transition-colors rounded-xl text-xs font-bold",
-                  formButtonReset: "text-white/60 hover:text-white transition-colors text-xs font-medium",
-                  navbarButton: "text-white/70 hover:text-primary transition-colors text-sm py-2.5 px-4 rounded-lg hover:bg-white/[0.03]",
-                  navbarButtonActive: "text-primary bg-primary/5 font-semibold",
-                  sidebarItem: "text-white/70 hover:text-white py-2 px-3 rounded-lg hover:bg-white/[0.03] transition-all",
-                  userPreviewMainIdentifier: "text-white font-semibold",
-                  userPreviewSecondaryIdentifier: "text-white/50 text-xs",
-                  accordionTriggerButton: "text-white/80 hover:text-white transition-colors",
-                  badge: "bg-primary/10 text-primary border border-primary/20",
-                }
-              }}
-            />
-          </div>
+      <main className="flex-1 p-6">
+        <div className="max-w-6xl mx-auto">
+          {/* 
+            Clerk UserProfile — integrated layout.
+            We force transparent backgrounds and remove borders on the internal card 
+            to make it feel like part of the page grid, not a floating modal.
+          */}
+          <UserProfile 
+            routing="hash"
+            localization={{
+              errors: {
+                user_exists_with_different_provider: "Den här e-postadressen används redan av ett annat konto.",
+                email_address_claimed: "Den här e-postadressen används redan av ett annat konto.",
+              }
+            }}
+            appearance={{
+              elements: {
+                rootBox: "w-full",
+                card: "w-full shadow-none border-none bg-transparent flex flex-col lg:flex-row gap-8",
+                
+                // Sidebar (Navbar)
+                navbar: "w-full lg:w-[240px] shrink-0 border-none bg-transparent p-0 flex flex-col gap-1",
+                navbarMobileMenuRow: "bg-[#050B1C] border border-white/10 rounded-xl mb-4",
+                navbarButton: "text-white/60 hover:text-white hover:bg-white/5 transition-all py-2 px-3 rounded-xl text-sm font-medium justify-start",
+                navbarButtonActive: "text-primary bg-primary/10 hover:bg-primary/15 font-semibold",
+                
+                // Headers & Typography
+                headerTitle: "text-white text-2xl font-bold tracking-tight mb-1",
+                headerSubtitle: "text-white/50 text-sm mb-6",
+                profileSectionTitleText: "text-white text-lg font-semibold tracking-tight border-b border-white/5 pb-3 mb-6",
+                profileSectionSubtitleText: "text-white/50 text-sm mt-1 mb-4 leading-relaxed",
+                
+                // Content Area
+                pageScrollBox: "flex-1 p-0 bg-transparent",
+                profileSection: "mb-10 last:mb-0",
+                profileSectionContent: "gap-6",
+                
+                // Form Elements
+                formFieldLabel: "text-white/80 text-sm font-medium mb-2",
+                formFieldInput: "bg-[#0A1025] border-white/10 text-white rounded-xl focus:border-primary/50 focus:ring-primary/20 transition-all py-2.5 px-4",
+                formButtonPrimary: "bg-primary text-[#030614] hover:bg-cyan-300 transition-colors rounded-xl text-sm font-bold py-2.5 px-6 shadow-[0_0_15px_rgba(6,182,212,0.2)]",
+                formButtonReset: "text-white/60 hover:text-white transition-colors text-sm font-medium",
+                
+                // Connected Accounts / OAuth
+                socialButtonsBlockButton: "bg-[#0A1025] border-white/10 text-white hover:bg-white/5 transition-colors rounded-xl py-3 px-4",
+                socialButtonsBlockButtonText: "text-white font-medium ml-3",
+                socialButtonsBlockButtonArrow: "text-white/30",
+                
+                // Identity / Email rows
+                userPreviewMainIdentifier: "text-white font-semibold text-sm",
+                userPreviewSecondaryIdentifier: "text-white/60 text-xs mt-0.5",
+                profileSectionItem: "py-4 border-b border-white/5 last:border-0",
+                
+                // Badges
+                badge: "bg-primary/15 text-primary border border-primary/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider",
+                
+                // Error Messages
+                formResendCodeLink: "text-primary hover:text-cyan-300",
+                alert: "bg-red-500/10 border-red-500/30 text-red-200 rounded-xl p-4 text-sm leading-relaxed",
+                alertText: "text-red-200",
+                
+                // Misc
+                accordionTriggerButton: "text-white/80 hover:text-white transition-colors",
+                breadcrumbsItem: "text-white/50 hover:text-white transition-colors",
+                breadcrumbsItemActive: "text-white font-medium",
+                developmentMode: "hidden", // Hide the distracting dev mode banner
+              }
+            }}
+          />
         </div>
       </main>
     </>

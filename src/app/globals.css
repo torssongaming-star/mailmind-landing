@@ -130,17 +130,7 @@ input:-webkit-autofill:active {
  * Clerk — Global text contrast fixes for Profile/Account views.
  * Use softer whites for subtitles and labels to improve hierarchy.
  */
-.cl-headerSubtitle,
-.cl-profileSectionSubtitle,
-.cl-userPreviewSecondaryIdentifier,
-.cl-formFieldLabel {
-  color: rgba(255, 255, 255, 0.6) !important;
-}
 
-.cl-headerTitle,
-.cl-profileSectionTitle,
-.cl-userPreviewMainIdentifier {
-  color: #ffffff !important;
-}
+
 
 
