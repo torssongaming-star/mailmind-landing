@@ -26,6 +26,7 @@ import {
   getAiSettings,
   listCaseTypes,
   createDraft,
+  updateThread,
   defaultAiSettings,
 } from "./threads";
 import { listActiveKnowledge } from "./knowledge";
@@ -133,6 +134,20 @@ export async function autoTriageNewMessage(input: {
     metadata,
     aiModel:   ai.model,
   });
+
+  // Auto-classify: write case_type back to thread immediately so inbox
+  // filtering and stats work without waiting for the agent to send the draft.
+  if (ai.output.action === "summarize" && ai.output.case_type) {
+    await updateThread(organizationId, threadId, {
+      caseTypeSlug: ai.output.case_type,
+    });
+  } else if (ai.output.action === "ask" && ai.output.collected_info) {
+    // Even on "ask", merge any partial collected_info into the thread
+    const merged = { ...(thread.collectedInfo ?? {}), ...ai.output.collected_info };
+    if (Object.keys(merged).length > 0) {
+      await updateThread(organizationId, threadId, { collectedInfo: merged });
+    }
+  }
 
   // Increment usage atomically (inline, since we don't have a Clerk userId)
   await db
