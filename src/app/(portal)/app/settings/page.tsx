@@ -10,10 +10,12 @@ import Link from "next/link";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { getAiSettings, listCaseTypes, defaultAiSettings } from "@/lib/app/threads";
 import { listTemplates } from "@/lib/app/notes";
+import { listKnowledge } from "@/lib/app/knowledge";
 import { AiSettingsEditor } from "./AiSettingsEditor";
 import { CaseTypesEditor } from "./CaseTypesEditor";
 import { OrganizationEditor } from "./OrganizationEditor";
 import { TemplatesEditor } from "./TemplatesEditor";
+import { KnowledgeEditor } from "./KnowledgeEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -25,10 +27,11 @@ export default async function SettingsPage() {
   if (!account.user) redirect("/app/onboarding");
   if (!account.access.canUseApp) redirect("/app");
 
-  const [settings, caseTypes, templates] = await Promise.all([
+  const [settings, caseTypes, templates, knowledge] = await Promise.all([
     getAiSettings(account.organization.id),
     listCaseTypes(account.organization.id),
     listTemplates(account.organization.id),
+    listKnowledge(account.organization.id),
   ]);
 
   // Settings dates are not serialisable — pass strings to the client component
@@ -86,6 +89,24 @@ export default async function SettingsPage() {
           replies like &quot;Quote received&quot;, &quot;Booking confirmed&quot;, etc.
         </p>
         <TemplatesEditor initial={templates} />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-white">Kunskapsbas</h2>
+        <p className="text-xs text-muted-foreground">
+          Vanliga frågor och svar som AI:n känner till. Importera från din hemsida
+          eller lägg till manuellt — priser, öppettider, policyer m.m.
+          Aktiva svar injiceras i varje AI-anrop.
+        </p>
+        <KnowledgeEditor
+          initial={knowledge.map(k => ({
+            id:       k.id,
+            question: k.question,
+            answer:   k.answer,
+            category: k.category,
+            isActive: k.isActive,
+          }))}
+        />
       </section>
 
     </main>
