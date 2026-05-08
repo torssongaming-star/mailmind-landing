@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/usage-warning",
+      "schedule": "0 8 * * 1"
+    }
+  ]
+}
