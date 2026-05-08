@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -22,11 +22,29 @@ const STATUS_CLASSES: Record<string, string> = {
   resolved:  "bg-white/10 text-muted-foreground border-white/15",
 };
 
+const POLL_INTERVAL_MS = 30_000; // 30 seconds
+
 export function InboxList({ threads }: { threads: Thread[] }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pendingAction, setPendingAction] = useState<"resolve" | "escalate" | "delete" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  const [refreshing, setRefreshing] = useState(false);
+
+  const refresh = useCallback(() => {
+    setRefreshing(true);
+    router.refresh();
+    setLastRefresh(new Date());
+    // Brief visual feedback — reset after 1s
+    setTimeout(() => setRefreshing(false), 1000);
+  }, [router]);
+
+  // Auto-poll every 30s
+  useEffect(() => {
+    const id = setInterval(refresh, POLL_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [refresh]);
 
   const allSelected = threads.length > 0 && selected.size === threads.length;
   const someSelected = selected.size > 0 && !allSelected;
@@ -139,6 +157,23 @@ export function InboxList({ threads }: { threads: Thread[] }) {
             aria-label={allSelected ? "Deselect all" : "Select all"}
           />
           <span>{threads.length} thread{threads.length === 1 ? "" : "s"}</span>
+          <div className="flex-1" />
+          <button
+            onClick={refresh}
+            disabled={refreshing}
+            title={`Uppdaterades ${lastRefresh.toLocaleTimeString("sv-SE")}`}
+            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-white transition-colors disabled:opacity-40"
+          >
+            <svg
+              width="10" height="10" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              className={refreshing ? "animate-spin" : ""}
+            >
+              <polyline points="23 4 23 10 17 10"/>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+            {refreshing ? "Uppdaterar…" : lastRefresh.toLocaleTimeString("sv-SE", { timeStyle: "short" })}
+          </button>
         </li>
 
         {threads.map(t => {
