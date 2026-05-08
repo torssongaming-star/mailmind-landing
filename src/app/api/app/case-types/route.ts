@@ -36,6 +36,7 @@ const PostBody = z.object({
   routeToEmail:   z.string().email().nullable().optional(),
   isDefault:      z.boolean().optional(),
   sortOrder:      z.number().int().min(0).max(999).optional(),
+  slaHours:       z.number().int().min(1).max(720).nullable().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -68,6 +69,7 @@ export async function POST(req: NextRequest) {
         routeToEmail:   parsed.data.routeToEmail ?? null,
         isDefault:      parsed.data.isDefault ?? false,
         sortOrder:      parsed.data.sortOrder ?? 0,
+        slaHours:       parsed.data.slaHours ?? null,
       })
       .returning();
     return NextResponse.json({ caseType: row });

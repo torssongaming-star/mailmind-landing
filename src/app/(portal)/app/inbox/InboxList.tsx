@@ -24,7 +24,7 @@ const STATUS_CLASSES: Record<string, string> = {
 
 const POLL_INTERVAL_MS = 30_000; // 30 seconds
 
-export function InboxList({ threads }: { threads: Thread[] }) {
+export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; slaByCaseType?: Record<string, number> }) {
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pendingAction, setPendingAction] = useState<"resolve" | "escalate" | "delete" | null>(null);
@@ -178,6 +178,14 @@ export function InboxList({ threads }: { threads: Thread[] }) {
 
         {threads.map(t => {
           const isSelected = selected.has(t.id);
+          // SLA badge computation
+          const slaHours = t.caseTypeSlug ? slaByCaseType[t.caseTypeSlug] : undefined;
+          let slaBadge: "breached" | "warning" | null = null;
+          if (slaHours && t.lastMessageAt) {
+            const elapsedHours = (Date.now() - new Date(t.lastMessageAt).getTime()) / 3_600_000;
+            if (elapsedHours >= slaHours) slaBadge = "breached";
+            else if (elapsedHours >= slaHours * 0.8) slaBadge = "warning";
+          }
           return (
             <li
               key={t.id}
@@ -208,6 +216,16 @@ export function InboxList({ threads }: { threads: Thread[] }) {
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
+                  {slaBadge === "breached" && (
+                    <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-red-500/15 text-red-400 border-red-500/30">
+                      SLA
+                    </span>
+                  )}
+                  {slaBadge === "warning" && (
+                    <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-amber-500/15 text-amber-400 border-amber-500/30">
+                      SLA snart
+                    </span>
+                  )}
                   {t.snoozedUntil && new Date(t.snoozedUntil) > new Date() && (
                     <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-amber-500/15 text-amber-400 border-amber-500/30 inline-flex items-center gap-1">
                       <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

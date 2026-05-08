@@ -17,6 +17,7 @@ import {
   subscriptions,
   licenseEntitlements,
   usageCounters,
+  users,
   type Subscription,
 } from "@/lib/db";
 import { eq, and, desc } from "drizzle-orm";
@@ -33,6 +34,8 @@ import { listActiveKnowledge } from "./knowledge";
 import { generateDraft } from "./ai";
 import { writeAuditLog } from "./audit";
 import { computeAccess } from "./entitlements";
+import { fireWebhooksForThread } from "./webhooks";
+import { notifyNewThread } from "./notify";
 
 function currentMonthIso(): string {
   const now = new Date();
@@ -141,6 +144,13 @@ export async function autoTriageNewMessage(input: {
     await updateThread(organizationId, threadId, {
       caseTypeSlug: ai.output.case_type,
     });
+    // Fire webhooks for classified thread (non-blocking)
+    fireWebhooksForThread(organizationId, {
+      id:           threadId,
+      caseTypeSlug: ai.output.case_type ?? null,
+      fromEmail:    thread.fromEmail,
+      subject:      thread.subject ?? null,
+    }).catch(() => {});
   } else if (ai.output.action === "ask" && ai.output.collected_info) {
     // Even on "ask", merge any partial collected_info into the thread
     const merged = { ...(thread.collectedInfo ?? {}), ...ai.output.collected_info };
@@ -160,6 +170,30 @@ export async function autoTriageNewMessage(input: {
         updatedAt:    new Date(),
       },
     });
+
+  // Notify org owner about new inbound thread (non-blocking)
+  try {
+    const ownerRow = await db
+      .select()
+      .from(users)
+      .where(and(
+        eq(users.organizationId, organizationId),
+        eq(users.role, "owner"),
+      ))
+      .limit(1)
+      .then(r => r[0] ?? null);
+    if (ownerRow?.email) {
+      notifyNewThread({
+        toEmail:   ownerRow.email,
+        fromName:  thread.fromName,
+        fromEmail: thread.fromEmail,
+        subject:   thread.subject ?? null,
+        threadId,
+      }).catch(() => {});
+    }
+  } catch {
+    // Never let notification failure break the triage flow
+  }
 
   await writeAuditLog({
     organizationId,

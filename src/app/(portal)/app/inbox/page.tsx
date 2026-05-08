@@ -9,7 +9,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentAccount } from "@/lib/app/entitlements";
-import { listThreads, wakeUpSnoozedThreads } from "@/lib/app/threads";
+import { listThreads, wakeUpSnoozedThreads, listCaseTypes } from "@/lib/app/threads";
 import { NewThreadButton } from "./NewThreadButton";
 import { InboxFilters } from "./InboxFilters";
 import { InboxList } from "./InboxList";
@@ -40,7 +40,15 @@ export default async function InboxPage({
   // Wake up any threads whose snooze has expired before listing
   await wakeUpSnoozedThreads(account.organization.id);
 
-  const all = await listThreads(account.organization.id, { limit: 200 });
+  const [all, caseTypesList] = await Promise.all([
+    listThreads(account.organization.id, { limit: 200 }),
+    listCaseTypes(account.organization.id),
+  ]);
+
+  const slaByCaseType: Record<string, number> = {};
+  for (const ct of caseTypesList) {
+    if (ct.slaHours != null) slaByCaseType[ct.slug] = ct.slaHours;
+  }
 
   // Filter on the server so the count + list always agree
   const threads = all.filter(t => {
@@ -112,6 +120,7 @@ export default async function InboxPage({
         </div>
       ) : (
         <InboxList
+          slaByCaseType={slaByCaseType}
           threads={threads.map(t => ({
             id:             t.id,
             subject:        t.subject,

@@ -22,6 +22,7 @@ const PatchBody = z.object({
   routeToEmail:   z.string().email().nullable().optional(),
   isDefault:      z.boolean().optional(),
   sortOrder:      z.number().int().min(0).max(999).optional(),
+  slaHours:       z.number().int().min(1).max(720).nullable().optional(),
 });
 
 export async function PATCH(

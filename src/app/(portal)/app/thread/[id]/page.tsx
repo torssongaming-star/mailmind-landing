@@ -191,6 +191,14 @@ export default async function ThreadPage({
                 action={d.action}
                 status={d.status}
                 initialBody={d.bodyText}
+                templateVars={{
+                  customer_name: thread.fromName ?? "",
+                  from_email:    thread.fromEmail,
+                  case_type:     thread.caseTypeSlug ?? "",
+                  ...(Object.fromEntries(
+                    Object.entries(thread.collectedInfo ?? {}).map(([k, v]) => [k, String(v)])
+                  )),
+                }}
               />
 
               <p className="text-[10px] text-muted-foreground border-t border-white/5 pt-2">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { interpolateTemplate } from "@/lib/utils/templateVars";
 
 type DraftAction = "ask" | "summarize" | "escalate";
 type DraftStatus = "pending" | "approved" | "edited" | "sent" | "rejected";
@@ -13,7 +14,7 @@ type Template = { id: string; title: string; slug: string | null; bodyText: stri
  * Lazily fetches templates the first time it's expanded — no network cost
  * if the user never opens it.
  */
-function TemplatePicker({ onInsert }: { onInsert: (text: string) => void }) {
+function TemplatePicker({ onInsert, templateVars }: { onInsert: (text: string) => void; templateVars: Record<string, string> }) {
   const [open, setOpen]               = useState(false);
   const [templates, setTemplates]     = useState<Template[] | null>(null);
   const [loading, setLoading]         = useState(false);
@@ -30,7 +31,7 @@ function TemplatePicker({ onInsert }: { onInsert: (text: string) => void }) {
 
   const handleInsert = async (tpl: Template) => {
     setInsertingId(tpl.id);
-    onInsert(tpl.bodyText);
+    onInsert(interpolateTemplate(tpl.bodyText, templateVars));
     setOpen(false);
     // Fire-and-forget: increment use_count on the server
     fetch(`/api/app/templates/${tpl.id}`, {
@@ -95,11 +96,13 @@ export function DraftActions({
   action,
   status,
   initialBody,
+  templateVars = {},
 }: {
   draftId: string;
   action: DraftAction;
   status: DraftStatus;
   initialBody: string | null;
+  templateVars?: Record<string, string>;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -134,7 +137,7 @@ export function DraftActions({
   if (editing && action !== "escalate") {
     return (
       <div className="space-y-2 border-t border-white/5 pt-3">
-        <TemplatePicker onInsert={tpl => setBody(prev => prev.trim() ? prev + "\n\n" + tpl : tpl)} />
+        <TemplatePicker templateVars={templateVars} onInsert={tpl => setBody(prev => prev.trim() ? prev + "\n\n" + tpl : tpl)} />
         <textarea
           value={body}
           onChange={e => setBody(e.target.value)}

@@ -35,6 +35,7 @@ import {
 } from "@/lib/app/threads";
 import { autoTriageNewMessage } from "@/lib/app/autoTriage";
 import { writeAuditLog } from "@/lib/app/audit";
+import { isBlocked } from "@/lib/app/blocklist";
 
 export const runtime = "nodejs";
 
@@ -149,6 +150,13 @@ export async function POST(req: NextRequest) {
     console.warn("[inbound] no inbox registered for", toEmail);
     // Return 200 to prevent SendGrid retries (the email is "accepted" but not processed)
     return NextResponse.json({ status: "no_inbox", to: toEmail });
+  }
+
+  // Blocklist check — drop emails from blocked senders
+  const blocked = await isBlocked(inbox.organizationId, fromEmail);
+  if (blocked) {
+    console.log(`[inbound] blocked sender ${fromEmail} — skipping`);
+    return NextResponse.json({ ok: true, skipped: "blocked" });
   }
 
   // Idempotency check — if SendGrid retries the same email (e.g. our handler

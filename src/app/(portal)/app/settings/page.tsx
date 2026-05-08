@@ -11,11 +11,15 @@ import { getCurrentAccount } from "@/lib/app/entitlements";
 import { getAiSettings, listCaseTypes, defaultAiSettings } from "@/lib/app/threads";
 import { listTemplates } from "@/lib/app/notes";
 import { listKnowledge } from "@/lib/app/knowledge";
+import { listBlocklist } from "@/lib/app/blocklist";
+import { listWebhooks } from "@/lib/app/webhooks";
 import { AiSettingsEditor } from "./AiSettingsEditor";
 import { CaseTypesEditor } from "./CaseTypesEditor";
 import { OrganizationEditor } from "./OrganizationEditor";
 import { TemplatesEditor } from "./TemplatesEditor";
 import { KnowledgeEditor } from "./KnowledgeEditor";
+import { BlocklistEditor } from "./BlocklistEditor";
+import { WebhooksEditor } from "./WebhooksEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -27,11 +31,13 @@ export default async function SettingsPage() {
   if (!account.user) redirect("/app/onboarding");
   if (!account.access.canUseApp) redirect("/app");
 
-  const [settings, caseTypes, templates, knowledge] = await Promise.all([
+  const [settings, caseTypes, templates, knowledge, blocklist, webhooks] = await Promise.all([
     getAiSettings(account.organization.id),
     listCaseTypes(account.organization.id),
     listTemplates(account.organization.id),
     listKnowledge(account.organization.id),
+    listBlocklist(account.organization.id),
+    listWebhooks(account.organization.id),
   ]);
 
   // Settings dates are not serialisable — pass strings to the client component
@@ -89,6 +95,32 @@ export default async function SettingsPage() {
           replies like &quot;Quote received&quot;, &quot;Booking confirmed&quot;, etc.
         </p>
         <TemplatesEditor initial={templates} />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-white">Blocklista</h2>
+        <p className="text-xs text-muted-foreground">
+          Mejl från dessa avsändare ignoreras automatiskt.
+        </p>
+        <BlocklistEditor
+          initial={blocklist.map(b => ({
+            id:        b.id,
+            pattern:   b.pattern,
+            reason:    b.reason ?? null,
+            createdAt: b.createdAt,
+          }))}
+        />
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-white">Webhooks</h2>
+        <p className="text-xs text-muted-foreground">
+          Skicka automatiska notifikationer till externa system när ett ärende klassificeras.
+        </p>
+        <WebhooksEditor
+          initial={webhooks}
+          caseTypes={caseTypes.map(c => ({ slug: c.slug, label: c.label }))}
+        />
       </section>
 
       <section className="space-y-3">

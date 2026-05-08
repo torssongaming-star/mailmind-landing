@@ -23,6 +23,22 @@ export function UsageHistory({
   const maxDrafts  = Math.max(...sorted.map(d => d.aiDrafts), 1);
   const chartMax   = Math.max(maxDrafts, draftsLimit * 0.5);
 
+  const downloadCsv = () => {
+    const header = "Månad,AI-svar,E-post,% av plan";
+    const rows = [...sorted].reverse().map(d => {
+      const pct = draftsLimit > 0 ? Math.round((d.aiDrafts / draftsLimit) * 100) : 0;
+      return `${formatMonth(d.month)},${d.aiDrafts},${d.emails},${pct}%`;
+    });
+    const csv = [header, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `mailmind-usage-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-4">
       {/* Bar chart */}
@@ -65,6 +81,16 @@ export function UsageHistory({
             </div>
           );
         })}
+      </div>
+
+      {/* Download CSV */}
+      <div className="flex justify-end">
+        <button
+          onClick={downloadCsv}
+          className="text-xs text-muted-foreground hover:text-white border border-white/10 hover:border-white/25 px-3 py-1.5 rounded-lg transition-colors"
+        >
+          Ladda ner rapport (CSV)
+        </button>
       </div>
 
       {/* Table summary */}

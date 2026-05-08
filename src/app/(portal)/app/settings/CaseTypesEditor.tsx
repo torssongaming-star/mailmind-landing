@@ -21,6 +21,7 @@ type Row = {
   requiredFields: string[];
   routeToEmail: string | null;
   isDefault: boolean;
+  slaHours: number | null;
   /** local-only state */
   _isNew?: boolean;
   _isDirty?: boolean;
@@ -36,6 +37,7 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
       requiredFields: (c.requiredFields ?? []) as string[],
       routeToEmail:   c.routeToEmail,
       isDefault:      c.isDefault,
+      slaHours:       c.slaHours ?? null,
     }))
   );
   const [addingNew, setAddingNew] = useState(false);
@@ -65,6 +67,7 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
             requiredFields: row.requiredFields,
             routeToEmail:   row.routeToEmail || null,
             isDefault:      row.isDefault,
+            slaHours:       row.slaHours ?? null,
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -82,6 +85,7 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
             requiredFields: row.requiredFields,
             routeToEmail:   row.routeToEmail || null,
             isDefault:      row.isDefault,
+            slaHours:       row.slaHours ?? null,
           }),
         });
         const data = await res.json().catch(() => ({}));
@@ -125,7 +129,7 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
   const addNew = () => {
     setRows(prev => [...prev, {
       slug: "", label: "", requiredFields: [], routeToEmail: "",
-      isDefault: false, _isNew: true, _isDirty: true,
+      isDefault: false, slaHours: null, _isNew: true, _isDirty: true,
     }]);
     setAddingNew(true);
   };
@@ -195,7 +199,7 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
                 <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Route finished cases to (optional)</label>
                 <input
@@ -203,6 +207,18 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
                   value={row.routeToEmail ?? ""}
                   onChange={e => updateRow(idx, { routeToEmail: e.target.value })}
                   placeholder="offert@dittforetag.se"
+                  className="ct-input"
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">SLA (timmar, valfritt)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={720}
+                  value={row.slaHours ?? ""}
+                  onChange={e => updateRow(idx, { slaHours: e.target.value ? parseInt(e.target.value, 10) : null })}
+                  placeholder="48"
                   className="ct-input"
                 />
               </div>

@@ -124,6 +124,19 @@ export function TemplatesEditor({ initial }: { initial: ReplyTemplate[] }) {
 
   return (
     <div className="space-y-3">
+      <div className="rounded-lg border border-white/8 bg-white/[0.02] px-3 py-2.5 text-xs text-muted-foreground space-y-1">
+        <p className="text-white/60 font-medium">Tillgängliga variabler:</p>
+        <p>
+          <code className="text-primary/80">{"{{customer_name}}"}</code>
+          {" · "}
+          <code className="text-primary/80">{"{{from_email}}"}</code>
+          {" · "}
+          <code className="text-primary/80">{"{{case_type}}"}</code>
+          {" · "}
+          plus valfri insamlad info t.ex. <code className="text-primary/80">{"{{order_id}}"}</code>
+        </p>
+      </div>
+
       {error && (
         <div className="rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-red-400">
           {error}

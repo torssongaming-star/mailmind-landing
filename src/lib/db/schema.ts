@@ -481,6 +481,8 @@ export const caseTypes = pgTable(
     routeToEmail:    varchar("route_to_email", { length: 320 }),
     /** Fallback when AI can't classify (one per org) */
     isDefault:       boolean("is_default").notNull().default(false),
+    /** SLA target in hours — inbox shows countdown + red badge when exceeded */
+    slaHours:        integer("sla_hours"),
     sortOrder:       integer("sort_order").notNull().default(0),
     createdAt:       timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt:       timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
@@ -879,6 +881,60 @@ export const knowledgeEntries = pgTable(
 
 export type KnowledgeEntry    = typeof knowledgeEntries.$inferSelect;
 export type NewKnowledgeEntry = typeof knowledgeEntries.$inferInsert;
+
+/**
+ * sender_blocklist
+ * Emails from matching addresses/domains are silently dropped on inbound.
+ * `pattern` can be exact address (user@domain.com) or domain (@domain.com).
+ */
+export const senderBlocklist = pgTable(
+  "sender_blocklist",
+  {
+    id:             uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    /** exact address or @domain.com prefix */
+    pattern:        varchar("pattern", { length: 320 }).notNull(),
+    reason:         varchar("reason", { length: 500 }),
+    createdAt:      timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("sender_blocklist_org_idx").on(t.organizationId),
+    uniqueIndex("sender_blocklist_org_pattern_idx").on(t.organizationId, t.pattern),
+  ]
+);
+
+export type SenderBlock    = typeof senderBlocklist.$inferSelect;
+export type NewSenderBlock = typeof senderBlocklist.$inferInsert;
+
+/**
+ * webhook_endpoints
+ * Customer-configured outbound webhooks. Fired when a thread is classified
+ * to a matching case_type_slug (or "*" for all).
+ */
+export const webhookEndpoints = pgTable(
+  "webhook_endpoints",
+  {
+    id:              uuid("id").primaryKey().defaultRandom(),
+    organizationId:  uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    url:             varchar("url", { length: 2048 }).notNull(),
+    /** case_type slug to trigger on, or "*" for all classifications */
+    caseTypeSlug:    varchar("case_type_slug", { length: 100 }).notNull().default("*"),
+    /** Optional secret — sent as X-Mailmind-Secret header */
+    secret:          varchar("secret", { length: 255 }),
+    isActive:        boolean("is_active").notNull().default(true),
+    /** Last delivery status: "ok" | "error" | null */
+    lastStatus:      varchar("last_status", { length: 20 }),
+    lastFiredAt:     timestamp("last_fired_at", { withTimezone: true }),
+    createdAt:       timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:       timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("webhook_endpoints_org_idx").on(t.organizationId),
+  ]
+);
+
+export type WebhookEndpoint    = typeof webhookEndpoints.$inferSelect;
+export type NewWebhookEndpoint = typeof webhookEndpoints.$inferInsert;
 
 // Admin tables
 export type AdminCustomerProfile = typeof adminCustomerProfiles.$inferSelect;
