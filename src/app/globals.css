@@ -255,6 +255,16 @@ input:-webkit-autofill:active {
 
 
 
+.cl-socialButtonsBlockButton__apple img,
+.cl-socialButtonsBlockButton__apple svg,
+.cl-socialButtonsBlockButton__apple span,
+.cl-socialButtonsBlockButton[data-provider="apple"] img,
+.cl-socialButtonsBlockButton[data-provider="apple"] svg,
+.cl-socialButtonsBlockButton[data-provider="apple"] span {
+  filter: invert(1) brightness(1.2) !important;
+  background-color: #ffffff !important; /* This acts as the mask fill color */
+}
+
 /*
  * Clerk — Appearance API Fallbacks
  * Using stable .cl-* classes to fix transparency and contrast issues
@@ -264,22 +274,16 @@ input:-webkit-autofill:active {
 .cl-socialButtonsIconButton,
 .cl-socialButtonsIconButton__apple,
 .cl-socialButtonsIconButton__microsoft {
-  background-color: #ffffff !important;
-  color: #020617 !important;
-  border-color: rgba(255, 255, 255, 0.8) !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: none !important;
 }
 
 .cl-socialButtonsIconButton:hover,
 .cl-socialButtonsIconButton:focus,
-.cl-socialButtonsIconButton:active,
-.cl-socialButtonsIconButton__apple:hover,
-.cl-socialButtonsIconButton__apple:focus,
-.cl-socialButtonsIconButton__apple:active,
-.cl-socialButtonsIconButton__microsoft:hover,
-.cl-socialButtonsIconButton__microsoft:focus,
-.cl-socialButtonsIconButton__microsoft:active {
-  background-color: #ffffff !important;
-  color: #020617 !important;
+.cl-socialButtonsIconButton:active {
+  background-color: rgba(255, 255, 255, 0.1) !important;
 }
 
 .cl-lastAuthenticationStrategyBadge {

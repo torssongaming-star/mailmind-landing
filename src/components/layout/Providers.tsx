@@ -48,11 +48,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
           // Logo Fix: Brighten the logo on dark background
           logoImage: "brightness-0 invert opacity-90 hover:opacity-100 transition-opacity",
 
-          // Social auth buttons - Solid white background for visibility
+          // Social auth buttons - Subtle dark style matching Google
           socialButtonsIconButton:
-            "bg-white text-slate-950 hover:bg-white focus:bg-white active:bg-white border border-white/80 shadow-sm",
+            "bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 shadow-none",
           socialButtonsProviderIcon:
-            "text-slate-950",
+            "text-white",
           socialButtonsBlockButton: 
             "bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200",
           socialButtonsBlockButtonText: "font-medium text-white",
