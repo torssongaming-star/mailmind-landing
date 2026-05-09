@@ -250,3 +250,45 @@ input:-webkit-autofill:active {
 
 
 
+/*
+ * Clerk — Appearance API Fallbacks
+ * Using stable .cl-* classes to fix transparency and contrast issues
+ * that the appearance prop cannot fully resolve.
+ */
+
+.cl-socialButtonsIconButton,
+.cl-socialButtonsIconButton__apple,
+.cl-socialButtonsIconButton__microsoft {
+  background-color: #ffffff !important;
+  color: #020617 !important;
+  border-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.cl-socialButtonsIconButton:hover,
+.cl-socialButtonsIconButton:focus,
+.cl-socialButtonsIconButton:active,
+.cl-socialButtonsIconButton__apple:hover,
+.cl-socialButtonsIconButton__apple:focus,
+.cl-socialButtonsIconButton__apple:active,
+.cl-socialButtonsIconButton__microsoft:hover,
+.cl-socialButtonsIconButton__microsoft:focus,
+.cl-socialButtonsIconButton__microsoft:active {
+  background-color: #ffffff !important;
+  color: #020617 !important;
+}
+
+.cl-lastAuthenticationStrategyBadge {
+  color: #f1f5f9 !important;
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  font-weight: 600 !important;
+}
+
+.cl-footer,
+.cl-footer *,
+.cl-footer svg,
+.cl-footer svg * {
+  color: #cbd5e1 !important;
+  fill: #cbd5e1 !important;
+  opacity: 1 !important;
+}

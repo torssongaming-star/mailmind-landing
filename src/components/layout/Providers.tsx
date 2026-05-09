@@ -27,12 +27,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
           colorInputBackground: "#0d1f3c", // lighter navy for inputs
           colorText: "#ffffff",            // High contrast text (RESTORED)
           colorTextSecondary: "#cbd5e1",   // Light slate text (RESTORED)
+          colorForeground: "#e2e8f0",      // High contrast foreground
+          colorMutedForeground: "#cbd5e1", // High contrast muted foreground
           colorNeutral: "#94a3b8",         // Slate-400
           borderRadius: "1rem",
           fontFamily: "Inter, sans-serif",
         },
         options: {
           unsafe_disableDevelopmentModeWarnings: true, // Turn off "Development mode" warning
+          socialButtonsVariant: "iconButton",          // Use icon buttons for social providers
         },
         elements: {
           // Card: Glass effect matching our design system
@@ -45,7 +48,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
           // Logo Fix: Brighten the logo on dark background
           logoImage: "brightness-0 invert opacity-90 hover:opacity-100 transition-opacity",
 
-          // Social auth buttons
+          // Social auth buttons - Solid white background for visibility
+          socialButtonsIconButton:
+            "bg-white text-slate-950 hover:bg-white focus:bg-white active:bg-white border border-white/80 shadow-sm",
+          socialButtonsProviderIcon:
+            "text-slate-950",
           socialButtonsBlockButton: 
             "bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200",
           socialButtonsBlockButtonText: "font-medium text-white",
@@ -67,11 +74,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
             "shadow-[0_0_20px_rgba(6,182,212,0.2)] hover:shadow-[0_0_25px_rgba(6,182,212,0.3)] transition-all",
 
           // Footer links
-          footer: "text-slate-500",
+          footer: "text-slate-300",
+          footerPages: "text-slate-300",
           footerText: "text-slate-500",
           footerActionText: "text-slate-400",
           footerActionLink: "text-cyan-400 hover:text-cyan-300 font-semibold transition-colors",
           
+          // Badges
+          lastAuthenticationStrategyBadge:
+            "text-slate-100 bg-white/10 border border-white/20 font-semibold px-1.5 py-0.5 rounded",
+
           // Misc contrast fixes
           identityPreviewText: "text-white",
           identityPreviewEditButton: "text-cyan-400 hover:text-cyan-300",
