@@ -95,9 +95,12 @@ export function Navbar() {
                   >
                     Login
                   </Link>
-                  <Button size="sm" variant="ghost" asChild className="text-white hover:bg-white/10">
-                    <Link href="/signup">Sign up</Link>
-                  </Button>
+                  <Link
+                    href="/signup"
+                    className="text-sm text-muted-foreground hover:text-white transition-colors font-medium"
+                  >
+                    Sign up
+                  </Link>
                 </>
               )}
             </div>
