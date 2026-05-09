@@ -67,6 +67,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
             "shadow-[0_0_20px_rgba(6,182,212,0.2)] hover:shadow-[0_0_25px_rgba(6,182,212,0.3)] transition-all",
 
           // Footer links
+          footer: "text-slate-500",
+          footerText: "text-slate-500",
           footerActionText: "text-slate-400",
           footerActionLink: "text-cyan-400 hover:text-cyan-300 font-semibold transition-colors",
           
