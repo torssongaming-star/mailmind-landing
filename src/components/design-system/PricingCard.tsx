@@ -81,7 +81,9 @@ export function PricingCard({ name, price, description, features, popular, ctaTe
         }`}
         asChild
       >
-        <Link href="#contact">{ctaText || "Book a demo"}</Link>
+        <Link href={name.toLowerCase().includes("enterprise") ? "#contact" : "/signup"}>
+          {ctaText || "Get started"}
+        </Link>
       </Button>
     </motion.div>
   )

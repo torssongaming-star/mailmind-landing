@@ -60,7 +60,7 @@ export function Hero() {
             className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-5 md:mb-8 w-full sm:w-auto"
           >
             <Button size="lg" className="w-full sm:w-auto gap-2 text-base h-14 px-8 shadow-[0_0_20px_rgba(6,182,212,0.25)]" asChild>
-              <Link href="#contact">Book a demo <ArrowRight size={18} /></Link>
+              <Link href="/signup">Get started <ArrowRight size={18} /></Link>
             </Button>
             <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2 text-base h-14 px-8 border-white/10 bg-white/[0.03]" asChild>
               <Link href="#demo">View product</Link>

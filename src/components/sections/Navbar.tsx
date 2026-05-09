@@ -88,12 +88,17 @@ export function Navbar() {
                   />
                 </>
               ) : (
-                <Link
-                  href="/login"
-                  className="text-sm text-muted-foreground hover:text-white transition-colors font-medium"
-                >
-                  Login
-                </Link>
+                <>
+                  <Link
+                    href="/login"
+                    className="text-sm text-muted-foreground hover:text-white transition-colors font-medium"
+                  >
+                    Login
+                  </Link>
+                  <Button size="sm" variant="ghost" asChild className="text-white hover:bg-white/10">
+                    <Link href="/signup">Sign up</Link>
+                  </Button>
+                </>
               )}
             </div>
 
@@ -195,6 +200,23 @@ export function Navbar() {
                     {isSignedIn ? <LayoutDashboard size={18} className="text-primary/60" /> : <ArrowRight size={18} className="text-white/20" />}
                   </Link>
                 </motion.li>
+
+                {!isSignedIn && (
+                  <motion.li
+                    initial={{ opacity: 0, x: -16 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.06 + (navLinks.length + 1) * 0.05, duration: 0.2 }}
+                  >
+                    <Link
+                      href="/signup"
+                      onClick={close}
+                      className="flex items-center justify-between w-full py-4 border-b border-white/8 text-lg font-medium text-white/80 hover:text-white active:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded"
+                    >
+                      <span>Sign up</span>
+                      <ArrowRight size={18} className="text-white/20" />
+                    </Link>
+                  </motion.li>
+                )}
               </ul>
 
               {/* Primary CTA — visually strong */}
