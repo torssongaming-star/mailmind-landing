@@ -110,9 +110,13 @@ input:-webkit-autofill:active {
  */
 .cl-socialButtonsBlockButton__apple img,
 .cl-socialButtonsBlockButton__apple svg,
+.cl-socialButtonsBlockButton__apple span,
 .cl-socialButtonsBlockButton[data-provider="apple"] img,
-.cl-socialButtonsBlockButton[data-provider="apple"] svg {
-  filter: none !important;
+.cl-socialButtonsBlockButton[data-provider="apple"] svg,
+.cl-socialButtonsBlockButton[data-provider="apple"] span {
+  color: #000000 !important;
+  fill: #000000 !important;
+  filter: brightness(0) !important;
 }
 
 /*
