@@ -180,7 +180,7 @@ export default async function BillingPage({
           </div>
           {hasSubscription && (
             <p className="text-xs text-muted-foreground mt-4">
-              Uppgraderingar sker direkt. Nedgraderingar träder i kraft vid nästa faktureringsperiod.
+              Upgrades take effect immediately. Downgrades will be applied at the start of the next billing cycle.
             </p>
           )}
         </div>

@@ -25,35 +25,40 @@ export function Providers({ children }: { children: React.ReactNode }) {
           colorPrimary: "#06b6d4",         // cyan
           colorBackground: "#050B1C",      // Deep navy matching our --background
           colorInputBackground: "#0d1f3c", // lighter navy for inputs
-          colorInputText: "#ffffff",
-          colorText: "#ffffff",
-          colorTextSecondary: "#ffffff",   // white (was slate-300)
-          colorNeutral: "#cbd5e1",         // slate-300 (was 400)
+          colorText: "#ffffff",            // High contrast text (RESTORED)
+          colorTextSecondary: "#cbd5e1",   // Light slate text (RESTORED)
+          colorNeutral: "#94a3b8",         // Slate-400
           borderRadius: "1rem",
           fontFamily: "Inter, sans-serif",
+        },
+        options: {
+          unsafe_disableDevelopmentModeWarnings: true, // Turn off "Development mode" warning
         },
         elements: {
           // Card: Glass effect matching our design system
           card: "bg-[#050B1C]/95 border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.4),0_0_20px_rgba(6,182,212,0.05)] backdrop-blur-xl",
           
           // Header
-          headerTitle: "text-white text-2xl font-bold tracking-tight",
-          headerSubtitle: "text-slate-400 text-base font-normal",
+          headerTitle: "text-2xl font-bold tracking-tight text-white",
+          headerSubtitle: "text-base font-normal text-slate-400",
+
+          // Logo Fix: Brighten the logo on dark background
+          logoImage: "brightness-0 invert opacity-90 hover:opacity-100 transition-opacity",
 
           // Social auth buttons
           socialButtonsBlockButton: 
             "bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200",
-          socialButtonsBlockButtonText: "text-white font-medium",
-          socialButtonsBlockButtonArrow: "text-white/50",
+          socialButtonsBlockButtonText: "font-medium text-white",
+          socialButtonsBlockButtonArrow: "opacity-50 text-white",
           
           // divider
           dividerLine: "bg-white/10",
-          dividerText: "text-slate-500 uppercase text-[10px] font-bold tracking-widest",
+          dividerText: "uppercase text-[10px] font-bold tracking-widest text-slate-500",
 
           // Form fields
-          formFieldLabel: "text-slate-300 text-xs font-semibold uppercase tracking-wider mb-1.5",
+          formFieldLabel: "text-xs font-semibold uppercase tracking-wider mb-1.5 text-slate-300",
           formFieldInput: 
-            "bg-[#0d1f3c] border border-white/10 text-white placeholder:text-slate-600 " +
+            "bg-[#0d1f3c] border border-white/10 text-white " +
             "focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all",
           
           // Primary button
@@ -72,10 +77,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
           formFieldSuccessText: "text-green-400",
           formFieldAction: "text-cyan-400 hover:text-cyan-300 text-xs font-medium",
           
+          // Account / User Profile tab fixes
+          userProfile: "text-white",
+          userButtonPopoverCard: "bg-[#050B1C] border border-white/10 shadow-2xl",
+          userButtonPopoverActionButtonText: "text-white",
+          userButtonPopoverActionButtonIcon: "text-white/60",
+          userButtonPopoverFooter: "border-t border-white/10",
+          
           // Breadcrumbs and other small text
           breadcrumbItem: "text-slate-400",
           breadcrumbSeparator: "text-slate-600",
-          userButtonPopoverCard: "bg-[#050B1C] border border-white/10 shadow-2xl",
         },
       }}
     >

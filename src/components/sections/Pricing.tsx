@@ -18,7 +18,7 @@ export function Pricing() {
         </p>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-5 md:gap-8 max-w-6xl mx-auto relative z-10 mb-10 md:mb-16 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-8 max-w-[90rem] mx-auto relative z-10 mb-10 md:mb-16 items-start">
         {plans.map((plan, index) => (
           <div key={index} className={plan.popular ? "mt-4 lg:mt-0 lg:-mt-4" : ""}>
             <PricingCard
