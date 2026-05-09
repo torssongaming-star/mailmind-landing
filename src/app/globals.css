@@ -116,6 +116,7 @@ input:-webkit-autofill:active {
 .cl-socialButtonsBlockButton[data-provider="apple"] span {
   color: #000000 !important;
   fill: #000000 !important;
+  background-color: #000000 !important;
   filter: brightness(0) !important;
 }
 
