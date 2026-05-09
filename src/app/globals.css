@@ -112,7 +112,7 @@ input:-webkit-autofill:active {
 .cl-socialButtonsBlockButton__apple svg,
 .cl-socialButtonsBlockButton[data-provider="apple"] img,
 .cl-socialButtonsBlockButton[data-provider="apple"] svg {
-  filter: invert(1) brightness(1.2) !important;
+  filter: none !important;
 }
 
 /*
