@@ -40,6 +40,11 @@ export const metadata: Metadata = {
     description: siteConfig.description,
     creator: siteConfig.twitterHandle || undefined,
   },
+  icons: {
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
