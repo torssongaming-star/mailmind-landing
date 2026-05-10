@@ -17,8 +17,7 @@ export async function POST() {
 
     // 1. Resolve organization and Stripe Customer ID
     const portalData = await db.getPortalData(userId);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let stripeCustomerId: any = portalData.org?.stripeCustomerId || undefined;
+    let stripeCustomerId: string | undefined = portalData.org?.stripeCustomerId || undefined;
 
     if (!stripeCustomerId) {
       // Fallback to Clerk metadata
@@ -59,14 +58,15 @@ export async function POST() {
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const error = err as Error & { code?: string; type?: string };
     console.error("[billing/portal] Detailed Error:", {
-      message: err.message,
-      code: err.code,
-      type: err.type,
+      message: error.message,
+      code: error.code,
+      type: error.type,
     });
     return NextResponse.json(
-      { error: err.message || "Failed to create billing portal session" },
+      { error: error.message || "Failed to create billing portal session" },
       { status: 500 }
     );
   }

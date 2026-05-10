@@ -2,8 +2,9 @@ import { getAdminUser, listAdminNotes } from "@/lib/admin/queries";
 import { User as UserIcon, Building2, ShieldCheck, Mail, Lock, History, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
 import { notFound } from "next/navigation";
-import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { AdminNote } from "@/lib/db/schema";
+import React from "react";
 
 export default async function AdminUserDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -88,7 +89,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
               </div>
 
               <div className="space-y-4 mt-8 pt-8 border-t border-white/5">
-                {notes.map((note: any) => (
+                {notes.map((note: AdminNote) => (
                   <div key={note.id} className="p-4 bg-white/[0.02] rounded-xl border border-white/5 space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Admin Action</span>
@@ -137,7 +138,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   );
 }
 
-function DetailItem({ label, value, icon: Icon }: { label: string, value: string, icon: any }) {
+function DetailItem({ label, value, icon: Icon }: { label: string, value: string, icon: React.ComponentType<{ className?: string }> }) {
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">

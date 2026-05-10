@@ -7,7 +7,6 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { listThreads, wakeUpSnoozedThreads, listCaseTypes } from "@/lib/app/threads";
 import { NewThreadButton } from "./NewThreadButton";

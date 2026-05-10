@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db, isDbConnected, organizations, users, subscriptions, licenseEntitlements, usageCounters } from "@/lib/db";
-import { eq, and, desc, gte } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { PLANS } from "@/lib/plans";
 import { notifyUsageWarning } from "@/lib/app/notify";
 

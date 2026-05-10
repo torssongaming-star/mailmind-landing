@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ExternalLink, Loader2, AlertTriangle } from "lucide-react";
 
 /**
@@ -13,7 +12,6 @@ import { ExternalLink, Loader2, AlertTriangle } from "lucide-react";
 export function ManageBillingButton() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
 
   const handleClick = async () => {
     setLoading(true);

@@ -34,20 +34,6 @@ export async function listThreads(
   const { limit = 50, showSnoozed = false } = opts;
   if (!isDbConnected()) return [] as EmailThread[];
 
-  const where = showSnoozed
-    ? and(
-        eq(emailThreads.organizationId, organizationId),
-        isNotNull(emailThreads.snoozedUntil),
-      )
-    : and(
-        eq(emailThreads.organizationId, organizationId),
-        // NULL = not snoozed; future date = still snoozed (exclude)
-        // We use: snoozedUntil IS NULL OR snoozedUntil <= now()
-        // Drizzle doesn't have a clean or() for this, so we run a raw condition
-        // via: exclude rows where snoozedUntil > now (i.e. actively snoozed)
-        // Done via subfilter below — see note.
-      );
-
   // We need: WHERE org_id = ? AND (snoozed_until IS NULL OR snoozed_until <= now())
   // Drizzle approach: use sql template for the OR condition
   const { sql: sqlTag } = await import("drizzle-orm");

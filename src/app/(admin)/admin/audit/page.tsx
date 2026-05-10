@@ -35,7 +35,7 @@ export default async function AdminAuditLogPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {logs.map((log: any) => (
+              {logs.map((log: AdminAuditLog) => (
                 <tr key={log.id} className="hover:bg-white/[0.01] transition-colors group">
                   <td className="px-6 py-4 text-slate-500 text-xs font-mono">
                     {format(new Date(log.createdAt), "yyyy-MM-dd HH:mm:ss")}

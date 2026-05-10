@@ -2,6 +2,8 @@ import { listAdminUsers } from "@/lib/admin/queries";
 import Link from "next/link";
 import { Search, ChevronRight, User as UserIcon } from "lucide-react";
 import { format } from "date-fns";
+import { User, Organization } from "@/lib/db/schema";
+import { cn } from "@/lib/utils";
 
 export default async function AdminUsersPage() {
   const users = await listAdminUsers();
@@ -37,7 +39,7 @@ export default async function AdminUsersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {users.map((user: any) => (
+              {users.map((user: User & { organization: Organization | null }) => (
                 <tr key={user.id} className="hover:bg-white/[0.01] transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
@@ -92,4 +94,3 @@ export default async function AdminUsersPage() {
   );
 }
 
-import { cn } from "@/lib/utils";

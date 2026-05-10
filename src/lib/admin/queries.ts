@@ -6,9 +6,10 @@ import {
   adminCustomerProfiles, 
   adminNotes, 
   adminAuditLogs,
-  adminKnowledgeArticles
+  adminKnowledgeArticles,
+  AdminKnowledgeArticle
 } from "@/lib/db/schema";
-import { desc, eq, count, sql, and, or, ilike } from "drizzle-orm";
+import { desc, eq, count, and, or, ilike } from "drizzle-orm";
 
 /**
  * Gets overview statistics for the admin dashboard.
@@ -52,10 +53,10 @@ export async function listKnowledgeArticles(options?: {
     
     const filters = [];
     if (options?.status) filters.push(eq(adminKnowledgeArticles.status, options.status));
-    if (options?.category) filters.push(eq(adminKnowledgeArticles.category, options.category as any));
+    if (options?.category) filters.push(eq(adminKnowledgeArticles.category, options.category as AdminKnowledgeArticle["category"]));
 
     if (filters.length > 0) {
-      // @ts-ignore
+      // @ts-expect-error -- Drizzle and/or array spread typing mismatch
       query = query.where(and(...filters));
     }
 
@@ -77,7 +78,7 @@ export async function getKnowledgeArticle(idOrSlug: string) {
       .from(adminKnowledgeArticles)
       .where(
         or(
-          eq(adminKnowledgeArticles.id, idOrSlug as any),
+          eq(adminKnowledgeArticles.id, idOrSlug),
           eq(adminKnowledgeArticles.slug, idOrSlug)
         )
       )
@@ -249,7 +250,7 @@ export async function writeAdminAuditLog(data: {
   targetType?: string;
   targetClerkUserId?: string;
   targetOrganizationId?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }) {
   if (!isDbConnected()) return;
 

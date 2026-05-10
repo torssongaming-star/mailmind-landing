@@ -18,7 +18,7 @@ export async function GET(
     const article = await getKnowledgeArticle(id);
     if (!article) return NextResponse.json({ error: "Not found" }, { status: 404 });
     return NextResponse.json(article);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   }
 }
@@ -34,13 +34,14 @@ export async function PATCH(
     await requireAdminApi();
     const { id } = await params;
     const admin = await getAdminIdentity();
+    if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const data = await req.json();
 
     const [updated] = await db.update(adminKnowledgeArticles)
       .set({
         ...data,
-        updatedByClerkUserId: admin?.clerkUserId,
-        updatedByEmail: admin?.email,
+        updatedByClerkUserId: admin.clerkUserId,
+        updatedByEmail: admin.email,
         updatedAt: new Date(),
         publishedAt: data.status === "published" ? new Date() : undefined,
         archivedAt: data.status === "archived" ? new Date() : undefined,
@@ -49,8 +50,8 @@ export async function PATCH(
       .returning();
 
     await db.insert(adminAuditLogs).values({
-      actorClerkUserId: admin?.clerkUserId!,
-      actorEmail: admin?.email!,
+      actorClerkUserId: admin.clerkUserId,
+      actorEmail: admin.email || "unknown",
       action: "knowledge_article_updated",
       targetType: "knowledge_article",
       metadata: { articleId: id, status: data.status },

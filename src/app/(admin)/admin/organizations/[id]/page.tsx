@@ -1,9 +1,11 @@
 import { getAdminOrganization, listAdminNotes } from "@/lib/admin/queries";
-import { Building2, Users, CreditCard, Rocket, History, Mail, Calendar, ShieldCheck, Activity } from "lucide-react";
+import { Building2, Users, CreditCard, Mail, Calendar, ShieldCheck, Activity } from "lucide-react";
 import { format } from "date-fns";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { User, AdminNote } from "@/lib/db/schema";
+import React from "react";
 
 export default async function AdminOrganizationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -103,7 +105,7 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
               Team Members ({org.users.length})
             </h2>
             <div className="divide-y divide-white/5">
-              {org.users.map((user: any) => (
+              {org.users.map((user: User) => (
                 <div key={user.id} className="py-4 flex items-center justify-between group">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-primary/30 transition-colors">
@@ -139,7 +141,7 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
               </button>
 
               <div className="space-y-4 pt-4 border-t border-white/5">
-                {notes.map((note: any) => (
+                {notes.map((note: AdminNote) => (
                   <div key={note.id} className="p-3 bg-white/[0.02] rounded-lg border border-white/5">
                     <span className="text-slate-600 text-[9px] block mb-1">{format(new Date(note.createdAt), "PPp")}</span>
                     <p className="text-slate-400 text-xs leading-relaxed">{note.content}</p>
@@ -153,7 +155,7 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
   );
 }
 
-function DetailItem({ label, value, icon: Icon }: { label: string, value: string, icon: any }) {
+function DetailItem({ label, value, icon: Icon }: { label: string, value: string, icon: React.ComponentType<{ className?: string }> }) {
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">

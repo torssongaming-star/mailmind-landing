@@ -13,7 +13,7 @@ import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import Anthropic from "@anthropic-ai/sdk";
 import { getCurrentAccount } from "@/lib/app/entitlements";
-import { bulkCreateKnowledge, listKnowledge } from "@/lib/app/knowledge";
+import { bulkCreateKnowledge } from "@/lib/app/knowledge";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;

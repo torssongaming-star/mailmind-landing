@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
-import { adminCustomerProfiles, organizations } from "@/lib/db/schema";
+import { adminCustomerProfiles, organizations, AdminCustomerProfile, Organization } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { Rocket, Calendar, User, Building2, ChevronRight, MessageSquare } from "lucide-react";
+import { Rocket, Calendar, User, Building2, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -29,7 +29,7 @@ export default async function AdminPilotsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        {profiles.map(({ profile, org }: any) => (
+        {profiles.map(({ profile, org }: { profile: AdminCustomerProfile, org: Organization | null }) => (
           <div key={profile.id} className="bg-[#050B1C] border border-white/5 rounded-2xl p-8 hover:border-primary/20 transition-all group shadow-xl">
             <div className="flex flex-col lg:flex-row lg:items-start gap-8">
               <div className="flex-1 space-y-4">

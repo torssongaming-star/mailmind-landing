@@ -1,7 +1,7 @@
 import { getKnowledgeArticle } from "@/lib/admin/queries";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ChevronLeft, Edit, Calendar, User, Tag, Clock } from "lucide-react";
+import { ChevronLeft, Edit, User, Tag, Clock } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";

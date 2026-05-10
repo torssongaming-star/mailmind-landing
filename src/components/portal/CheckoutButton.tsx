@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export function CheckoutButton({
   plan,
@@ -13,7 +12,6 @@ export function CheckoutButton({
   isCurrent: boolean;
 }) {
   const [loading, setLoading] = useState(false);
-  const router = useRouter();
 
   const handleClick = async () => {
     if (isCurrent) return;

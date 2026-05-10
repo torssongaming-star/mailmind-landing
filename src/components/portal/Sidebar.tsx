@@ -10,7 +10,6 @@ import {
   BarChart2,
   Mail,
   ArrowLeft,
-  AppWindow,
   UserCircle,
   HelpCircle,
 } from "lucide-react";

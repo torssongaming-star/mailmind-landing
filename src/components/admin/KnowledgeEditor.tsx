@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { upsertKnowledgeArticleAction, publishKnowledgeArticleAction, archiveKnowledgeArticleAction } from "@/lib/admin/actions";
+import { upsertKnowledgeArticleAction } from "@/lib/admin/actions";
 import { useRouter } from "next/navigation";
 import { Save, Send, Archive, ChevronLeft, Eye, Loader2 } from "lucide-react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
+import { AdminKnowledgeArticle } from "@/lib/db/schema";
 
 interface KnowledgeEditorProps {
-  article?: any; // AdminKnowledgeArticle
+  article?: AdminKnowledgeArticle;
 }
 
 const categories = [
@@ -46,7 +47,7 @@ export function KnowledgeEditor({ article }: KnowledgeEditorProps) {
       const result = await upsertKnowledgeArticleAction({
         ...formData,
         id: article?.id,
-        status: statusOverride || formData.status as any,
+        status: statusOverride || formData.status as AdminKnowledgeArticle["status"],
       });
 
       if (result.success) {
@@ -190,7 +191,7 @@ export function KnowledgeEditor({ article }: KnowledgeEditorProps) {
                   <label className="text-slate-500 text-[10px] font-bold uppercase tracking-widest ml-1">Category</label>
                   <select
                     value={formData.category}
-                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                    onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value as AdminKnowledgeArticle["category"] }))}
                     className="w-full bg-[#030614] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-slate-200 outline-none focus:border-primary/50 transition-all cursor-pointer"
                   >
                     {categories.map(cat => (

@@ -1,5 +1,5 @@
 import { listKnowledgeArticles } from "@/lib/admin/queries";
-import { BookOpen, Plus, Search, Filter, ChevronRight, Edit, Eye, Archive, CheckCircle } from "lucide-react";
+import { BookOpen, Plus, Edit, Eye } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { KnowledgeFilters } from "@/components/admin/KnowledgeFilters";
@@ -14,8 +14,8 @@ export default async function AdminKnowledgeListPage({
   const { q, status, category } = await searchParams;
   
   let articles: AdminKnowledgeArticle[] = await listKnowledgeArticles({ 
-    status: (status === "all" ? undefined : status) as any, 
-    category: (category === "all" ? undefined : category) as any 
+    status: (status === "all" ? undefined : status) as AdminKnowledgeArticle["status"], 
+    category: (category === "all" ? undefined : category)
   });
 
   if (q) {
@@ -60,7 +60,7 @@ export default async function AdminKnowledgeListPage({
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {articles.map((article: any) => (
+              {articles.map((article: AdminKnowledgeArticle) => (
                 <tr key={article.id} className="hover:bg-white/[0.01] transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">

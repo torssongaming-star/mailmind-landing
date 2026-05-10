@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Search, ChevronRight, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Organization, Subscription } from "@/lib/db/schema";
 
 export default async function AdminOrganizationsPage() {
   const orgs = await listAdminOrganizations();
@@ -38,7 +39,7 @@ export default async function AdminOrganizationsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
-              {orgs.map((org: any) => {
+              {orgs.map((org: Organization & { subscriptions: Subscription[] }) => {
                 const sub = org.subscriptions[0];
                 return (
                   <tr key={org.id} className="hover:bg-white/[0.01] transition-colors group">

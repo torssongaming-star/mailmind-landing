@@ -17,6 +17,7 @@ export async function POST(
     const { id } = await params;
     await requireAdminApi();
     const admin = await getAdminIdentity();
+    if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
     
     const userId = id;
@@ -36,8 +37,8 @@ export async function POST(
     
     // We log it here.
     await db.insert(adminAuditLogs).values({
-      actorClerkUserId: admin?.clerkUserId!,
-      actorEmail: admin?.email!,
+      actorClerkUserId: admin.clerkUserId,
+      actorEmail: admin.email || "unknown",
       action: "password_reset_requested",
       targetClerkUserId: userId,
       metadata: { target_email: user.emailAddresses[0]?.emailAddress },

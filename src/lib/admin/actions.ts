@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { adminNotes, adminCustomerProfiles, adminAuditLogs, adminKnowledgeArticles } from "@/lib/db/schema";
+import { adminNotes, adminCustomerProfiles, adminAuditLogs, adminKnowledgeArticles, AdminKnowledgeArticle } from "@/lib/db/schema";
 import { getAdminIdentity, requireAdminApi } from "@/lib/admin/auth";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
@@ -15,7 +15,7 @@ export async function upsertKnowledgeArticleAction(data: {
   slug: string;
   summary?: string;
   content: string;
-  category: any;
+  category: AdminKnowledgeArticle["category"];
   status?: "draft" | "published" | "archived";
   tags?: string[];
 }) {

@@ -18,7 +18,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           user_exists_with_different_password: "Den här e-postadressen används redan av ett annat konto.",
           identifier_already_exists: "Den här e-postadressen används redan av ett annat konto.",
         }
-      } as any}
+      } as unknown as Record<string, unknown>}
       appearance={{
         baseTheme: dark,
         variables: {
