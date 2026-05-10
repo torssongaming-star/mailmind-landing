@@ -7,7 +7,6 @@ import { siteConfig } from "@/config/site";
 export function Demo() {
   return (
     <Section id="demo" className="overflow-hidden border-b border-white/5">
-      <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent pointer-events-none" />
       
       <div className="text-center max-w-4xl mx-auto mb-8 md:mb-16 relative z-10">
         <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 tracking-tight leading-snug">See {siteConfig.siteName} in action</h2>
