@@ -34,10 +34,10 @@ export function PricingCard({ name, price, description, features, popular, ctaTe
 
       {/* Most Popular badge */}
       {popular && (
-        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-10">
+        <div className="absolute -top-[25.33px] left-1/2 -translate-x-1/2 z-10 h-auto overflow-visible">
           <Badge
             variant="glass"
-            className="px-3 py-1 text-xs md:text-sm font-semibold shadow-[0_0_12px_rgba(6,182,212,0.4)] whitespace-nowrap"
+            className="px-3 py-1.5 text-xs md:text-sm font-semibold shadow-[0_0_12px_rgba(6,182,212,0.4)] whitespace-nowrap justify-center gap-1.5 leading-none"
           >
             ✦ Most Popular
           </Badge>
