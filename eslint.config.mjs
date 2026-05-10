@@ -4,7 +4,7 @@ import tseslint from "typescript-eslint";
 
 const eslintConfig = [
   {
-    ignores: [".next/**", "node_modules/**", "out/**", "public/**", "*.config.js", "*.config.ts"],
+    ignores: [".next/**", "node_modules/**", "out/**", "public/**", "*.config.js", "*.config.ts", ".agents/**"],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
