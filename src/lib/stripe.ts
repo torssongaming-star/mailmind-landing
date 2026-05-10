@@ -12,7 +12,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
  * Singleton Stripe client (Server-only).
  */
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
-  apiVersion: "2026-04-22.dahlia",
+  apiVersion: "2024-06-20", // Use a standard stable version
   typescript: true,
 });
 
@@ -23,6 +23,15 @@ export const PRICE_IDS = {
   business: process.env.STRIPE_PRICE_ID_BUSINESS  ?? "",
   enterprise: process.env.STRIPE_PRICE_ID_ENTERPRISE ?? "",
 } as const;
+
+// Log configuration status (without leaking keys)
+console.log("[stripe] Configuration:", {
+  hasSecretKey: !!process.env.STRIPE_SECRET_KEY,
+  env: process.env.NODE_ENV,
+  priceIds: Object.fromEntries(
+    Object.entries(PRICE_IDS).map(([k, v]) => [k, v ? (v.startsWith("price_") ? "valid_format" : "invalid_format") : "missing"])
+  )
+});
 
 /**
  * Look up which plan a Stripe price ID belongs to.

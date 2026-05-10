@@ -19,9 +19,12 @@ export async function POST(req: NextRequest) {
     const plan = body.plan as keyof typeof PRICE_IDS;
 
     const priceId = PRICE_IDS[plan];
+    
+    console.log("[billing/checkout] Request:", { plan, priceId, availablePlans: Object.keys(PRICE_IDS) });
+
     if (!priceId || priceId === "price_replace_me") {
       return NextResponse.json(
-        { error: "Den här planen är inte tillgänglig för tillfället. Kontakta support om problemet kvarstår." },
+        { error: `Den här planen (${plan}) är inte tillgänglig för tillfället. Kontakta support om problemet kvarstår.` },
         { status: 400 }
       );
     }

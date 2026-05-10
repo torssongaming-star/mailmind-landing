@@ -59,10 +59,14 @@ export async function POST() {
     });
 
     return NextResponse.json({ url: session.url });
-  } catch (err) {
-    console.error("[billing/portal] Error:", err);
+  } catch (err: any) {
+    console.error("[billing/portal] Detailed Error:", {
+      message: err.message,
+      code: err.code,
+      type: err.type,
+    });
     return NextResponse.json(
-      { error: "Failed to create billing portal session" },
+      { error: err.message || "Failed to create billing portal session" },
       { status: 500 }
     );
   }
