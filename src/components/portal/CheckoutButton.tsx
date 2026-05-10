@@ -26,7 +26,7 @@ export function CheckoutButton({
       });
       const data = await res.json();
       if (data.url) {
-        router.push(data.url);
+        window.location.href = data.url;
       } else {
         console.error("Checkout error:", data.error);
         alert(data.error ?? "Something went wrong. Please try again.");

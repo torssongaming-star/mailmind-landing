@@ -29,16 +29,6 @@ export async function POST(req: NextRequest) {
     // 1. Resolve organization and Stripe Customer ID
     const portalData = await db.getPortalData(userId);
 
-    // Check if user already has an active subscription
-    if (portalData.subscription?.status === "active" || portalData.subscription?.status === "trialing") {
-      // If it's the SAME plan, block it. If it's a DIFFERENT plan, we should 
-      // ideally redirect to the customer portal instead of checkout.
-      return NextResponse.json(
-        { error: "Du har redan en aktiv plan. Vill du ändra din plan? Gör det via 'Manage billing'." },
-        { status: 400 }
-      );
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let stripeCustomerId: any = portalData.org?.stripeCustomerId || undefined;
 
@@ -72,6 +62,17 @@ export async function POST(req: NextRequest) {
           stripeCustomerId,
         },
       });
+    }
+
+    // Check if user already has an active subscription
+    if (portalData.subscription?.status === "active" || portalData.subscription?.status === "trialing") {
+      // If they already have a plan, redirect them to the Billing Portal instead
+      // of showing an error. This enables "Switch plan" buttons to work.
+      const session = await stripe.billingPortal.sessions.create({
+        customer: stripeCustomerId,
+        return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`,
+      });
+      return NextResponse.json({ url: session.url });
     }
 
     // 2. Create Stripe Checkout session

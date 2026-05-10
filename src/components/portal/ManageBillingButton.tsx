@@ -29,7 +29,7 @@ export function ManageBillingButton() {
       }
 
       // Redirect to Stripe Customer Portal
-      router.push(data.url);
+      window.location.href = data.url;
     } catch {
       setError("Network error. Please check your connection and try again.");
     } finally {
