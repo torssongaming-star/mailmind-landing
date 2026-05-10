@@ -23,8 +23,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
         baseTheme: dark,
         variables: {
           colorPrimary: "#06b6d4",         // cyan
-          colorBackground: "#050B1C",      // Deep navy matching our --background
-          colorInputBackground: "#0d1f3c", // lighter navy for inputs
+          colorBackground: "#09090b",      // Neutral Zinc Black
+          colorInputBackground: "#141416", // Muted surface for inputs
           colorText: "#ffffff",            // High contrast text (RESTORED)
           colorTextSecondary: "#cbd5e1",   // Light slate text (RESTORED)
           colorForeground: "#e2e8f0",      // High contrast foreground
@@ -39,7 +39,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
         elements: {
           // Card: Glass effect matching our design system
-          card: "bg-[#050B1C]/95 border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.4),0_0_20px_rgba(6,182,212,0.05)] backdrop-blur-xl",
+          card: "bg-[#101012]/95 border border-white/10 shadow-[0_0_50px_rgba(0,0,0,0.4),0_0_20px_rgba(255,255,255,0.02)] backdrop-blur-xl",
           
           // Header
           headerTitle: "text-2xl font-bold tracking-tight text-white",
@@ -65,12 +65,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
           // Form fields
           formFieldLabel: "text-xs font-semibold uppercase tracking-wider mb-1.5 text-slate-300",
           formFieldInput: 
-            "bg-[#0d1f3c] border border-white/10 text-white " +
+            "bg-zinc-900 border border-white/10 text-white " +
             "focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/20 transition-all",
           
           // Primary button
           formButtonPrimary: 
-            "bg-cyan-500 hover:bg-cyan-400 active:bg-cyan-600 text-[#030614] font-bold py-3 " +
+            "bg-cyan-500 hover:bg-cyan-400 active:bg-cyan-600 text-[#09090b] font-bold py-3 " +
             "shadow-[0_0_20px_rgba(6,182,212,0.2)] hover:shadow-[0_0_25px_rgba(6,182,212,0.3)] transition-all",
 
           // Footer links
@@ -93,7 +93,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           
           // Account / User Profile tab fixes
           userProfile: "text-white",
-          userButtonPopoverCard: "bg-[#050B1C] border border-white/10 shadow-2xl",
+          userButtonPopoverCard: "bg-[#101012] border border-white/10 shadow-2xl",
           userButtonPopoverActionButtonText: "text-white",
           userButtonPopoverActionButtonIcon: "text-white/60",
           userButtonPopoverFooter: "border-t border-white/10",

@@ -4,23 +4,23 @@
 
 @layer base {
   :root {
-    --background: 225 66% 3%; /* Deep Navy / Almost Black #030614 */
+    --background: 240 10% 4%; /* Deep Zinc Black #09090b */
     --foreground: 210 40% 98%;
 
-    --card: 225 66% 4%;
+    --card: 240 10% 6%; /* Neutral Surface #101012 */
     --card-foreground: 210 40% 98%;
 
-    --popover: 225 66% 4%;
+    --popover: 240 10% 6%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 189 94% 43%; /* Neon Cyan #06b6d4 */
-    --primary-foreground: 225 66% 5%;
+    --primary-foreground: 240 10% 4%;
 
-    --secondary: 225 20% 15%;
+    --secondary: 240 5% 15%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 225 20% 15%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 240 5% 12%;
+    --muted-foreground: 215 15% 65%;
 
     --accent: 262 83% 58%; /* Soft Violet #8b5cf6 */
     --accent-foreground: 210 40% 98%;
@@ -28,8 +28,8 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 225 20% 12%;
-    --input: 225 20% 12%;
+    --border: 240 5% 15%;
+    --input: 240 5% 15%;
     --ring: 189 94% 43%;
 
     --radius: 0.75rem;
@@ -62,7 +62,7 @@
 /* Custom utility for inner glow glassmorphism */
 @layer utilities {
   .glass-card {
-    @apply bg-[#050B1C]/60 border border-white/5 shadow-[inset_0_0_20px_rgba(6,182,212,0.02)];
+    @apply bg-zinc-900/60 border border-white/5 shadow-[inset_0_0_20px_rgba(255,255,255,0.01)];
     /* Lighter blur on mobile — xl (24px) on desktop, default (8px) on mobile */
     backdrop-filter: blur(8px);
   }
@@ -72,7 +72,7 @@
     }
   }
   .glass-card-hover {
-    @apply hover:border-primary/30 hover:bg-[#050B1C]/80 hover:shadow-[inset_0_0_20px_rgba(6,182,212,0.05),0_0_20px_rgba(6,182,212,0.1)] transition-all duration-500 ease-out;
+    @apply hover:border-primary/30 hover:bg-zinc-800/80 hover:shadow-[inset_0_0_20px_rgba(6,182,212,0.05),0_0_20px_rgba(6,182,212,0.1)] transition-all duration-500 ease-out;
   }
 }
 
@@ -97,7 +97,7 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0px 1000px #111d35 inset !important;
+  -webkit-box-shadow: 0 0 0px 1000px #09090b inset !important;
   -webkit-text-fill-color: #f1f5f9 !important;
   caret-color: #f1f5f9;
   transition: background-color 9999s ease-in-out 0s;
@@ -145,7 +145,7 @@ input:-webkit-autofill:active {
   width: 100% !important;
   max-width: none !important;
   min-height: auto !important;
-  background: #050B1C !important;
+  background: #101012 !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   border-radius: 24px !important;
   box-shadow: none !important;
@@ -153,13 +153,13 @@ input:-webkit-autofill:active {
 }
 
 .mailmind-account-profile .cl-navbar {
-  background: rgba(255, 255, 255, 0.02) !important;
+  background: rgba(255, 255, 255, 0.01) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
   padding: 24px 0 !important;
 }
 
 .mailmind-account-profile .cl-navbarButton {
-  color: rgba(255, 255, 255, 0.6) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
   border-radius: 12px !important;
   margin: 0 12px !important;
   transition: all 0.2s !important;
@@ -167,13 +167,13 @@ input:-webkit-autofill:active {
 
 .mailmind-account-profile .cl-navbarButton:hover {
   color: #ffffff !important;
-  background: rgba(255, 255, 255, 0.05) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
 }
 
 .mailmind-account-profile .cl-navbarButton[data-active="true"],
 .mailmind-account-profile .cl-navbarButtonActive {
   color: #06b6d4 !important;
-  background: rgba(6,182,212,0.12) !important;
+  background: rgba(6,182,212,0.1) !important;
   font-weight: 600 !important;
 }
 
@@ -187,32 +187,32 @@ input:-webkit-autofill:active {
 .mailmind-account-profile .cl-profileSectionSubtitleText,
 .mailmind-account-profile .cl-userPreviewSecondaryIdentifier,
 .mailmind-account-profile .cl-profileSectionSubtitle {
-  color: rgba(255, 255, 255, 0.6) !important;
+  color: rgba(255, 255, 255, 0.5) !important;
 }
 
 .mailmind-account-profile .cl-userPreviewMainIdentifier,
 .mailmind-account-profile .cl-formFieldLabel,
 .mailmind-account-profile .cl-accordionTriggerButton,
 .mailmind-account-profile .cl-profileSectionTitle {
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: rgba(255, 255, 255, 0.85) !important;
 }
 
 .mailmind-account-profile .cl-formFieldInput {
-  background: rgba(255, 255, 255, 0.03) !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   color: #ffffff !important;
 }
 
 .mailmind-account-profile .cl-profileSectionItem,
 .mailmind-account-profile .cl-accordionContent,
 .mailmind-account-profile .cl-pageScrollBox {
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 .mailmind-account-profile .cl-badge {
   color: #67e8f9 !important;
-  background: rgba(6, 182, 212, 0.16) !important;
-  border: 1px solid rgba(6, 182, 212, 0.35) !important;
+  background: rgba(6, 182, 212, 0.1) !important;
+  border: 1px solid rgba(6, 182, 212, 0.2) !important;
   text-transform: uppercase !important;
   font-size: 10px !important;
   letter-spacing: 0.05em !important;
@@ -226,8 +226,8 @@ input:-webkit-autofill:active {
 
 /* Fix for OAuth providers visibility */
 .mailmind-account-profile .cl-socialButtonsBlockButton {
-  background: rgba(255, 255, 255, 0.03) !important;
-  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .mailmind-account-profile .cl-socialButtonsBlockButtonText {
@@ -247,8 +247,8 @@ input:-webkit-autofill:active {
 /* User friendly error message handling if needed via CSS content injection 
    (only if localization doesn't pick up) */
 .mailmind-account-profile .cl-alert__error {
-  background: rgba(239, 68, 68, 0.12) !important;
-  border: 1px solid rgba(239, 68, 68, 0.25) !important;
+  background: rgba(239, 68, 68, 0.1) !important;
+  border: 1px solid rgba(239, 68, 68, 0.2) !important;
   color: #fecaca !important;
   border-radius: 12px !important;
 }
@@ -261,8 +261,10 @@ input:-webkit-autofill:active {
 .cl-socialButtonsBlockButton[data-provider="apple"] img,
 .cl-socialButtonsBlockButton[data-provider="apple"] svg,
 .cl-socialButtonsBlockButton[data-provider="apple"] span {
-  filter: invert(1) brightness(1.2) !important;
-  background-color: #ffffff !important; /* This acts as the mask fill color */
+  color: #000000 !important;
+  fill: #000000 !important;
+  background-color: #000000 !important;
+  filter: brightness(0) !important;
 }
 
 /*
@@ -274,22 +276,22 @@ input:-webkit-autofill:active {
 .cl-socialButtonsIconButton,
 .cl-socialButtonsIconButton__apple,
 .cl-socialButtonsIconButton__microsoft {
-  background-color: rgba(255, 255, 255, 0.05) !important;
+  background-color: rgba(255, 255, 255, 0.04) !important;
   color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
   box-shadow: none !important;
 }
 
 .cl-socialButtonsIconButton:hover,
 .cl-socialButtonsIconButton:focus,
 .cl-socialButtonsIconButton:active {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .cl-lastAuthenticationStrategyBadge {
   color: #f1f5f9 !important;
-  background-color: rgba(255, 255, 255, 0.1) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   font-weight: 600 !important;
 }
 
@@ -297,7 +299,7 @@ input:-webkit-autofill:active {
 .cl-footer *,
 .cl-footer svg,
 .cl-footer svg * {
-  color: #cbd5e1 !important;
-  fill: #cbd5e1 !important;
+  color: #94a3b8 !important;
+  fill: #94a3b8 !important;
   opacity: 1 !important;
 }

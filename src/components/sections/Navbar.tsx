@@ -35,7 +35,7 @@ export function Navbar() {
         initial={{ y: -80, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 280, damping: 28, delay: 0.1 }}
-        className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-[#030614]/80 backdrop-blur-xl"
+        className="fixed top-0 left-0 right-0 z-50 border-b border-white/5 bg-background/80 backdrop-blur-xl"
         aria-label="Main navigation"
       >
         <div className="container mx-auto px-4 md:px-8 max-w-7xl h-16 md:h-20 flex items-center justify-between">
