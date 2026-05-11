@@ -2,10 +2,7 @@ import { PlanKey } from "./plans";
 import Stripe from "stripe";
 
 if (!process.env.STRIPE_SECRET_KEY) {
-  // Only throw in production server environments to allow builds to pass
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("STRIPE_SECRET_KEY is not set in environment variables.");
-  }
+  console.warn("⚠️ STRIPE_SECRET_KEY is not set in environment variables.");
 }
 
 /**
