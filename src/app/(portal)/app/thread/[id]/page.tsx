@@ -17,6 +17,7 @@ import { InternalNotes } from "./InternalNotes";
 import { SnoozeButton } from "./SnoozeButton";
 import { CustomerHistory } from "./CustomerHistory";
 import { TagEditor } from "./TagEditor";
+import { BlockSenderButton } from "./BlockSenderButton";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,7 @@ export default async function ThreadPage({
             threadId={thread.id}
             snoozedUntil={thread.snoozedUntil ?? null}
           />
+          <BlockSenderButton fromEmail={thread.fromEmail} />
         </div>
         <TagEditor
           threadId={thread.id}
