@@ -95,6 +95,10 @@ export async function autoTriageNewMessage(input: {
     listActiveKnowledge(organizationId),
   ]);
 
+  // Dry-run mode: generate + log but do NOT auto-send.
+  // The `isDryRun` flag is written to the draft row so admin can review quality.
+  const isDryRun = settings?.dryRunEnabled ?? false;
+
   // Generate
   const ai = await generateDraft({
     organizationName: orgRow.name,
@@ -136,6 +140,7 @@ export async function autoTriageNewMessage(input: {
     bodyText,
     metadata,
     aiModel:   ai.model,
+    isDryRun,
   });
 
   // Auto-classify: write case_type back to thread immediately so inbox
@@ -171,39 +176,43 @@ export async function autoTriageNewMessage(input: {
       },
     });
 
-  // Notify org owner about new inbound thread (non-blocking)
-  try {
-    const ownerRow = await db
-      .select()
-      .from(users)
-      .where(and(
-        eq(users.organizationId, organizationId),
-        eq(users.role, "owner"),
-      ))
-      .limit(1)
-      .then(r => r[0] ?? null);
-    if (ownerRow?.email) {
-      notifyNewThread({
-        toEmail:   ownerRow.email,
-        fromName:  thread.fromName,
-        fromEmail: thread.fromEmail,
-        subject:   thread.subject ?? null,
-        threadId,
-      }).catch(() => {});
+  // Notify org owner about new inbound thread (non-blocking).
+  // Skipped in dry-run mode — no real email action was taken.
+  if (!isDryRun) {
+    try {
+      const ownerRow = await db
+        .select()
+        .from(users)
+        .where(and(
+          eq(users.organizationId, organizationId),
+          eq(users.role, "owner"),
+        ))
+        .limit(1)
+        .then(r => r[0] ?? null);
+      if (ownerRow?.email) {
+        notifyNewThread({
+          toEmail:   ownerRow.email,
+          fromName:  thread.fromName,
+          fromEmail: thread.fromEmail,
+          subject:   thread.subject ?? null,
+          threadId,
+        }).catch(() => {});
+      }
+    } catch {
+      // Never let notification failure break the triage flow
     }
-  } catch {
-    // Never let notification failure break the triage flow
   }
 
   await writeAuditLog({
     organizationId,
     userId: null,
-    action: "ai_draft_generated",
+    action: isDryRun ? "ai_dry_run_generated" : "ai_draft_generated",
     metadata: {
       threadId,
-      draftId: draft?.id ?? null,
-      action:  ai.output.action,
-      source:  "auto_triage",
+      draftId:  draft?.id ?? null,
+      action:   ai.output.action,
+      source:   "auto_triage",
+      dry_run:  isDryRun,
     },
   });
 

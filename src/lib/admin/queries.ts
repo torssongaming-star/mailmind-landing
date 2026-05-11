@@ -9,6 +9,8 @@ import {
   adminKnowledgeArticles,
   AdminKnowledgeArticle,
   emailThreads,
+  aiDrafts,
+  aiSettings,
 } from "@/lib/db/schema";
 import { desc, eq, count, and, or, ilike, max } from "drizzle-orm";
 
@@ -222,6 +224,82 @@ export async function getOrgHealth(orgId: string) {
   } catch (error) {
     console.error("Failed to fetch org health:", error);
     return null;
+  }
+}
+
+/**
+ * Returns dry-run stats for an org:
+ *   total     — all dry-run drafts ever generated
+ *   approved  — how many were marked approved (counts toward threshold)
+ *   pending   — not yet reviewed
+ */
+export async function getDryRunStats(orgId: string) {
+  if (!isDbConnected()) return null;
+
+  try {
+    const [total] = await db
+      .select({ value: count() })
+      .from(aiDrafts)
+      .where(and(eq(aiDrafts.organizationId, orgId), eq(aiDrafts.isDryRun, true)));
+
+    const [approved] = await db
+      .select({ value: count() })
+      .from(aiDrafts)
+      .where(and(
+        eq(aiDrafts.organizationId, orgId),
+        eq(aiDrafts.isDryRun, true),
+        eq(aiDrafts.dryRunApproved, true),
+      ));
+
+    const [pending] = await db
+      .select({ value: count() })
+      .from(aiDrafts)
+      .where(and(
+        eq(aiDrafts.organizationId, orgId),
+        eq(aiDrafts.isDryRun, true),
+        eq(aiDrafts.dryRunApproved, null as unknown as boolean),
+      ));
+
+    const settings = await db
+      .select({ dryRunEnabled: aiSettings.dryRunEnabled, autoSendEnabled: aiSettings.autoSendEnabled })
+      .from(aiSettings)
+      .where(eq(aiSettings.organizationId, orgId))
+      .limit(1)
+      .then(r => r[0] ?? null);
+
+    return {
+      total:           total?.value ?? 0,
+      approved:        approved?.value ?? 0,
+      pending:         pending?.value ?? 0,
+      dryRunEnabled:   settings?.dryRunEnabled ?? false,
+      autoSendEnabled: settings?.autoSendEnabled ?? false,
+    };
+  } catch (error) {
+    console.error("Failed to fetch dry-run stats:", error);
+    return null;
+  }
+}
+
+/**
+ * Lists dry-run drafts for an org, newest first.
+ * Includes the thread subject for display.
+ */
+export async function listDryRunDrafts(orgId: string, limit = 50) {
+  if (!isDbConnected()) return [];
+
+  try {
+    return await db.query.aiDrafts.findMany({
+      where: and(
+        eq(aiDrafts.organizationId, orgId),
+        eq(aiDrafts.isDryRun, true),
+      ),
+      with: { thread: { columns: { id: true, subject: true, fromEmail: true } } },
+      orderBy: [desc(aiDrafts.generatedAt)],
+      limit,
+    });
+  } catch (error) {
+    console.error("Failed to list dry-run drafts:", error);
+    return [];
   }
 }
 

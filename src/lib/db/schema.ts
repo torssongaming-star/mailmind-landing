@@ -449,6 +449,21 @@ export const aiSettings = pgTable(
     maxInteractions:  integer("max_interactions").notNull().default(2),
     /** Optional signature appended to AI replies (Markdown supported) */
     signature:        text("signature"),
+    /**
+     * Dry-run mode: AI generates and logs drafts but does NOT auto-send.
+     * Must be enabled and verified (≥ 20 approved iterations) before
+     * autoSendEnabled can be activated.
+     * Default false — set manually by Mailmind team via admin console.
+     */
+    dryRunEnabled:    boolean("dry_run_enabled").notNull().default(false),
+    /**
+     * Auto-send mode: qualified drafts (confidence ≥ 90%, low risk, etc.)
+     * are dispatched automatically without human review.
+     * ONLY Mailmind team may activate this. Requires dryRunEnabled to have
+     * been verified with ≥ 20 approved dry-run iterations first.
+     * Default false.
+     */
+    autoSendEnabled:  boolean("auto_send_enabled").notNull().default(false),
     createdAt:        timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt:        timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
@@ -682,6 +697,19 @@ export const aiDrafts = pgTable(
     generatedAt:     timestamp("generated_at", { withTimezone: true }).defaultNow().notNull(),
     approvedAt:      timestamp("approved_at", { withTimezone: true }),
     sentAt:          timestamp("sent_at", { withTimezone: true }),
+    /**
+     * True when this draft was generated in dry-run mode.
+     * The draft is logged for quality review but was NOT (and will NOT be) sent.
+     * Counted toward the 20-iteration threshold required before auto-send.
+     */
+    isDryRun:        boolean("is_dry_run").notNull().default(false),
+    /**
+     * Dry-run review result set by Mailmind team:
+     *   null  = not yet reviewed
+     *   true  = quality approved (counts toward threshold)
+     *   false = quality rejected (does not count)
+     */
+    dryRunApproved:  boolean("dry_run_approved"),
     createdAt:       timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt:       timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },

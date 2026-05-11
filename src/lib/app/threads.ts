@@ -197,6 +197,7 @@ export async function createDraft(input: {
   bodyText?: string | null;
   metadata?: Record<string, unknown> | null;
   aiModel: string;
+  isDryRun?: boolean;
 }) {
   if (!isDbConnected()) return null;
   const [row] = await db
@@ -211,6 +212,7 @@ export async function createDraft(input: {
       aiModel:        input.aiModel,
       status:         "pending",
       generatedAt:    new Date(),
+      isDryRun:       input.isDryRun ?? false,
     })
     .returning();
   return row ?? null;
@@ -381,6 +383,8 @@ export function defaultAiSettings(organizationId: string): AiSettings {
     language:         "sv",
     maxInteractions:  2,
     signature:        null,
+    dryRunEnabled:    false,
+    autoSendEnabled:  false,
     createdAt:        new Date(),
     updatedAt:        new Date(),
   };

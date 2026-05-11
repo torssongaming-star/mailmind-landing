@@ -1,4 +1,5 @@
-import { getAdminOrganization, listAdminNotes, getOrgHealth } from "@/lib/admin/queries";
+import { getAdminOrganization, listAdminNotes, getOrgHealth, getDryRunStats } from "@/lib/admin/queries";
+import { DryRunPanel } from "./DryRunPanel";
 import { Building2, Users, CreditCard, Mail, Calendar, ShieldCheck, Activity, MessageSquare, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { notFound } from "next/navigation";
@@ -9,10 +10,11 @@ import React from "react";
 
 export default async function AdminOrganizationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [org, notes, health] = await Promise.all([
+  const [org, notes, health, dryRunStats] = await Promise.all([
     getAdminOrganization(id),
     listAdminNotes(id, "organization"),
     getOrgHealth(id),
+    getDryRunStats(id),
   ]);
 
   if (!org) notFound();
@@ -161,6 +163,15 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
 
         {/* Notes & Actions */}
         <div className="space-y-8">
+           {/* Dry-run panel */}
+           <DryRunPanel
+             orgId={id}
+             dryRunEnabled={dryRunStats?.dryRunEnabled ?? false}
+             approved={dryRunStats?.approved ?? 0}
+             total={dryRunStats?.total ?? 0}
+             pending={dryRunStats?.pending ?? 0}
+           />
+
            <div className="bg-[#050B1C] border border-white/5 rounded-2xl p-6 space-y-6">
              <h3 className="text-white text-sm font-bold uppercase tracking-widest border-b border-white/5 pb-3">Internal Notes</h3>
              <textarea 
