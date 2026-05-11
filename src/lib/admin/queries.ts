@@ -1,15 +1,16 @@
 import { db, isDbConnected } from "@/lib/db";
-import { 
-  users, 
-  organizations, 
-  subscriptions, 
-  adminCustomerProfiles, 
-  adminNotes, 
+import {
+  users,
+  organizations,
+  subscriptions,
+  adminCustomerProfiles,
+  adminNotes,
   adminAuditLogs,
   adminKnowledgeArticles,
-  AdminKnowledgeArticle
+  AdminKnowledgeArticle,
+  emailThreads,
 } from "@/lib/db/schema";
-import { desc, eq, count, and, or, ilike } from "drizzle-orm";
+import { desc, eq, count, and, or, ilike, max } from "drizzle-orm";
 
 /**
  * Gets overview statistics for the admin dashboard.
@@ -198,6 +199,28 @@ export async function getAdminOrganization(id: string) {
     });
   } catch (error) {
     console.error("Failed to get admin organization:", error);
+    return null;
+  }
+}
+
+/**
+ * Returns org health metrics: thread count + last activity timestamp.
+ */
+export async function getOrgHealth(orgId: string) {
+  if (!isDbConnected()) return null;
+
+  try {
+    const [row] = await db
+      .select({
+        threadCount:  count(emailThreads.id),
+        lastActivity: max(emailThreads.lastMessageAt),
+      })
+      .from(emailThreads)
+      .where(eq(emailThreads.organizationId, orgId));
+
+    return row ?? null;
+  } catch (error) {
+    console.error("Failed to fetch org health:", error);
     return null;
   }
 }

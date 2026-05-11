@@ -1,5 +1,5 @@
-import { getAdminOrganization, listAdminNotes } from "@/lib/admin/queries";
-import { Building2, Users, CreditCard, Mail, Calendar, ShieldCheck, Activity } from "lucide-react";
+import { getAdminOrganization, listAdminNotes, getOrgHealth } from "@/lib/admin/queries";
+import { Building2, Users, CreditCard, Mail, Calendar, ShieldCheck, Activity, MessageSquare, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -9,8 +9,11 @@ import React from "react";
 
 export default async function AdminOrganizationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const org = await getAdminOrganization(id);
-  const notes = await listAdminNotes(id, "organization");
+  const [org, notes, health] = await Promise.all([
+    getAdminOrganization(id),
+    listAdminNotes(id, "organization"),
+    getOrgHealth(id),
+  ]);
 
   if (!org) notFound();
 
@@ -95,6 +98,34 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
                    <span className="text-slate-400">{entitlements?.maxUsers || 0}</span>
                  </div>
                </div>
+            </div>
+          </div>
+
+          {/* Org health */}
+          <div className="bg-[#050B1C] border border-white/5 rounded-2xl p-8 space-y-6">
+            <h2 className="text-white font-bold flex items-center gap-2 border-b border-white/5 pb-4">
+              <MessageSquare className="w-5 h-5 text-cyan-400" />
+              Aktivitet
+            </h2>
+            <div className="grid grid-cols-2 gap-8">
+              <div className="space-y-1">
+                <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                  <MessageSquare className="w-3 h-3 text-slate-600" />
+                  Totalt antal trådar
+                </span>
+                <span className="text-white text-lg font-bold">{health?.threadCount ?? 0}</span>
+              </div>
+              <div className="space-y-1">
+                <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
+                  <Clock className="w-3 h-3 text-slate-600" />
+                  Senaste aktivitet
+                </span>
+                <span className="text-white text-sm font-medium">
+                  {health?.lastActivity
+                    ? format(new Date(health.lastActivity), "d MMM yyyy HH:mm")
+                    : "Ingen aktivitet än"}
+                </span>
+              </div>
             </div>
           </div>
 

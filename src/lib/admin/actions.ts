@@ -1,10 +1,23 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { adminNotes, adminCustomerProfiles, adminAuditLogs, adminKnowledgeArticles, AdminKnowledgeArticle } from "@/lib/db/schema";
+import {
+  adminNotes,
+  adminCustomerProfiles,
+  adminAuditLogs,
+  adminKnowledgeArticles,
+  AdminKnowledgeArticle,
+  organizations,
+  users,
+  subscriptions,
+  licenseEntitlements,
+  aiSettings,
+  caseTypes,
+} from "@/lib/db/schema";
 import { getAdminIdentity, requireAdminApi } from "@/lib/admin/auth";
 import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
+import { PLANS, PlanKey } from "@/lib/plans";
 
 /**
  * Creates or updates a knowledge article.
@@ -255,4 +268,147 @@ export async function logPasswordResetAction(targetClerkUserId: string, email: s
   });
 
   return { success: true };
+}
+
+// ── Case type templates ────────────────────────────────────────────────────────
+
+const CASE_TYPE_TEMPLATES: Record<string, Array<{ slug: string; label: string; requiredFields: string[]; isDefault: boolean; slaHours: number | null; sortOrder: number }>> = {
+  standard_smb: [
+    { slug: "general",     label: "General enquiry",   requiredFields: [],                         isDefault: true,  slaHours: 48, sortOrder: 0 },
+    { slug: "order",       label: "Order / delivery",  requiredFields: ["order_number"],            isDefault: false, slaHours: 24, sortOrder: 1 },
+    { slug: "complaint",   label: "Complaint",         requiredFields: ["description"],             isDefault: false, slaHours: 8,  sortOrder: 2 },
+    { slug: "billing",     label: "Billing",           requiredFields: ["invoice_number"],          isDefault: false, slaHours: 48, sortOrder: 3 },
+    { slug: "technical",   label: "Technical support", requiredFields: ["product", "description"],  isDefault: false, slaHours: 24, sortOrder: 4 },
+  ],
+  ecommerce: [
+    { slug: "general",     label: "General enquiry",   requiredFields: [],                                       isDefault: true,  slaHours: 48, sortOrder: 0 },
+    { slug: "order",       label: "Order / tracking",  requiredFields: ["order_number"],                         isDefault: false, slaHours: 12, sortOrder: 1 },
+    { slug: "return",      label: "Return / refund",   requiredFields: ["order_number", "reason"],               isDefault: false, slaHours: 24, sortOrder: 2 },
+    { slug: "product",     label: "Product question",  requiredFields: ["product"],                              isDefault: false, slaHours: 48, sortOrder: 3 },
+    { slug: "complaint",   label: "Complaint",         requiredFields: ["description"],                          isDefault: false, slaHours: 8,  sortOrder: 4 },
+  ],
+  empty: [],
+};
+
+// ── Provision customer ─────────────────────────────────────────────────────────
+
+/**
+ * Creates a new customer account in one transaction:
+ *   org → user → subscription (trial) → entitlements → AI settings → case types
+ *
+ * The Clerk user must already exist (sign up on /signup first or be invited).
+ * We don't create Clerk users here — Clerk is the identity source of truth.
+ */
+export async function provisionCustomerAction(data: {
+  orgName: string;
+  ownerEmail: string;
+  ownerClerkUserId: string;
+  plan: PlanKey;
+  trialDays: number;
+  caseTypeTemplate: keyof typeof CASE_TYPE_TEMPLATES;
+  aiLanguage: string;
+  aiTone: "formal" | "friendly" | "neutral";
+  notes?: string;
+}) {
+  await requireAdminApi();
+  const admin = await getAdminIdentity();
+  if (!admin) throw new Error("No admin session");
+
+  try {
+    const plan = PLANS[data.plan];
+    const trialEnd = new Date();
+    trialEnd.setDate(trialEnd.getDate() + data.trialDays);
+    const syntheticSubId = `sub_trial_${Date.now()}`;
+
+    // 1. Create org
+    const [org] = await db.insert(organizations).values({
+      name: data.orgName,
+    }).returning();
+
+    // 2. Create user (owner)
+    await db.insert(users).values({
+      clerkUserId:    data.ownerClerkUserId,
+      organizationId: org.id,
+      email:          data.ownerEmail,
+      role:           "owner",
+    });
+
+    // 3. Create trial subscription
+    await db.insert(subscriptions).values({
+      organizationId:       org.id,
+      stripeSubscriptionId: syntheticSubId,
+      stripeCustomerId:     `cus_trial_${org.id}`,
+      plan:                 data.plan === "enterprise" ? "business" : data.plan as "starter" | "team" | "business",
+      status:               "trialing",
+      currentPeriodEnd:     trialEnd,
+      cancelAtPeriodEnd:    false,
+    });
+
+    // 4. Create entitlements from plan definition
+    await db.insert(licenseEntitlements).values({
+      organizationId:      org.id,
+      plan:                data.plan === "enterprise" ? "business" : data.plan as "starter" | "team" | "business",
+      maxUsers:            plan.seatLimit,
+      maxInboxes:          plan.inboxLimit,
+      maxAiDraftsPerMonth: plan.draftsLimit,
+    });
+
+    // 5. AI settings
+    await db.insert(aiSettings).values({
+      organizationId: org.id,
+      language:       data.aiLanguage,
+      tone:           data.aiTone,
+      maxInteractions: 2,
+    });
+
+    // 6. Case types from template
+    const templateRows = CASE_TYPE_TEMPLATES[data.caseTypeTemplate] ?? [];
+    if (templateRows.length > 0) {
+      await db.insert(caseTypes).values(
+        templateRows.map((t) => ({
+          organizationId: org.id,
+          slug:           t.slug,
+          label:          t.label,
+          requiredFields: t.requiredFields,
+          isDefault:      t.isDefault,
+          slaHours:       t.slaHours,
+          sortOrder:      t.sortOrder,
+        }))
+      );
+    }
+
+    // 7. Internal note if provided
+    if (data.notes?.trim()) {
+      await db.insert(adminNotes).values({
+        subjectType:          "organization",
+        content:              data.notes.trim(),
+        authorClerkUserId:    admin.clerkUserId,
+        targetOrganizationId: org.id,
+      });
+    }
+
+    // 8. Audit log
+    await db.insert(adminAuditLogs).values({
+      actorClerkUserId:     admin.clerkUserId,
+      actorEmail:           admin.email!,
+      action:               "customer_provisioned",
+      targetOrganizationId: org.id,
+      metadata: {
+        orgName:       data.orgName,
+        ownerEmail:    data.ownerEmail,
+        plan:          data.plan,
+        trialDays:     data.trialDays,
+        template:      data.caseTypeTemplate,
+      },
+    });
+
+    revalidatePath("/admin/organizations");
+    revalidatePath("/admin/onboarding");
+
+    return { success: true, orgId: org.id };
+  } catch (error) {
+    console.error("[provisionCustomerAction] failed:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return { success: false, error: message };
+  }
 }

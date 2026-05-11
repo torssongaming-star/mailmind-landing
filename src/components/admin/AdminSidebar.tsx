@@ -2,27 +2,29 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  Users, 
-  Building2, 
-  Rocket, 
-  BookOpen, 
-  History, 
+import {
+  LayoutDashboard,
+  Users,
+  Building2,
+  Rocket,
+  BookOpen,
+  History,
   Activity,
   ChevronLeft,
-  ShieldCheck
+  ShieldCheck,
+  UserPlus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
-  { name: "Overview", href: "/admin", icon: LayoutDashboard },
-  { name: "Users", href: "/admin/users", icon: Users },
-  { name: "Organizations", href: "/admin/organizations", icon: Building2 },
-  { name: "Pilots", href: "/admin/pilots", icon: Rocket },
-  { name: "Knowledge Base", href: "/admin/knowledge", icon: BookOpen },
-  { name: "Audit Log", href: "/admin/audit", icon: History },
-  { name: "Health", href: "/admin/health", icon: Activity },
+  { name: "Overview",       href: "/admin",               icon: LayoutDashboard },
+  { name: "Provision kund", href: "/admin/onboarding",    icon: UserPlus },
+  { name: "Users",          href: "/admin/users",         icon: Users },
+  { name: "Organizations",  href: "/admin/organizations", icon: Building2 },
+  { name: "Pilots",         href: "/admin/pilots",        icon: Rocket },
+  { name: "Knowledge Base", href: "/admin/knowledge",     icon: BookOpen },
+  { name: "Audit Log",      href: "/admin/audit",         icon: History },
+  { name: "Health",         href: "/admin/health",        icon: Activity },
 ];
 
 export function AdminSidebar() {
