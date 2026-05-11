@@ -100,11 +100,30 @@ const NAV: NavItem[] = [
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+/**
+ * Returns the href of the single best-matching child for the current pathname.
+ * "Best" = longest href that is an exact match or a prefix of pathname.
+ * This prevents /app/settings from being highlighted when on /app/settings/account.
+ */
+function bestActiveChildHref(
+  children: { href: string }[],
+  pathname: string
+): string | null {
+  const sorted = [...children].sort((a, b) => b.href.length - a.href.length);
+  for (const child of sorted) {
+    if (
+      pathname === child.href ||
+      pathname.startsWith(child.href + "/")
+    ) {
+      return child.href;
+    }
+  }
+  return null;
+}
+
 /** Returns true if the group has an active child for the given pathname */
 function groupIsActive(group: NavGroup, pathname: string): boolean {
-  return group.children.some(
-    c => pathname === c.href || pathname.startsWith(c.href + "/")
-  );
+  return bestActiveChildHref(group.children, pathname) !== null;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -211,10 +230,10 @@ export function Sidebar() {
                 {/* Children */}
                 {isOpen && (
                   <div className="ml-8 mt-0.5 mb-1 space-y-0.5 border-l border-white/[0.06] pl-3">
-                    {item.children.map(child => {
-                      const childActive =
-                        pathname === child.href ||
-                        (child.href !== "/app" && pathname.startsWith(child.href + "/"));
+                    {(() => {
+                      const activeHref = bestActiveChildHref(item.children, pathname);
+                      return item.children.map(child => {
+                      const childActive = child.href === activeHref;
                       return (
                         <Link
                           key={child.href}
@@ -229,7 +248,8 @@ export function Sidebar() {
                           {child.label}
                         </Link>
                       );
-                    })}
+                    });
+                    })()}
                   </div>
                 )}
               </div>
