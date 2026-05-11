@@ -1,8 +1,7 @@
 /**
- * /app/inbox — list of email threads.
- *
- * Phase 2 minimum viable UI. Until inbox connectors land, threads are created
- * via the "New test thread" button which posts to /api/app/threads.
+ * /app/inbox — split-pane email triage view.
+ * Left: compact thread list. Right: thread content panel (client-side load).
+ * Full viewport height, no dead space.
  */
 
 import { auth } from "@clerk/nextjs/server";
@@ -11,7 +10,7 @@ import { getCurrentAccount } from "@/lib/app/entitlements";
 import { listThreads, wakeUpSnoozedThreads, listCaseTypes } from "@/lib/app/threads";
 import { NewThreadButton } from "./NewThreadButton";
 import { InboxFilters } from "./InboxFilters";
-import { InboxList } from "./InboxList";
+import { InboxShell } from "./InboxShell";
 
 export const dynamic = "force-dynamic";
 
@@ -29,15 +28,14 @@ export default async function InboxPage({
   const account = await getCurrentAccount(userId);
   if (!account.user) redirect("/app/onboarding");
 
-  const params = await searchParams;
-  const isOutlook = params.source === "outlook";
+  const params      = await searchParams;
+  const isOutlook   = params.source === "outlook";
   const filterStatus = VALID_STATUSES.includes(params.status as ThreadStatus)
     ? (params.status as ThreadStatus)
     : null;
-  const query   = (params.q   ?? "").trim().toLowerCase();
+  const query     = (params.q   ?? "").trim().toLowerCase();
   const tagFilter = (params.tag ?? "").trim().toLowerCase();
 
-  // Wake up any threads whose snooze has expired before listing
   await wakeUpSnoozedThreads(account.organization.id);
 
   const [all, caseTypesList] = await Promise.all([
@@ -50,93 +48,96 @@ export default async function InboxPage({
     if (ct.slaHours != null) slaByCaseType[ct.slug] = ct.slaHours;
   }
 
-  // Filter on the server so the count + list always agree
   const threads = all.filter(t => {
     if (filterStatus && t.status !== filterStatus) return false;
     if (tagFilter && !(t.tags ?? []).includes(tagFilter)) return false;
     if (query) {
-      const haystack = [
-        t.subject ?? "",
-        t.fromEmail ?? "",
-        t.fromName ?? "",
-        t.caseTypeSlug ?? "",
-        ...(t.tags ?? []),
-      ].join(" ").toLowerCase();
+      const haystack = [t.subject ?? "", t.fromEmail, t.fromName ?? "", t.caseTypeSlug ?? "", ...(t.tags ?? [])].join(" ").toLowerCase();
       if (!haystack.includes(query)) return false;
     }
     return true;
   });
 
-  // Counts per status for the filter bar
   const counts = {
-    all:        all.length,
-    open:       all.filter(t => t.status === "open").length,
-    waiting:    all.filter(t => t.status === "waiting").length,
-    escalated:  all.filter(t => t.status === "escalated").length,
-    resolved:   all.filter(t => t.status === "resolved").length,
+    all:       all.length,
+    open:      all.filter(t => t.status === "open").length,
+    waiting:   all.filter(t => t.status === "waiting").length,
+    escalated: all.filter(t => t.status === "escalated").length,
+    resolved:  all.filter(t => t.status === "resolved").length,
   };
 
+  // Outlook add-in: keep old compact single-column layout
+  if (isOutlook) {
+    const { InboxList } = await import("./InboxList");
+    return (
+      <main className="max-w-full p-4 space-y-4">
+        <header className="flex items-center justify-between">
+          <h1 className="text-xl font-bold text-white">Threads</h1>
+          <NewThreadButton compact />
+        </header>
+        <InboxFilters currentStatus={filterStatus} currentQuery={query} currentTag={tagFilter || undefined} counts={counts} compact />
+        <InboxList
+          slaByCaseType={slaByCaseType}
+          threads={threads.map(t => ({ id: t.id, subject: t.subject, fromEmail: t.fromEmail, fromName: t.fromName, status: t.status, caseTypeSlug: t.caseTypeSlug, lastMessageAt: t.lastMessageAt, snoozedUntil: t.snoozedUntil ?? null, tags: t.tags ?? [] }))}
+        />
+      </main>
+    );
+  }
+
   return (
-    <main className={isOutlook 
-      ? "max-w-full p-4 space-y-4" 
-      : "max-w-4xl mx-auto p-6 md:p-10 space-y-6"
-    }>
-      <header className="flex items-center justify-between">
+    <div className="flex flex-col h-screen overflow-hidden">
+      {/* Top bar */}
+      <header className="shrink-0 flex items-center gap-4 px-6 py-3 border-b border-white/8 bg-[#030614]">
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-0.5">Inbox</p>
-          <h1 className={isOutlook ? "text-xl font-bold text-white" : "text-2xl font-bold text-white"}>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground leading-none mb-0.5">Inbox</p>
+          <h1 className="text-base font-bold text-white leading-none">
             Threads
+            <span className="ml-2 text-xs font-normal text-muted-foreground">
+              {threads.length}{threads.length !== all.length ? ` / ${all.length}` : ""}
+            </span>
           </h1>
-          <p className="text-[10px] text-muted-foreground mt-0.5">
-            {threads.length} of {all.length} {isOutlook ? "items" : "threads"}
-          </p>
         </div>
-        <div className="flex gap-2">
-          <NewThreadButton compact={isOutlook} />
+        <div className="flex-1">
+          <InboxFilters
+            currentStatus={filterStatus}
+            currentQuery={query}
+            currentTag={tagFilter || undefined}
+            counts={counts}
+          />
         </div>
+        <NewThreadButton />
       </header>
 
-      <InboxFilters
-        currentStatus={filterStatus}
-        currentQuery={query}
-        currentTag={tagFilter || undefined}
-        counts={counts}
-        compact={isOutlook}
-      />
-
+      {/* Split pane — fills remaining height */}
       {threads.length === 0 ? (
-        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-10 text-center">
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
           {all.length === 0 ? (
             <>
-              <p className="text-white/70 text-sm mb-1">No threads yet</p>
-              <p className="text-xs text-muted-foreground mb-4">
-                Create a test thread to try the AI draft flow before connecting a real inbox.
-              </p>
+              <p className="text-sm text-white/70">Inga trådar än</p>
+              <p className="text-xs">Skapa en testtråd för att prova AI-utkast-flödet.</p>
               <NewThreadButton />
             </>
           ) : (
-            <>
-              <p className="text-white/70 text-sm mb-1">No threads match your filter</p>
-              <p className="text-xs text-muted-foreground">Clear the filter or search to see all {all.length} threads.</p>
-            </>
+            <p className="text-sm">Inga trådar matchar filtret</p>
           )}
         </div>
       ) : (
-        <InboxList
+        <InboxShell
+          canGenerate={account.access.canGenerateAiDraft}
           slaByCaseType={slaByCaseType}
           threads={threads.map(t => ({
-            id:             t.id,
-            subject:        t.subject,
-            fromEmail:      t.fromEmail,
-            fromName:       t.fromName,
-            status:         t.status,
-            caseTypeSlug:   t.caseTypeSlug,
-            lastMessageAt:  t.lastMessageAt,
-            snoozedUntil:   t.snoozedUntil ?? null,
-            tags:           t.tags ?? [],
+            id:            t.id,
+            subject:       t.subject,
+            fromEmail:     t.fromEmail,
+            fromName:      t.fromName,
+            status:        t.status,
+            caseTypeSlug:  t.caseTypeSlug,
+            lastMessageAt: t.lastMessageAt,
+            snoozedUntil:  t.snoozedUntil ?? null,
+            tags:          t.tags ?? [],
           }))}
         />
       )}
-    </main>
+    </div>
   );
 }

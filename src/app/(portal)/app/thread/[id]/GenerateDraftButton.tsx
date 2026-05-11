@@ -3,7 +3,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function GenerateDraftButton({ threadId }: { threadId: string }) {
+export function GenerateDraftButton({
+  threadId,
+  onDone,
+}: {
+  threadId: string;
+  onDone?:  () => void;
+}) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError]     = useState<string | null>(null);
@@ -23,6 +29,7 @@ export function GenerateDraftButton({ threadId }: { threadId: string }) {
         throw new Error(data.error ?? "Generation failed");
       }
       router.refresh();
+      onDone?.();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {

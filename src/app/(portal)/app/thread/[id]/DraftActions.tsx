@@ -97,12 +97,14 @@ export function DraftActions({
   status,
   initialBody,
   templateVars = {},
+  onDone,
 }: {
   draftId: string;
   action: DraftAction;
   status: DraftStatus;
   initialBody: string | null;
   templateVars?: Record<string, string>;
+  onDone?: () => void;
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -127,6 +129,7 @@ export function DraftActions({
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Action failed");
       router.refresh();
+      onDone?.();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
