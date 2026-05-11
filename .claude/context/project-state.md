@@ -43,7 +43,7 @@ Domain: `mailmind.se`. Inbound mail subdomain: `mail.mailmind.se`.
 
 ---
 
-## What's built (Phase 5.5 complete)
+## What's built (Fas 6d complete)
 
 - ✅ Org + user sync, trial creation, onboarding wizard
 - ✅ Stripe checkout + portal + webhook (subscription_status, plan resolution)
@@ -57,25 +57,36 @@ Domain: `mailmind.se`. Inbound mail subdomain: `mail.mailmind.se`.
 - ✅ Bulk thread actions (multi-select)
 - ✅ Audit log
 - ✅ Health check endpoint at `/api/admin/health`
+- ✅ Admin onboarding console (`/admin/onboarding`) — provision kund med ett klick
+- ✅ Outlook sideload-guide (`/admin/sideload`) + manifest.xml (Mailbox 1.3, pinnable)
+- ✅ Dry-run pipeline — AI genererar drafts utan att skicka, granskas i `/admin/organizations/[id]/dry-run`
+- ✅ Autosvar-pipeline — `canAutoSend()` (4 låsta regler) + `executeSendDraft()` (delad send-logik)
+- ✅ AI output utökad med `confidence`, `risk_level`, `source_grounded` på alla tre action-typer
+- ✅ AutoSendPanel — admin-toggle med säkerhetslås (kräver ≥ 20 godkända dry-run-iterationer)
 
 Latest commits:
+- `9be638d` — Fas 6d: autosvar-pipeline (autoSend.ts, AutoSendPanel, toggleAutoSendAction)
+- `300950c` — fix: DRY_RUN_THRESHOLD moved to constants.ts (use server constraint)
 - `f9ab3cc` — template picker + webhook idempotency
 - `6528800` — internal notes + reply templates
 - `edf340e` — syncUserAndOrganization duplicate-org fix
-- `084265c` — UX polish (checklist, edit org, error boundaries)
-- `ffa07b4` — stats dashboard + bulk actions
 
 ---
 
 ## Pending / Backlog
 
-User-flagged interest, not yet built:
-- **Snooze threads** — defer to later, surface back at chosen time
-- **Tags on threads** — free-form labels for filtering
-- **Customer history** — show all threads from same email address
-- **Auto-classify case_type** at first AI call
+### Fas 6e — Manuella ops (ingen kod)
+- **Live Stripe keys** — byt ut test-nycklar i Vercel env (STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+- **Resend domänverifiering** — lägg till DNS-poster för `mail.mailmind.se` i Resend dashboard, verifiera SPF/DKIM
+- Dessa två måste vara klara innan riktiga kunder kan betala och ta emot svar
+
+### Fas 7 — Nästa kod-iteration (förslag)
+- **Per-avsändare blockering** — `isBlocked` i `canAutoSend()` är hårdkodad `false` (TODO-kommentar finns i autoTriage.ts:195)
+- **Snooze threads** — defer till senare, surface vid valt klockslag
+- **Tags på trådar** — fritext-labels för filtrering
+- **Kundhistorik** — visa alla trådar från samma e-postadress
 - **Mobile responsivity** pass
-- **Live Stripe keys** + **Resend Domain Auth** (manual ops, not code)
+- **Prompt caching per org** — system-prompten byggs om vid varje anrop; cache när org-config inte ändrats (Anthropic cache_control, kommentar finns i ai.ts)
 
 ---
 
