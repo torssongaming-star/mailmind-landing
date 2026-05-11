@@ -1,5 +1,6 @@
 import { getAdminOrganization, listAdminNotes, getOrgHealth, getDryRunStats } from "@/lib/admin/queries";
 import { DryRunPanel } from "./DryRunPanel";
+import { AutoSendPanel } from "./AutoSendPanel";
 import { Building2, Users, CreditCard, Mail, Calendar, ShieldCheck, Activity, MessageSquare, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { notFound } from "next/navigation";
@@ -170,6 +171,13 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
              approved={dryRunStats?.approved ?? 0}
              total={dryRunStats?.total ?? 0}
              pending={dryRunStats?.pending ?? 0}
+           />
+
+           {/* Auto-send panel (locked until dry-run threshold is met) */}
+           <AutoSendPanel
+             orgId={id}
+             autoSendEnabled={dryRunStats?.autoSendEnabled ?? false}
+             approved={dryRunStats?.approved ?? 0}
            />
 
            <div className="bg-[#050B1C] border border-white/5 rounded-2xl p-6 space-y-6">

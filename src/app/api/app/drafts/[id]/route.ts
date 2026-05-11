@@ -19,19 +19,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { getCurrentAccount } from "@/lib/app/entitlements";
-import {
-  getThread,
-  getDraft,
-  updateDraft,
-  updateThread,
-  appendMessage,
-  getAiSettings,
-  listMessages,
-  setThreadExternalId,
-} from "@/lib/app/threads";
-import { eq } from "drizzle-orm";
-import { db, isDbConnected, inboxes as inboxesTable } from "@/lib/db";
-import { sendEmail, replySubject, appendSignature } from "@/lib/app/email";
+import { getDraft, updateDraft } from "@/lib/app/threads";
+import { executeSendDraft } from "@/lib/app/autoSend";
 import { writeAuditLog } from "@/lib/app/audit";
 
 export const runtime = "nodejs";
@@ -105,144 +94,18 @@ export async function PATCH(
   }
 
   // ── SEND ──────────────────────────────────────────────────────────────────
-  // Loads the thread so we know who to email and how to update status afterwards.
-  const thread = await getThread(orgId, draft.threadId);
-  if (!thread) return NextResponse.json({ error: "Thread missing" }, { status: 500 });
+  const sendResult = await executeSendDraft({
+    orgId,
+    draftId,
+    userId: account.user.id,
+  });
 
-  const now = new Date();
-
-  // For "ask" and "summarize" we send the customer-facing reply.
-  // For "escalate" we don't send to the customer — just mark thread escalated.
-  if (draft.action !== "escalate") {
-    if (!draft.bodyText?.trim()) {
-      return NextResponse.json({ error: "Draft has no body to send" }, { status: 400 });
-    }
-
-    // Resolve inbox so we can set Reply-To. When the customer replies, it lands
-    // back at our SendGrid Inbound Parse endpoint and we can thread it.
-    let replyTo: string | undefined;
-    if (thread.inboxId && isDbConnected()) {
-      const inboxRows = await db
-        .select()
-        .from(inboxesTable)
-        .where(eq(inboxesTable.id, thread.inboxId))
-        .limit(1);
-      replyTo = inboxRows[0]?.email ?? undefined;
-    }
-
-    // Threading headers — In-Reply-To = last customer message id;
-    // References = chain of all prior message ids in the thread.
-    const messages = await listMessages(draft.threadId);
-    const priorIds = messages
-      .map(m => m.externalMessageId)
-      .filter((x): x is string => !!x);
-    const headers: Record<string, string> = {};
-    const lastCustomerMsg = [...messages].reverse().find(m => m.role === "customer");
-    if (lastCustomerMsg?.externalMessageId) {
-      headers["In-Reply-To"] = lastCustomerMsg.externalMessageId;
-    }
-    if (priorIds.length > 0) {
-      headers["References"] = priorIds.join(" ");
-    }
-
-    // Append signature from the org's AI settings (if any)
-    const settings = await getAiSettings(orgId);
-    const finalBody = appendSignature(draft.bodyText, settings?.signature);
-
-    const result = await sendEmail({
-      to:      thread.fromEmail,
-      subject: replySubject(thread.subject),
-      text:    finalBody,
-      replyTo,
-      headers: Object.keys(headers).length > 0 ? headers : undefined,
-    });
-
-    if (!result.ok) {
-      return NextResponse.json({ error: `Email failed: ${result.error}` }, { status: 502 });
-    }
-
-    // Append assistant message to conversation log
-    await appendMessage({
-      threadId:           draft.threadId,
-      role:               "assistant",
-      bodyText:           finalBody,
-      externalMessageId:  result.id || null,
-      sentAt:             now,
-    });
-
-    // If the thread has no externalThreadId yet, set it to the outgoing
-    // Message-ID. When the customer replies, their In-Reply-To header will
-    // reference this ID, allowing the inbound webhook to thread the reply
-    // into the existing conversation instead of creating a new thread.
-    if (!thread.externalThreadId && result.id) {
-      await setThreadExternalId(orgId, draft.threadId, result.id);
-    }
+  if (!sendResult.ok) {
+    const status = sendResult.error.startsWith("resend_error") ? 502 : 500;
+    return NextResponse.json({ error: sendResult.error }, { status });
   }
 
-  // Update draft + thread status atomically (best effort — no real txn)
-  await updateDraft(orgId, draftId, {
-    status:     "sent",
-    approvedAt: now,
-    sentAt:     now,
-  });
-
-  // Thread status transitions per draft action
-  let newStatus: "open" | "waiting" | "escalated" | "resolved" = thread.status;
-  let interactionCount = thread.interactionCount;
-  let caseTypeSlug = thread.caseTypeSlug;
-  let collectedInfo = thread.collectedInfo;
-
-  switch (draft.action) {
-    case "ask":
-      newStatus = "waiting";
-      interactionCount = thread.interactionCount + 1;
-      // Merge any collected_info from this draft into the thread
-      collectedInfo = mergeCollected(thread.collectedInfo, draft.metadata);
-      break;
-    case "summarize":
-      newStatus = "resolved";
-      caseTypeSlug = (draft.metadata as { case_type?: string })?.case_type ?? caseTypeSlug;
-      collectedInfo = mergeCollected(thread.collectedInfo, draft.metadata);
-      break;
-    case "escalate":
-      newStatus = "escalated";
-      break;
-  }
-
-  await updateThread(orgId, draft.threadId, {
-    status:           newStatus,
-    interactionCount,
-    caseTypeSlug,
-    collectedInfo,
-    lastMessageAt:    now,
-  });
-
-  await writeAuditLog({
-    organizationId: orgId,
-    userId:         account.user.id,
-    action: draft.action === "escalate"
-      ? "thread_escalated"
-      : draft.action === "summarize"
-        ? "thread_resolved"
-        : "ai_draft_sent",
-    metadata: {
-      draftId,
-      draftAction:     draft.action,
-      threadId:        draft.threadId,
-      newThreadStatus: newStatus,
-    },
-  });
-
-  return NextResponse.json({ ok: true, status: "sent", threadStatus: newStatus });
-}
-
-// ── helpers ──────────────────────────────────────────────────────────────────
-
-function mergeCollected(
-  existing: Record<string, unknown> | null | undefined,
-  metadata: unknown,
-): Record<string, unknown> {
-  const ci = (metadata as { collected_info?: Record<string, unknown> })?.collected_info;
-  if (!ci || typeof ci !== "object") return existing ?? {};
-  return { ...(existing ?? {}), ...ci };
+  // Re-fetch draft for the updated thread status to return to client
+  const sent = await getDraft(orgId, draftId);
+  return NextResponse.json({ ok: true, status: "sent", threadStatus: sent?.status ?? "sent" });
 }

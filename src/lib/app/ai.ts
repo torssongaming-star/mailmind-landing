@@ -34,11 +34,21 @@ export const AI_MODEL = "claude-haiku-4-5-20251001";
 const TIMEOUT_MS = 15_000;
 const MAX_RETRIES = 3;
 
+/** Fields appended to every AI output for auto-send eligibility. */
+const AutoSendMeta = z.object({
+  /** AI self-reported confidence 0.0–1.0. Auto-send requires ≥ 0.90. */
+  confidence:      z.number().min(0).max(1).default(0),
+  /** "low" | "medium" | "high". Auto-send only allowed on "low". */
+  risk_level:      z.enum(["low", "medium", "high"]).default("medium"),
+  /** True when the answer is traceable to knowledge base or thread history. */
+  source_grounded: z.boolean().default(false),
+});
+
 export const AskOutput = z.object({
   action:         z.literal("ask"),
   question:       z.string().min(1),
   collected_info: z.record(z.string(), z.unknown()),
-});
+}).merge(AutoSendMeta);
 
 export const SummarizeOutput = z.object({
   action:         z.literal("summarize"),
@@ -46,12 +56,12 @@ export const SummarizeOutput = z.object({
   summary:        z.string().min(1),
   customer_reply: z.string().min(1),
   collected_info: z.record(z.string(), z.unknown()),
-});
+}).merge(AutoSendMeta);
 
 export const EscalateOutput = z.object({
   action: z.literal("escalate"),
   reason: z.string().min(1),
-});
+}).merge(AutoSendMeta);
 
 export const AIOutputSchema = z.discriminatedUnion("action", [
   AskOutput,
@@ -130,10 +140,15 @@ REGLER:
 6. Om ärendetyp är helt oklar ELLER du nått max interaktioner → eskalera (action: escalate).
 7. Vid tveksamhet → eskalera hellre än att gissa.
 
-KRITISKT: Returnera ENDAST giltig JSON utan markdown-fences. Exakt ett av dessa format:
-{"action":"ask","question":"string","collected_info":{}}
-{"action":"summarize","case_type":"string","summary":"string","customer_reply":"string","collected_info":{}}
-{"action":"escalate","reason":"string"}`;
+KRITISKT: Returnera ENDAST giltig JSON utan markdown-fences. Inkludera ALLTID dessa tre fält i svaret:
+- "confidence": ett tal 0.0–1.0 som representerar hur säker du är på ditt svar
+- "risk_level": "low" | "medium" | "high" (eskalering = alltid "high"; klagomål/juridik = "high"; tydlig fråga med känd svar = "low")
+- "source_grounded": true om svaret baseras på tillhandahållen företagsinformation eller trådhistorik, annars false
+
+Exakt ett av dessa format:
+{"action":"ask","question":"string","collected_info":{},"confidence":0.8,"risk_level":"low","source_grounded":false}
+{"action":"summarize","case_type":"string","summary":"string","customer_reply":"string","collected_info":{},"confidence":0.95,"risk_level":"low","source_grounded":true}
+{"action":"escalate","reason":"string","confidence":0.0,"risk_level":"high","source_grounded":false}`;
 }
 
 export function buildUserMessage(opts: {
@@ -278,7 +293,13 @@ export async function generateDraft(input: GenerateDraftInput): Promise<Generate
     const reason = err instanceof Error ? err.message : "Unknown AI error";
     console.error("[ai] error:", reason, "| raw:", rawText.slice(0, 200));
     return {
-      output: { action: "escalate", reason: `AI fallback: ${reason}` },
+      output: {
+        action:          "escalate",
+        reason:          `AI fallback: ${reason}`,
+        confidence:      0,
+        risk_level:      "high",
+        source_grounded: false,
+      },
       rawText,
       model: AI_MODEL,
     };

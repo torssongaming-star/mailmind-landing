@@ -36,6 +36,7 @@ import { writeAuditLog } from "./audit";
 import { computeAccess } from "./entitlements";
 import { fireWebhooksForThread } from "./webhooks";
 import { notifyNewThread } from "./notify";
+import { canAutoSend, executeSendDraft } from "./autoSend";
 
 function currentMonthIso(): string {
   const now = new Date();
@@ -51,7 +52,7 @@ export async function autoTriageNewMessage(input: {
   organizationId: string;
   threadId: string;
   newEmailBody: string;
-}): Promise<{ ok: true; draftId: string } | { ok: false; reason: string }> {
+}): Promise<{ ok: true; draftId: string; autoSent?: boolean } | { ok: false; reason: string }> {
   const { organizationId, threadId, newEmailBody } = input;
 
   if (!isDbConnected()) {
@@ -176,6 +177,51 @@ export async function autoTriageNewMessage(input: {
       },
     });
 
+  // ── Auto-send ──────────────────────────────────────────────────────────────
+  // Only when autoSendEnabled AND not dry-run AND draft was created.
+  let autoSent = false;
+  if (!isDryRun && draft && settings?.autoSendEnabled) {
+    const meta = draft.metadata as Record<string, unknown> | null;
+    const confidence      = typeof meta?.confidence === "number"  ? meta.confidence      : 0;
+    const riskLevel       = (meta?.risk_level as "low" | "medium" | "high") ?? "medium";
+    const sourceGrounded  = typeof meta?.source_grounded === "boolean" ? meta.source_grounded : false;
+
+    const decision = canAutoSend({
+      action:           ai.output.action,
+      confidence,
+      riskLevel,
+      sourceGrounded,
+      interactionCount: thread.interactionCount,
+      isBlocked:        false, // TODO: per-sender block flag (Fas 7)
+    });
+
+    if (decision.eligible) {
+      const sendResult = await executeSendDraft({
+        orgId:   organizationId,
+        draftId: draft.id,
+        userId:  null, // system-triggered
+      });
+      autoSent = sendResult.ok;
+      if (!sendResult.ok) {
+        console.warn("[autoTriage] auto-send failed:", sendResult.error, "— draft stays pending for manual review");
+      }
+    } else {
+      // Log why auto-send was blocked (non-fatal)
+      await writeAuditLog({
+        organizationId,
+        userId: null,
+        action: "ai_draft_generated",
+        metadata: {
+          threadId,
+          draftId:         draft.id,
+          action:          ai.output.action,
+          source:          "auto_triage",
+          auto_send_blocked: decision.blockers,
+        },
+      });
+    }
+  }
+
   // Notify org owner about new inbound thread (non-blocking).
   // Skipped in dry-run mode — no real email action was taken.
   if (!isDryRun) {
@@ -216,7 +262,7 @@ export async function autoTriageNewMessage(input: {
     },
   });
 
-  return draft ? { ok: true, draftId: draft.id } : { ok: false, reason: "draft_create_failed" };
+  return draft ? { ok: true, draftId: draft.id, autoSent } : { ok: false, reason: "draft_create_failed" };
 }
 
 // Re-export the subscription type for callers that need it

@@ -457,6 +457,48 @@ export async function toggleDryRunAction(orgId: string, enabled: boolean) {
   }
 }
 
+// ── Auto-send toggle ───────────────────────────────────────────────────────────
+
+/**
+ * Enable or disable auto-send for an org.
+ * Safety gate: caller should verify approved >= DRY_RUN_THRESHOLD before calling.
+ */
+export async function toggleAutoSendAction(orgId: string, enabled: boolean) {
+  await requireAdminApi();
+  const admin = await getAdminIdentity();
+  if (!admin) throw new Error("No admin session");
+
+  try {
+    await db
+      .insert(aiSettings)
+      .values({
+        organizationId:  orgId,
+        autoSendEnabled: enabled,
+        language:        "sv",
+        tone:            "friendly",
+        maxInteractions: 2,
+      })
+      .onConflictDoUpdate({
+        target: aiSettings.organizationId,
+        set: { autoSendEnabled: enabled, updatedAt: new Date() },
+      });
+
+    await db.insert(adminAuditLogs).values({
+      actorClerkUserId:     admin.clerkUserId,
+      actorEmail:           admin.email!,
+      action:               enabled ? "auto_send_enabled" : "auto_send_disabled",
+      targetOrganizationId: orgId,
+      metadata:             { enabled },
+    });
+
+    revalidatePath(`/admin/organizations/${orgId}`);
+    return { success: true };
+  } catch (error) {
+    console.error("[toggleAutoSendAction] failed:", error);
+    return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
+  }
+}
+
 /**
  * Mark a dry-run draft as approved (true) or rejected (false).
  * Only counts approved drafts toward the DRY_RUN_THRESHOLD.
