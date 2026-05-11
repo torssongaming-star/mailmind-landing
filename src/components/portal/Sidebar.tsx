@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -14,22 +15,23 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SupportDrawer } from "./SupportDrawer";
 
 import { siteConfig } from "@/config/site";
 
 const navItems = [
-  { href: "/app",                label: "Home",      icon: LayoutDashboard },
-  { href: "/app/inbox",          label: "Inbox",     icon: Mail },
-  { href: "/dashboard/billing",  label: "Billing",   icon: CreditCard },
-  { href: "/app/settings/account", label: "Account", icon: UserCircle },
-  { href: "/app/settings",       label: "Settings",  icon: Settings },
-  { href: "/dashboard/team",     label: "Team",      icon: Users },
-  { href: "/dashboard/usage",    label: "Usage",     icon: BarChart2 },
-  { href: "mailto:support@mailmind.se", label: "Support", icon: HelpCircle },
+  { href: "/app",                  label: "Home",     icon: LayoutDashboard },
+  { href: "/app/inbox",            label: "Inbox",    icon: Mail },
+  { href: "/dashboard/billing",    label: "Billing",  icon: CreditCard },
+  { href: "/app/settings/account", label: "Account",  icon: UserCircle },
+  { href: "/app/settings",         label: "Settings", icon: Settings },
+  { href: "/dashboard/team",       label: "Team",     icon: Users },
+  { href: "/dashboard/usage",      label: "Usage",    icon: BarChart2 },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [supportOpen, setSupportOpen] = useState(false);
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 w-64 hidden lg:flex flex-col border-r border-white/5 bg-[#030614]/95 backdrop-blur-md">
@@ -67,8 +69,15 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Back to site */}
-      <div className="p-4 border-t border-white/5">
+      {/* Support + Back to site */}
+      <div className="p-4 border-t border-white/5 space-y-1">
+        <button
+          onClick={() => setSupportOpen(true)}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-white hover:bg-white/[0.04] transition-all duration-200"
+        >
+          <HelpCircle size={17} className="text-muted-foreground" />
+          Support
+        </button>
         <Link
           href="/"
           className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-muted-foreground hover:text-white transition-colors rounded-xl hover:bg-white/[0.04]"
@@ -77,6 +86,8 @@ export function Sidebar() {
           Back to {siteConfig.domain}
         </Link>
       </div>
+
+      <SupportDrawer open={supportOpen} onClose={() => setSupportOpen(false)} />
     </aside>
   );
 }
