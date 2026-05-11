@@ -2,20 +2,18 @@ import { PlanKey } from "./plans";
 import Stripe from "stripe";
 
 if (!process.env.STRIPE_SECRET_KEY) {
-  // Only throw in production server environments to allow builds to pass
-  if (process.env.NODE_ENV === "production") {
-    throw new Error("STRIPE_SECRET_KEY is not set in environment variables.");
-  }
+  console.warn("⚠️ STRIPE_SECRET_KEY is not set in environment variables.");
 }
 
 /**
  * Singleton Stripe client (Server-only).
  */
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? "", {
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "sk_test_dummy", {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- API version mismatch in SDK types
   apiVersion: "2026-04-22.dahlia" as any,
   typescript: true,
 });
+
 
 /** Server-side Price ID map — sourced from environment variables */
 export const PRICE_IDS = {
