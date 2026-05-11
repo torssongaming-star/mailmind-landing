@@ -13,13 +13,15 @@ import {
   ChevronLeft,
   ShieldCheck,
   UserPlus,
+  Monitor,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Overview",       href: "/admin",               icon: LayoutDashboard },
-  { name: "Provision kund", href: "/admin/onboarding",    icon: UserPlus },
-  { name: "Users",          href: "/admin/users",         icon: Users },
+  { name: "Provision kund",  href: "/admin/onboarding", icon: UserPlus },
+  { name: "Outlook-guide",  href: "/admin/sideload",    icon: Monitor },
+  { name: "Users",          href: "/admin/users",       icon: Users },
   { name: "Organizations",  href: "/admin/organizations", icon: Building2 },
   { name: "Pilots",         href: "/admin/pilots",        icon: Rocket },
   { name: "Knowledge Base", href: "/admin/knowledge",     icon: BookOpen },

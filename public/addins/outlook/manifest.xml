@@ -1,20 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<OfficeApp 
-  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1" 
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0" 
-  xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides" 
+<OfficeApp
+  xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
+  xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides"
   xsi:type="MailApp">
-  
+
   <Id>d3b1a2c3-4e5f-6a7b-8c9d-0e1f2a3b4c5d</Id>
-  <Version>1.0.0.0</Version>
+  <Version>1.1.0.0</Version>
   <ProviderName>Mailmind</ProviderName>
-  <DefaultLocale>en-US</DefaultLocale>
+  <DefaultLocale>sv-SE</DefaultLocale>
   <DisplayName DefaultValue="Mailmind" />
-  <Description DefaultValue="Open your Mailmind inbox from Outlook" />
+  <Description DefaultValue="Triage inkommande mejl med AI direkt i Outlook." />
   <IconUrl DefaultValue="https://mailmind.se/addins/outlook/icon-32.png" />
   <HighResolutionIconUrl DefaultValue="https://mailmind.se/addins/outlook/icon-80.png" />
-  
+  <SupportUrl DefaultValue="https://mailmind.se/support" />
+
   <AppDomains>
     <AppDomain>https://mailmind.se</AppDomain>
     <AppDomain>https://www.mailmind.se</AppDomain>
@@ -23,38 +24,49 @@
   <Hosts>
     <Host Name="Mailbox" />
   </Hosts>
-  
+
+  <!--
+    Mailbox 1.3 required for:
+      - Office.context.mailbox.item.body.getAsync (read email body text)
+    Mailbox 1.1 was the old minimum — insufficient for triage.
+  -->
   <Requirements>
-    <Sets DefaultMinVersion="1.1">
-      <Set Name="Mailbox" />
+    <Sets DefaultMinVersion="1.3">
+      <Set Name="Mailbox" MinVersion="1.3" />
     </Sets>
   </Requirements>
-  
+
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
         <SourceLocation DefaultValue="https://mailmind.se/addins/outlook/" />
-        <RequestedHeight>250</RequestedHeight>
+        <RequestedHeight>550</RequestedHeight>
       </DesktopSettings>
     </Form>
   </FormSettings>
-  
+
+  <!-- ReadItem: read current message subject, sender, body — sufficient for triage -->
   <Permissions>ReadItem</Permissions>
-  
+
   <Rule xsi:type="RuleCollection" Mode="And">
     <Rule xsi:type="ItemIs" ItemType="Message" FormType="Read" />
   </Rule>
-  
+
   <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides" xsi:type="VersionOverridesV1_0">
     <Description resid="appDescription" />
+    <Requirements>
+      <bt:Sets DefaultMinVersion="1.3">
+        <bt:Set Name="Mailbox" MinVersion="1.3" />
+      </bt:Sets>
+    </Requirements>
     <Hosts>
       <Host xsi:type="MailHost">
         <DesktopFormFactor>
           <ExtensionPoint xsi:type="MessageReadCommandSurface">
             <OfficeTab id="TabDefault">
-              <Group id="msgReadGroup">
+              <Group id="mailmindGroup">
                 <Label resid="groupLabel" />
-                <Control xsi:type="Button" id="msgReadOpenPaneButton">
+                <Control xsi:type="Button" id="mailmindTriageButton">
                   <Label resid="buttonLabel" />
                   <Supertip>
                     <Title resid="supertipTitle" />
@@ -67,6 +79,7 @@
                   </Icon>
                   <Action xsi:type="ShowTaskpane">
                     <SourceLocation resid="taskpaneUrl" />
+                    <SupportsPinning>true</SupportsPinning>
                   </Action>
                 </Control>
               </Group>
@@ -85,13 +98,13 @@
         <bt:Url id="taskpaneUrl" DefaultValue="https://mailmind.se/addins/outlook/" />
       </bt:Urls>
       <bt:ShortStrings>
-        <bt:String id="groupLabel" DefaultValue="Mailmind" />
-        <bt:String id="buttonLabel" DefaultValue="Open Mailmind" />
-        <bt:String id="supertipTitle" DefaultValue="Mailmind" />
+        <bt:String id="groupLabel"    DefaultValue="Mailmind" />
+        <bt:String id="buttonLabel"   DefaultValue="Triage med Mailmind" />
+        <bt:String id="supertipTitle" DefaultValue="Mailmind AI-triagering" />
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="appDescription" DefaultValue="Open your Mailmind inbox from Outlook" />
-        <bt:String id="supertipDescription" DefaultValue="Open the Mailmind taskpane to manage your email with AI." />
+        <bt:String id="appDescription"      DefaultValue="Triage inkommande mejl med AI direkt i Outlook." />
+        <bt:String id="supertipDescription" DefaultValue="Öppna Mailmind-panelen för att klassificera och skapa AI-utkast till det markerade mejlet." />
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>
