@@ -37,6 +37,7 @@ import { computeAccess } from "./entitlements";
 import { fireWebhooksForThread } from "./webhooks";
 import { notifyNewThread } from "./notify";
 import { canAutoSend, executeSendDraft } from "./autoSend";
+import { isBlocked } from "./blocklist";
 
 function currentMonthIso(): string {
   const now = new Date();
@@ -192,7 +193,7 @@ export async function autoTriageNewMessage(input: {
       riskLevel,
       sourceGrounded,
       interactionCount: thread.interactionCount,
-      isBlocked:        false, // TODO: per-sender block flag (Fas 7)
+      isBlocked:        await isBlocked(organizationId, thread.fromEmail),
     });
 
     if (decision.eligible) {

@@ -13,6 +13,7 @@ type Thread = {
   caseTypeSlug:   string | null;
   lastMessageAt:  Date | null;
   snoozedUntil:   Date | null;
+  tags:           string[];
 };
 
 const STATUS_CLASSES: Record<string, string> = {
@@ -234,6 +235,11 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
                       Snoozad
                     </span>
                   )}
+                  {t.tags.slice(0, 3).map(tag => (
+                    <span key={tag} className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full border bg-primary/10 text-primary border-primary/20">
+                      {tag}
+                    </span>
+                  ))}
                   <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                     STATUS_CLASSES[t.status] ?? STATUS_CLASSES.resolved
                   }`}>

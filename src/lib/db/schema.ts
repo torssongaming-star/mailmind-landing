@@ -575,6 +575,8 @@ export const emailThreads = pgTable(
     lastMessageAt:     timestamp("last_message_at", { withTimezone: true }),
     /** When snoozed, thread is hidden from inbox until this timestamp */
     snoozedUntil:      timestamp("snoozed_until", { withTimezone: true }),
+    /** Free-form agent labels, e.g. ["vip", "follow-up"] */
+    tags:              jsonb("tags").$type<string[]>().notNull().default([]),
     createdAt:         timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt:         timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },

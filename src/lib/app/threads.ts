@@ -116,7 +116,7 @@ export async function setThreadExternalId(
 export async function updateThread(
   organizationId: string,
   threadId: string,
-  patch: Partial<Pick<EmailThread, "status" | "caseTypeSlug" | "collectedInfo" | "interactionCount" | "lastMessageAt" | "snoozedUntil">>
+  patch: Partial<Pick<EmailThread, "status" | "caseTypeSlug" | "collectedInfo" | "interactionCount" | "lastMessageAt" | "snoozedUntil" | "tags">>
 ) {
   if (!isDbConnected()) return;
   await db

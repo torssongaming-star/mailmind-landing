@@ -23,11 +23,13 @@ const TABS: Array<{ value: "all" | "open" | "waiting" | "escalated" | "resolved"
 export function InboxFilters({
   currentStatus,
   currentQuery,
+  currentTag,
   counts,
   compact,
 }: {
   currentStatus: string | null;
   currentQuery: string;
+  currentTag?: string;
   counts: Counts;
   compact?: boolean;
 }) {
@@ -54,6 +56,13 @@ export function InboxFilters({
     const qs = next.toString();
     return `/app/inbox${qs ? `?${qs}` : ""}`;
   };
+
+  const clearTagHref = (() => {
+    const next = new URLSearchParams(searchParams.toString());
+    next.delete("tag");
+    const qs = next.toString();
+    return `/app/inbox${qs ? `?${qs}` : ""}`;
+  })();
 
   const activeStatus = currentStatus ?? "all";
 
@@ -82,6 +91,17 @@ export function InboxFilters({
           );
         })}
       </div>
+
+      {/* Active tag filter chip */}
+      {currentTag && (
+        <Link
+          href={clearTagHref}
+          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors"
+        >
+          #{currentTag}
+          <span className="text-primary/60 hover:text-primary leading-none">×</span>
+        </Link>
+      )}
 
       {/* Search */}
       <div className="relative flex-1 sm:max-w-xs">

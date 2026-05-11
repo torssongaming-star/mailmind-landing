@@ -21,7 +21,7 @@ type ThreadStatus = (typeof VALID_STATUSES)[number];
 export default async function InboxPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; q?: string; source?: string }>;
+  searchParams: Promise<{ status?: string; q?: string; source?: string; tag?: string }>;
 }) {
   const { userId } = await auth();
   if (!userId) redirect("/login");
@@ -34,7 +34,8 @@ export default async function InboxPage({
   const filterStatus = VALID_STATUSES.includes(params.status as ThreadStatus)
     ? (params.status as ThreadStatus)
     : null;
-  const query = (params.q ?? "").trim().toLowerCase();
+  const query   = (params.q   ?? "").trim().toLowerCase();
+  const tagFilter = (params.tag ?? "").trim().toLowerCase();
 
   // Wake up any threads whose snooze has expired before listing
   await wakeUpSnoozedThreads(account.organization.id);
@@ -52,12 +53,14 @@ export default async function InboxPage({
   // Filter on the server so the count + list always agree
   const threads = all.filter(t => {
     if (filterStatus && t.status !== filterStatus) return false;
+    if (tagFilter && !(t.tags ?? []).includes(tagFilter)) return false;
     if (query) {
       const haystack = [
         t.subject ?? "",
         t.fromEmail ?? "",
         t.fromName ?? "",
         t.caseTypeSlug ?? "",
+        ...(t.tags ?? []),
       ].join(" ").toLowerCase();
       if (!haystack.includes(query)) return false;
     }
@@ -96,6 +99,7 @@ export default async function InboxPage({
       <InboxFilters
         currentStatus={filterStatus}
         currentQuery={query}
+        currentTag={tagFilter || undefined}
         counts={counts}
         compact={isOutlook}
       />
@@ -129,6 +133,7 @@ export default async function InboxPage({
             caseTypeSlug:   t.caseTypeSlug,
             lastMessageAt:  t.lastMessageAt,
             snoozedUntil:   t.snoozedUntil ?? null,
+            tags:           t.tags ?? [],
           }))}
         />
       )}

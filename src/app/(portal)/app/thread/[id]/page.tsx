@@ -16,6 +16,7 @@ import { DraftActions } from "./DraftActions";
 import { InternalNotes } from "./InternalNotes";
 import { SnoozeButton } from "./SnoozeButton";
 import { CustomerHistory } from "./CustomerHistory";
+import { TagEditor } from "./TagEditor";
 
 export const dynamic = "force-dynamic";
 
@@ -60,9 +61,15 @@ export default async function ThreadPage({
           {" · "}
           <span>{thread.interactionCount} interaction{thread.interactionCount === 1 ? "" : "s"}</span>
         </p>
-        <SnoozeButton
+        <div className="flex items-center gap-3 flex-wrap">
+          <SnoozeButton
+            threadId={thread.id}
+            snoozedUntil={thread.snoozedUntil ?? null}
+          />
+        </div>
+        <TagEditor
           threadId={thread.id}
-          snoozedUntil={thread.snoozedUntil ?? null}
+          initialTags={thread.tags ?? []}
         />
       </header>
 
