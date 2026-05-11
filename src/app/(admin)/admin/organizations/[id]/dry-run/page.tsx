@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getDryRunStats, listDryRunDrafts, getAdminOrganization } from "@/lib/admin/queries";
 import { DryRunReviewClient } from "./DryRunReviewClient";
-import { DRY_RUN_THRESHOLD } from "@/lib/admin/actions";
+import { DRY_RUN_THRESHOLD } from "@/lib/admin/constants";
 import { ChevronLeft, FlaskConical, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 

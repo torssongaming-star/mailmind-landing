@@ -1,7 +1,8 @@
 "use client";
 
 import { useTransition } from "react";
-import { toggleDryRunAction, DRY_RUN_THRESHOLD } from "@/lib/admin/actions";
+import { toggleDryRunAction } from "@/lib/admin/actions";
+import { DRY_RUN_THRESHOLD } from "@/lib/admin/constants";
 import { FlaskConical, ChevronRight, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";

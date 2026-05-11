@@ -416,10 +416,6 @@ export async function provisionCustomerAction(data: {
 
 // ── Dry-run toggle ─────────────────────────────────────────────────────────────
 
-/** DRY_RUN_THRESHOLD is the number of approved iterations required before
- *  Mailmind team may enable auto-send for an org. */
-export const DRY_RUN_THRESHOLD = 20;
-
 /**
  * Enable or disable dry-run mode for an org.
  * Upserts ai_settings if the row doesn't exist yet.
