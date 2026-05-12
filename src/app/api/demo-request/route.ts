@@ -8,7 +8,7 @@ const demoRequestSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   workEmail: z.string().email("Invalid work email address"),
   companyName: z.string().min(1, "Company name is required"),
-  companyWebsite: z.string().url().optional().or(z.literal("")),
+  companyWebsite: z.string().optional(),
   emailVolume: z.string().min(1, "Email volume is required"),
   currentSystem: z.string().min(1, "Current system is required"),
   message: z.string().optional(),
@@ -24,6 +24,7 @@ const demoRequestSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+    console.log("[api/demo-request] Received body:", JSON.stringify(body, null, 2));
 
     // 1. Validate with Zod
     const result = demoRequestSchema.safeParse(body);
