@@ -250,11 +250,11 @@ export async function getAdminOrganization(id: string) {
     return await db.query.organizations.findFirst({
       where: eq(organizations.id, id),
       with: {
-        users: true,
-        subscriptions: true,
+        users:              true,
+        subscriptions:      true,
         licenseEntitlement: true,
-        usageCounters: true,
-        aiSettings: true,
+        usageCounters:      true,
+        // aiSettings is NOT in organizationsRelations — query separately if needed
       },
     });
   } catch (error) {
