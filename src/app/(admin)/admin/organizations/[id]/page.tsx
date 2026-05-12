@@ -1,13 +1,14 @@
 import { getAdminOrganization, listAdminNotes, getOrgHealth, getDryRunStats } from "@/lib/admin/queries";
 import { DryRunPanel } from "./DryRunPanel";
 import { AutoSendPanel } from "./AutoSendPanel";
-import { Building2, Users, CreditCard, Mail, Calendar, ShieldCheck, Activity, MessageSquare, Clock } from "lucide-react";
+import { Building2, Users, CreditCard, Mail, Calendar, ShieldCheck, Activity, MessageSquare, Clock, Zap } from "lucide-react";
 import { format } from "date-fns";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { User, AdminNote } from "@/lib/db/schema";
 import React from "react";
+import { LucideIcon } from "lucide-react";
 
 export default async function AdminOrganizationDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -19,26 +20,34 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
   ]);
 
   if (!org) notFound();
+  const o = org as any;
 
-  const sub = org.subscriptions[0];
-  const entitlements = org.licenseEntitlement;
-  const usage = org.usageCounters[0];
+  const sub = o.subscriptions[0];
+  const entitlements = o.licenseEntitlement;
+  
+  // Find current month usage
+  const currentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+    .toISOString()
+    .slice(0, 10);
+  const usage = o.usageCounters?.find((u: any) => u.month === currentMonth);
 
   return (
-    <div className="p-8 space-y-8 max-w-6xl mx-auto">
+    <div className="p-8 space-y-8 max-w-6xl mx-auto animate-in fade-in duration-500">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-2xl bg-primary/5 flex items-center justify-center border border-primary/10 shadow-2xl">
             <Building2 className="w-8 h-8 text-primary" />
           </div>
           <div>
-            <h1 className="text-white text-3xl font-bold tracking-tight">{org.name}</h1>
+            <h1 className="text-white text-3xl font-bold tracking-tight">{o.name}</h1>
             <div className="flex items-center gap-2 mt-1">
-              <span className="text-slate-500 text-xs font-mono">{org.id}</span>
+              <span className="text-slate-500 text-xs font-mono">{o.id}</span>
               <span className="text-slate-700">•</span>
               <span className={cn(
                 "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest",
-                sub?.status === "active" ? "bg-green-500/10 text-green-500" : "bg-white/5 text-slate-400"
+                sub?.status === "active" ? "bg-green-500/10 text-green-500" : 
+                sub?.status === "trialing" ? "bg-primary/10 text-primary" :
+                "bg-white/5 text-slate-400"
               )}>
                 {sub?.status || "Free Account"}
               </span>
@@ -62,6 +71,32 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-8">
+          
+          {/* Health Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <StatCard 
+              label="Active Threads" 
+              value={(health?.threadCount || 0).toString()} 
+              icon={MessageSquare} 
+              color="text-violet-500" 
+              bgColor="bg-violet-500/10"
+            />
+            <StatCard 
+              label="AI Drafts (Month)" 
+              value={`${usage?.aiDraftsUsed || 0} / ${entitlements?.maxAiDraftsPerMonth || 0}`} 
+              icon={Zap} 
+              color="text-yellow-500" 
+              bgColor="bg-yellow-500/10"
+            />
+            <StatCard 
+              label="Last Activity" 
+              value={health?.lastActivity ? format(new Date(health.lastActivity), "MMM d, HH:mm") : "None"} 
+              icon={Activity} 
+              color="text-emerald-500" 
+              bgColor="bg-emerald-500/10"
+            />
+          </div>
+
           {/* Billing & Subscription */}
           <div className="bg-[#050B1C] border border-white/5 rounded-2xl p-8 space-y-6">
             <h2 className="text-white font-bold flex items-center gap-2 border-b border-white/5 pb-4">
@@ -71,7 +106,7 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
             
             <div className="grid grid-cols-2 gap-8">
               <DetailItem label="Plan" value={sub?.plan || "Free"} icon={ShieldCheck} />
-              <DetailItem label="Stripe Customer" value={org.stripeCustomerId || "N/A"} icon={Mail} />
+              <DetailItem label="Stripe Customer" value={o.stripeCustomerId || "N/A"} icon={Mail} />
               <DetailItem label="Stripe Subscription" value={sub?.stripeSubscriptionId || "N/A"} icon={Activity} />
               <DetailItem label="Next Invoice" value={sub ? format(new Date(sub.currentPeriodEnd), "PPP") : "N/A"} icon={Calendar} />
             </div>
@@ -96,7 +131,7 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
                <div className="space-y-1">
                  <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Seats Occupied</span>
                  <div className="flex items-center gap-2">
-                   <span className="text-white text-lg font-bold">{org.users.length}</span>
+                   <span className="text-white text-lg font-bold">{o.users.length}</span>
                    <span className="text-slate-600">/</span>
                    <span className="text-slate-400">{entitlements?.maxUsers || 0}</span>
                  </div>
@@ -104,42 +139,14 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
             </div>
           </div>
 
-          {/* Org health */}
-          <div className="bg-[#050B1C] border border-white/5 rounded-2xl p-8 space-y-6">
-            <h2 className="text-white font-bold flex items-center gap-2 border-b border-white/5 pb-4">
-              <MessageSquare className="w-5 h-5 text-cyan-400" />
-              Aktivitet
-            </h2>
-            <div className="grid grid-cols-2 gap-8">
-              <div className="space-y-1">
-                <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
-                  <MessageSquare className="w-3 h-3 text-slate-600" />
-                  Totalt antal trådar
-                </span>
-                <span className="text-white text-lg font-bold">{health?.threadCount ?? 0}</span>
-              </div>
-              <div className="space-y-1">
-                <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5">
-                  <Clock className="w-3 h-3 text-slate-600" />
-                  Senaste aktivitet
-                </span>
-                <span className="text-white text-sm font-medium">
-                  {health?.lastActivity
-                    ? format(new Date(health.lastActivity), "d MMM yyyy HH:mm")
-                    : "Ingen aktivitet än"}
-                </span>
-              </div>
-            </div>
-          </div>
-
           {/* Members */}
           <div className="bg-[#050B1C] border border-white/5 rounded-2xl p-8 space-y-6">
             <h2 className="text-white font-bold flex items-center gap-2 border-b border-white/5 pb-4">
               <Users className="w-5 h-5 text-violet-500" />
-              Team Members ({org.users.length})
+              Team Members ({o.users.length})
             </h2>
             <div className="divide-y divide-white/5">
-              {org.users.map((user: User) => (
+              {o.users.map((user: User) => (
                 <div key={user.id} className="py-4 flex items-center justify-between group">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10 group-hover:border-primary/30 transition-colors">
@@ -200,6 +207,20 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
               </div>
            </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, icon: Icon, color, bgColor }: { label: string, value: string, icon: LucideIcon, color: string, bgColor: string }) {
+  return (
+    <div className="bg-[#050B1C] border border-white/5 rounded-2xl p-6 space-y-3 shadow-xl">
+      <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center border border-white/5", bgColor)}>
+        <Icon className={cn("w-5 h-5", color)} />
+      </div>
+      <div>
+        <div className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">{label}</div>
+        <div className="text-white text-xl font-bold mt-1">{value}</div>
       </div>
     </div>
   );

@@ -11,8 +11,9 @@ import {
   emailThreads,
   aiDrafts,
   aiSettings,
+  usageCounters
 } from "@/lib/db/schema";
-import { desc, eq, count, and, or, ilike, max } from "drizzle-orm";
+import { desc, eq, count, and, or, ilike, max, sql } from "drizzle-orm";
 
 /**
  * Gets overview statistics for the admin dashboard.
@@ -119,9 +120,6 @@ export async function searchKnowledgeArticles(query: string) {
 
 /**
  * Lists users for the admin dashboard.
-
-/**
- * Lists users for the admin dashboard.
  */
 export async function listAdminUsers() {
   if (!isDbConnected()) return [];
@@ -173,6 +171,7 @@ export async function listAdminOrganizations() {
     return await db.query.organizations.findMany({
       with: {
         subscriptions: true,
+        usageCounters: true,
       },
       orderBy: [desc(organizations.createdAt)],
       limit: 100,
@@ -180,6 +179,64 @@ export async function listAdminOrganizations() {
   } catch (error) {
     console.error("Failed to list admin organizations:", error);
     return [];
+  }
+}
+
+/**
+ * Gets health metrics for a list of organizations.
+ */
+export async function getOrganizationsHealth(organizationIds: string[]) {
+  if (!isDbConnected() || organizationIds.length === 0) return {};
+
+  try {
+    const month = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+      .toISOString()
+      .slice(0, 10);
+
+    const threadStats = await db
+      .select({
+        organizationId: emailThreads.organizationId,
+        count: count(),
+        lastActivity: sql<Date | null>`max(${emailThreads.lastMessageAt})`,
+      })
+      .from(emailThreads)
+      .where(sql`${emailThreads.organizationId} = ANY(${organizationIds})`)
+      .groupBy(emailThreads.organizationId);
+
+    const usageStats = await db
+      .select({
+        organizationId: usageCounters.organizationId,
+        aiDraftsUsed: usageCounters.aiDraftsUsed,
+      })
+      .from(usageCounters)
+      .where(
+        and(
+          sql`${usageCounters.organizationId} = ANY(${organizationIds})`,
+          eq(usageCounters.month, month)
+        )
+      );
+
+    const healthMap: Record<string, { threads: number; aiUsage: number; lastActivity: Date | null }> = {};
+    
+    organizationIds.forEach(id => {
+      healthMap[id] = { threads: 0, aiUsage: 0, lastActivity: null };
+    });
+
+    threadStats.forEach(stat => {
+      if (stat.organizationId) {
+        healthMap[stat.organizationId].threads = stat.count;
+        healthMap[stat.organizationId].lastActivity = stat.lastActivity;
+      }
+    });
+
+    usageStats.forEach(stat => {
+      healthMap[stat.organizationId].aiUsage = stat.aiDraftsUsed;
+    });
+
+    return healthMap;
+  } catch (error) {
+    console.error("Failed to fetch organizations health:", error);
+    return {};
   }
 }
 
@@ -197,6 +254,7 @@ export async function getAdminOrganization(id: string) {
         subscriptions: true,
         licenseEntitlement: true,
         usageCounters: true,
+        aiSettings: true,
       },
     });
   } catch (error) {

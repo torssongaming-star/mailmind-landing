@@ -360,6 +360,7 @@ export async function provisionCustomerAction(data: {
       language:       data.aiLanguage,
       tone:           data.aiTone,
       maxInteractions: 2,
+      dryRunEnabled: true, // Default to true for new customers as per MAI-7
     });
 
     // 6. Case types from template
@@ -412,6 +413,29 @@ export async function provisionCustomerAction(data: {
     const message = error instanceof Error ? error.message : "Unknown error";
     return { success: false, error: message };
   }
+}
+
+/**
+ * Legacy provisioning action for MAI-7 compatibility if needed.
+ * Merges logic with the newer provisionCustomerAction pattern.
+ */
+export async function createCustomerAction(data: {
+  email: string;
+  orgName: string;
+  plan: PlanKey;
+  dryRun: boolean;
+}) {
+  // We'll map this to provisionCustomerAction but with some defaults
+  return provisionCustomerAction({
+    orgName: data.orgName,
+    ownerEmail: data.email,
+    ownerClerkUserId: `pending_${Math.random().toString(36).slice(2, 10)}`, // placeholder
+    plan: data.plan,
+    trialDays: 14,
+    caseTypeTemplate: "standard_smb",
+    aiLanguage: "sv",
+    aiTone: "friendly",
+  });
 }
 
 // ── Dry-run toggle ─────────────────────────────────────────────────────────────
