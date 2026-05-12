@@ -667,3 +667,41 @@ export async function createPilotLeadAction(data: {
 
   revalidatePath("/admin/pilots");
 }
+
+/**
+ * Updates an existing pilot / enterprise lead.
+ */
+export async function updatePilotLeadAction(id: string, data: {
+  ownerName:     string;
+  contactName?:  string;
+  contactEmail?: string;
+  summary?:      string;
+  status:        OrgStatus;
+}) {
+  await requireAdminApi();
+  const admin = await getAdminIdentity();
+  if (!admin) throw new Error("No admin session");
+
+  if (!data.ownerName.trim()) throw new Error("Owner name is required");
+
+  await db
+    .update(adminCustomerProfiles)
+    .set({
+      ownerName:    data.ownerName.trim(),
+      contactName:  data.contactName?.trim()  || null,
+      contactEmail: data.contactEmail?.trim() || null,
+      summary:      data.summary?.trim()      || null,
+      status:       data.status,
+      updatedAt:    new Date(),
+    })
+    .where(eq(adminCustomerProfiles.id, id));
+
+  await db.insert(adminAuditLogs).values({
+    actorClerkUserId: admin.clerkUserId,
+    actorEmail:       admin.email!,
+    action:           "pilot_lead_updated",
+    metadata:         { id, ownerName: data.ownerName, status: data.status },
+  });
+
+  revalidatePath("/admin/pilots");
+}

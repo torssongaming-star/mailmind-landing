@@ -1,11 +1,12 @@
 import { db } from "@/lib/db";
 import { adminCustomerProfiles, organizations, AdminCustomerProfile, Organization } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { Rocket, Calendar, User, Building2, MessageSquare } from "lucide-react";
+import { Rocket, Calendar, User, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { NewPilotModal } from "./NewPilotModal";
+import { EditPilotModal } from "./EditPilotModal";
 
 export default async function AdminPilotsPage() {
   const profiles = await db.select({
@@ -79,10 +80,14 @@ export default async function AdminPilotsPage() {
                     View Org
                   </Link>
                 )}
-                <button className="w-full py-2.5 bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 rounded-xl text-[10px] font-bold uppercase tracking-widest text-center transition-all flex items-center justify-center gap-2">
-                  <MessageSquare className="w-3 h-3" />
-                  Edit Profile
-                </button>
+                <EditPilotModal profile={{
+                  id:           profile.id,
+                  ownerName:    profile.ownerName,
+                  contactName:  profile.contactName,
+                  contactEmail: profile.contactEmail,
+                  summary:      profile.summary,
+                  status:       profile.status,
+                }} />
               </div>
             </div>
           </div>
