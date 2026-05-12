@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   UserPlus,
   Monitor,
+  Mail,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -37,8 +38,8 @@ export function AdminSidebar() {
     <aside className="w-64 bg-[#050B1C] border-r border-white/5 flex flex-col h-screen sticky top-0 hidden lg:flex shrink-0">
       <div className="p-6">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl overflow-hidden bg-primary/10 flex items-center justify-center border border-primary/20">
-            <Image src="/logo.png" alt="Mailmind Admin Logo" width={40} height={40} className="object-cover w-full h-full" />
+          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+            <Mail className="text-primary" size={20} />
           </div>
           <div>
             <h1 className="text-white font-bold tracking-tight">Mailmind</h1>

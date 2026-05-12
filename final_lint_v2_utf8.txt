@@ -1,0 +1,15 @@
+﻿
+> mailmind@1.0.0 lint
+> eslint .
+
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\.agents\skills\clerk-backend-api\scripts\extract-tags.js
+   2:1   error  'process' is not defined  no-undef
+   3:1   error  'process' is not defined  no-undef
+  11:14  error  'console' is not defined  no-undef
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\.agents\skills\clerk-tanstack-patterns\templates\tanstack-basic-auth\src\routes\__root.tsx
+  27:7  warning  Do not use `<head>` element. Use `<Head />` from `next/head` instead. See: https://nextjs.org/docs/messages/no-head-element  @next/next/no-head-element
+
+Ô£û 4 problems (3 errors, 1 warning)
+

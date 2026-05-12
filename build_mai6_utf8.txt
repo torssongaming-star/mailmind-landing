@@ -1,0 +1,111 @@
+﻿
+> mailmind@1.0.0 build
+> next build
+
+Ôû▓ Next.js 16.2.4 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+Ô£ô Compiled successfully in 19.1s
+  Running TypeScript ...
+  Finished TypeScript in 16.0s ...
+  Collecting page data using 5 workers ...
+[stripe] Configuration: {
+  hasSecretKey: true,
+  env: 'production',
+  priceIds: {
+    starter: 'valid_format',
+    team: 'valid_format',
+    business: 'valid_format'
+  }
+}
+  Generating static pages using 5 workers (0/47) ...
+  Generating static pages using 5 workers (11/47) 
+  Generating static pages using 5 workers (23/47) 
+  Generating static pages using 5 workers (35/47) 
+Ô£ô Generating static pages using 5 workers (47/47) in 958ms
+  Finalizing page optimization ...
+
+Route (app)
+Ôöî Ôùï /
+Ôö£ Ôùï /_not-found
+Ôö£ Ôùï /addins/outlook
+Ôö£ Ôùï /addins/outlook/signin
+Ôö£ Ôùï /addins/outlook/signin-callback
+Ôö£ ãÆ /admin
+Ôö£ ãÆ /admin/audit
+Ôö£ ãÆ /admin/health
+Ôö£ ãÆ /admin/knowledge
+Ôö£ ãÆ /admin/knowledge/[id]
+Ôö£ ãÆ /admin/knowledge/[id]/edit
+Ôö£ ãÆ /admin/knowledge/new
+Ôö£ ãÆ /admin/organizations
+Ôö£ ãÆ /admin/organizations/[id]
+Ôö£ ãÆ /admin/pilots
+Ôö£ ãÆ /admin/users
+Ôö£ ãÆ /admin/users/[id]
+Ôö£ ãÆ /api/admin/health
+Ôö£ ãÆ /api/admin/knowledge
+Ôö£ ãÆ /api/admin/knowledge/[id]
+Ôö£ ãÆ /api/admin/users/[id]/password-reset
+Ôö£ ãÆ /api/app/ai-settings
+Ôö£ ãÆ /api/app/ai/draft
+Ôö£ ãÆ /api/app/blocklist
+Ôö£ ãÆ /api/app/blocklist/[id]
+Ôö£ ãÆ /api/app/case-types
+Ôö£ ãÆ /api/app/case-types/[id]
+Ôö£ ãÆ /api/app/drafts/[id]
+Ôö£ ãÆ /api/app/inboxes
+Ôö£ ãÆ /api/app/inboxes/[id]
+Ôö£ ãÆ /api/app/knowledge
+Ôö£ ãÆ /api/app/knowledge/[id]
+Ôö£ ãÆ /api/app/knowledge/scrape
+Ôö£ ãÆ /api/app/me
+Ôö£ ãÆ /api/app/notes/[id]
+Ôö£ ãÆ /api/app/onboarding
+Ôö£ ãÆ /api/app/organization
+Ôö£ ãÆ /api/app/templates
+Ôö£ ãÆ /api/app/templates/[id]
+Ôö£ ãÆ /api/app/threads
+Ôö£ ãÆ /api/app/threads/[id]
+Ôö£ ãÆ /api/app/threads/[id]/notes
+Ôö£ ãÆ /api/app/threads/[id]/snooze
+Ôö£ ãÆ /api/app/threads/bulk
+Ôö£ ãÆ /api/app/webhooks
+Ôö£ ãÆ /api/app/webhooks/[id]
+Ôö£ ãÆ /api/billing/checkout
+Ôö£ ãÆ /api/billing/portal
+Ôö£ ãÆ /api/cron/usage-warning
+Ôö£ ãÆ /api/db-test
+Ôö£ ãÆ /api/demo-request
+Ôö£ ãÆ /api/webhooks/clerk
+Ôö£ ãÆ /api/webhooks/sendgrid/inbound
+Ôö£ ãÆ /api/webhooks/stripe
+Ôö£ ãÆ /app
+Ôö£ ãÆ /app/activity
+Ôö£ ãÆ /app/inbox
+Ôö£ ãÆ /app/inboxes
+Ôö£ ãÆ /app/onboarding
+Ôö£ ãÆ /app/settings
+Ôö£ Ôùï /app/settings/account
+Ôö£ ãÆ /app/stats
+Ôö£ ãÆ /app/thread/[id]
+Ôö£ Ôùï /dashboard
+Ôö£ ãÆ /dashboard/billing
+Ôö£ Ôùï /dashboard/settings
+Ôö£ Ôùï /dashboard/team
+Ôö£ ãÆ /dashboard/usage
+Ôö£ ãÆ /login/[[...login]]
+Ôö£ Ôùï /privacy
+Ôö£ Ôùï /robots.txt
+Ôö£ Ôùï /security
+Ôö£ ãÆ /signup/[[...signup]]
+Ôö£ Ôùï /sitemap.xml
+Ôöö Ôùï /terms
+
+
+ãÆ Proxy (Middleware)
+
+Ôùï  (Static)   prerendered as static content
+ãÆ  (Dynamic)  server-rendered on demand
+

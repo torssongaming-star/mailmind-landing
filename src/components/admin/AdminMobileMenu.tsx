@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Menu, X, ChevronLeft } from "lucide-react";
+import { Menu, X, ChevronLeft, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { adminNavigation } from "./AdminSidebar";
@@ -50,8 +50,8 @@ export function AdminMobileMenu() {
             >
               <div className="p-6 shrink-0 flex items-center justify-between border-b border-white/5">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl overflow-hidden bg-primary/10 flex items-center justify-center border border-primary/20">
-                    <Image src="/logo.png" alt="Mailmind Admin Logo" width={40} height={40} className="object-cover w-full h-full" />
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
+                    <Mail className="text-primary" size={20} />
                   </div>
                   <div>
                     <h1 className="text-white font-bold tracking-tight">Mailmind</h1>

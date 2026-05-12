@@ -1,0 +1,5 @@
+﻿
+> mailmind@1.0.0 typecheck
+> tsc --noEmit
+
+src/components/layout/Providers.tsx(22,7): error TS1005: '}' expected.

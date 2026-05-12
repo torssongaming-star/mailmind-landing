@@ -1,0 +1,79 @@
+﻿
+> mailmind@1.0.0 lint
+> eslint .
+
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\.agents\skills\clerk-backend-api\scripts\extract-tags.js
+   2:1   error  'process' is not defined  no-undef
+   3:1   error  'process' is not defined  no-undef
+  11:14  error  'console' is not defined  no-undef
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\.agents\skills\clerk-tanstack-patterns\templates\tanstack-basic-auth\src\routes\__root.tsx
+  27:7  warning  Do not use `<head>` element. Use `<Head />` from `next/head` instead. See: https://nextjs.org/docs/messages/no-head-element  @next/next/no-head-element
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\(admin)\admin\audit\page.tsx
+  38:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\(admin)\admin\knowledge\page.tsx
+  17:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  63:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\(admin)\admin\organizations\[id]\page.tsx
+  106:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  142:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  156:89  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\(admin)\admin\organizations\page.tsx
+  41:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\(admin)\admin\pilots\page.tsx
+  32:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\(admin)\admin\users\[id]\page.tsx
+   90:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:89  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\(admin)\admin\users\page.tsx
+  40:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\api\admin\knowledge\[id]\route.ts
+  52:25  error  Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong  @typescript-eslint/no-non-null-asserted-optional-chain
+  53:19  error  Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong  @typescript-eslint/no-non-null-asserted-optional-chain
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\api\admin\knowledge\route.ts
+  15:50  error  Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+  16:54  error  Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+  43:26  error  Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong  @typescript-eslint/no-non-null-asserted-optional-chain
+  44:20  error  Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong  @typescript-eslint/no-non-null-asserted-optional-chain
+  49:25  error  Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong  @typescript-eslint/no-non-null-asserted-optional-chain
+  50:19  error  Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong  @typescript-eslint/no-non-null-asserted-optional-chain
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\api\admin\users\[id]\password-reset\route.ts
+  39:25  error  Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong  @typescript-eslint/no-non-null-asserted-optional-chain
+  40:19  error  Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong  @typescript-eslint/no-non-null-asserted-optional-chain
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\api\billing\portal\route.ts
+  62:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\components\admin\KnowledgeEditor.tsx
+  12:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  49:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\components\layout\Providers.tsx
+  21:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\lib\admin\actions.ts
+  18:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\lib\admin\queries.ts
+   55:97  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   58:7   error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+   80:53  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  252:14  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\lib\stripe.ts
+  15:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+Ô£û 36 problems (35 errors, 1 warning)
+
