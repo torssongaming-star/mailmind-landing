@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
     // 1. Validate with Zod
     const result = demoRequestSchema.safeParse(body);
     if (!result.success) {
+      console.warn("[api/demo-request] Validation failed:", result.error.format());
       return NextResponse.json(
         { error: "Validation failed", details: result.error.format() },
         { status: 400 }
@@ -48,9 +49,13 @@ export async function POST(req: NextRequest) {
     const fromEmail = process.env.DEMO_REQUEST_FROM;
 
     if (!apiKey || !toEmail || !fromEmail) {
-      console.error("[api/demo-request] Missing environment variables for Resend");
+      const missing = [];
+      if (!apiKey) missing.push("RESEND_API_KEY");
+      if (!toEmail) missing.push("DEMO_REQUEST_TO");
+      if (!fromEmail) missing.push("DEMO_REQUEST_FROM");
+      console.error("[api/demo-request] Missing environment variables:", missing.join(", "));
       return NextResponse.json(
-        { error: "Email service not configured" },
+        { error: `Email service not configured. Missing: ${missing.join(", ")}` },
         { status: 500 }
       );
     }
@@ -78,8 +83,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (error) {
-      console.error("[api/demo-request] Resend error:", error);
-      return NextResponse.json({ error: "Failed to send email" }, { status: 500 });
+      console.error("[api/demo-request] Resend API error:", JSON.stringify(error, null, 2));
+      return NextResponse.json({ error: `Email service error: ${error.message}` }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
