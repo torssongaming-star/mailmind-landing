@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { upsertKnowledgeArticleAction } from "@/lib/admin/actions";
 import { useRouter } from "next/navigation";
-import { Save, Send, Archive, ChevronLeft, Eye, Loader2 } from "lucide-react";
+import { Save, Send, Archive, ChevronLeft, Eye, Loader2, Edit } from "lucide-react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import { cn } from "@/lib/utils";
