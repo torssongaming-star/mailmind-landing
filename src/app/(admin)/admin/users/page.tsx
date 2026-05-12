@@ -26,7 +26,8 @@ export default async function AdminUsersPage() {
         </div>
       </div>
 
-      <div className="bg-[#050B1C] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
+      {/* Desktop Table View */}
+      <div className="hidden md:block bg-[#050B1C] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -79,17 +80,64 @@ export default async function AdminUsersPage() {
                   </td>
                 </tr>
               ))}
-              {users.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500 italic text-sm">
-                    No users found in the system.
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4">
+        {users.map((user: User & { organization: Organization | null }) => (
+          <div key={user.id} className="bg-[#050B1C] border border-white/5 rounded-2xl p-5 space-y-4 shadow-lg">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 shrink-0">
+                  <UserIcon className="w-5 h-5 text-slate-400" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-white text-sm font-bold truncate">{user.email}</span>
+                  <span className="text-slate-500 text-[10px] font-mono truncate">{user.clerkUserId}</span>
+                </div>
+              </div>
+              <span className={cn(
+                "px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider shrink-0",
+                user.role === "owner" ? "bg-primary/10 text-primary" : "bg-white/5 text-slate-400"
+              )}>
+                {user.role}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 py-4 border-y border-white/5">
+              <div className="flex flex-col gap-1">
+                <span className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">Organization</span>
+                <span className="text-slate-200 text-xs truncate">
+                  {user.organization?.name || "None"}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-slate-500 text-[9px] font-bold uppercase tracking-widest">Joined</span>
+                <span className="text-slate-200 text-xs">
+                  {format(new Date(user.createdAt), "MMM d, yyyy")}
+                </span>
+              </div>
+            </div>
+
+            <Link 
+              href={`/admin/users/${user.clerkUserId}`}
+              className="w-full flex items-center justify-center gap-2 py-3 bg-white/5 hover:bg-white/10 text-primary rounded-xl text-xs font-bold uppercase tracking-widest transition-all"
+            >
+              Manage User
+              <ChevronRight className="w-4 h-4" />
+            </Link>
+          </div>
+        ))}
+      </div>
+
+      {users.length === 0 && (
+        <div className="bg-[#050B1C] border border-white/5 rounded-2xl p-12 text-center text-slate-500 italic text-sm">
+          No users found in the system.
+        </div>
+      )}
     </div>
   );
 }
