@@ -38,7 +38,7 @@ export default function NewCustomerPage() {
       if (result.success) {
         setSuccess(true);
         setTimeout(() => {
-          router.push(`/admin/organizations/${result.organizationId}`);
+          router.push(`/admin/organizations/${result.orgId}`);
         }, 1500);
       } else {
         setError(result.error as string);
