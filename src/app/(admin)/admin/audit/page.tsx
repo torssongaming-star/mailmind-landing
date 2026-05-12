@@ -131,7 +131,7 @@ export default async function AdminAuditLogPage() {
                 </div>
               </div>
 
-              {log.metadata && (
+              {!!log.metadata && (
                 <div className="flex flex-col gap-1">
                   <span className="text-slate-500 text-[8px] font-bold uppercase tracking-widest">Metadata</span>
                   <pre className="text-[9px] text-slate-400 font-mono bg-black/20 p-2 rounded overflow-x-auto">
