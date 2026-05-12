@@ -1,12 +1,14 @@
 import { getAdminOrganization, listAdminNotes, getOrgHealth, getDryRunStats } from "@/lib/admin/queries";
 import { DryRunPanel } from "./DryRunPanel";
 import { AutoSendPanel } from "./AutoSendPanel";
+import { OrgNotesPanel } from "./OrgNotesPanel";
+import { OrgProfilePanel } from "./OrgProfilePanel";
 import { Building2, Users, CreditCard, Mail, Calendar, ShieldCheck, Activity, MessageSquare, Clock, Zap } from "lucide-react";
 import { format } from "date-fns";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { User, AdminNote } from "@/lib/db/schema";
+import { User } from "@/lib/db/schema";
 import React from "react";
 import { LucideIcon } from "lucide-react";
 
@@ -22,13 +24,8 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
   if (!org) notFound();
   const o = org as any;
 
-  const sub = o.subscriptions[0];
+  const sub          = o.subscriptions[0];
   const entitlements = o.licenseEntitlement;
-  
-  // Find current month usage
-  const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
-  const usage = o.usageCounters?.find((u: any) => u.month === currentMonth);
 
   return (
     <div className="p-4 sm:p-8 space-y-8 max-w-6xl mx-auto w-full animate-in fade-in duration-500">
@@ -53,19 +50,11 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
             </div>
           </div>
         </div>
- 
-        <div className="flex flex-row sm:flex-row gap-3">
-          <select className="flex-1 sm:flex-none bg-[#050B1C] border border-white/10 rounded-xl px-4 py-2 text-[10px] font-bold text-white uppercase tracking-widest outline-none focus:border-primary/50 transition-all cursor-pointer appearance-none text-center">
-            <option>Change Status</option>
-            <option value="pilot">Mark as Pilot</option>
-            <option value="enterprise_lead">Enterprise Lead</option>
-            <option value="internal_test">Internal Test</option>
-            <option value="churned">Churned</option>
-          </select>
-          <button className="flex-1 sm:flex-none px-4 py-2 bg-primary text-black hover:bg-cyan-300 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap">
-            Update Profile
-          </button>
-        </div>
+
+        <OrgProfilePanel
+          orgId={id}
+          initialStatus={null}
+        />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -80,11 +69,11 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
               color="text-violet-500" 
               bgColor="bg-violet-500/10"
             />
-            <StatCard 
-              label="AI Drafts (Month)" 
-              value={`${usage?.aiDraftsUsed || 0} / ${entitlements?.maxAiDraftsPerMonth || 0}`} 
-              icon={Zap} 
-              color="text-yellow-500" 
+            <StatCard
+              label="AI Drafts (Month)"
+              value={`${health?.aiDraftsThisMonth ?? 0} / ${entitlements?.maxAiDraftsPerMonth || "∞"}`}
+              icon={Zap}
+              color="text-yellow-500"
               bgColor="bg-yellow-500/10"
             />
             <StatCard 
@@ -120,11 +109,11 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
             
             <div className="grid grid-cols-2 gap-8">
                <div className="space-y-1">
-                 <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">AI Drafts Used</span>
+                 <span className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">AI Drafts (denna månad)</span>
                  <div className="flex items-center gap-2">
-                   <span className="text-white text-lg font-bold">{usage?.aiDraftsUsed || 0}</span>
+                   <span className="text-white text-lg font-bold">{health?.aiDraftsThisMonth ?? 0}</span>
                    <span className="text-slate-600">/</span>
-                   <span className="text-slate-400">{entitlements?.maxAiDraftsPerMonth || 0}</span>
+                   <span className="text-slate-400">{entitlements?.maxAiDraftsPerMonth || "∞"}</span>
                  </div>
                </div>
                <div className="space-y-1">
@@ -186,25 +175,7 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
              approved={dryRunStats?.approved ?? 0}
            />
 
-           <div className="bg-[#050B1C] border border-white/5 rounded-2xl p-6 space-y-6">
-             <h3 className="text-white text-sm font-bold uppercase tracking-widest border-b border-white/5 pb-3">Internal Notes</h3>
-             <textarea 
-                placeholder="Add internal context..."
-                className="w-full bg-[#030614] border border-white/10 rounded-xl p-3 text-xs text-white focus:border-primary/50 outline-none h-24 transition-all resize-none"
-              />
-              <button className="w-full py-2 bg-primary/10 text-primary hover:bg-primary/20 border border-primary/20 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all">
-                Add Organization Note
-              </button>
-
-              <div className="space-y-4 pt-4 border-t border-white/5">
-                {notes.map((note: AdminNote) => (
-                  <div key={note.id} className="p-3 bg-white/[0.02] rounded-lg border border-white/5">
-                    <span className="text-slate-600 text-[9px] block mb-1">{format(new Date(note.createdAt), "PPp")}</span>
-                    <p className="text-slate-400 text-xs leading-relaxed">{note.content}</p>
-                  </div>
-                ))}
-              </div>
-           </div>
+           <OrgNotesPanel orgId={id} initial={notes} />
         </div>
       </div>
     </div>

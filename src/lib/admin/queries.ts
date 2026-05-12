@@ -14,7 +14,7 @@ import {
   usageCounters,
   auditLogs
 } from "@/lib/db/schema";
-import { desc, eq, count, and, or, ilike, max, sql } from "drizzle-orm";
+import { desc, eq, count, and, or, ilike, max, gte, sql } from "drizzle-orm";
 
 /**
  * Gets overview statistics for the admin dashboard.
@@ -264,48 +264,59 @@ export async function getAdminOrganization(id: string) {
 }
 
 /**
- * Returns org health metrics: thread count + last activity timestamp.
+ * Returns org health metrics: thread count, last activity, and real AI draft
+ * count for the current calendar month (queried from aiDrafts directly because
+ * usageCounters is not yet incremented at runtime).
  */
 export async function getOrgHealth(orgId: string) {
   if (!isDbConnected()) return null;
 
   try {
-    const [threadRow] = await db
-      .select({
-        threadCount:  count(emailThreads.id),
-        lastThreadActivity: max(emailThreads.lastMessageAt),
-      })
-      .from(emailThreads)
-      .where(eq(emailThreads.organizationId, orgId));
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
 
-    const [draftRow] = await db
-      .select({
-        lastDraftActivity: max(aiDrafts.generatedAt),
-      })
-      .from(aiDrafts)
-      .where(eq(aiDrafts.organizationId, orgId));
-
-    const [auditRow] = await db
-      .select({
-        lastAuditActivity: max(auditLogs.createdAt),
-      })
-      .from(auditLogs)
-      .where(eq(auditLogs.organizationId, orgId));
+    const [[threadRow], [draftMonthRow], [draftActivityRow], [auditRow]] = await Promise.all([
+      db
+        .select({
+          threadCount:        count(emailThreads.id),
+          lastThreadActivity: max(emailThreads.lastMessageAt),
+        })
+        .from(emailThreads)
+        .where(eq(emailThreads.organizationId, orgId)),
+      // Count drafts for current month (usageCounters is not written to yet)
+      db
+        .select({ value: count(aiDrafts.id) })
+        .from(aiDrafts)
+        .where(and(
+          eq(aiDrafts.organizationId, orgId),
+          gte(aiDrafts.generatedAt, monthStart),
+        )),
+      db
+        .select({ lastDraftActivity: max(aiDrafts.generatedAt) })
+        .from(aiDrafts)
+        .where(eq(aiDrafts.organizationId, orgId)),
+      db
+        .select({ lastAuditActivity: max(auditLogs.createdAt) })
+        .from(auditLogs)
+        .where(eq(auditLogs.organizationId, orgId)),
+    ]);
 
     // Resolve most recent activity from all sources
     const activities = [
       threadRow?.lastThreadActivity,
-      draftRow?.lastDraftActivity,
+      draftActivityRow?.lastDraftActivity,
       auditRow?.lastAuditActivity,
     ].filter(Boolean) as Date[];
 
-    const lastActivity = activities.length > 0 
+    const lastActivity = activities.length > 0
       ? new Date(Math.max(...activities.map(d => d.getTime())))
       : null;
 
     return {
-      threadCount: threadRow?.threadCount ?? 0,
+      threadCount:       threadRow?.threadCount ?? 0,
       lastActivity,
+      aiDraftsThisMonth: draftMonthRow?.value   ?? 0,
     };
   } catch (error) {
     console.error("Failed to fetch org health:", error);

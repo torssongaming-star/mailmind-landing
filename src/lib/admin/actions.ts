@@ -17,7 +17,7 @@ import {
 } from "@/lib/db/schema";
 import { getAdminIdentity, requireAdminApi } from "@/lib/admin/auth";
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { PLANS, PlanKey } from "@/lib/plans";
 
 /**
@@ -557,4 +557,113 @@ export async function reviewDryRunDraftAction(draftId: string, orgId: string, ap
     console.error("[reviewDryRunDraftAction] failed:", error);
     return { success: false, error: error instanceof Error ? error.message : "Unknown error" };
   }
+}
+
+// ── Org notes ──────────────────────────────────────────────────────────────────
+
+/**
+ * Adds an internal note to an organization.
+ */
+export async function createOrgNoteAction(orgId: string, content: string) {
+  await requireAdminApi();
+  const admin = await getAdminIdentity();
+  if (!admin) throw new Error("No admin session");
+
+  if (!content.trim()) throw new Error("Content is required");
+
+  await db.insert(adminNotes).values({
+    subjectType:          "organization",
+    targetOrganizationId: orgId,
+    authorClerkUserId:    admin.clerkUserId,
+    content:              content.trim(),
+  });
+
+  revalidatePath(`/admin/organizations/${orgId}`);
+}
+
+// ── Org profile (status) ───────────────────────────────────────────────────────
+
+type OrgStatus = "internal_test" | "pilot" | "active_customer" | "enterprise_lead" | "enterprise_customer" | "churned";
+
+/**
+ * Upserts the admin customer profile for an org (sets status, summary, etc.).
+ */
+export async function upsertOrgProfileAction(orgId: string, data: {
+  status:  OrgStatus;
+  summary?: string;
+}) {
+  await requireAdminApi();
+  const admin = await getAdminIdentity();
+  if (!admin) throw new Error("No admin session");
+
+  // adminCustomerProfiles has no UNIQUE constraint on organizationId,
+  // so we do a manual select → update-or-insert.
+  const [existing] = await db
+    .select({ id: adminCustomerProfiles.id })
+    .from(adminCustomerProfiles)
+    .where(eq(adminCustomerProfiles.organizationId, orgId))
+    .limit(1);
+
+  if (existing) {
+    await db
+      .update(adminCustomerProfiles)
+      .set({ status: data.status, summary: data.summary ?? null, updatedAt: new Date() })
+      .where(eq(adminCustomerProfiles.id, existing.id));
+  } else {
+    await db.insert(adminCustomerProfiles).values({
+      organizationId: orgId,
+      status:         data.status,
+      summary:        data.summary ?? null,
+    });
+  }
+
+  await db.insert(adminAuditLogs).values({
+    actorClerkUserId:     admin.clerkUserId,
+    actorEmail:           admin.email!,
+    action:               "org_profile_updated",
+    targetOrganizationId: orgId,
+    metadata:             { status: data.status },
+  });
+
+  revalidatePath(`/admin/organizations/${orgId}`);
+  revalidatePath("/admin/pilots");
+}
+
+// ── Pilot leads ────────────────────────────────────────────────────────────────
+
+/**
+ * Creates a new pilot / enterprise lead entry (not linked to an org yet).
+ */
+export async function createPilotLeadAction(data: {
+  ownerName:    string;
+  contactName?: string;
+  contactEmail?: string;
+  summary?:     string;
+  status:       OrgStatus;
+}) {
+  await requireAdminApi();
+  const admin = await getAdminIdentity();
+  if (!admin) throw new Error("No admin session");
+
+  if (!data.ownerName.trim()) throw new Error("Owner name is required");
+
+  const [profile] = await db
+    .insert(adminCustomerProfiles)
+    .values({
+      ownerName:    data.ownerName.trim(),
+      contactName:  data.contactName?.trim() || null,
+      contactEmail: data.contactEmail?.trim() || null,
+      summary:      data.summary?.trim()      || null,
+      status:       data.status,
+    })
+    .returning({ id: adminCustomerProfiles.id });
+
+  await db.insert(adminAuditLogs).values({
+    actorClerkUserId: admin.clerkUserId,
+    actorEmail:       admin.email!,
+    action:           "pilot_lead_created",
+    metadata:         { ownerName: data.ownerName, status: data.status, id: profile?.id },
+  });
+
+  revalidatePath("/admin/pilots");
 }

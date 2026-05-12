@@ -5,6 +5,7 @@ import { Rocket, Calendar, User, Building2, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { NewPilotModal } from "./NewPilotModal";
 
 export default async function AdminPilotsPage() {
   const profiles = await db.select({
@@ -23,9 +24,7 @@ export default async function AdminPilotsPage() {
           <p className="text-slate-400 text-sm">Manage high-touch customers and enterprise leads.</p>
         </div>
         
-        <button className="px-4 py-2 bg-primary text-black hover:bg-cyan-300 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
-          New Pilot Lead
-        </button>
+        <NewPilotModal />
       </div>
 
       <div className="grid grid-cols-1 gap-6">
