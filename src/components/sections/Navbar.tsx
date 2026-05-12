@@ -5,6 +5,7 @@ import { Mail, Menu, X, ArrowRight, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useAuth, UserButton } from "@clerk/nextjs";
 
 import { siteConfig } from "@/config/site";
@@ -46,8 +47,8 @@ export function Navbar() {
             className="flex items-center gap-2.5 z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-lg"
             aria-label={`${siteConfig.siteName} — go to homepage`}
           >
-            <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary border border-primary/30 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
-              <Mail size={18} />
+            <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary border border-primary/30 shadow-[0_0_15px_rgba(6,182,212,0.2)]">
+              <Image src="/logo.png" alt="Mailmind Logo" width={40} height={40} className="object-cover w-full h-full" />
             </div>
             <span className="text-xl md:text-2xl font-bold tracking-tight text-white">{siteConfig.siteName}</span>
           </Link>

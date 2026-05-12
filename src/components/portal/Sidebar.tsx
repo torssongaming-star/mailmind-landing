@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -164,8 +165,8 @@ export function Sidebar() {
         {/* Logo */}
         <div className="h-16 flex items-center px-6 border-b border-white/5 shrink-0">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary border border-primary/30 shadow-[0_0_12px_rgba(6,182,212,0.2)] group-hover:shadow-[0_0_16px_rgba(6,182,212,0.35)] transition-shadow">
-              <Mail size={15} />
+            <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary border border-primary/30 shadow-[0_0_12px_rgba(6,182,212,0.2)] group-hover:shadow-[0_0_16px_rgba(6,182,212,0.35)] transition-shadow">
+              <Image src="/logo.png" alt="Mailmind Logo" width={32} height={32} className="object-cover w-full h-full" />
             </div>
             <span className="font-bold text-lg tracking-tight text-white">{siteConfig.siteName}</span>
           </Link>

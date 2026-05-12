@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -36,8 +37,8 @@ export function AdminSidebar() {
     <aside className="w-64 bg-[#050B1C] border-r border-white/5 flex flex-col h-screen sticky top-0">
       <div className="p-6">
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20">
-            <ShieldCheck className="w-6 h-6 text-primary" />
+          <div className="w-10 h-10 rounded-xl overflow-hidden bg-primary/10 flex items-center justify-center border border-primary/20">
+            <Image src="/logo.png" alt="Mailmind Admin Logo" width={40} height={40} className="object-cover w-full h-full" />
           </div>
           <div>
             <h1 className="text-white font-bold tracking-tight">Mailmind</h1>
