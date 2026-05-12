@@ -34,8 +34,8 @@ export function KnowledgeFilters() {
   };
 
   return (
-    <div className="flex flex-wrap gap-4 items-center justify-between w-full">
-      <div className="flex gap-4 flex-1 max-w-2xl">
+    <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between w-full">
+      <div className="flex flex-col sm:flex-row gap-4 flex-1 max-w-4xl">
         <div className="relative flex-1">
           <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
           <input 
@@ -55,35 +55,37 @@ export function KnowledgeFilters() {
           )}
         </div>
         
-        <select 
-          value={searchParams.get("category") || "all"}
-          onChange={(e) => handleFilterChange("category", e.target.value)}
-          className="bg-[#050B1C] border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-300 outline-none focus:border-primary/50 transition-all cursor-pointer"
-        >
-          <option value="all">All Categories</option>
-          <option value="enterprise">Enterprise</option>
-          <option value="gdpr">GDPR</option>
-          <option value="security">Security</option>
-          <option value="dpa">DPA</option>
-          <option value="ai_policy">AI Policy</option>
-          <option value="pilot">Pilot</option>
-          <option value="support">Support</option>
-          <option value="billing">Billing</option>
-          <option value="onboarding">Onboarding</option>
-          <option value="internal_process">Internal Process</option>
-          <option value="other">Other</option>
-        </select>
+        <div className="flex gap-2 sm:gap-4">
+          <select 
+            value={searchParams.get("category") || "all"}
+            onChange={(e) => handleFilterChange("category", e.target.value)}
+            className="flex-1 sm:flex-none bg-[#050B1C] border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-300 outline-none focus:border-primary/50 transition-all cursor-pointer min-w-0"
+          >
+            <option value="all">All Categories</option>
+            <option value="enterprise">Enterprise</option>
+            <option value="gdpr">GDPR</option>
+            <option value="security">Security</option>
+            <option value="dpa">DPA</option>
+            <option value="ai_policy">AI Policy</option>
+            <option value="pilot">Pilot</option>
+            <option value="support">Support</option>
+            <option value="billing">Billing</option>
+            <option value="onboarding">Onboarding</option>
+            <option value="internal_process">Internal Process</option>
+            <option value="other">Other</option>
+          </select>
 
-        <select 
-          value={searchParams.get("status") || "all"}
-          onChange={(e) => handleFilterChange("status", e.target.value)}
-          className="bg-[#050B1C] border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-300 outline-none focus:border-primary/50 transition-all cursor-pointer"
-        >
-          <option value="all">All Status</option>
-          <option value="published">Published</option>
-          <option value="draft">Draft</option>
-          <option value="archived">Archived</option>
-        </select>
+          <select 
+            value={searchParams.get("status") || "all"}
+            onChange={(e) => handleFilterChange("status", e.target.value)}
+            className="flex-1 sm:flex-none bg-[#050B1C] border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-300 outline-none focus:border-primary/50 transition-all cursor-pointer min-w-0"
+          >
+            <option value="all">All Status</option>
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
+            <option value="archived">Archived</option>
+          </select>
+        </div>
       </div>
     </div>
   );

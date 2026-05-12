@@ -28,16 +28,16 @@ export default async function AdminKnowledgeListPage({
   }
 
   return (
-    <div className="p-8 space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-8 space-y-8 max-w-[1600px] mx-auto w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-white text-3xl font-bold tracking-tight mb-2">Knowledge Base</h1>
-          <p className="text-slate-400">Manage internal documentation and guides.</p>
+          <h1 className="text-white text-2xl sm:text-3xl font-bold tracking-tight mb-2">Knowledge Base</h1>
+          <p className="text-slate-400 text-sm">Manage internal documentation and guides.</p>
         </div>
         
         <Link 
           href="/admin/knowledge/new"
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-black hover:bg-cyan-300 rounded-xl text-sm font-bold uppercase tracking-widest transition-all shadow-lg shadow-primary/10"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-black hover:bg-cyan-300 rounded-xl text-sm font-bold uppercase tracking-widest transition-all shadow-lg shadow-primary/10 whitespace-nowrap"
         >
           <Plus className="w-4 h-4" />
           New Article
@@ -46,7 +46,8 @@ export default async function AdminKnowledgeListPage({
 
       <KnowledgeFilters />
 
-      <div className="bg-[#050B1C] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
+      {/* Desktop Table View */}
+      <div className="hidden lg:block bg-[#050B1C] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -116,23 +117,77 @@ export default async function AdminKnowledgeListPage({
                   </td>
                 </tr>
               ))}
-              {articles.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-20 text-center">
-                    <div className="flex flex-col items-center gap-3">
-                      <BookOpen className="w-12 h-12 text-slate-800" />
-                      <p className="text-slate-500 text-sm">No articles found. Create your first guide.</p>
-                      <Link href="/admin/knowledge/new" className="text-primary text-xs font-bold uppercase tracking-widest mt-2 hover:underline">
-                        Get Started
-                      </Link>
-                    </div>
-                  </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* Mobile Card View */}
+      <div className="lg:hidden space-y-4">
+        {articles.map((article: AdminKnowledgeArticle) => (
+          <div key={article.id} className="bg-[#050B1C] border border-white/5 rounded-2xl p-5 space-y-4 shadow-lg">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 shrink-0">
+                  <BookOpen className="w-5 h-5 text-slate-400" />
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-white text-sm font-bold truncate">{article.title}</span>
+                  <span className="text-slate-500 text-[10px] font-mono truncate">{article.slug}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 py-4 border-y border-white/5">
+              <div className="flex flex-col gap-1">
+                <span className="text-slate-500 text-[8px] font-bold uppercase tracking-widest">Category</span>
+                <span className="text-slate-200 text-xs truncate">
+                  {article.category.replace("_", " ")}
+                </span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-slate-500 text-[8px] font-bold uppercase tracking-widest">Status</span>
+                <span className={cn(
+                  "text-[10px] font-bold uppercase tracking-wider",
+                  article.status === "published" ? "text-green-500" :
+                  article.status === "draft" ? "text-yellow-500" :
+                  "text-red-500"
+                )}>
+                  {article.status}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-2">
+               <div className="flex flex-col">
+                  <span className="text-slate-500 text-[8px] font-bold uppercase tracking-widest">Updated</span>
+                  <span className="text-slate-400 text-[10px]">{format(new Date(article.updatedAt), "MMM d, yyyy")}</span>
+               </div>
+               <div className="flex gap-2">
+                  <Link 
+                    href={`/admin/knowledge/${article.id}`}
+                    className="p-3 bg-white/5 hover:bg-white/10 text-slate-400 rounded-xl transition-all"
+                  >
+                    <Eye className="w-4 h-4" />
+                  </Link>
+                  <Link 
+                    href={`/admin/knowledge/${article.id}/edit`}
+                    className="p-3 bg-primary/10 hover:bg-primary/20 text-primary rounded-xl transition-all"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Link>
+               </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {articles.length === 0 && (
+        <div className="bg-[#050B1C] border border-white/5 rounded-2xl p-12 text-center">
+          <BookOpen className="w-12 h-12 text-slate-800 mx-auto mb-4" />
+          <p className="text-slate-500 text-sm italic">No articles found. Create your first guide.</p>
+        </div>
+      )}
     </div>
   );
 }
