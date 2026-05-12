@@ -189,9 +189,8 @@ export async function getOrganizationsHealth(organizationIds: string[]) {
   if (!isDbConnected() || organizationIds.length === 0) return {};
 
   try {
-    const month = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-      .toISOString()
-      .slice(0, 10);
+    const now = new Date();
+    const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
 
     const threadStats = await db
       .select({
@@ -270,15 +269,43 @@ export async function getOrgHealth(orgId: string) {
   if (!isDbConnected()) return null;
 
   try {
-    const [row] = await db
+    const [threadRow] = await db
       .select({
         threadCount:  count(emailThreads.id),
-        lastActivity: max(emailThreads.lastMessageAt),
+        lastThreadActivity: max(emailThreads.lastMessageAt),
       })
       .from(emailThreads)
       .where(eq(emailThreads.organizationId, orgId));
 
-    return row ?? null;
+    const [draftRow] = await db
+      .select({
+        lastDraftActivity: max(aiDrafts.generatedAt),
+      })
+      .from(aiDrafts)
+      .where(eq(aiDrafts.organizationId, orgId));
+
+    const [auditRow] = await db
+      .select({
+        lastAuditActivity: max(auditLogs.createdAt),
+      })
+      .from(auditLogs)
+      .where(eq(auditLogs.organizationId, orgId));
+
+    // Resolve most recent activity from all sources
+    const activities = [
+      threadRow?.lastThreadActivity,
+      draftRow?.lastDraftActivity,
+      auditRow?.lastAuditActivity,
+    ].filter(Boolean) as Date[];
+
+    const lastActivity = activities.length > 0 
+      ? new Date(Math.max(...activities.map(d => d.getTime())))
+      : null;
+
+    return {
+      threadCount: threadRow?.threadCount ?? 0,
+      lastActivity,
+    };
   } catch (error) {
     console.error("Failed to fetch org health:", error);
     return null;

@@ -26,9 +26,8 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
   const entitlements = o.licenseEntitlement;
   
   // Find current month usage
-  const currentMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-    .toISOString()
-    .slice(0, 10);
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
   const usage = o.usageCounters?.find((u: any) => u.month === currentMonth);
 
   return (
