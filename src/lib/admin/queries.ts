@@ -11,7 +11,8 @@ import {
   emailThreads,
   aiDrafts,
   aiSettings,
-  usageCounters
+  usageCounters,
+  auditLogs
 } from "@/lib/db/schema";
 import { desc, eq, count, and, or, ilike, max, sql } from "drizzle-orm";
 
