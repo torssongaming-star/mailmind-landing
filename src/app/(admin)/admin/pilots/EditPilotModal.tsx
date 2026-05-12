@@ -8,24 +8,30 @@ type OrgStatus = "internal_test" | "pilot" | "active_customer" | "enterprise_lea
 
 type Props = {
   profile: {
-    id:           string;
-    ownerName:    string | null;
-    contactName:  string | null;
-    contactEmail: string | null;
-    summary:      string | null;
-    status:       OrgStatus;
+    id:             string;
+    ownerName:      string | null;
+    contactName:    string | null;
+    contactEmail:   string | null;
+    summary:        string | null;
+    status:         OrgStatus;
+    nextFollowUpAt: Date | null;
   };
 };
 
 export function EditPilotModal({ profile }: Props) {
-  const [open,         setOpen]         = useState(false);
-  const [ownerName,    setOwnerName]    = useState(profile.ownerName    ?? "");
-  const [contactName,  setContactName]  = useState(profile.contactName  ?? "");
-  const [contactEmail, setContactEmail] = useState(profile.contactEmail ?? "");
-  const [summary,      setSummary]      = useState(profile.summary      ?? "");
-  const [status,       setStatus]       = useState<OrgStatus>(profile.status);
-  const [saving,       setSaving]       = useState(false);
-  const [error,        setError]        = useState<string | null>(null);
+  const [open,          setOpen]          = useState(false);
+  const [ownerName,     setOwnerName]     = useState(profile.ownerName    ?? "");
+  const [contactName,   setContactName]   = useState(profile.contactName  ?? "");
+  const [contactEmail,  setContactEmail]  = useState(profile.contactEmail ?? "");
+  const [summary,       setSummary]       = useState(profile.summary      ?? "");
+  const [status,        setStatus]        = useState<OrgStatus>(profile.status);
+  const [nextFollowUp,  setNextFollowUp]  = useState(
+    profile.nextFollowUpAt
+      ? new Date(profile.nextFollowUpAt).toISOString().slice(0, 10)
+      : ""
+  );
+  const [saving,        setSaving]        = useState(false);
+  const [error,         setError]         = useState<string | null>(null);
 
   const close = () => { setError(null); setOpen(false); };
 
@@ -36,6 +42,7 @@ export function EditPilotModal({ profile }: Props) {
     try {
       await updatePilotLeadAction(profile.id, {
         ownerName, contactName, contactEmail, summary, status,
+        nextFollowUpAt: nextFollowUp ? new Date(nextFollowUp) : null,
       });
       close();
     } catch (e) {
@@ -113,6 +120,15 @@ export function EditPilotModal({ profile }: Props) {
                     <option value="enterprise_customer">Enterprise Customer</option>
                     <option value="churned">Churned</option>
                   </select>
+                </Field>
+
+                <Field label="Nästa uppföljning">
+                  <input
+                    type="date"
+                    value={nextFollowUp}
+                    onChange={e => setNextFollowUp(e.target.value)}
+                    className="input-field"
+                  />
                 </Field>
 
                 <Field label="Sammanfattning">

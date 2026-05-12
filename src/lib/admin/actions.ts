@@ -672,11 +672,12 @@ export async function createPilotLeadAction(data: {
  * Updates an existing pilot / enterprise lead.
  */
 export async function updatePilotLeadAction(id: string, data: {
-  ownerName:     string;
-  contactName?:  string;
-  contactEmail?: string;
-  summary?:      string;
-  status:        OrgStatus;
+  ownerName:      string;
+  contactName?:   string;
+  contactEmail?:  string;
+  summary?:       string;
+  status:         OrgStatus;
+  nextFollowUpAt?: Date | null;
 }) {
   await requireAdminApi();
   const admin = await getAdminIdentity();
@@ -687,12 +688,13 @@ export async function updatePilotLeadAction(id: string, data: {
   await db
     .update(adminCustomerProfiles)
     .set({
-      ownerName:    data.ownerName.trim(),
-      contactName:  data.contactName?.trim()  || null,
-      contactEmail: data.contactEmail?.trim() || null,
-      summary:      data.summary?.trim()      || null,
-      status:       data.status,
-      updatedAt:    new Date(),
+      ownerName:      data.ownerName.trim(),
+      contactName:    data.contactName?.trim()  || null,
+      contactEmail:   data.contactEmail?.trim() || null,
+      summary:        data.summary?.trim()      || null,
+      status:         data.status,
+      nextFollowUpAt: data.nextFollowUpAt ?? null,
+      updatedAt:      new Date(),
     })
     .where(eq(adminCustomerProfiles.id, id));
 

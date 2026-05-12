@@ -81,12 +81,13 @@ export default async function AdminPilotsPage() {
                   </Link>
                 )}
                 <EditPilotModal profile={{
-                  id:           profile.id,
-                  ownerName:    profile.ownerName,
-                  contactName:  profile.contactName,
-                  contactEmail: profile.contactEmail,
-                  summary:      profile.summary,
-                  status:       profile.status,
+                  id:             profile.id,
+                  ownerName:      profile.ownerName,
+                  contactName:    profile.contactName,
+                  contactEmail:   profile.contactEmail,
+                  summary:        profile.summary,
+                  status:         profile.status,
+                  nextFollowUpAt: profile.nextFollowUpAt,
                 }} />
               </div>
             </div>
