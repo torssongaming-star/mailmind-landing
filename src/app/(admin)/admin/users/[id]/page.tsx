@@ -14,27 +14,27 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
   if (!user) notFound();
 
   return (
-    <div className="p-8 space-y-8 max-w-6xl mx-auto">
-      <div className="flex items-start justify-between">
+    <div className="p-4 sm:p-8 space-y-8 max-w-6xl mx-auto w-full">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-2xl">
-            <UserIcon className="w-8 h-8 text-slate-400" />
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 shadow-2xl shrink-0">
+            <UserIcon className="w-6 h-6 sm:w-8 sm:h-8 text-slate-400" />
           </div>
-          <div>
-            <h1 className="text-white text-3xl font-bold tracking-tight">{user.email}</h1>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-slate-500 text-xs font-mono">{user.clerkUserId}</span>
-              <span className="text-slate-700">•</span>
-              <span className="text-primary text-[10px] font-bold uppercase tracking-widest">{user.role}</span>
+          <div className="min-w-0">
+            <h1 className="text-white text-xl sm:text-3xl font-bold tracking-tight truncate">{user.email}</h1>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              <span className="text-slate-500 text-[10px] sm:text-xs font-mono truncate">{user.clerkUserId}</span>
+              <span className="text-slate-700 hidden sm:inline">•</span>
+              <span className="text-primary text-[9px] sm:text-[10px] font-bold uppercase tracking-widest">{user.role}</span>
             </div>
           </div>
         </div>
-
-        <div className="flex gap-3">
-          <button className="px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white text-xs font-bold uppercase tracking-widest transition-all">
-            Inaktivera Konto
+ 
+        <div className="flex flex-row sm:flex-row gap-3">
+          <button className="flex-1 sm:flex-none px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap">
+            Inaktivera
           </button>
-          <button className="px-4 py-2 bg-primary text-black hover:bg-cyan-300 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
+          <button className="flex-1 sm:flex-none px-4 py-2 bg-primary text-black hover:bg-cyan-300 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap">
             Reset Password
           </button>
         </div>
@@ -43,13 +43,13 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Profile Info */}
         <div className="lg:col-span-2 space-y-8">
-          <div className="bg-[#050B1C] border border-white/5 rounded-2xl p-8 space-y-6">
+          <div className="bg-[#050B1C] border border-white/5 rounded-2xl p-5 sm:p-8 space-y-6">
             <h2 className="text-white font-bold flex items-center gap-2 border-b border-white/5 pb-4">
               <ShieldCheck className="w-5 h-5 text-primary" />
               Account Details
             </h2>
             
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
               <DetailItem label="Email Address" value={user.email} icon={Mail} />
               <DetailItem label="Joined Mailmind" value={format(new Date(user.createdAt), "PPP")} icon={History} />
               <DetailItem label="Role in Team" value={user.role} icon={ShieldCheck} />
@@ -57,7 +57,7 @@ export default async function AdminUserDetailPage({ params }: { params: Promise<
             </div>
           </div>
 
-          <div className="bg-[#050B1C] border border-white/5 rounded-2xl p-8 space-y-6">
+          <div className="bg-[#050B1C] border border-white/5 rounded-2xl p-5 sm:p-8 space-y-6">
             <h2 className="text-white font-bold flex items-center gap-2 border-b border-white/5 pb-4">
               <Lock className="w-5 h-5 text-violet-500" />
               Security Status

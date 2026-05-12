@@ -32,19 +32,19 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
   const usage = o.usageCounters?.find((u: any) => u.month === currentMonth);
 
   return (
-    <div className="p-8 space-y-8 max-w-6xl mx-auto animate-in fade-in duration-500">
-      <div className="flex items-start justify-between">
+    <div className="p-4 sm:p-8 space-y-8 max-w-6xl mx-auto w-full animate-in fade-in duration-500">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-primary/5 flex items-center justify-center border border-primary/10 shadow-2xl">
-            <Building2 className="w-8 h-8 text-primary" />
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-primary/5 flex items-center justify-center border border-primary/10 shadow-2xl shrink-0">
+            <Building2 className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
           </div>
-          <div>
-            <h1 className="text-white text-3xl font-bold tracking-tight">{o.name}</h1>
-            <div className="flex items-center gap-2 mt-1">
-              <span className="text-slate-500 text-xs font-mono">{o.id}</span>
-              <span className="text-slate-700">•</span>
+          <div className="min-w-0">
+            <h1 className="text-white text-xl sm:text-3xl font-bold tracking-tight truncate">{o.name}</h1>
+            <div className="flex flex-wrap items-center gap-2 mt-1">
+              <span className="text-slate-500 text-[10px] sm:text-xs font-mono truncate">{o.id}</span>
+              <span className="text-slate-700 hidden sm:inline">•</span>
               <span className={cn(
-                "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest",
+                "px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold uppercase tracking-widest",
                 sub?.status === "active" ? "bg-green-500/10 text-green-500" : 
                 sub?.status === "trialing" ? "bg-primary/10 text-primary" :
                 "bg-white/5 text-slate-400"
@@ -54,16 +54,16 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
             </div>
           </div>
         </div>
-
-        <div className="flex gap-3">
-          <select className="bg-[#050B1C] border border-white/10 rounded-xl px-4 py-2 text-xs font-bold text-white uppercase tracking-widest outline-none focus:border-primary/50 transition-all cursor-pointer appearance-none text-center">
+ 
+        <div className="flex flex-row sm:flex-row gap-3">
+          <select className="flex-1 sm:flex-none bg-[#050B1C] border border-white/10 rounded-xl px-4 py-2 text-[10px] font-bold text-white uppercase tracking-widest outline-none focus:border-primary/50 transition-all cursor-pointer appearance-none text-center">
             <option>Change Status</option>
             <option value="pilot">Mark as Pilot</option>
             <option value="enterprise_lead">Enterprise Lead</option>
             <option value="internal_test">Internal Test</option>
             <option value="churned">Churned</option>
           </select>
-          <button className="px-4 py-2 bg-primary text-black hover:bg-cyan-300 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
+          <button className="flex-1 sm:flex-none px-4 py-2 bg-primary text-black hover:bg-cyan-300 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all whitespace-nowrap">
             Update Profile
           </button>
         </div>
