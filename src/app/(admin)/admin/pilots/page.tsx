@@ -16,11 +16,11 @@ export default async function AdminPilotsPage() {
   .orderBy(desc(adminCustomerProfiles.createdAt));
 
   return (
-    <div className="p-8 space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-8 space-y-8 max-w-7xl mx-auto w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-white text-3xl font-bold tracking-tight mb-2">Pilot & Enterprise</h1>
-          <p className="text-slate-400">Manage high-touch customers and enterprise leads.</p>
+          <h1 className="text-white text-2xl sm:text-3xl font-bold tracking-tight mb-2">Pilot & Enterprise</h1>
+          <p className="text-slate-400 text-sm">Manage high-touch customers and enterprise leads.</p>
         </div>
         
         <button className="px-4 py-2 bg-primary text-black hover:bg-cyan-300 rounded-xl text-xs font-bold uppercase tracking-widest transition-all">
@@ -30,7 +30,7 @@ export default async function AdminPilotsPage() {
 
       <div className="grid grid-cols-1 gap-6">
         {profiles.map(({ profile, org }: { profile: AdminCustomerProfile, org: Organization | null }) => (
-          <div key={profile.id} className="bg-[#050B1C] border border-white/5 rounded-2xl p-8 hover:border-primary/20 transition-all group shadow-xl">
+          <div key={profile.id} className="bg-[#050B1C] border border-white/5 rounded-2xl p-5 sm:p-8 hover:border-primary/20 transition-all group shadow-xl">
             <div className="flex flex-col lg:flex-row lg:items-start gap-8">
               <div className="flex-1 space-y-4">
                 <div className="flex items-center gap-3">

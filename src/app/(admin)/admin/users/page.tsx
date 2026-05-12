@@ -9,19 +9,19 @@ export default async function AdminUsersPage() {
   const users = await listAdminUsers();
 
   return (
-    <div className="p-8 space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-8 space-y-8 max-w-[1600px] mx-auto w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-white text-3xl font-bold tracking-tight mb-2">User Management</h1>
-          <p className="text-slate-400">View and manage all registered users.</p>
+          <h1 className="text-white text-2xl sm:text-3xl font-bold tracking-tight mb-2">User Management</h1>
+          <p className="text-slate-400 text-sm">View and manage all registered users.</p>
         </div>
         
-        <div className="relative">
+        <div className="relative w-full sm:w-64">
           <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
           <input 
             type="text" 
             placeholder="Search email..." 
-            className="bg-[#050B1C] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:border-primary/50 outline-none w-64 transition-all"
+            className="bg-[#050B1C] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:border-primary/50 outline-none w-full transition-all"
           />
         </div>
       </div>

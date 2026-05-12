@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navigation = [
+export const adminNavigation = [
   { name: "Overview",       href: "/admin",               icon: LayoutDashboard },
   { name: "Provision kund",  href: "/admin/onboarding", icon: UserPlus },
   { name: "Outlook-guide",  href: "/admin/sideload",    icon: Monitor },
@@ -34,7 +34,7 @@ export function AdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-[#050B1C] border-r border-white/5 flex flex-col h-screen sticky top-0">
+    <aside className="w-64 bg-[#050B1C] border-r border-white/5 flex flex-col h-screen sticky top-0 hidden lg:flex shrink-0">
       <div className="p-6">
         <div className="flex items-center gap-3 mb-8">
           <div className="w-10 h-10 rounded-xl overflow-hidden bg-primary/10 flex items-center justify-center border border-primary/20">
@@ -50,7 +50,7 @@ export function AdminSidebar() {
         </div>
 
         <nav className="space-y-1">
-          {navigation.map((item) => {
+          {adminNavigation.map((item) => {
             const isActive = pathname === item.href || (item.href !== "/admin" && pathname.startsWith(item.href));
             return (
               <Link

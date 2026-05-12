@@ -12,26 +12,26 @@ export default async function AdminOrganizationsPage() {
   const health = await getOrganizationsHealth(orgIds);
 
   return (
-    <div className="p-8 space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="p-4 sm:p-8 space-y-8 max-w-[1600px] mx-auto w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-white text-3xl font-bold tracking-tight mb-2">Organizations</h1>
-          <p className="text-slate-400">View and manage B2B customer accounts.</p>
+          <h1 className="text-white text-2xl sm:text-3xl font-bold tracking-tight mb-2">Organizations</h1>
+          <p className="text-slate-400 text-sm">View and manage B2B customer accounts.</p>
         </div>
         
-        <div className="flex items-center gap-4">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="relative flex-1 sm:flex-none">
             <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
             <input 
               type="text" 
-              placeholder="Search organizations..." 
-              className="bg-[#050B1C] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:border-primary/50 outline-none w-64 transition-all"
+              placeholder="Search..." 
+              className="bg-[#050B1C] border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:border-primary/50 outline-none w-full sm:w-64 transition-all"
             />
           </div>
           
           <Link 
             href="/admin/customers/new"
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-black hover:bg-cyan-300 rounded-xl text-sm font-bold transition-all shadow-lg shadow-primary/10"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-primary text-black hover:bg-cyan-300 rounded-xl text-sm font-bold transition-all shadow-lg shadow-primary/10 whitespace-nowrap"
           >
             <Plus className="w-4 h-4" />
             New Customer

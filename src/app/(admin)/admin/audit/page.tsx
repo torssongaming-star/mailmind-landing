@@ -16,10 +16,10 @@ export default async function AdminAuditLogPage() {
   };
 
   return (
-    <div className="p-8 space-y-8">
+    <div className="p-4 sm:p-8 space-y-8 max-w-[1600px] mx-auto w-full">
       <div>
-        <h1 className="text-white text-3xl font-bold tracking-tight mb-2">Audit Log</h1>
-        <p className="text-slate-400">Chronological record of all administrative actions.</p>
+        <h1 className="text-white text-2xl sm:text-3xl font-bold tracking-tight mb-2">Audit Log</h1>
+        <p className="text-slate-400 text-sm">Chronological record of all administrative actions.</p>
       </div>
 
       <div className="bg-[#050B1C] border border-white/5 rounded-2xl overflow-hidden shadow-xl">
