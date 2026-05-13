@@ -376,6 +376,28 @@ export async function createMailmindInbox(input: {
   return rows[0] ?? null;
 }
 
+/** Create a Gmail OAuth inbox. config stores encrypted tokens. */
+export async function createGmailInbox(input: {
+  organizationId: string;
+  email:          string;
+  displayName:    string;
+  config:         Record<string, unknown>;
+}): Promise<Inbox | null> {
+  if (!isDbConnected()) return null;
+  const rows = await db
+    .insert(inboxes)
+    .values({
+      organizationId: input.organizationId,
+      provider:       "gmail",
+      email:          input.email.toLowerCase(),
+      displayName:    input.displayName,
+      status:         "active",
+      config:         input.config,
+    })
+    .returning();
+  return rows[0] ?? null;
+}
+
 export async function deleteInbox(organizationId: string, inboxId: string) {
   if (!isDbConnected()) return;
   await db

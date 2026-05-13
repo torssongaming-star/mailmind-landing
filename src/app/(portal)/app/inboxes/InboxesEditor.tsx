@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ForwardingGuide } from "./ForwardingGuide";
 import { ConnectionTester } from "./ConnectionTester";
 
@@ -23,7 +23,12 @@ export function InboxesEditor({
   canAddMore: boolean;
   limit: number;
 }) {
-  const router = useRouter();
+  const router       = useRouter();
+  const searchParams = useSearchParams();
+
+  const urlError     = searchParams.get("error");
+  const urlConnected = searchParams.get("connected");
+
   const [showForm, setShowForm] = useState(initial.length === 0);
   const [pending, setPending]   = useState(false);
   const [error, setError]       = useState<string | null>(null);
@@ -91,6 +96,18 @@ export function InboxesEditor({
 
   return (
     <div className="space-y-4">
+      {/* Banners from OAuth callback */}
+      {urlError && (
+        <div className="rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-red-400">
+          {urlError}
+        </div>
+      )}
+      {urlConnected && (
+        <div className="rounded-lg border border-green-500/20 bg-green-500/5 px-3 py-2 text-xs text-green-400">
+          ✓ Gmail-konto {urlConnected} kopplat
+        </div>
+      )}
+
       {error && (
         <div className="rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-red-400">
           {error}
@@ -230,12 +247,20 @@ export function InboxesEditor({
       )}
 
       {!showForm && canAddMore && (
-        <button
-          onClick={() => setShowForm(true)}
-          className="w-full rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-3 text-xs text-muted-foreground hover:text-white hover:border-white/30 transition-colors"
-        >
-          + Connect another inbox
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowForm(true)}
+            className="flex-1 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-3 text-xs text-muted-foreground hover:text-white hover:border-white/30 transition-colors"
+          >
+            + Vidarebefordran (mailmind)
+          </button>
+          <a
+            href="/api/app/inboxes/gmail/auth"
+            className="flex-1 rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-3 text-xs text-muted-foreground hover:text-white hover:border-white/30 transition-colors text-center"
+          >
+            + Koppla Gmail
+          </a>
+        </div>
       )}
 
       {!canAddMore && (
