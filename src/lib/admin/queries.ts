@@ -200,7 +200,7 @@ export async function getOrganizationsHealth(organizationIds: string[]) {
         lastActivity: sql<Date | null>`max(${emailThreads.lastMessageAt})`,
       })
       .from(emailThreads)
-      .where(sql`${emailThreads.organizationId} = ANY(${organizationIds})`)
+      .where(sql`${emailThreads.organizationId} = ANY(ARRAY[${sql.join(organizationIds.map(id => sql`${id}`), sql`, `)}]::uuid[])`)
       .groupBy(emailThreads.organizationId);
 
     const usageStats = await db
@@ -211,7 +211,7 @@ export async function getOrganizationsHealth(organizationIds: string[]) {
       .from(usageCounters)
       .where(
         and(
-          sql`${usageCounters.organizationId} = ANY(${organizationIds})`,
+          sql`${usageCounters.organizationId} = ANY(ARRAY[${sql.join(organizationIds.map(id => sql`${id}`), sql`, `)}]::uuid[])`,
           eq(usageCounters.month, month)
         )
       );
