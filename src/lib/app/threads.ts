@@ -29,9 +29,9 @@ import {
 
 export async function listThreads(
   organizationId: string,
-  opts: { limit?: number; showSnoozed?: boolean } = {}
+  opts: { limit?: number; showSnoozed?: boolean; inboxId?: string | null } = {}
 ) {
-  const { limit = 50, showSnoozed = false } = opts;
+  const { limit = 50, showSnoozed = false, inboxId = null } = opts;
   if (!isDbConnected()) return [] as EmailThread[];
 
   // We need: WHERE org_id = ? AND (snoozed_until IS NULL OR snoozed_until <= now())
@@ -39,20 +39,20 @@ export async function listThreads(
   const { sql: sqlTag } = await import("drizzle-orm");
   const activeFilter = sqlTag`(${emailThreads.snoozedUntil} IS NULL OR ${emailThreads.snoozedUntil} <= NOW())`;
 
+  const conditions = [eq(emailThreads.organizationId, organizationId)];
+  if (showSnoozed) {
+    conditions.push(isNotNull(emailThreads.snoozedUntil));
+  } else {
+    conditions.push(activeFilter);
+  }
+  if (inboxId) {
+    conditions.push(eq(emailThreads.inboxId, inboxId));
+  }
+
   return db
     .select()
     .from(emailThreads)
-    .where(
-      showSnoozed
-        ? and(
-            eq(emailThreads.organizationId, organizationId),
-            isNotNull(emailThreads.snoozedUntil),
-          )
-        : and(
-            eq(emailThreads.organizationId, organizationId),
-            activeFilter,
-          )
-    )
+    .where(and(...conditions))
     .orderBy(desc(emailThreads.lastMessageAt))
     .limit(limit);
 }
@@ -143,6 +143,67 @@ export async function wakeUpSnoozedThreads(organizationId: string) {
       lte(emailThreads.snoozedUntil, new Date()),
     ));
 }
+
+/**
+ * Cron entry point — wake snoozed threads across ALL orgs in a single statement.
+ * Returns the number of rows affected.
+ */
+export async function wakeUpAllSnoozedThreads(): Promise<number> {
+  if (!isDbConnected()) return 0;
+  const result = await db
+    .update(emailThreads)
+    .set({ snoozedUntil: null, updatedAt: new Date() })
+    .where(and(
+      isNotNull(emailThreads.snoozedUntil),
+      lte(emailThreads.snoozedUntil, new Date()),
+    ))
+    .returning({ id: emailThreads.id });
+  return result.length;
+}
+
+/** Count active vs snoozed threads — used by InboxFilters tab counts. */
+export async function countSnoozedThreads(organizationId: string): Promise<number> {
+  if (!isDbConnected()) return 0;
+  const { sql: sqlTag } = await import("drizzle-orm");
+  const rows = (await db.execute(sqlTag`
+    SELECT COUNT(*)::int AS n
+    FROM email_threads
+    WHERE organization_id = ${organizationId}
+      AND snoozed_until IS NOT NULL
+      AND snoozed_until > NOW()
+  `)) as unknown as { rows: Array<{ n: number }> };
+  return rows.rows[0]?.n ?? 0;
+}
+
+/** Server-side search across subject, fromEmail, fromName, tags. ILIKE for case-insensitive. */
+export async function searchThreads(
+  organizationId: string,
+  query: string,
+  limit = 50,
+): Promise<EmailThread[]> {
+  if (!isDbConnected()) return [];
+  const q = query.trim();
+  if (!q) return [];
+  const { sql: sqlTag } = await import("drizzle-orm");
+  const pattern = `%${q.replace(/[%_]/g, m => "\\" + m)}%`;
+  const rows = (await db.execute(sqlTag`
+    SELECT * FROM email_threads
+    WHERE organization_id = ${organizationId}
+      AND (
+        subject     ILIKE ${pattern}
+        OR from_email ILIKE ${pattern}
+        OR from_name  ILIKE ${pattern}
+        OR EXISTS (
+          SELECT 1 FROM jsonb_array_elements_text(tags) AS tag
+          WHERE tag ILIKE ${pattern}
+        )
+      )
+    ORDER BY last_message_at DESC
+    LIMIT ${limit}
+  `)) as unknown as { rows: EmailThread[] };
+  return rows.rows;
+}
+
 
 // ── Messages ─────────────────────────────────────────────────────────────────
 

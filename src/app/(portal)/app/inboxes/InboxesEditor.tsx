@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ForwardingGuide } from "./ForwardingGuide";
+import { ConnectionTester } from "./ConnectionTester";
 
 type InboxRow = {
   id: string;
@@ -31,6 +32,10 @@ export function InboxesEditor({
   const [displayName, setDisplayName]   = useState("");
   const [forwardedFrom, setForwardedFrom] = useState("");
   const [copiedId, setCopiedId]         = useState<string | null>(null);
+  /** IDs of inboxes the user just created in this session — we show the
+   *  ConnectionTester on these until the user dismisses it. Keyed by id so
+   *  it survives router.refresh(). */
+  const [testingIds, setTestingIds]     = useState<Set<string>>(new Set());
 
   const handleCreate = async () => {
     setPending(true);
@@ -47,6 +52,9 @@ export function InboxesEditor({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Create failed");
+      if (data.inbox?.id) {
+        setTestingIds(prev => new Set(prev).add(data.inbox.id));
+      }
       setSlug(""); setDisplayName(""); setForwardedFrom("");
       setShowForm(false);
       router.refresh();
@@ -127,6 +135,19 @@ export function InboxesEditor({
                 {copiedId === inbox.id ? "Copied!" : "Copy"}
               </button>
             </div>
+
+            {/* Live connection tester — only on inboxes created this session */}
+            {testingIds.has(inbox.id) && (
+              <ConnectionTester
+                inboxId={inbox.id}
+                email={inbox.email}
+                onDismiss={() => setTestingIds(prev => {
+                  const next = new Set(prev);
+                  next.delete(inbox.id);
+                  return next;
+                })}
+              />
+            )}
 
             {/* Forwarding setup guide — expandable */}
             <ForwardingGuide mailmindAddress={inbox.email} />

@@ -16,7 +16,7 @@ import { writeAuditLog } from "@/lib/app/audit";
 
 export const runtime = "nodejs";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -25,7 +25,11 @@ export async function GET() {
     return NextResponse.json({ error: "Account not provisioned" }, { status: 400 });
   }
 
-  const threads = await listThreads(account.organization.id, { limit: 100 });
+  const url     = new URL(req.url);
+  const limit   = Math.min(Math.max(parseInt(url.searchParams.get("limit") ?? "100", 10) || 100, 1), 200);
+  const inboxId = url.searchParams.get("inboxId");
+
+  const threads = await listThreads(account.organization.id, { limit, inboxId });
   return NextResponse.json({ threads });
 }
 

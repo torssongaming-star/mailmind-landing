@@ -96,43 +96,9 @@ export default async function AppHomePage() {
       {/* Access banner */}
       <AccessBanner reason={account.access.reason} />
 
-      {/* Getting-started checklist — only when not all done */}
+      {/* Getting-started — guided checklist with one active step at a time */}
       {!setupComplete && account.access.canUseApp && (
-        <section className="rounded-2xl border border-primary/20 bg-primary/5 p-5">
-          <h2 className="text-sm font-semibold text-white mb-1">Get started</h2>
-          <p className="text-xs text-muted-foreground mb-4">
-            A few quick steps to start triaging emails with AI.
-          </p>
-          <ul className="space-y-2.5">
-            <ChecklistItem
-              done={setup.accountReady}
-              label="Account created"
-              hint="Done — welcome aboard"
-              href={null}
-            />
-            <ChecklistItem
-              done={setup.caseTypesReady}
-              label="Case types configured"
-              hint="Default categories are seeded; customise them under Settings"
-              href="/app/settings"
-              cta="Edit case types"
-            />
-            <ChecklistItem
-              done={setup.inboxConnected}
-              label="Inbox connected"
-              hint="Forward your existing support@yourcompany.com to a Mailmind inbox"
-              href="/app/inboxes"
-              cta="Connect inbox"
-            />
-            <ChecklistItem
-              done={setup.firstThread}
-              label="First thread processed"
-              hint="Send a test email or wait for the first real customer message"
-              href="/app/inbox"
-              cta="Open inbox"
-            />
-          </ul>
-        </section>
+        <GettingStarted setup={setup} />
       )}
 
       {/* Plan + subscription */}
@@ -262,45 +228,150 @@ export default async function AppHomePage() {
 
 // ── Subcomponents ─────────────────────────────────────────────────────────────
 
-function ChecklistItem({
-  done,
-  label,
-  hint,
-  href,
-  cta,
-}: {
-  done: boolean;
+type SetupState = {
+  accountReady:   boolean;
+  inboxConnected: boolean;
+  caseTypesReady: boolean;
+  firstThread:    boolean;
+};
+
+type GuidedStep = {
+  key:   "accountReady" | "inboxConnected" | "firstThread" | "caseTypeAdjustment";
   label: string;
-  hint: string;
-  href: string | null;
-  cta?: string;
-}) {
+  hint:  string;
+  href:  string;
+  cta:   string;
+};
+
+const GUIDED_STEPS: GuidedStep[] = [
+  {
+    key:   "accountReady",
+    label: "Konto skapat",
+    hint:  "Välkommen ombord!",
+    href:  "/app",
+    cta:   "Klart",
+  },
+  {
+    key:   "inboxConnected",
+    label: "Anslut din första inkorg",
+    hint:  "Vidarebefordra support@dittforetag.se till en Mailmind-adress — vi ger dig instruktioner.",
+    href:  "/app/inboxes",
+    cta:   "Anslut inkorg",
+  },
+  {
+    key:   "firstThread",
+    label: "Ta emot ditt första ärende",
+    hint:  "Skicka ett testmejl till din nya inkorg-adress. Det dyker upp här inom 30 sekunder.",
+    href:  "/app/inbox",
+    cta:   "Öppna inkorg",
+  },
+  {
+    key:   "caseTypeAdjustment",
+    label: "Anpassa ärendetyper (valfritt)",
+    hint:  "Vi har lagt in en grunduppsättning. Justera kategorier och SLA i inställningarna när du vill.",
+    href:  "/app/settings",
+    cta:   "Öppna inställningar",
+  },
+];
+
+function GettingStarted({ setup }: { setup: SetupState }) {
+  // Determine the active (first incomplete) step — only that one gets a CTA.
+  const completed: Record<string, boolean> = {
+    accountReady:       setup.accountReady,
+    inboxConnected:     setup.inboxConnected,
+    firstThread:        setup.firstThread,
+    caseTypeAdjustment: setup.caseTypesReady, // optional, doesn't gate
+  };
+  const activeIdx = GUIDED_STEPS.findIndex((s, i) => {
+    // Skip the optional case-types step when determining "next required action".
+    if (s.key === "caseTypeAdjustment") return false;
+    return !completed[s.key];
+  });
+
+  const doneCount = GUIDED_STEPS.filter(s => s.key !== "caseTypeAdjustment" && completed[s.key]).length;
+  const totalCount = GUIDED_STEPS.filter(s => s.key !== "caseTypeAdjustment").length;
+
   return (
-    <li className="flex items-start gap-3">
-      <span
-        className={`shrink-0 w-5 h-5 rounded-full border flex items-center justify-center text-[10px] font-bold mt-0.5 ${
-          done
-            ? "bg-green-500/20 border-green-500/40 text-green-400"
-            : "border-white/20 text-muted-foreground"
-        }`}
-      >
-        {done ? "✓" : ""}
-      </span>
-      <div className="flex-1 min-w-0">
-        <p className={`text-sm font-medium ${done ? "text-muted-foreground line-through" : "text-white"}`}>
-          {label}
-        </p>
-        <p className="text-[11px] text-muted-foreground/80 mt-0.5">{hint}</p>
+    <section className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/[0.08] to-primary/[0.02] p-6 space-y-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-base font-bold text-white">Kom igång med Mailmind</h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            {activeIdx === -1
+              ? "Allt klart — välj en sak att justera nedan, eller börja triagera."
+              : "Följ stegen så är du igång på under 5 minuter."}
+          </p>
+        </div>
+        <div className="shrink-0 text-right">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Framsteg</p>
+          <p className="text-sm font-mono text-primary mt-0.5">{doneCount} / {totalCount}</p>
+        </div>
       </div>
-      {!done && href && cta && (
-        <Link
-          href={href}
-          className="shrink-0 px-3 py-1 rounded-lg text-[11px] font-semibold bg-white/10 text-white hover:bg-white/20 transition-colors"
-        >
-          {cta}
-        </Link>
-      )}
-    </li>
+
+      <ul className="space-y-2">
+        {GUIDED_STEPS.map((s, i) => {
+          const isDone     = completed[s.key];
+          const isActive   = !isDone && i === activeIdx;
+          const isOptional = s.key === "caseTypeAdjustment";
+          const isLocked   = !isDone && !isActive && !isOptional;
+
+          return (
+            <li
+              key={s.key as string}
+              className={`flex items-center gap-3 rounded-xl px-4 py-3 transition-colors ${
+                isActive
+                  ? "bg-primary/10 border border-primary/40"
+                  : isDone
+                    ? "bg-white/[0.02] border border-white/5"
+                    : isLocked
+                      ? "bg-white/[0.02] border border-white/5 opacity-50"
+                      : "bg-white/[0.02] border border-white/5"
+              }`}
+            >
+              <span
+                className={`shrink-0 w-6 h-6 rounded-full border flex items-center justify-center text-[11px] font-bold ${
+                  isDone
+                    ? "bg-green-500/20 border-green-500/40 text-green-400"
+                    : isActive
+                      ? "bg-primary text-[#030614] border-primary"
+                      : "border-white/15 text-muted-foreground"
+                }`}
+              >
+                {isDone ? "✓" : i + 1}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className={`text-sm font-medium ${isDone ? "text-muted-foreground line-through" : "text-white"}`}>
+                  {s.label}
+                  {isOptional && !isDone && (
+                    <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground/70 font-normal">valfritt</span>
+                  )}
+                </p>
+                {(isActive || isOptional || (!isLocked && !isDone)) && (
+                  <p className="text-[11px] text-muted-foreground/80 mt-0.5">{s.hint}</p>
+                )}
+              </div>
+              {!isDone && (isActive || isOptional) && (
+                <Link
+                  href={s.href}
+                  className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    isActive
+                      ? "bg-primary text-[#030614] hover:bg-cyan-300"
+                      : "bg-white/10 text-white hover:bg-white/20"
+                  }`}
+                >
+                  {s.cta} →
+                </Link>
+              )}
+              {isLocked && (
+                <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground/50">
+                  Låst
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 

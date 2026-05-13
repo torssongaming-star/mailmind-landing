@@ -18,6 +18,8 @@ import {
   Inbox,
   ChevronDown,
   Zap,
+  Menu,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SupportDrawer } from "./SupportDrawer";
@@ -132,6 +134,7 @@ function groupIsActive(group: NavGroup, pathname: string): boolean {
 export function Sidebar() {
   const pathname                  = usePathname();
   const [supportOpen, setSupportOpen] = useState(false);
+  const [mobileOpen, setMobileOpen]   = useState(false);
 
   // Track which groups are manually expanded. Auto-open active group on mount/nav.
   const defaultOpen = () =>
@@ -142,7 +145,8 @@ export function Sidebar() {
 
   const [expanded, setExpanded] = useState<Record<string, boolean>>(defaultOpen);
 
-  // Whenever the route changes, make sure the active group is open
+  // Whenever the route changes, make sure the active group is open + close the
+  // mobile drawer (so it doesn't sit on top of the just-navigated page).
   useEffect(() => {
     setExpanded(prev => {
       const next = { ...prev };
@@ -153,28 +157,25 @@ export function Sidebar() {
       });
       return next;
     });
+    setMobileOpen(false);
   }, [pathname]);
+
+  // Lock body scroll while mobile drawer is open
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
 
   const toggle = (id: string) =>
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
-  return (
+  // Shared nav body for both desktop sidebar and mobile drawer
+  const navBody = (
     <>
-      <aside className="fixed inset-y-0 left-0 z-30 w-64 hidden lg:flex flex-col border-r border-white/5 bg-[#030614]/95 backdrop-blur-md">
-
-        {/* Logo */}
-        <div className="h-16 flex items-center px-6 border-b border-white/5 shrink-0">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary border border-primary/30 shadow-[0_0_12px_rgba(6,182,212,0.2)] group-hover:shadow-[0_0_16px_rgba(6,182,212,0.35)] transition-shadow">
-              <Image src="/logo.png" alt="Mailmind Logo" width={32} height={32} className="object-cover w-full h-full" />
-            </div>
-            <span className="font-bold text-lg tracking-tight text-white">{siteConfig.siteName}</span>
-          </Link>
-        </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
-          {NAV.map(item => {
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
+        {NAV.map(item => {
             if (item.kind === "leaf") {
               const isActive = pathname === item.href ||
                 (item.href !== "/app" && item.href !== "/dashboard" &&
@@ -256,30 +257,94 @@ export function Sidebar() {
               </div>
             );
           })}
-        </nav>
+      </nav>
 
-        {/* Support + Back to site */}
-        <div className="p-4 border-t border-white/5 space-y-0.5">
-          <button
-            onClick={() => setSupportOpen(true)}
-            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-white hover:bg-white/[0.04] transition-all duration-200"
-          >
-            <HelpCircle size={17} className="text-muted-foreground" />
-            Support
-          </button>
-          <Link
-            href="/"
-            className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-muted-foreground hover:text-white transition-colors rounded-xl hover:bg-white/[0.04]"
-          >
-            <ArrowLeft size={14} />
-            Back to {siteConfig.domain}
-          </Link>
+      {/* Support + Back to site */}
+      <div className="p-4 border-t border-white/5 space-y-0.5">
+        <button
+          onClick={() => setSupportOpen(true)}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-white hover:bg-white/[0.04] transition-all duration-200"
+        >
+          <HelpCircle size={17} className="text-muted-foreground" />
+          Support
+        </button>
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-muted-foreground hover:text-white transition-colors rounded-xl hover:bg-white/[0.04]"
+        >
+          <ArrowLeft size={14} />
+          Back to {siteConfig.domain}
+        </Link>
+      </div>
+    </>
+  );
+
+  const logo = (
+    <Link href="/" className="flex items-center gap-2.5 group" onClick={() => setMobileOpen(false)}>
+      <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary border border-primary/30 shadow-[0_0_12px_rgba(6,182,212,0.2)] group-hover:shadow-[0_0_16px_rgba(6,182,212,0.35)] transition-shadow">
+        <Image src="/logo.png" alt="Mailmind Logo" width={32} height={32} className="object-cover w-full h-full" />
+      </div>
+      <span className="font-bold text-lg tracking-tight text-white">{siteConfig.siteName}</span>
+    </Link>
+  );
+
+  return (
+    <>
+      {/* ── Desktop sidebar ──────────────────────────────────────────────── */}
+      <aside className="fixed inset-y-0 left-0 z-30 w-64 hidden lg:flex flex-col border-r border-white/5 bg-[#030614]/95 backdrop-blur-md">
+        <div className="h-16 flex items-center px-6 border-b border-white/5 shrink-0">
+          {logo}
         </div>
+        {navBody}
+      </aside>
 
+      {/* ── Mobile top bar ───────────────────────────────────────────────── */}
+      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between h-14 px-4 border-b border-white/5 bg-[#030614]/95 backdrop-blur-md">
+        <button
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open menu"
+          className="w-9 h-9 rounded-lg flex items-center justify-center text-white/80 hover:text-white hover:bg-white/5 transition-colors"
+        >
+          <Menu size={20} />
+        </button>
+        {logo}
+        <div className="w-9" /> {/* spacer to balance hamburger */}
+      </header>
+
+      {/* ── Mobile drawer + backdrop ─────────────────────────────────────── */}
+      {mobileOpen && (
+        <div
+          onClick={() => setMobileOpen(false)}
+          className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-[fadeIn_150ms_ease-out]"
+          aria-hidden
+        />
+      )}
+      <aside
+        className={cn(
+          "lg:hidden fixed inset-y-0 left-0 z-50 w-72 flex flex-col border-r border-white/5 bg-[#030614] transition-transform duration-200 ease-out",
+          mobileOpen ? "translate-x-0" : "-translate-x-full"
+        )}
+        aria-hidden={!mobileOpen}
+      >
+        <div className="h-14 flex items-center justify-between px-4 border-b border-white/5 shrink-0">
+          {logo}
+          <button
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close menu"
+            className="w-9 h-9 rounded-lg flex items-center justify-center text-white/80 hover:text-white hover:bg-white/5 transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+        {navBody}
       </aside>
 
       {/* Rendered OUTSIDE aside so backdrop-blur doesn't confine it */}
       <SupportDrawer open={supportOpen} onClose={() => setSupportOpen(false)} />
+
+      <style jsx>{`
+        @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+      `}</style>
     </>
   );
 }

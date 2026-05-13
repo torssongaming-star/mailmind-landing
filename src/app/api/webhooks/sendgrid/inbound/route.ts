@@ -67,17 +67,14 @@ async function readPayload(req: NextRequest): Promise<Record<string, string>> {
 function decodeMimeWords(str: string): string {
   if (!str) return str;
 
-  // Replace all RFC 2047 encoded-word tokens
   const decoded = str.replace(
     /=\?([^?]+)\?([BbQq])\?([^?]*)\?=/g,
     (_, charset: string, encoding: string, text: string) => {
       try {
         if (encoding.toUpperCase() === "B") {
-          // Base64
           const buf = Buffer.from(text, "base64");
           return buf.toString(charset.toLowerCase().replace("-", "") === "iso88591" ? "latin1" : "utf8");
         } else {
-          // Quoted-printable: replace _ with space, =XX with char
           const qp = text.replace(/_/g, " ").replace(/=([0-9A-Fa-f]{2})/g, (__, hex) =>
             String.fromCharCode(parseInt(hex, 16))
           );
@@ -95,24 +92,20 @@ function decodeMimeWords(str: string): string {
   return decoded;
 }
 
-/** Extract the first email address from a header value like "Name <a@b.com>". */
 function extractEmail(headerValue: string): string | null {
   if (!headerValue) return null;
   const match = headerValue.match(/<([^>]+)>/);
   if (match) return match[1].trim().toLowerCase();
-  // Fallback: trust the whole field if it looks like an address
   const trimmed = headerValue.trim().toLowerCase();
   return /^[^@\s]+@[^@\s]+$/.test(trimmed) ? trimmed : null;
 }
 
-/** Some SendGrid `to` headers list multiple recipients — pick the @mail.mailmind.se one. */
 function pickMailmindAddress(toHeader: string): string | null {
   const candidates = toHeader.split(",").map(s => s.trim());
   for (const c of candidates) {
     const e = extractEmail(c);
     if (e && e.endsWith("@mail.mailmind.se")) return e;
   }
-  // Fallback: first address
   return candidates.length > 0 ? extractEmail(candidates[0]) : null;
 }
 
@@ -128,7 +121,6 @@ export async function POST(req: NextRequest) {
   const fromHeader     = decodeMimeWords(payload.from ?? "");
   const toHeader       = payload.to ?? "";
   const subject        = decodeMimeWords(payload.subject ?? "");
-  // SendGrid provides plain text + HTML; prefer text. `email` is the raw MIME.
   const bodyText       = decodeMimeWords((payload.text ?? payload.body ?? "").trim());
   const messageHeaders = payload.headers ?? "";
 
@@ -144,25 +136,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Could not parse from/to addresses" }, { status: 400 });
   }
 
-  // Resolve org from inbox
   const inbox = await getInboxByEmail(toEmail);
   if (!inbox) {
     console.warn("[inbound] no inbox registered for", toEmail);
-    // Return 200 to prevent SendGrid retries (the email is "accepted" but not processed)
     return NextResponse.json({ status: "no_inbox", to: toEmail });
   }
 
-  // Blocklist check — drop emails from blocked senders
   const blocked = await isBlocked(inbox.organizationId, fromEmail);
   if (blocked) {
     console.log(`[inbound] blocked sender ${fromEmail} — skipping`);
     return NextResponse.json({ ok: true, skipped: "blocked" });
   }
 
-  // Idempotency check — if SendGrid retries the same email (e.g. our handler
-  // was slow), skip duplicate processing. We dedupe on Message-ID since that's
-  // globally unique per RFC 5322. Also handles cases where the customer sends
-  // the exact same email twice.
   const messageIdEarly = extractHeader(payload.headers ?? "", "Message-ID");
   if (messageIdEarly) {
     const dup = await findMessageByExternalId(messageIdEarly);
@@ -172,14 +157,10 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Try to thread the email. SendGrid passes the Message-ID and References
-  // headers in the `headers` field. Look for In-Reply-To first, then Message-ID.
   const messageId    = extractHeader(messageHeaders, "Message-ID");
   const inReplyTo    = extractHeader(messageHeaders, "In-Reply-To");
   const referencesHd = extractHeader(messageHeaders, "References");
 
-  // Use the OLDEST reference id as the canonical thread id when available;
-  // else the In-Reply-To; else the message id (= start of new thread).
   const externalThreadId =
     (referencesHd ? referencesHd.split(/\s+/).filter(Boolean)[0] : null) ||
     inReplyTo ||
@@ -190,7 +171,6 @@ export async function POST(req: NextRequest) {
     ? await findThreadByExternalId(inbox.organizationId, externalThreadId)
     : null;
 
-  // If matched thread is closed, start a new one (per Electron prototype's logic)
   if (thread && (thread.status === "resolved" || thread.status === "escalated")) {
     thread = null;
   }
@@ -209,7 +189,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Append customer message
   const now = new Date();
   await appendMessage({
     threadId:           thread.id,
@@ -236,13 +215,6 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  // Fire-and-forget AI auto-triage. We DON'T await — webhook returns fast,
-  // SendGrid doesn't retry on slow responses, and the human can review the
-  // draft once it lands. If AI fails, the thread still exists for manual handling.
-  //
-  // In a Vercel serverless environment, we DO need to await so the function
-  // doesn't terminate before the AI call completes. Use a sensible timeout via
-  // the AI service's built-in 15s timeout.
   const triageResult = await autoTriageNewMessage({
     organizationId: inbox.organizationId,
     threadId:       thread.id,
@@ -256,8 +228,6 @@ export async function POST(req: NextRequest) {
     triage:   triageResult.ok ? "generated" : `skipped: ${triageResult.reason}`,
   });
 }
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function extractHeader(headersBlob: string, name: string): string | null {
   if (!headersBlob) return null;

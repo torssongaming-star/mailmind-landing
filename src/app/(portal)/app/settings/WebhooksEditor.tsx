@@ -13,6 +13,14 @@ type Webhook = {
   lastFiredAt: Date | string | null;
 };
 
+type Delivery = {
+  id:         string;
+  statusCode: number | null;
+  durationMs: number | null;
+  error:      string | null;
+  sentAt:     string;
+};
+
 type CaseTypeMeta = { slug: string; label: string };
 
 export function WebhooksEditor({
@@ -30,6 +38,23 @@ export function WebhooksEditor({
   const [pending, setPending] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [deliveries, setDeliveries] = useState<Record<string, Delivery[] | "loading">>({});
+
+  const toggleExpand = async (id: string) => {
+    const next = expandedId === id ? null : id;
+    setExpandedId(next);
+    if (next && !deliveries[id]) {
+      setDeliveries(prev => ({ ...prev, [id]: "loading" }));
+      try {
+        const res = await fetch(`/api/app/webhooks/${id}/deliveries`);
+        const data = await res.json().catch(() => ({ deliveries: [] }));
+        setDeliveries(prev => ({ ...prev, [id]: data.deliveries ?? [] }));
+      } catch {
+        setDeliveries(prev => ({ ...prev, [id]: [] }));
+      }
+    }
+  };
 
   const handleAdd = async () => {
     if (!url.trim()) return;
@@ -144,37 +169,90 @@ export function WebhooksEditor({
       ) : (
         <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 overflow-hidden">
           <ul className="divide-y divide-white/5">
-            {webhooks.map(w => (
-              <li key={w.id} className="flex items-start gap-3 px-4 py-3">
-                <div className="flex-1 min-w-0 space-y-0.5">
-                  <p className="text-sm text-white font-mono truncate">{w.url}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {w.caseTypeSlug === "*"
-                      ? "Alla ärendetyper"
-                      : caseTypes.find(ct => ct.slug === w.caseTypeSlug)?.label ?? w.caseTypeSlug}
-                    {w.secret && " · Nyckel konfigurerad"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  {w.lastStatus && (
-                    <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                      w.lastStatus === "ok"
-                        ? "bg-green-500/15 text-green-400 border-green-500/30"
-                        : "bg-red-500/15 text-red-400 border-red-500/30"
-                    }`}>
-                      {w.lastStatus}
-                    </span>
+            {webhooks.map(w => {
+              const isExpanded = expandedId === w.id;
+              const log = deliveries[w.id];
+              return (
+                <li key={w.id} className="px-4 py-3">
+                  <div className="flex items-start gap-3">
+                    <button
+                      onClick={() => toggleExpand(w.id)}
+                      className="flex-1 min-w-0 space-y-0.5 text-left"
+                      title="Visa leveranshistorik"
+                    >
+                      <p className="text-sm text-white font-mono truncate">{w.url}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {w.caseTypeSlug === "*"
+                          ? "Alla ärendetyper"
+                          : caseTypes.find(ct => ct.slug === w.caseTypeSlug)?.label ?? w.caseTypeSlug}
+                        {w.secret && " · Nyckel konfigurerad"}
+                        <span className="text-muted-foreground/60"> · {isExpanded ? "▴ Dölj logg" : "▾ Visa logg"}</span>
+                      </p>
+                    </button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {w.lastStatus && (
+                        <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                          w.lastStatus === "ok"
+                            ? "bg-green-500/15 text-green-400 border-green-500/30"
+                            : "bg-red-500/15 text-red-400 border-red-500/30"
+                        }`}>
+                          {w.lastStatus}
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleDelete(w.id)}
+                        disabled={deletingId === w.id}
+                        className="text-xs text-red-400 hover:text-red-300 transition-colors disabled:opacity-40"
+                      >
+                        {deletingId === w.id ? "Tar bort…" : "Ta bort"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Delivery log */}
+                  {isExpanded && (
+                    <div className="mt-3 rounded-lg border border-white/5 bg-black/20 overflow-hidden">
+                      {log === "loading" ? (
+                        <p className="text-xs text-muted-foreground italic px-3 py-2">Hämtar logg…</p>
+                      ) : !log || log.length === 0 ? (
+                        <p className="text-xs text-muted-foreground italic px-3 py-2">Inga leveranser ännu.</p>
+                      ) : (
+                        <table className="w-full text-[11px]">
+                          <thead className="text-muted-foreground/70">
+                            <tr className="border-b border-white/5">
+                              <th className="text-left font-medium px-3 py-1.5">Tid</th>
+                              <th className="text-left font-medium px-3 py-1.5">Status</th>
+                              <th className="text-left font-medium px-3 py-1.5">Latens</th>
+                              <th className="text-left font-medium px-3 py-1.5">Fel</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {log.map(d => (
+                              <tr key={d.id} className="border-b border-white/[0.03] last:border-0">
+                                <td className="px-3 py-1.5 text-muted-foreground tabular-nums">
+                                  {new Date(d.sentAt).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "medium" })}
+                                </td>
+                                <td className="px-3 py-1.5">
+                                  <span className={d.statusCode && d.statusCode < 400 ? "text-green-400" : "text-red-400"}>
+                                    {d.statusCode ?? "—"}
+                                  </span>
+                                </td>
+                                <td className="px-3 py-1.5 text-muted-foreground tabular-nums">
+                                  {d.durationMs != null ? `${d.durationMs} ms` : "—"}
+                                </td>
+                                <td className="px-3 py-1.5 text-red-300/80 truncate max-w-[200px]" title={d.error ?? undefined}>
+                                  {d.error ?? ""}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      )}
+                    </div>
                   )}
-                  <button
-                    onClick={() => handleDelete(w.id)}
-                    disabled={deletingId === w.id}
-                    className="text-xs text-red-400 hover:text-red-300 transition-colors disabled:opacity-40"
-                  >
-                    {deletingId === w.id ? "Tar bort…" : "Ta bort"}
-                  </button>
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

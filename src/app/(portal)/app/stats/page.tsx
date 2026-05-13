@@ -16,7 +16,10 @@ import {
   getDraftStats,
   getTopCaseTypes,
   getResponseStats,
+  getThreadsPerDay,
+  getAutoVsManualSent,
 } from "@/lib/app/stats";
+import { DailyThreadsChart } from "./DailyThreadsChart";
 
 export const dynamic = "force-dynamic";
 
@@ -29,12 +32,17 @@ export default async function StatsPage() {
   if (!account.access.canUseApp) redirect("/app");
 
   const orgId = account.organization.id;
-  const [threadStats, draftStats, topCaseTypes, responseStats] = await Promise.all([
+  const [threadStats, draftStats, topCaseTypes, responseStats, dailyThreads, autoVsManual] = await Promise.all([
     getThreadStats(orgId),
     getDraftStats(orgId),
     getTopCaseTypes(orgId, 5),
     getResponseStats(orgId),
+    getThreadsPerDay(orgId, 14),
+    getAutoVsManualSent(orgId),
   ]);
+
+  const totalSent = autoVsManual.auto + autoVsManual.manual;
+  const autoPct   = totalSent > 0 ? Math.round((autoVsManual.auto / totalSent) * 100) : 0;
 
   const draftLimit = account.entitlements?.maxAiDraftsPerMonth ?? 0;
   const draftsThisMonthUsed = account.usage?.aiDraftsUsed ?? 0;
@@ -60,6 +68,56 @@ export default async function StatsPage() {
         <MetricCard label="This week"     value={threadStats.thisWeek} />
         <MetricCard label="This month"    value={threadStats.thisMonth} />
         <MetricCard label="All time"      value={threadStats.total} />
+      </section>
+
+      {/* Daily thread volume */}
+      <section>
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+          Threads — last 14 days
+        </h2>
+        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5">
+          <DailyThreadsChart data={dailyThreads} />
+        </div>
+      </section>
+
+      {/* Auto-sent vs manual */}
+      <section>
+        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+          Autosvar vs manuell — this month
+        </h2>
+        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-4">
+          {totalSent === 0 && autoVsManual.rejected === 0 ? (
+            <p className="text-xs text-muted-foreground italic">
+              Inga skickade svar denna månad. När du börjar godkänna AI-utkast (eller aktiverar autosvar) syns fördelningen här.
+            </p>
+          ) : (
+            <>
+              <div className="flex items-baseline gap-3">
+                <span className="text-3xl font-bold text-white">{autoPct}%</span>
+                <span className="text-xs text-muted-foreground">
+                  av {totalSent} skickade gick automatiskt
+                </span>
+              </div>
+              <div className="flex h-2 rounded-full overflow-hidden bg-white/5">
+                <div
+                  className="h-full bg-gradient-to-r from-primary to-cyan-300"
+                  style={{ width: `${totalSent > 0 ? (autoVsManual.auto / totalSent) * 100 : 0}%` }}
+                  title={`Auto: ${autoVsManual.auto}`}
+                />
+                <div
+                  className="h-full bg-amber-400/60"
+                  style={{ width: `${totalSent > 0 ? (autoVsManual.manual / totalSent) * 100 : 0}%` }}
+                  title={`Manuell: ${autoVsManual.manual}`}
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
+                <Mini label="Auto"     value={autoVsManual.auto} />
+                <Mini label="Manuell"  value={autoVsManual.manual} />
+                <Mini label="Avvisade" value={autoVsManual.rejected} />
+              </div>
+            </>
+          )}
+        </div>
       </section>
 
       {/* AI usage */}

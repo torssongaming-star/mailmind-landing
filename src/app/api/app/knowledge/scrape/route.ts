@@ -11,6 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
+import * as cheerio from "cheerio";
 import Anthropic from "@anthropic-ai/sdk";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { bulkCreateKnowledge } from "@/lib/app/knowledge";
@@ -19,24 +20,65 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 const Body = z.object({
-  url: z.string().url(),
+  url: z.string().min(1),
 });
 
+/**
+ * Accept bare domains like "energikompaniet.se" — onboarding users don't
+ * know to type the scheme. Returns a normalized https:// URL or throws.
+ */
+function normalizeUrl(raw: string): string {
+  const cleaned = raw.trim().replace(/^(https?:\/\/)/i, "");
+  if (!cleaned) throw new Error("URL is empty");
+  if (!/^[a-z0-9][\w.-]*\.[a-z]{2,}(\/.*)?$/i.test(cleaned)) {
+    throw new Error("Invalid domain — write something like example.se");
+  }
+  return `https://${cleaned}`;
+}
+
+/**
+ * Extracts a clean, structured representation of the page using cheerio.
+ * - Drops script/style/nav/footer/aside chrome that confuses the LLM.
+ * - Keeps headings as "## H2 — H3" and pairs them with the next paragraphs.
+ * - Preserves visible link text and list items (often where FAQ pairs hide).
+ * Output is capped to 8 000 chars to stay well under Claude's context for Haiku.
+ */
 async function fetchPageText(url: string): Promise<string> {
   const res = await fetch(url, {
     headers: { "User-Agent": "Mailmind-Onboarding-Bot/1.0" },
     signal: AbortSignal.timeout(10_000),
+    redirect: "follow",
   });
   if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
   const html = await res.text();
 
-  // Strip HTML tags, scripts, styles — keep text
-  return html
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
-    .replace(/<[^>]+>/g, " ")
-    .replace(/\s{3,}/g, "\n")
-    .slice(0, 8000); // cap to avoid huge prompts
+  const $ = cheerio.load(html);
+  // Drop boilerplate
+  $("script, style, noscript, nav, header, footer, aside, form, iframe").remove();
+  // Visible-only-ish: also drop hidden + cookie banners by common class names
+  $('[hidden], [aria-hidden="true"]').remove();
+  $('[class*="cookie" i], [class*="consent" i], [class*="banner" i]').remove();
+
+  const blocks: string[] = [];
+  const root = $("main").length ? $("main").first() : $("body");
+
+  root.find("h1, h2, h3, h4, p, li, summary, dt, dd").each((_, el) => {
+    const $el = $(el);
+    const tag = (el as { tagName?: string }).tagName?.toLowerCase() ?? "";
+    const text = $el.text().replace(/\s+/g, " ").trim();
+    if (!text) return;
+    if (text.length < 3) return;
+    if (/^h[1-4]$/.test(tag)) {
+      blocks.push(`\n## ${text}`);
+    } else if (tag === "li" || tag === "dt") {
+      blocks.push(`- ${text}`);
+    } else {
+      blocks.push(text);
+    }
+  });
+
+  const joined = blocks.join("\n").replace(/\n{3,}/g, "\n\n").trim();
+  return joined.slice(0, 8000);
 }
 
 export async function POST(req: NextRequest) {
@@ -50,7 +92,14 @@ export async function POST(req: NextRequest) {
   const parsed = Body.safeParse(json);
   if (!parsed.success) return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
 
-  const { url } = parsed.data;
+  let url: string;
+  try {
+    url = normalizeUrl(parsed.data.url);
+  } catch (e) {
+    return NextResponse.json({
+      error: e instanceof Error ? e.message : "Invalid URL",
+    }, { status: 400 });
+  }
 
   // Fetch page
   let pageText: string;

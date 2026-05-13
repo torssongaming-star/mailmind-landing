@@ -7,7 +7,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getCurrentAccount } from "@/lib/app/entitlements";
-import { listThreads, wakeUpSnoozedThreads, listCaseTypes } from "@/lib/app/threads";
+import { listThreads, wakeUpSnoozedThreads, listCaseTypes, countSnoozedThreads, searchThreads } from "@/lib/app/threads";
 import { NewThreadButton } from "./NewThreadButton";
 import { InboxFilters } from "./InboxFilters";
 import { InboxShell } from "./InboxShell";
@@ -16,6 +16,7 @@ export const dynamic = "force-dynamic";
 
 const VALID_STATUSES = ["open", "waiting", "escalated", "resolved"] as const;
 type ThreadStatus = (typeof VALID_STATUSES)[number];
+const SNOOZED = "snoozed" as const;
 
 export default async function InboxPage({
   searchParams,
@@ -30,6 +31,7 @@ export default async function InboxPage({
 
   const params      = await searchParams;
   const isOutlook   = params.source === "outlook";
+  const isSnoozedView = params.status === SNOOZED;
   const filterStatus = VALID_STATUSES.includes(params.status as ThreadStatus)
     ? (params.status as ThreadStatus)
     : null;
@@ -38,9 +40,17 @@ export default async function InboxPage({
 
   await wakeUpSnoozedThreads(account.organization.id);
 
-  const [all, caseTypesList] = await Promise.all([
-    listThreads(account.organization.id, { limit: 200 }),
+  // Server-side search bypasses the 200-row limit. Falls back to in-memory
+  // filtering for facets (status, tag) on top of the search result.
+  const useServerSearch = query.length >= 2;
+  const [all, caseTypesList, snoozedCount] = await Promise.all([
+    useServerSearch
+      ? searchThreads(account.organization.id, query, 200)
+      : isSnoozedView
+        ? listThreads(account.organization.id, { limit: 200, showSnoozed: true })
+        : listThreads(account.organization.id, { limit: 200 }),
     listCaseTypes(account.organization.id),
+    countSnoozedThreads(account.organization.id),
   ]);
 
   const slaByCaseType: Record<string, number> = {};
@@ -51,7 +61,9 @@ export default async function InboxPage({
   const threads = all.filter(t => {
     if (filterStatus && t.status !== filterStatus) return false;
     if (tagFilter && !(t.tags ?? []).includes(tagFilter)) return false;
-    if (query) {
+    // Local search still applied when server-side returned a superset
+    // (or for short queries — server-search threshold is 2 chars).
+    if (query && !useServerSearch) {
       const haystack = [t.subject ?? "", t.fromEmail, t.fromName ?? "", t.caseTypeSlug ?? "", ...(t.tags ?? [])].join(" ").toLowerCase();
       if (!haystack.includes(query)) return false;
     }
@@ -64,6 +76,7 @@ export default async function InboxPage({
     waiting:   all.filter(t => t.status === "waiting").length,
     escalated: all.filter(t => t.status === "escalated").length,
     resolved:  all.filter(t => t.status === "resolved").length,
+    snoozed:   snoozedCount,
   };
 
   // Outlook add-in: keep old compact single-column layout

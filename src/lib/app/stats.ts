@@ -52,6 +52,18 @@ export type ResponseStat = {
   sampleSize:             number;
 };
 
+export type DailyThreadStat = {
+  /** ISO date (YYYY-MM-DD) */
+  date:   string;
+  count:  number;
+};
+
+export type AutoVsManualStat = {
+  auto:     number;
+  manual:   number;
+  rejected: number;
+};
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function startOf(unit: "day" | "week" | "month"): Date {
@@ -206,6 +218,75 @@ export async function getTopCaseTypes(
     label: r.label ?? r.slug ?? "(unknown)",
     count: Number(r.c),
   }));
+}
+
+// ── Threads per day (last N days, inclusive of today) ───────────────────────
+
+/**
+ * Returns an array of length `days`, one entry per day from oldest to newest.
+ * Missing days are filled with zero so the chart has no gaps.
+ */
+export async function getThreadsPerDay(
+  organizationId: string,
+  days = 14,
+): Promise<DailyThreadStat[]> {
+  // Build skeleton with zeros so missing-day gaps render cleanly
+  const skeleton: DailyThreadStat[] = [];
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    skeleton.push({ date: d.toISOString().slice(0, 10), count: 0 });
+  }
+
+  if (!isDbConnected()) return skeleton;
+
+  const since = new Date(today);
+  since.setDate(today.getDate() - (days - 1));
+
+  const rows = (await db.execute(sql`
+    SELECT to_char(date_trunc('day', created_at AT TIME ZONE 'UTC'), 'YYYY-MM-DD') AS day,
+           COUNT(*)::int AS count
+    FROM email_threads
+    WHERE organization_id = ${organizationId}
+      AND created_at >= ${since.toISOString()}
+    GROUP BY day
+    ORDER BY day ASC
+  `)) as unknown as { rows: Array<{ day: string; count: number }> };
+
+  const byDay = new Map(rows.rows.map(r => [r.day, Number(r.count)]));
+  return skeleton.map(s => ({ date: s.date, count: byDay.get(s.date) ?? 0 }));
+}
+
+// ── Auto-sent vs manual ──────────────────────────────────────────────────────
+
+/**
+ * Distinguishes drafts sent automatically (userId IS NULL, executed by the
+ * autosvar-pipeline) from drafts sent manually by a human reviewer. Scoped
+ * to the current calendar month for "this month's mix" reporting.
+ */
+export async function getAutoVsManualSent(organizationId: string): Promise<AutoVsManualStat> {
+  if (!isDbConnected()) return { auto: 0, manual: 0, rejected: 0 };
+
+  const monthStart = startOf("month");
+  const rows = (await db.execute(sql`
+    SELECT
+      COUNT(*) FILTER (WHERE status IN ('sent','approved','edited') AND user_id IS NULL)     AS auto,
+      COUNT(*) FILTER (WHERE status IN ('sent','approved','edited') AND user_id IS NOT NULL) AS manual,
+      COUNT(*) FILTER (WHERE status = 'rejected')                                            AS rejected
+    FROM ai_drafts
+    WHERE organization_id = ${organizationId}
+      AND generated_at >= ${monthStart.toISOString()}
+      AND is_dry_run = false
+  `)) as unknown as { rows: Array<{ auto: string | number; manual: string | number; rejected: string | number }> };
+
+  const row = rows.rows[0];
+  return {
+    auto:     Number(row?.auto ?? 0),
+    manual:   Number(row?.manual ?? 0),
+    rejected: Number(row?.rejected ?? 0),
+  };
 }
 
 // ── Median response time ─────────────────────────────────────────────────────

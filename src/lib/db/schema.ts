@@ -474,6 +474,24 @@ export const webhookEndpoints = pgTable(
   (t) => [index("webhook_endpoints_org_idx").on(t.organizationId)]
 );
 
+export const webhookDeliveries = pgTable(
+  "webhook_deliveries",
+  {
+    id:             uuid("id").primaryKey().defaultRandom(),
+    endpointId:     uuid("endpoint_id").notNull().references(() => webhookEndpoints.id, { onDelete: "cascade" }),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    threadId:       uuid("thread_id"),
+    statusCode:     integer("status_code"),
+    durationMs:     integer("duration_ms"),
+    error:          text("error"),
+    sentAt:         timestamp("sent_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("webhook_deliveries_endpoint_idx").on(t.endpointId, t.sentAt),
+    index("webhook_deliveries_org_idx").on(t.organizationId, t.sentAt),
+  ]
+);
+
 // ── Relations ─────────────────────────────────────────────────────────────────
 
 export const organizationsRelations = relations(organizations, ({ many, one }) => ({
@@ -482,6 +500,12 @@ export const organizationsRelations = relations(organizations, ({ many, one }) =
   licenseEntitlement: one(licenseEntitlements, {
     fields: [organizations.id],
     references: [licenseEntitlements.organizationId],
+  }),
+  // aiSettings is a one-to-one keyed on organizationId. Declared on both sides
+  // so `db.query.organizations.findFirst({ with: { aiSettings: true } })` works.
+  aiSettings: one(aiSettings, {
+    fields:     [organizations.id],
+    references: [aiSettings.organizationId],
   }),
   usageCounters: many(usageCounters),
   auditLogs:     many(auditLogs),
@@ -639,6 +663,9 @@ export type SenderBlock = typeof senderBlocklist.$inferSelect;
 export type NewSenderBlock = typeof senderBlocklist.$inferInsert;
 export type WebhookEndpoint = typeof webhookEndpoints.$inferSelect;
 export type NewWebhookEndpoint = typeof webhookEndpoints.$inferInsert;
+
+export type WebhookDelivery = typeof webhookDeliveries.$inferSelect;
+export type NewWebhookDelivery = typeof webhookDeliveries.$inferInsert;
 
 export type AdminCustomerProfile = typeof adminCustomerProfiles.$inferSelect;
 export type NewAdminCustomerProfile = typeof adminCustomerProfiles.$inferInsert;

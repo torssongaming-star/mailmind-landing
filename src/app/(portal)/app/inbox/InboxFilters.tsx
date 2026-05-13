@@ -10,14 +10,16 @@ type Counts = {
   waiting: number;
   escalated: number;
   resolved: number;
+  snoozed: number;
 };
 
-const TABS: Array<{ value: "all" | "open" | "waiting" | "escalated" | "resolved"; label: string }> = [
+const TABS: Array<{ value: "all" | "open" | "waiting" | "escalated" | "resolved" | "snoozed"; label: string }> = [
   { value: "all",       label: "All" },
   { value: "open",      label: "Open" },
   { value: "waiting",   label: "Waiting" },
   { value: "escalated", label: "Escalated" },
   { value: "resolved",  label: "Resolved" },
+  { value: "snoozed",   label: "Snoozade" },
 ];
 
 export function InboxFilters({

@@ -2,8 +2,8 @@
  * Webhook endpoint management and firing logic.
  */
 
-import { db, isDbConnected, webhookEndpoints } from "@/lib/db";
-import { eq, and } from "drizzle-orm";
+import { db, isDbConnected, webhookEndpoints, webhookDeliveries } from "@/lib/db";
+import { eq, and, desc } from "drizzle-orm";
 
 export async function listWebhooks(organizationId: string) {
   if (!isDbConnected()) return [];
@@ -85,14 +85,55 @@ export async function fireWebhooksForThread(
 
   await Promise.allSettled(
     matching.map(async ep => {
+      const start = Date.now();
+      let statusCode: number | null = null;
+      let errorMsg:   string | null = null;
       try {
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (ep.secret) headers["X-Mailmind-Secret"] = ep.secret;
         const res = await fetch(ep.url, { method: "POST", headers, body: payload });
+        statusCode = res.status;
+        if (!res.ok) errorMsg = `HTTP ${res.status}`;
         await updateWebhookStatus(ep.id, res.ok ? "ok" : "error");
-      } catch {
+      } catch (e) {
+        errorMsg = e instanceof Error ? e.message : "Unknown error";
         await updateWebhookStatus(ep.id, "error");
+      } finally {
+        // Best-effort delivery log — failure here must not break the fire loop.
+        try {
+          await db.insert(webhookDeliveries).values({
+            endpointId:     ep.id,
+            organizationId,
+            threadId:       thread.id,
+            statusCode,
+            durationMs:     Date.now() - start,
+            error:          errorMsg,
+          });
+        } catch (logErr) {
+          console.warn("[webhooks] failed to log delivery:", logErr);
+        }
       }
     })
   );
+}
+
+/**
+ * Recent deliveries for an endpoint (most recent first).
+ * Org-scoped so a leaked endpointId from one org can never read another's logs.
+ */
+export async function listRecentDeliveries(
+  organizationId: string,
+  endpointId: string,
+  limit = 20,
+) {
+  if (!isDbConnected()) return [];
+  return db
+    .select()
+    .from(webhookDeliveries)
+    .where(and(
+      eq(webhookDeliveries.endpointId, endpointId),
+      eq(webhookDeliveries.organizationId, organizationId),
+    ))
+    .orderBy(desc(webhookDeliveries.sentAt))
+    .limit(limit);
 }
