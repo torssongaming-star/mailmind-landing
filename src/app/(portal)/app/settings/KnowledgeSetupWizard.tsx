@@ -8,7 +8,7 @@ type Question = {
   hint:     string;
 };
 
-type Step = "intro" | "generating" | "answering" | "saving" | "done";
+type Step = "intro" | "scraping" | "generating" | "answering" | "saving" | "done";
 
 export function KnowledgeSetupWizard({ onComplete }: { onComplete: () => void }) {
   const [step, setStep]               = useState<Step>("intro");
@@ -18,6 +18,10 @@ export function KnowledgeSetupWizard({ onComplete }: { onComplete: () => void })
   const [industry, setIndustry]       = useState("");
   const [description, setDescription] = useState("");
   const [contactAbout, setContactAbout] = useState("");
+  const [siteUrl, setSiteUrl]         = useState("");
+
+  // scrape results
+  const [scrapedCount, setScrapedCount] = useState(0);
 
   // Step 2
   const [questions, setQuestions]     = useState<Question[]>([]);
@@ -26,8 +30,35 @@ export function KnowledgeSetupWizard({ onComplete }: { onComplete: () => void })
   // ── Step 1 → generate questions ──────────────────────────────────────────
   const handleGenerate = async () => {
     if (!industry.trim() || !description.trim()) return;
-    setStep("generating");
     setError(null);
+
+    let scrapedText: string | undefined;
+
+    // Optional: scrape the website first
+    if (siteUrl.trim()) {
+      setStep("scraping");
+      try {
+        const res = await fetch("/api/app/knowledge/scrape", {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ url: siteUrl.trim() }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.inserted > 0) {
+          setScrapedCount(data.inserted);
+          // Build a short text summary from the imported entries for AI context
+          scrapedText = (data.entries as { question: string; answer: string }[] ?? [])
+            .slice(0, 20)
+            .map((e: { question: string; answer: string }) => `F: ${e.question}\nS: ${e.answer}`)
+            .join("\n\n")
+            .slice(0, 4000);
+        }
+      } catch {
+        // Scrape failure is non-fatal — continue without site context
+      }
+    }
+
+    setStep("generating");
     try {
       const res = await fetch("/api/app/knowledge/guided-setup", {
         method:  "POST",
@@ -38,6 +69,7 @@ export function KnowledgeSetupWizard({ onComplete }: { onComplete: () => void })
           industry:     industry.trim(),
           description:  description.trim(),
           contactAbout: contactAbout.trim() || undefined,
+          scrapedText,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -84,6 +116,11 @@ export function KnowledgeSetupWizard({ onComplete }: { onComplete: () => void })
       <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-6 text-center space-y-3">
         <p className="text-2xl">✓</p>
         <p className="text-sm font-semibold text-green-400">Kunskapsbasen är uppsatt!</p>
+        {scrapedCount > 0 && (
+          <p className="text-xs text-muted-foreground">
+            {scrapedCount} svar importerade från hemsidan + era egna svar sparade.
+          </p>
+        )}
         <p className="text-xs text-muted-foreground">
           AI:n kan nu använda denna information för att svara på kundfrågor.
         </p>
@@ -98,7 +135,7 @@ export function KnowledgeSetupWizard({ onComplete }: { onComplete: () => void })
   }
 
   // ── Answering ─────────────────────────────────────────────────────────────
-  if (step === "answering") {
+  if (step === "answering" || step === "saving") {
     const answeredCount = Object.values(answers).filter(a => a.trim()).length;
     return (
       <div className="space-y-5">
@@ -107,6 +144,11 @@ export function KnowledgeSetupWizard({ onComplete }: { onComplete: () => void })
           <p className="text-xs text-muted-foreground mt-0.5">
             Hoppa över frågor som inte är relevanta. Ju fler svar, desto bättre blir AI:n.
           </p>
+          {scrapedCount > 0 && (
+            <p className="text-xs text-green-400 mt-1">
+              ✓ {scrapedCount} svar importerade automatiskt från hemsidan
+            </p>
+          )}
         </div>
 
         {error && (
@@ -138,22 +180,26 @@ export function KnowledgeSetupWizard({ onComplete }: { onComplete: () => void })
           <p className="text-xs text-muted-foreground">{answeredCount} av {questions.length} besvarade</p>
           <button
             onClick={handleSave}
-            disabled={answeredCount === 0}
+            disabled={step === "saving" || answeredCount === 0}
             className="px-4 py-2 rounded-lg bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40"
           >
-            Spara i kunskapsbasen →
+            {step === "saving" ? "Sparar…" : "Spara i kunskapsbasen →"}
           </button>
         </div>
       </div>
     );
   }
 
-  // ── Generating ────────────────────────────────────────────────────────────
-  if (step === "generating") {
+  // ── Scraping / Generating spinners ────────────────────────────────────────
+  if (step === "scraping" || step === "generating") {
     return (
       <div className="py-10 text-center space-y-3">
         <div className="w-6 h-6 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin mx-auto" />
-        <p className="text-xs text-muted-foreground">AI analyserar er bransch och genererar frågor…</p>
+        <p className="text-xs text-muted-foreground">
+          {step === "scraping"
+            ? "Hämtar innehåll från hemsidan…"
+            : "AI analyserar er bransch och genererar frågor…"}
+        </p>
       </div>
     );
   }
@@ -173,6 +219,22 @@ export function KnowledgeSetupWizard({ onComplete }: { onComplete: () => void })
       )}
 
       <div className="space-y-4">
+        <div>
+          <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
+            Hemsida (valfritt)
+          </label>
+          <input
+            type="text"
+            value={siteUrl}
+            onChange={e => setSiteUrl(e.target.value)}
+            placeholder="T.ex. dittforetag.se/om-oss"
+            className="w-full bg-white/5 text-white text-sm rounded-lg px-3 py-2 border border-white/10 focus:border-indigo-500/50 outline-none"
+          />
+          <p className="text-[10px] text-muted-foreground mt-1">
+            Om ni anger en URL importeras innehållet automatiskt och AI:n anpassar frågorna efter er hemsida.
+          </p>
+        </div>
+
         <div>
           <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
             Bransch / typ av verksamhet *
@@ -218,7 +280,7 @@ export function KnowledgeSetupWizard({ onComplete }: { onComplete: () => void })
         disabled={!industry.trim() || !description.trim()}
         className="w-full py-2.5 rounded-lg bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40"
       >
-        Generera frågor →
+        {siteUrl.trim() ? "Hämta hemsida & generera frågor →" : "Generera frågor →"}
       </button>
     </div>
   );
