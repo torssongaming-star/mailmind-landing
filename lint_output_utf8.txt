@@ -1,0 +1,120 @@
+﻿
+> mailmind@1.0.0 lint
+> eslint .
+
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\.agents\skills\clerk-backend-api\scripts\extract-tags.js
+   2:1   error  'process' is not defined  no-undef
+   3:1   error  'process' is not defined  no-undef
+  11:14  error  'console' is not defined  no-undef
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\.agents\skills\clerk-tanstack-patterns\templates\tanstack-basic-auth\src\routes\__root.tsx
+  27:7  warning  Do not use `<head>` element. Use `<Head />` from `next/head` instead. See: https://nextjs.org/docs/messages/no-head-element  @next/next/no-head-element
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\(admin)\admin\audit\page.tsx
+  38:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\(admin)\admin\knowledge\[id]\page.tsx
+  4:29  error  'Calendar' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\(admin)\admin\knowledge\page.tsx
+   2:26  error  'Search' is defined but never used        @typescript-eslint/no-unused-vars
+   2:34  error  'Filter' is defined but never used        @typescript-eslint/no-unused-vars
+   2:42  error  'ChevronRight' is defined but never used  @typescript-eslint/no-unused-vars
+   2:67  error  'Archive' is defined but never used       @typescript-eslint/no-unused-vars
+   2:76  error  'CheckCircle' is defined but never used   @typescript-eslint/no-unused-vars
+  17:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  18:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  63:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\(admin)\admin\organizations\[id]\page.tsx
+    2:40  error  'Rocket' is defined but never used        @typescript-eslint/no-unused-vars
+    2:48  error  'History' is defined but never used       @typescript-eslint/no-unused-vars
+  106:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  142:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  156:89  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\(admin)\admin\organizations\page.tsx
+  41:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\(admin)\admin\pilots\page.tsx
+   4:45  error  'ChevronRight' is defined but never used  @typescript-eslint/no-unused-vars
+  32:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\(admin)\admin\users\[id]\page.tsx
+    5:10  error  'cn' is defined but never used            @typescript-eslint/no-unused-vars
+   91:35  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  140:89  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\(admin)\admin\users\page.tsx
+  40:33  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\(portal)\app\inbox\page.tsx
+  10:8  error  'Link' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\api\admin\knowledge\[id]\route.ts
+  21:12  error  'error' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  52:25  error  Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong  @typescript-eslint/no-non-null-asserted-optional-chain
+  53:19  error  Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong  @typescript-eslint/no-non-null-asserted-optional-chain
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\api\admin\knowledge\route.ts
+  15:50  error  Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+  16:54  error  Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
+  20:12  error  'error' is defined but never used                                                                           @typescript-eslint/no-unused-vars
+  43:26  error  Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong  @typescript-eslint/no-non-null-asserted-optional-chain
+  44:20  error  Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong  @typescript-eslint/no-non-null-asserted-optional-chain
+  49:25  error  Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong  @typescript-eslint/no-non-null-asserted-optional-chain
+  50:19  error  Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong  @typescript-eslint/no-non-null-asserted-optional-chain
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\api\admin\users\[id]\password-reset\route.ts
+  39:25  error  Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong  @typescript-eslint/no-non-null-asserted-optional-chain
+  40:19  error  Optional chain expressions can return undefined by design - using a non-null assertion is unsafe and wrong  @typescript-eslint/no-non-null-asserted-optional-chain
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\api\app\knowledge\scrape\route.ts
+  16:31  error  'listKnowledge' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\api\billing\portal\route.ts
+  62:17  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\app\api\cron\usage-warning\route.ts
+  14:25  error  'gte' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\components\admin\KnowledgeEditor.tsx
+   4:40  error  'publishKnowledgeArticleAction' is defined but never used  @typescript-eslint/no-unused-vars
+   4:71  error  'archiveKnowledgeArticleAction' is defined but never used  @typescript-eslint/no-unused-vars
+  12:13  error  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+  49:54  error  Unexpected any. Specify a different type                   @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\components\admin\KnowledgeFilters.tsx
+  3:18  error  'Filter' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\components\layout\Providers.tsx
+  21:12  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\components\portal\CheckoutButton.tsx
+  16:9  error  'router' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\components\portal\ManageBillingButton.tsx
+  16:9  error  'router' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\components\portal\Sidebar.tsx
+  13:3  error  'AppWindow' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\lib\admin\actions.ts
+  18:13  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\lib\admin\queries.ts
+   11:27  error  'sql' is defined but never used                                                                                      @typescript-eslint/no-unused-vars
+   55:97  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+   58:7   error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+   80:53  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  252:14  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\lib\app\threads.ts
+  37:9  error  'where' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Users\emil.torsson\.gemini\antigravity\scratch\MailMind\src\lib\stripe.ts
+  15:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+Ô£û 59 problems (58 errors, 1 warning)
+
