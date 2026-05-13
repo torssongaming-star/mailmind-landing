@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { KnowledgeSetupWizard } from "./KnowledgeSetupWizard";
 
 type Entry = {
   id: string;
@@ -23,6 +24,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 export function KnowledgeEditor({ initial }: { initial: Entry[] }) {
   const router = useRouter();
   const [entries, setEntries]     = useState<Entry[]>(initial);
+  const [showWizard, setShowWizard] = useState(initial.length === 0);
   const [showForm, setShowForm]   = useState(false);
   const [newQ, setNewQ]           = useState("");
   const [newA, setNewA]           = useState("");
@@ -111,6 +113,29 @@ export function KnowledgeEditor({ initial }: { initial: Entry[] }) {
 
   return (
     <div className="space-y-4">
+      {/* Guided setup wizard — shown when KB is empty or user wants to redo */}
+      {showWizard ? (
+        <div className="rounded-2xl border border-indigo-500/20 bg-indigo-500/5 p-5">
+          <KnowledgeSetupWizard onComplete={() => { setShowWizard(false); router.refresh(); }} />
+        </div>
+      ) : entries.length === 0 && (
+        <button
+          onClick={() => setShowWizard(true)}
+          className="w-full rounded-2xl border border-dashed border-indigo-500/30 bg-indigo-500/5 px-4 py-4 text-sm text-indigo-300 hover:border-indigo-400/50 hover:text-indigo-200 transition-colors"
+        >
+          ✦ Kom igång med guidad kunskapsbas-setup
+        </button>
+      )}
+
+      {!showWizard && entries.length > 0 && (
+        <button
+          onClick={() => setShowWizard(true)}
+          className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors"
+        >
+          + Kör guidad setup igen
+        </button>
+      )}
+
       {/* Scrape from website */}
       <div className="rounded-xl border border-white/8 bg-[#050B1C]/60 p-4 space-y-3">
         <p className="text-xs font-semibold text-white/80">Importera från hemsida</p>
