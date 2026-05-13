@@ -376,6 +376,15 @@ export async function createMailmindInbox(input: {
   return rows[0] ?? null;
 }
 
+/** Update the config jsonb on an inbox row (e.g. to persist refreshed tokens or historyId). */
+export async function updateInboxConfig(inboxId: string, config: Record<string, unknown>) {
+  if (!isDbConnected()) return;
+  await db
+    .update(inboxes)
+    .set({ config, updatedAt: new Date() })
+    .where(eq(inboxes.id, inboxId));
+}
+
 /** Create a Gmail OAuth inbox. config stores encrypted tokens. */
 export async function createGmailInbox(input: {
   organizationId: string;

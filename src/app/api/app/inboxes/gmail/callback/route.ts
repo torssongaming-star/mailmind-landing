@@ -15,10 +15,11 @@ import {
   exchangeCode,
   getGmailAddress,
   encryptTokens,
+  watchGmailInbox,
   type GmailInboxConfig,
 } from "@/lib/app/gmail";
 import { getCurrentAccount } from "@/lib/app/entitlements";
-import { listInboxes, getInboxByEmail, createGmailInbox } from "@/lib/app/threads";
+import { listInboxes, getInboxByEmail, createGmailInbox, updateInboxConfig } from "@/lib/app/threads";
 import { writeAuditLog } from "@/lib/app/audit";
 
 export const runtime = "nodejs";
@@ -111,6 +112,23 @@ export async function GET(req: NextRequest) {
   }
 
   if (!inbox) return errorRedirect("Database unavailable");
+
+  // ── 8. Register Gmail push notifications if Pub/Sub topic is configured ───
+  const pubsubTopic = process.env.GMAIL_PUBSUB_TOPIC;
+  if (pubsubTopic) {
+    try {
+      const { historyId } = await watchGmailInbox(tokens.accessToken, pubsubTopic);
+      const updatedConfig: GmailInboxConfig = {
+        ...config,
+        historyId,
+        pubsubTopic,
+      };
+      await updateInboxConfig(inbox.id, updatedConfig as Record<string, unknown>);
+    } catch (err) {
+      // Non-fatal — inbox is still connected, push just won't work until topic is set up
+      console.error("[gmail/callback] watch registration failed:", err instanceof Error ? err.message : err);
+    }
+  }
 
   await writeAuditLog({
     organizationId: account.organization.id,

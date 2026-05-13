@@ -189,6 +189,178 @@ export async function getGmailAddress(accessToken: string): Promise<string> {
 }
 
 // ---------------------------------------------------------------------------
+// Gmail watch (Pub/Sub push notifications)
+// ---------------------------------------------------------------------------
+
+type WatchResponse = {
+  historyId: string;
+  expiration: string; // unix ms as string
+};
+
+/**
+ * Register a Gmail mailbox for push notifications via Cloud Pub/Sub.
+ * Must be called once after OAuth and renewed every ~7 days (Google max is 7d).
+ * Returns the initial historyId to store in inbox.config.
+ */
+export async function watchGmailInbox(
+  accessToken: string,
+  topicName: string,
+): Promise<{ historyId: string; expiration: string }> {
+  const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/watch", {
+    method: "POST",
+    headers: {
+      Authorization:  `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      topicName,
+      labelIds: ["INBOX"],
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Gmail watch failed (${res.status}): ${body}`);
+  }
+  const data = await res.json() as WatchResponse;
+  return { historyId: data.historyId, expiration: data.expiration };
+}
+
+// ---------------------------------------------------------------------------
+// Gmail history — fetch new messages since last historyId
+// ---------------------------------------------------------------------------
+
+type HistoryMessage = { id: string; threadId: string };
+type HistoryRecord  = { messagesAdded?: { message: HistoryMessage }[] };
+type HistoryResponse = {
+  history?:  HistoryRecord[];
+  historyId: string;
+};
+
+/**
+ * Fetch all message IDs added since `startHistoryId`.
+ * Returns new message stubs + the latest historyId to persist.
+ */
+export async function listHistory(
+  accessToken: string,
+  startHistoryId: string,
+): Promise<{ messages: HistoryMessage[]; latestHistoryId: string }> {
+  const params = new URLSearchParams({
+    startHistoryId,
+    historyTypes: "messageAdded",
+    labelId:      "INBOX",
+  });
+  const res = await fetch(
+    `https://gmail.googleapis.com/gmail/v1/users/me/history?${params}`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+
+  // 404 means the historyId is too old — caller should re-watch
+  if (res.status === 404) {
+    return { messages: [], latestHistoryId: startHistoryId };
+  }
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Gmail history fetch failed (${res.status}): ${body}`);
+  }
+
+  const data    = await res.json() as HistoryResponse;
+  const messages: HistoryMessage[] = [];
+  for (const record of data.history ?? []) {
+    for (const added of record.messagesAdded ?? []) {
+      messages.push(added.message);
+    }
+  }
+  return { messages, latestHistoryId: data.historyId };
+}
+
+// ---------------------------------------------------------------------------
+// Fetch + parse a single Gmail message
+// ---------------------------------------------------------------------------
+
+type GmailMessagePart = {
+  mimeType: string;
+  body:     { data?: string; size: number };
+  parts?:   GmailMessagePart[];
+  headers?: { name: string; value: string }[];
+};
+
+type GmailMessageRaw = {
+  id:        string;
+  threadId:  string;
+  labelIds?: string[];
+  payload:   GmailMessagePart & { headers: { name: string; value: string }[] };
+};
+
+export type ParsedGmailMessage = {
+  gmailMessageId: string;
+  gmailThreadId:  string;
+  fromEmail:      string;
+  fromName:       string | null;
+  subject:        string;
+  bodyText:       string;
+  messageId:      string | null; // RFC 2822 Message-ID header
+  inReplyTo:      string | null;
+  references:     string | null;
+};
+
+function decodeBase64Url(b64: string): string {
+  const standard = b64.replace(/-/g, "+").replace(/_/g, "/");
+  return Buffer.from(standard, "base64").toString("utf8");
+}
+
+function extractTextBody(part: GmailMessagePart): string {
+  if (part.mimeType === "text/plain" && part.body.data) {
+    return decodeBase64Url(part.body.data);
+  }
+  if (part.parts) {
+    for (const child of part.parts) {
+      const text = extractTextBody(child);
+      if (text) return text;
+    }
+  }
+  return "";
+}
+
+function getHeader(headers: { name: string; value: string }[], name: string): string | null {
+  return headers.find(h => h.name.toLowerCase() === name.toLowerCase())?.value ?? null;
+}
+
+function parseFromHeader(from: string | null): { email: string; name: string | null } {
+  if (!from) return { email: "", name: null };
+  const match = from.match(/^"?([^"<]*?)"?\s*<([^>]+)>$/);
+  if (match) return { email: match[2].trim().toLowerCase(), name: match[1].trim() || null };
+  return { email: from.trim().toLowerCase(), name: null };
+}
+
+/** Fetch a full Gmail message and parse it into a flat structure. */
+export async function getAndParseMessage(
+  accessToken: string,
+  messageId: string,
+): Promise<ParsedGmailMessage | null> {
+  const res = await fetch(
+    `https://gmail.googleapis.com/gmail/v1/users/me/messages/${messageId}?format=full`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  );
+  if (!res.ok) return null;
+
+  const raw     = await res.json() as GmailMessageRaw;
+  const headers = raw.payload.headers;
+  const from    = parseFromHeader(getHeader(headers, "from"));
+
+  return {
+    gmailMessageId: raw.id,
+    gmailThreadId:  raw.threadId,
+    fromEmail:      from.email,
+    fromName:       from.name,
+    subject:        getHeader(headers, "subject") ?? "(no subject)",
+    bodyText:       extractTextBody(raw.payload).trim(),
+    messageId:      getHeader(headers, "message-id"),
+    inReplyTo:      getHeader(headers, "in-reply-to"),
+    references:     getHeader(headers, "references"),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Types stored in inboxes.config for gmail provider
 // ---------------------------------------------------------------------------
 
