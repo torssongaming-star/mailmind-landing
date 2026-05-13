@@ -28,9 +28,17 @@ import {
   getAiSettings,
   listMessages,
   setThreadExternalId,
+  updateInboxConfig,
 } from "./threads";
 import { sendEmail, replySubject, appendSignature } from "./email";
 import { writeAuditLog } from "./audit";
+import {
+  decryptTokens,
+  encryptTokens,
+  getValidAccessToken,
+  sendViaGmail,
+  type GmailInboxConfig,
+} from "./gmail";
 
 // ── Rule 1: confidence threshold ─────────────────────────────────────────────
 export const AUTO_SEND_CONFIDENCE_THRESHOLD = 0.90;
@@ -136,15 +144,19 @@ export async function executeSendDraft(params: {
       return { ok: false, error: "no_body_text" };
     }
 
-    // Resolve inbox for Reply-To header
-    let replyTo: string | undefined;
+    // Resolve inbox
+    let inboxEmail: string | undefined;
+    let inboxProvider: string | undefined;
+    let inboxRow: typeof inboxesTable.$inferSelect | undefined;
     if (thread.inboxId) {
-      const inboxRows = await db
+      const rows = await db
         .select()
         .from(inboxesTable)
         .where(eq(inboxesTable.id, thread.inboxId))
         .limit(1);
-      replyTo = inboxRows[0]?.email ?? undefined;
+      inboxRow      = rows[0];
+      inboxEmail    = inboxRow?.email;
+      inboxProvider = inboxRow?.provider ?? undefined;
     }
 
     // Threading headers
@@ -152,41 +164,78 @@ export async function executeSendDraft(params: {
     const priorIds = messages
       .map(m => m.externalMessageId)
       .filter((x): x is string => !!x);
-    const headers: Record<string, string> = {};
     const lastCustomerMsg = [...messages].reverse().find(m => m.role === "customer");
-    if (lastCustomerMsg?.externalMessageId) {
-      headers["In-Reply-To"] = lastCustomerMsg.externalMessageId;
-    }
-    if (priorIds.length > 0) {
-      headers["References"] = priorIds.join(" ");
-    }
+    const inReplyTo  = lastCustomerMsg?.externalMessageId ?? null;
+    const references = priorIds.length > 0 ? priorIds.join(" ") : null;
 
     // Signature
-    const settings = await getAiSettings(orgId);
+    const settings  = await getAiSettings(orgId);
     const finalBody = appendSignature(draft.bodyText, settings?.signature ?? null);
+    const subject   = replySubject(thread.subject);
 
-    const result = await sendEmail({
-      to:      thread.fromEmail,
-      subject: replySubject(thread.subject),
-      text:    finalBody,
-      replyTo,
-      headers: Object.keys(headers).length > 0 ? headers : undefined,
-    });
+    let sentMessageId: string | null = null;
 
-    if (!result.ok) {
-      return { ok: false, error: `resend_error: ${result.error}` };
+    if (inboxProvider === "gmail" && inboxRow) {
+      // ── Send via Gmail API ───────────────────────────────────────────────
+      const config = inboxRow.config as GmailInboxConfig | null;
+      if (!config?.encryptedTokens) {
+        return { ok: false, error: "gmail_no_tokens" };
+      }
+
+      let tokens = decryptTokens(config.encryptedTokens);
+      const { token: accessToken, updated } = await getValidAccessToken(tokens);
+      if (updated) {
+        tokens = updated;
+        await updateInboxConfig(inboxRow.id, {
+          ...config,
+          encryptedTokens: encryptTokens(tokens),
+        } as Record<string, unknown>);
+      }
+
+      const gmailResult = await sendViaGmail(accessToken, {
+        from:          inboxEmail!,
+        to:            thread.fromEmail,
+        subject,
+        text:          finalBody,
+        inReplyTo,
+        references,
+        gmailThreadId: thread.externalThreadId,
+      });
+
+      if (!gmailResult.ok) {
+        return { ok: false, error: `gmail_send_error: ${gmailResult.error}` };
+      }
+      sentMessageId = gmailResult.messageId;
+    } else {
+      // ── Send via Resend ──────────────────────────────────────────────────
+      const headers: Record<string, string> = {};
+      if (inReplyTo)  headers["In-Reply-To"] = inReplyTo;
+      if (references) headers["References"]  = references;
+
+      const result = await sendEmail({
+        to:      thread.fromEmail,
+        subject,
+        text:    finalBody,
+        replyTo: inboxEmail,
+        headers: Object.keys(headers).length > 0 ? headers : undefined,
+      });
+
+      if (!result.ok) {
+        return { ok: false, error: `resend_error: ${result.error}` };
+      }
+      sentMessageId = result.id ?? null;
     }
 
     await appendMessage({
       threadId:          draft.threadId,
       role:              "assistant",
       bodyText:          finalBody,
-      externalMessageId: result.id ?? null,
+      externalMessageId: sentMessageId,
       sentAt:            now,
     });
 
-    if (!thread.externalThreadId && result.id) {
-      await setThreadExternalId(orgId, draft.threadId, result.id);
+    if (!thread.externalThreadId && sentMessageId) {
+      await setThreadExternalId(orgId, draft.threadId, sentMessageId);
     }
   }
 

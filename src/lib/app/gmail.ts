@@ -361,6 +361,70 @@ export async function getAndParseMessage(
 }
 
 // ---------------------------------------------------------------------------
+// Send email via Gmail API
+// ---------------------------------------------------------------------------
+
+export type GmailSendParams = {
+  from:       string;           // the authenticated Gmail address
+  to:         string;
+  subject:    string;
+  text:       string;
+  inReplyTo?: string | null;
+  references?: string | null;
+  gmailThreadId?: string | null; // if set, Gmail groups into same thread
+};
+
+export type GmailSendResult =
+  | { ok: true;  messageId: string }
+  | { ok: false; error: string };
+
+/**
+ * Send an email via the Gmail API using the authenticated user's account.
+ * Builds a minimal RFC 2822 MIME message, base64url-encodes it, and posts it.
+ */
+export async function sendViaGmail(
+  accessToken: string,
+  params: GmailSendParams,
+): Promise<GmailSendResult> {
+  const { from, to, subject, text, inReplyTo, references, gmailThreadId } = params;
+
+  // Build RFC 2822 message
+  const lines: string[] = [
+    `From: ${from}`,
+    `To: ${to}`,
+    `Subject: ${subject}`,
+    "MIME-Version: 1.0",
+    "Content-Type: text/plain; charset=UTF-8",
+    "Content-Transfer-Encoding: quoted-printable",
+  ];
+  if (inReplyTo)  lines.push(`In-Reply-To: ${inReplyTo}`);
+  if (references) lines.push(`References: ${references}`);
+  lines.push("", text);
+
+  const raw = Buffer.from(lines.join("\r\n")).toString("base64url");
+
+  const body: Record<string, string> = { raw };
+  if (gmailThreadId) body.threadId = gmailThreadId;
+
+  const res = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/messages/send", {
+    method: "POST",
+    headers: {
+      Authorization:  `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    return { ok: false, error: `Gmail send failed (${res.status}): ${err}` };
+  }
+
+  const data = await res.json() as { id: string };
+  return { ok: true, messageId: data.id };
+}
+
+// ---------------------------------------------------------------------------
 // Types stored in inboxes.config for gmail provider
 // ---------------------------------------------------------------------------
 
