@@ -8,7 +8,7 @@
 
 ## What Mailmind is
 
-Swedish B2B SaaS that uses AI to triage customer-support email. Customer forwards their support inbox to a unique `<slug>@mail.mailmind.se` address; we receive it, the AI classifies it (`ask` / `summarize` / `escalate`) and writes a draft reply; the agent reviews and sends with one click.
+Swedish B2B SaaS that uses AI to triage customer-support email. Customer connects their Gmail account (OAuth) or forwards their support inbox to a unique `<slug>@mail.mailmind.se` address; we receive it, the AI classifies it and writes a draft reply; the agent reviews and sends with one click.
 
 Target: Swedish SMBs (5–50 employees) drowning in support email who don't want a full Zendesk setup.
 
@@ -22,8 +22,8 @@ Target: Swedish SMBs (5–50 employees) drowning in support email who don't want
 | Auth | Clerk (middleware in `proxy.ts`) |
 | DB | Neon Postgres + Drizzle ORM 0.45 (HTTP serverless driver) |
 | Billing | Stripe (checkout + portal + webhooks) |
-| Inbound email | SendGrid Inbound Parse → `/api/webhooks/sendgrid/inbound` (temporary — Resend Inbound kostar $20/mån Pro, planerar migration när intäkter motiverar) |
-| Outbound email | Resend |
+| Inbound email | Gmail OAuth (Pub/Sub push) + SendGrid Inbound Parse → `/api/webhooks/sendgrid/inbound` |
+| Outbound email | Gmail API (for Gmail-connected inboxes) + Resend (for forwarded inboxes) |
 | AI | Anthropic SDK, `claude-haiku-4-5-20251001`, prompt caching (`cache_control: ephemeral`) |
 | Hosting | Vercel |
 
@@ -35,13 +35,16 @@ Domain: `mailmind.se`. Inbound mail subdomain: `mail.mailmind.se`.
 
 - **Multi-tenant.** Every read/write scoped by `organizationId`. Resolved server-side via `getCurrentAccount()` in `src/lib/app/entitlements.ts`. Never trust client-supplied org id.
 - **Entitlement gating** in `src/lib/app/entitlements.ts` — `assertCanGenerateAiDraft`, `computeAccess`. Plan limits read from DB, never from client props.
-- **Org sync priority** in `src/lib/db/queries.ts` `syncUserAndOrganization`: existing user → clerkOrgId → stripeCustomerId → new solo org. (Earlier bug: duplicate orgs on first checkout — fixed `edf340e`.)
+- **Org sync priority** in `src/lib/db/queries.ts` `syncUserAndOrganization`: existing user → clerkOrgId → stripeCustomerId → new solo org.
 - **Trial pattern:** 14-day trial on Starter plan, synthetic Stripe IDs until real checkout.
-- **Webhook idempotency** dedupes on `email_messages.external_message_id` (Message-ID per RFC 5322).
+- **Webhook idempotency** dedupes on `email_messages.external_message_id` (UNIQUE index — `email_messages_external_id_uniq`). Must be created manually in Neon SQL Editor (not via db:push — existing duplicates blocked it).
 - **Threading** uses In-Reply-To / References headers; OLDEST reference id is canonical. Closed threads (`resolved` / `escalated`) start fresh on next inbound.
-- **Postgres enum gotcha:** `ALTER TYPE ADD VALUE` requires being outside a transaction. drizzle-kit push silently skips them — must run raw SQL in Neon for new enum values.
+- **Gmail OAuth tokens** stored AES-256-GCM encrypted in `inboxes.config` (JSONB). Key in `GMAIL_TOKEN_ENCRYPTION_KEY` env var.
+- **Pub/Sub dedup** — stale historyId guard at top of push webhook; `findPendingDraft()` prevents duplicate drafts; UNIQUE index on `external_message_id` is the final backstop.
+- **Draft dedup** — `findPendingDraft(threadId)` in `autoTriage.ts`: if a pending/edited draft already exists → skip generation.
+- **AI price hallucination prevention** — `buildSystemPrompt()` in `ai.ts` has ABSOLUTA BEGRÄNSNINGAR: never estimate prices/costs/timelines not in KB; `source_grounded: true` only from KB or thread history.
 - **`"use server"` constraint:** only `export async function` allowed — no exported constants. Constants shared between server/client live in separate files (e.g. `src/lib/app/constants.ts`).
-- **`usageCounters` is written on every AI draft.** Manual generate goes through `incrementAiDraftUsage()` in `usage.ts`; auto-triage uses an inline upsert in `autoTriage.ts`. Both paths converge on the same `(organizationId, month)` row. `getOrgHealth()` historically read from `aiDrafts` for sample exactness — either source is correct now.
+- **Postgres enum gotcha:** `ALTER TYPE ADD VALUE` requires being outside a transaction. drizzle-kit push silently skips them — must run raw SQL in Neon for new enum values.
 
 ---
 
@@ -59,130 +62,116 @@ Fas 6c ✅  Dry-run pipeline + admin dry-run review UI
 Fas 6d ✅  Autosvar-pipeline (canAutoSend, executeSendDraft, AutoSendPanel)
 Fas 6e ⏳  Manuella ops — Live Stripe keys + Resend DNS (Emil, no code)
 Fas 7  ✅  Tags, blocklist-hook, inbox split-pane, settings sidebar, support drawer
-Fas 8a ✅  Snooze-cron, trådsökning (server-side ILIKE), "Snoozade"-tab i InboxFilters
-Fas 8b ✅  Stats-charts (recharts), webhook delivery log (kräver db:push), mobil-sidebar (hamburger + drawer)
-Fas 8c ✅  Onboarding-wizard split (3 steg) + URL-normalisering, signup-redirect-fix, guidad checklist
-Fas 8d ✅  Connection-tester (polling efter inbox create), cheerio i scrape
-Fas 8e ✅  aiSettings-relation tillagd, listThreads stöder inboxId-filter i SQL (push-down från in-memory)
-Fas 8f ✅  Admin /admin/health visar nu live data, check-logiken extraherad till `src/lib/admin/health.ts` (delas av API + UI)
-Fas 8  🔲  (allt klart för denna fas — nästa runda redo att planera)
+Fas 8  ✅  Stats, webhooks, snooze, search, onboarding-wizard, mobile-sidebar
+Fas 9  ✅  Gmail OAuth — connect, receive, send via Gmail API + Pub/Sub push
+Fas 10 ✅  Onboarding redesign — 5 obligatoriska steg + AI-kunskapsbas wizard
 ```
 
 ---
 
-## What's built (current — after Fas 7)
+## Vad som gjorts sedan senast (Emil läser detta)
 
-### Core product
-- ✅ Org + user sync, trial creation, onboarding wizard
-- ✅ Stripe checkout + portal + webhook (subscription_status, plan resolution)
-- ✅ Inbox creation (`<slug>@mail.mailmind.se`), SendGrid inbound webhook
-- ✅ Thread + message storage with idempotency
-- ✅ AI draft pipeline (auto-triage on inbound, manual generate)
-- ✅ Draft approve / edit / reject / send via Resend
-- ✅ Internal notes per thread
-- ✅ Reply templates (CRUD + insert via picker in draft editor)
-- ✅ Snooze threads (`snoozedUntil` column, `SnoozeButton` component — **no cron yet**)
-- ✅ Tags on threads (jsonb column, `TagEditor` chip component, filter in inbox)
-- ✅ Block sender (`BlockSenderButton` on thread + inbox split-pane)
-- ✅ Blocklist wired into `canAutoSend()` (was hardcoded `false`)
-- ✅ Stats dashboard (`/app/stats`)
-- ✅ Activity log (`/app/activity`)
-- ✅ Bulk thread actions (multi-select in inbox)
-- ✅ Audit log
+### Gmail OAuth (Fas 9) — klar
+- Användare kopplar sitt Gmail-konto via `/api/app/inboxes/gmail/auth` → Google OAuth → callback
+- Inkommande mail via Google Pub/Sub push till `/api/webhooks/gmail/push` (behöver `GMAIL_PUBSUB_TOPIC` i Vercel)
+- Utgående svar skickas via Gmail API istället för Resend (tråd-id kopplas korrekt)
+- Tokens krypterade med AES-256-GCM; kräver `GMAIL_TOKEN_ENCRYPTION_KEY` + `GOOGLE_CLIENT_ID` + `GOOGLE_CLIENT_SECRET` i Vercel
 
-### Autosvar-pipeline (Fas 6c–6d)
-- ✅ Dry-run pipeline — AI genererar drafts utan att skicka
-- ✅ Dry-run review UI at `/admin/organizations/[id]/dry-run`
-- ✅ `canAutoSend()` — 4 hårt låsta regler (confidence ≥ 90%, källgrundat, låg risk, ej blockerad)
-- ✅ `executeSendDraft()` — delad send-logik för manuell + auto
-- ✅ AI output utökad med `confidence`, `risk_level`, `source_grounded`
-- ✅ `AutoSendPanel` — admin-toggle, säkerhetslåst tills ≥ 20 godkända dry-run-iterationer
-- ✅ `DRY_RUN_THRESHOLD = 20` i `src/lib/app/constants.ts`
+### AI-förbättringar
+- Prompt hårdad: AI:n kan aldrig uppskatta priser/kostnader den inte hittar i kunskapsbasen
+- Eskalerar istället med ett briefing-meddelande till agenten
 
-### Portal UI (Fas 7 + polish)
-- ✅ Inbox: Gmail-style split-pane (`InboxShell` + `ThreadPanel`), auto-poll 30s
-- ✅ Settings: Vercel/Linear-style vertical sidebar (`SettingsTabs`), instant tab-switch
-- ✅ Support: slide-in drawer (`SupportDrawer`) med FAQ-accordion + kontaktformulär
-  - POST `/api/app/support` → Resend → support@mailmind.se, rate-limit 3/h/org
-- ✅ Portal sidebar: grupperad nav med kollapsbar dropdown, `bestActiveChildHref()` för korrekt markering
-- ✅ Kunskapsbas, Svarsmallar, Blocklista, Webhooks — alla i Settings
+### Onboarding (Fas 10) — ny 5-stegsdesign
+Fil: `src/app/(portal)/app/onboarding/OnboardingForm.tsx`
 
-### Admin-panel
-- ✅ `/admin/onboarding` — `ProvisionForm`: skapar org + trial + entitlements + case types + AI-inställningar i ett steg
-- ✅ `/admin/organizations` — lista med subscription/status
-- ✅ `/admin/organizations/[id]` — detalj: hälsometrics (threads, AI-drafts denna månad, senaste aktivitet), billing, usage, members, dry-run-panel, auto-send-panel, internal notes
-  - `OrgNotesPanel` (client) — sparar anteckningar live
-  - `OrgProfilePanel` (client) — Change Status + Update Profile, sparar till `adminCustomerProfiles`
-  - `getOrgHealth()` — räknar trådar + AI-drafts direkt från `aiDrafts` (inte `usageCounters`)
-- ✅ `/admin/pilots` — lista leads, `NewPilotModal` + `EditPilotModal` (inkl. `nextFollowUpAt`)
-- ✅ Admin-panel responsiv (mobile-fix i Emil's branch)
-- ✅ Outlook sideload-guide (`/admin/sideload`)
+**Steg 1 — Konto** (obligatorisk) — Företagsnamn  
+**Steg 2 — Hemsida** (obligatorisk, men äkta "har ingen hemsida"-väg) — Scrape importerar KB-poster  
+**Steg 3 — Ärendetyper** (obligatorisk, minst 1) — 4 förvalda + eget fält  
+**Steg 4 — AI-beteende** (obligatorisk) — Ton, språk, max uppföljningsfrågor med förklaring  
+**Steg 5 — Webhooks/Notifikationer** (valbar) — Förklaring i klartext + URL-fält  
+
+Filosofi: ingen kan hoppa förbi obligatoriska steg. AI:n är fullkittad dag 1.
+
+### Kunskapsbas-wizard
+Fil: `src/app/(portal)/app/settings/KnowledgeSetupWizard.tsx`
+- Steg 1: URL (valfritt) → scrape hemsida → importerar poster + använder innehållet som kontext
+- Steg 2: AI (Haiku) genererar 8–12 branschspecifika frågor med hints
+- Steg 3: Användaren fyller i svar → sparas som KB-poster
+- API: `/api/app/knowledge/guided-setup` (generate_questions + save_answers)
+- Scrape: `/api/app/knowledge/scrape` — 30+ poster, 16 000 teckens text-cap
+
+### Settings-layout
+- Inget `max-w-5xl` längre — full bredd
+- Kunskapsbas-sektion är inte längre i tvåkolumns-grid
+
+### AiSettingsEditor — fixad
+- Select-dropdowns: `color-scheme: dark` + `option { background: #0a0f1e }` — vita dropdowns borta
+- Etiketter översatta till svenska
+- `hint`-prop på Field-komponenten för korta förklaringstexter
 
 ---
 
-## Pending / Fas 6e (Emil — manuella ops, ingen kod)
+## Vad Emil behöver göra (manuella ops, ingen kod)
 
-> Måste vara klart innan riktiga kunder kan betala och ta emot autosvar.
+### Obligatoriskt innan riktiga kunder
+1. **Live Stripe-nycklar** — byt `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` i Vercel. Registrera live webhook i Stripe → `https://mailmind.se/api/webhooks/stripe`.
+2. **SendGrid Inbound Parse-MX** — MX för `mail.mailmind.se` → `mx.sendgrid.net` prio 10 i Loopia. Konfigurera Inbound Parse i SendGrid → URL `https://mailmind.se/api/webhooks/sendgrid/inbound`, hostname `mail.mailmind.se`.
+3. **UNIQUE index i Neon** (om inte gjort) — kör detta i Neon SQL Editor:
+   ```sql
+   -- Ta bort eventuella dubbletter först
+   DELETE FROM email_messages
+   WHERE id NOT IN (
+     SELECT DISTINCT ON (external_message_id) id
+     FROM email_messages
+     ORDER BY external_message_id, created_at ASC
+   );
+   -- Skapa unikt index
+   CREATE UNIQUE INDEX IF NOT EXISTS email_messages_external_id_uniq
+     ON email_messages (external_message_id)
+     WHERE external_message_id IS NOT NULL;
+   ```
 
-1. **Live Stripe-nycklar** — byt `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` i Vercel. Registrera live webhook-endpoint i Stripe dashboard → `https://mailmind.se/api/webhooks/stripe`.
-2. **Resend domänverifiering (outbound)** — ✅ klar (`mailmind.se` verified i Resend, DKIM+SPF+DMARC gröna).
-3. **SendGrid Inbound Parse-MX** — sätt MX för `mail.mailmind.se` till SendGrid (`mx.sendgrid.net` prio 10) i Loopia, konfigurera Inbound Parse i SendGrid → URL `https://mailmind.se/api/webhooks/sendgrid/inbound`, hostname `mail.mailmind.se`. (Tillfällig lösning — Resend Inbound kräver Pro $20/mån för ny domän, väntar tills intäkter motiverar.)
-
----
-
-## Fas 8 backlog (nästa kod-iteration)
-
-✅ Klart denna session:
-- Snooze-cron — `/api/cron/unsnooze` + `wakeUpAllSnoozedThreads()`, cron `*/15 * * * *`. "Snoozade"-tab i `InboxFilters`.
-- Trådsökning — `searchThreads()` ILIKE på subject/fromEmail/fromName/tags (jsonb), aktiveras vid query ≥ 2 tecken.
-- Kundhistorik-panel — fanns redan (`CustomerHistory.tsx`).
-- Prompt-caching — fanns redan (`ai.ts:267`).
-- **Stats-charts** — `recharts` installerat. `DailyThreadsChart` (14 dagar bar), auto-vs-manuell-fördelning, `getThreadsPerDay()` + `getAutoVsManualSent()`.
-- **Webhook delivery log** — ny tabell `webhook_deliveries` i schema, `fireWebhooksForThread` loggar varje försök, `listRecentDeliveries()`, ny route `/api/app/webhooks/[id]/deliveries`, expandable per-rad-logg i `WebhooksEditor`. **KRÄVER `npm run db:push`** innan deploy.
-- **Mobil-sidebar** — hamburger-knapp i sticky top-bar (`lg:hidden`), slide-in drawer från vänster, backdrop-blur, locks body scroll, stänger automatiskt vid route-byte. Portal-layout justerad: `flex` → block, `lg:ml-64` kvarstår.
-- **Onboarding-wizard** — split i 3 steg (Konto → Hemsida → Svar). URL-input med `https://`-prefix-label, accepterar bara `energikompaniet.se`. Backend `normalizeUrl()` i `/api/app/knowledge/scrape`.
-- **Signup-redirect** — `fallbackRedirectUrl="/app"` hårdsatt på `<SignIn>` + `<SignUp>` (överlever felaktig env).
-- **Guidad checklist på /app** — Linear-stil persistent "Kom igång": ett aktivt steg framhävt i taget, andra låsta, "1 / 3"-progress.
-
-✅ Allt klart i Fas 8:
-- **Connection-tester** — `ConnectionTester.tsx` pollar `/api/app/threads?inboxId=X&limit=1` var 2s i max 60s efter att man skapat en ny inbox. Tre states: polling (cyan + animerad puls) → verified (grön + länk till tråden) → timeout (amber + "Försök igen"). Endpointet stöder nu `?inboxId=` + `?limit=` query params.
-- **Cheerio scrape** — `cheerio` installerat. `fetchPageText()` i scrape-routen rippar script/style/nav/footer/aside/cookie-banners och behåller bara semantiska block (h1-h4, p, li, dt/dd, summary). Headings prefixas med `## `, listitems med `- `. Caps på 8000 tecken som tidigare.
+### För Gmail-integration (om den ska erbjudas kunder)
+4. **Google Cloud Pub/Sub** — sätt upp topic `mailmind-gmail-push` i Google Cloud Console, prenumeration med push-endpoint `https://mailmind.se/api/webhooks/gmail/push`. Lägg till `GMAIL_PUBSUB_TOPIC=projects/<projekt>/topics/mailmind-gmail-push` i Vercel.
+5. **Google OAuth consent screen** — lägg till domän `mailmind.se` som authorized domain, skicka in för Google-verifiering (krävs för externa användare).
 
 ---
 
-## Latest commits (top 8)
+## Nästa kod-iteration (förslag)
 
-```
-8ae1642  fix(admin): add nextFollowUpAt to Edit Profile modal
-39c8c13  feat(admin): wire up Edit Profile button on pilot leads
-d0de5e9  fix(admin): remove aiSettings from org query (not in relations → 404)
-550f367  fix(admin): fix 0 AI usage, OrgNotesPanel, OrgProfilePanel, NewPilotModal
-270522d  Fix: Missing auditLogs import in admin queries
-384eee2  Fix: Organization health metrics and activity tracking
-9cdb4d0  fix(sidebar): SupportDrawer always-open bug + grouped collapsible nav
-7d46835  feat: replace mailto: Support link with in-app slide-in drawer
-```
+### Prio 1 — Produkt-stabilitet
+- **Microsoft 365 / Outlook OAuth** — låst beslut i CLAUDE.md: "Integration: Microsoft 365/Outlook först". Kan implementeras analogt med Gmail: OAuth → Graph API för mail → webhook subscriptions.
+- **Autosvar-aktivering för riktiga kunder** — `DRY_RUN_THRESHOLD = 20` godkända dry-run-iterationer krävs. Admin-panelen visar progress.
+- **Retry-logik för AI-anrop** — misslyckas just nu tyst. Lägg till enkel exponential backoff (max 2 försök).
+
+### Prio 2 — Konvertering
+- **Checklist på /app för nya användare** — påminn om att koppla inbox, fylla i KB, aktivera autosvar.
+- **Email-rapport** — veckovis digest om inkorg-volym, AI-svarsprocent, eskaleringsfrekvens. Skickas via Resend.
+- **Prissida-test** — A/B-test av pricing tiers (Starter vs Pro) när Stripe-keys är live.
+
+### Prio 3 — Nice to have
+- **Redigera ärendetyper från onboarding** — idag visas de i Settings men inte i en "bekräfta och redigera"-vy efteråt.
+- **Inline KB-editor i tråden** — "Lägg till detta som kunskapssvar"-knapp direkt i thread-panelen.
+- **Webhook-test-knapp** — skicka ett testanrop från Settings → Webhooks utan att vänta på ett riktigt mejl.
 
 ---
 
 ## Known caveats
 
-- `usageCounters` skrivs nu från både `incrementAiDraftUsage` (manuell draft-route) och inline-upsert i `autoTriage.ts`. Admin-queries kan fortfarande fortsätta läsa från `aiDrafts` direkt om man vill ha exakt sample-precision, men `usage_counters` är auktoritativ för billing-rapporter.
-- `aiSettings` har nu relation på `organizations` (`one(aiSettings, ...)`). `db.query.organizations.findFirst({ with: { aiSettings: true } })` fungerar.
-- AI calls fail closed när over-limit (returnerar `skipped: <reason>`) — retries saknas.
-- Inget test-suite. Introducera inte ett utan att fråga användaren först.
+- `usageCounters` skrivs från både `incrementAiDraftUsage` (manuell) och inline-upsert i `autoTriage.ts`. Båda konvergerar på `(organizationId, month)`.
+- AI calls fail closed när over-limit — retries saknas.
+- Inget test-suite. Introducera inte ett utan att fråga användaren.
 - `.next`-cache kan bli stale efter directory moves — `rm -rf .next` löser.
-- Windows: PowerShell 5.1 saknar `-AsHashtable`; använd `Invoke-RestMethod | ConvertTo-Json`.
+- Windows: PowerShell 5.1 saknar `-AsHashtable`.
 
 ---
 
 ## Conventions for agents
 
-- **Multi-tenant first.** Varje query utan `organizationId` i WHERE är en läcka. Avvisa i review.
+- **Multi-tenant first.** Varje query utan `organizationId` i WHERE är en läcka.
 - **Server before client.** Bygg repo-funktion + route, sedan UI.
 - **Commit inte utan att bli ombedd.**
 - **Inga nya npm-paket** utan att kolla `package.json` och motivera i commit-meddelandet.
-- **Inga README/*.md-tillägg** om inte användaren explicit ber om det.
 - **Schema-ändringar:** uppdatera `src/lib/db/schema.ts`, säg till användaren att köra `npm run db:push`. Enum-tillägg kräver råa SQL-statements.
 - **`"use server"`-filer:** bara `export async function` — inga exporterade konstanter.
-- **Sessionsdisciplin:** håll sessioner fokuserade på en fas/feature. Uppdatera denna fil när fasen är klar.
+- **Git-kommandon:** inkludera alltid `cd`-kommando före git-kommandon i PowerShell.

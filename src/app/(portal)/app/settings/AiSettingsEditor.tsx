@@ -48,15 +48,15 @@ export function AiSettingsEditor({
     <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-4">
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <Field label="Tone">
+        <Field label="Ton" hint="Hur AI:n låter i sina svar.">
           <select value={tone} onChange={e => setTone(e.target.value as typeof tone)} className="select-style">
-            <option value="friendly">Friendly</option>
-            <option value="formal">Formal</option>
+            <option value="friendly">Vänlig</option>
+            <option value="formal">Formell</option>
             <option value="neutral">Neutral</option>
           </select>
         </Field>
 
-        <Field label="Language">
+        <Field label="Språk" hint="Språk AI:n skriver svar på.">
           <select value={language} onChange={e => setLanguage(e.target.value)} className="select-style">
             <option value="sv">Svenska</option>
             <option value="en">English</option>
@@ -66,20 +66,23 @@ export function AiSettingsEditor({
           </select>
         </Field>
 
-        <Field label="Max follow-up questions">
+        <Field
+          label="Max uppföljningsfrågor"
+          hint="Hur många gånger AI:n får fråga kunden om mer info innan den skickar ärendet vidare till er."
+        >
           <select
             value={maxInteractions}
             onChange={e => setMaxInteractions(Number(e.target.value))}
             className="select-style"
           >
             {[1, 2, 3, 4, 5].map(n => (
-              <option key={n} value={n}>{n} {n === 1 ? "question" : "questions"}</option>
+              <option key={n} value={n}>{n} {n === 1 ? "gång" : "gånger"}</option>
             ))}
           </select>
         </Field>
       </div>
 
-      <Field label="Email signature (appended to AI replies — optional)">
+      <Field label="E-postsignatur (läggs till i AI:ns svar — valfritt)">
         <textarea
           value={signature}
           onChange={e => setSignature(e.target.value)}
@@ -92,14 +95,14 @@ export function AiSettingsEditor({
       <div className="flex items-center justify-between border-t border-white/5 pt-3">
         <div className="text-xs">
           {error && <span className="text-red-400">{error}</span>}
-          {!error && savedAt && <span className="text-green-400">Saved {savedAt.toLocaleTimeString("sv-SE")}</span>}
+          {!error && savedAt && <span className="text-green-400">Sparades {savedAt.toLocaleTimeString("sv-SE")}</span>}
         </div>
         <button
           onClick={handleSave}
           disabled={saving}
           className="px-4 py-1.5 rounded-lg bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40"
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? "Sparar…" : "Spara"}
         </button>
       </div>
 
@@ -113,20 +116,26 @@ export function AiSettingsEditor({
           padding: 8px 12px;
           border: 1px solid rgba(255, 255, 255, 0.1);
           outline: none;
+          color-scheme: dark;
         }
         .select-style:focus {
           border-color: rgba(99, 102, 241, 0.5);
+        }
+        .select-style option {
+          background: #0a0f1e;
+          color: white;
         }
       `}</style>
     </div>
   );
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
   return (
     <div>
       <label className="block text-xs font-medium text-muted-foreground mb-1.5">{label}</label>
       {children}
+      {hint && <p className="text-[10px] text-muted-foreground/60 mt-1 leading-relaxed">{hint}</p>}
     </div>
   );
 }

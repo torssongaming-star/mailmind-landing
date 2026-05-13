@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-type Step = "workspace" | "website" | "casetypes" | "webhooks";
+type Step = "workspace" | "website" | "casetypes" | "aibehavior" | "webhooks";
 
 type KnowledgeEntry = { question: string; answer: string; category: string };
 
@@ -19,10 +19,11 @@ type CaseTypeOption = {
 // ── Progress bar ───────────────────────────────────────────────────────────────
 
 const STEPS: Array<{ id: Step; label: string }> = [
-  { id: "workspace", label: "Konto" },
-  { id: "website",   label: "Hemsida" },
-  { id: "casetypes", label: "Ärendetyper" },
-  { id: "webhooks",  label: "Notifikationer" },
+  { id: "workspace",  label: "Konto" },
+  { id: "website",    label: "Hemsida" },
+  { id: "casetypes",  label: "Ärendetyper" },
+  { id: "aibehavior", label: "AI-beteende" },
+  { id: "webhooks",   label: "Notifikationer" },
 ];
 
 function ProgressBar({ current }: { current: Step }) {
@@ -413,7 +414,113 @@ function CaseTypesStep({ onNext }: { onNext: () => void }) {
   );
 }
 
-// ── Step 4: Webhooks ───────────────────────────────────────────────────────────
+// ── Step 4: AI behavior ────────────────────────────────────────────────────────
+
+const SELECT_STYLE: React.CSSProperties = {
+  width: "100%",
+  background: "rgba(255,255,255,0.05)",
+  color: "white",
+  fontSize: 13,
+  borderRadius: 8,
+  padding: "8px 12px",
+  border: "1px solid rgba(255,255,255,0.1)",
+  outline: "none",
+  colorScheme: "dark",
+};
+
+function AiBehaviorStep({ onNext }: { onNext: () => void }) {
+  const [tone, setTone]           = useState<"friendly" | "formal" | "neutral">("friendly");
+  const [language, setLanguage]   = useState("sv");
+  const [maxInteractions, setMax] = useState(3);
+  const [saving, setSaving]       = useState(false);
+  const [error, setError]         = useState<string | null>(null);
+
+  const handleNext = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/app/ai-settings", {
+        method:  "PUT",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ tone, language, maxInteractions, signature: null }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Kunde inte spara");
+      }
+      onNext();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Något gick fel");
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-base font-semibold text-white mb-1">Hur ska AI:n bete sig?</h2>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Ställ in hur AI:n kommunicerar med era kunder. Ni kan ändra detta när som helst under Inställningar.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-xs font-medium text-muted-foreground mb-1.5">Ton i svaren</label>
+          <select value={tone} onChange={e => setTone(e.target.value as typeof tone)} style={SELECT_STYLE}>
+            <option value="friendly">Vänlig — avslappnad och personlig</option>
+            <option value="neutral">Neutral — balanserad och saklig</option>
+            <option value="formal">Formell — professionell och distanserad</option>
+          </select>
+          <p className="text-[10px] text-muted-foreground/60 mt-1">Välj den ton som stämmer med hur ni annars kommunicerar med kunder.</p>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-muted-foreground mb-1.5">Språk</label>
+          <select value={language} onChange={e => setLanguage(e.target.value)} style={SELECT_STYLE}>
+            <option value="sv">Svenska</option>
+            <option value="en">English</option>
+            <option value="no">Norsk</option>
+            <option value="da">Dansk</option>
+            <option value="fi">Suomi</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-muted-foreground mb-1.5">Max uppföljningsfrågor</label>
+          <select value={maxInteractions} onChange={e => setMax(Number(e.target.value))} style={SELECT_STYLE}>
+            {[1, 2, 3, 4, 5].map(n => (
+              <option key={n} value={n}>{n} {n === 1 ? "gång" : "gånger"}</option>
+            ))}
+          </select>
+          <div className="mt-2 rounded-lg border border-white/8 bg-white/[0.02] p-3 space-y-1.5 text-xs text-muted-foreground leading-relaxed">
+            <p>
+              Ibland behöver AI:n fråga kunden om mer information innan den kan hjälpa — t.ex. personnummer, ordernummer eller en beskrivning av problemet.
+            </p>
+            <p>
+              Det här värdet styr hur många gånger den får fråga <span className="text-white/60 font-medium">samma kund i samma ärende</span> innan den ger upp och skickar ärendet vidare till er.
+            </p>
+            <p className="text-white/50">
+              Exempel med 3: AI:n frågar → kunden svarar → AI:n frågar igen → kunden svarar → AI:n frågar en sista gång → om den fortfarande saknar info eskalerar den till er.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {error && <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>}
+
+      <button
+        onClick={handleNext}
+        disabled={saving}
+        className="w-full px-4 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40"
+      >
+        {saving ? "Sparar…" : "Fortsätt →"}
+      </button>
+    </div>
+  );
+}
+
+// ── Step 5: Webhooks ───────────────────────────────────────────────────────────
 
 function WebhooksStep({ onFinish }: { onFinish: () => void }) {
   const [url, setUrl]         = useState("");
@@ -562,8 +669,11 @@ export function OnboardingForm({
       )}
       {step === "casetypes" && (
         <CaseTypesStep
-          onNext={() => setStep("webhooks")}
+          onNext={() => setStep("aibehavior")}
         />
+      )}
+      {step === "aibehavior" && (
+        <AiBehaviorStep onNext={() => setStep("webhooks")} />
       )}
       {step === "webhooks" && (
         <WebhooksStep onFinish={finish} />
