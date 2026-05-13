@@ -36,7 +36,7 @@ export default async function SettingsPage() {
   const initialSettings = settings ?? defaultAiSettings(account.organization.id);
 
   return (
-    <main className="max-w-5xl mx-auto p-6 md:p-10 space-y-6">
+    <main className="p-6 md:p-8 space-y-6">
       <header className="flex items-center justify-between">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">App</p>

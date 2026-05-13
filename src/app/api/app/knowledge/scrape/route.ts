@@ -78,7 +78,7 @@ async function fetchPageText(url: string): Promise<string> {
   });
 
   const joined = blocks.join("\n").replace(/\n{3,}/g, "\n\n").trim();
-  return joined.slice(0, 8000);
+  return joined.slice(0, 16000);
 }
 
 export async function POST(req: NextRequest) {
@@ -123,11 +123,11 @@ export async function POST(req: NextRequest) {
 
   const response = await client.messages.create({
     model: "claude-haiku-4-5-20251001",
-    max_tokens: 2000,
+    max_tokens: 4000,
     system: `Du extraherar FAQ och prisinformation från hemsidetext.
 Returnera ENDAST giltig JSON-array utan markdown:
 [{"question":"...","answer":"...","category":"pricing|contact|hours|faq|policy|other"}]
-Max 15 poster. Frågor och svar på samma språk som sidan. Inkludera bara konkret faktainformation.`,
+Extrahera SÅ MÅNGA poster som finns på sidan — minst 10, gärna 30+. Frågor och svar på samma språk som sidan. Inkludera konkret faktainformation: priser, produkter, tjänster, kontaktinfo, öppettider, leveransvillkor, returpolicy, FAQ. Hoppa inte över information.`,
     messages: [{
       role: "user",
       content: `Hemsida: ${url}\n\nText:\n${pageText}\n\nExtrahera FAQ och prisinformation som JSON-array.`,

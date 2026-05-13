@@ -165,13 +165,14 @@ export function SettingsTabs({
             </SettingsRow>
           </div>
 
-          <div className={active === "knowledge" ? "" : "hidden"}>
-            <SettingsRow
-              title="Kunskapsbas"
-              desc="FAQ och företagsfakta som injiceras i varje AI-anrop. Priser, öppettider, policyer — lägg till det AI:n bör kunna svara direkt på."
-            >
-              <KnowledgeEditor initial={knowledge} />
-            </SettingsRow>
+          <div className={active === "knowledge" ? "space-y-4" : "hidden"}>
+            <div>
+              <h3 className="text-sm font-semibold text-white">Kunskapsbas</h3>
+              <p className="text-xs text-white/35 leading-relaxed mt-0.5">
+                FAQ och företagsfakta som injiceras i varje AI-anrop. Priser, öppettider, policyer — lägg till det AI:n bör kunna svara direkt på.
+              </p>
+            </div>
+            <KnowledgeEditor initial={knowledge} />
           </div>
 
           <div className={active === "templates" ? "" : "hidden"}>
