@@ -13,30 +13,34 @@ const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
-    default: `${siteConfig.siteName} | AI Email Support for European B2B Teams`,
-    template: `%s | ${siteConfig.siteName}`,
+    default: `Mailmind | AI Email Support for European B2B Teams`,
+    template: `%s | Mailmind`,
   },
   description: siteConfig.description,
+  keywords: ["Mailmind", "AI email support", "customer email AI", "Outlook AI", "Gmail AI", "B2B email automation", "GDPR email tool", "European AI support"],
   metadataBase: new URL(siteConfig.siteUrl),
+  alternates: {
+    canonical: siteConfig.siteUrl,
+  },
   openGraph: {
-    title: `${siteConfig.siteName} | AI Email Support for B2B`,
+    title: `Mailmind | AI Email Support for B2B`,
     description: siteConfig.description,
     url: siteConfig.siteUrl,
-    siteName: siteConfig.siteName,
-    locale: "en_IE",
+    siteName: "Mailmind",
+    locale: "sv_SE",
     type: "website",
     images: [
       {
         url: siteConfig.ogImage,
         width: 1200,
         height: 630,
-        alt: siteConfig.siteName,
+        alt: "Mailmind — AI email support",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: `${siteConfig.siteName} | Premium AI Email Support`,
+    title: `Mailmind | AI Email Support`,
     description: siteConfig.description,
     creator: siteConfig.twitterHandle || undefined,
   },
@@ -53,8 +57,32 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="sv" className="dark">
       <body className={`${inter.className} min-h-screen bg-background antialiased`}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "SoftwareApplication",
+              "name": "Mailmind",
+              "url": "https://mailmind.se",
+              "applicationCategory": "BusinessApplication",
+              "operatingSystem": "Web",
+              "description": siteConfig.description,
+              "offers": {
+                "@type": "Offer",
+                "priceCurrency": "SEK",
+                "availability": "https://schema.org/InStock"
+              },
+              "publisher": {
+                "@type": "Organization",
+                "name": "Mailmind",
+                "url": "https://mailmind.se"
+              }
+            })
+          }}
+        />
         <AnimatedBackground />
         <Providers>
           <MotionProvider>

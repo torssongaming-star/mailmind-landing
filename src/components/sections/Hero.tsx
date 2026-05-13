@@ -39,9 +39,8 @@ export function Hero() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-4 md:mb-6 text-white leading-[1.15] md:leading-[1.1]"
           >
-            Your customer emails,{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">answered faster</span>{" "}
-            with AI
+            Mailmind answers your customer emails{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-blue-400">faster with AI</span>
           </motion.h1>
 
           <motion.p

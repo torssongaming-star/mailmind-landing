@@ -11,7 +11,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
-import * as cheerio from "cheerio";
+import { load } from "cheerio";
 import Anthropic from "@anthropic-ai/sdk";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { bulkCreateKnowledge } from "@/lib/app/knowledge";
@@ -52,7 +52,7 @@ async function fetchPageText(url: string): Promise<string> {
   if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
   const html = await res.text();
 
-  const $ = cheerio.load(html);
+  const $ = load(html);
   // Drop boilerplate
   $("script, style, noscript, nav, header, footer, aside, form, iframe").remove();
   // Visible-only-ish: also drop hidden + cookie banners by common class names
