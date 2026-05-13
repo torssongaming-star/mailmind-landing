@@ -7,7 +7,7 @@
  * the resolved orgId here.
  */
 
-import { eq, and, desc, asc, lte, isNotNull } from "drizzle-orm";
+import { eq, and, desc, asc, lte, isNotNull, sql } from "drizzle-orm";
 import {
   db,
   isDbConnected,
@@ -248,6 +248,24 @@ export async function listDraftsForThread(threadId: string) {
     .from(aiDrafts)
     .where(eq(aiDrafts.threadId, threadId))
     .orderBy(desc(aiDrafts.generatedAt));
+}
+
+/** Returns the newest pending/edited draft for a thread, or null if none. */
+export async function findPendingDraft(threadId: string): Promise<AiDraft | null> {
+  if (!isDbConnected()) return null;
+  const rows = await db
+    .select()
+    .from(aiDrafts)
+    .where(
+      and(
+        eq(aiDrafts.threadId, threadId),
+        sql`${aiDrafts.status} IN ('pending', 'edited')`,
+        eq(aiDrafts.isDryRun, false),
+      )
+    )
+    .orderBy(desc(aiDrafts.generatedAt))
+    .limit(1);
+  return rows[0] ?? null;
 }
 
 export async function createDraft(input: {

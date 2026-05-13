@@ -27,6 +27,7 @@ import {
   getAiSettings,
   listCaseTypes,
   createDraft,
+  findPendingDraft,
   updateThread,
   defaultAiSettings,
 } from "./threads";
@@ -91,6 +92,13 @@ export async function autoTriageNewMessage(input: {
   // Load thread + history + AI config
   const thread = await getThread(organizationId, threadId);
   if (!thread) return { ok: false, reason: "thread_missing" };
+
+  // Skip if there's already a pending/edited draft — prevents duplicate drafts
+  // when Pub/Sub delivers the same notification twice or manual + auto trigger race.
+  const existingDraft = await findPendingDraft(threadId);
+  if (existingDraft) {
+    return { ok: false, reason: "draft_already_pending" };
+  }
 
   const [messages, settings, caseTypesList, knowledge] = await Promise.all([
     listMessages(threadId),

@@ -362,7 +362,7 @@ export const emailMessages = pgTable(
   },
   (t) => [
     index("email_messages_thread_idx").on(t.threadId, t.sentAt),
-    index("email_messages_external_id_idx").on(t.externalMessageId),
+    uniqueIndex("email_messages_external_id_uniq").on(t.externalMessageId),
   ]
 );
 
