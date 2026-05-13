@@ -15,7 +15,7 @@ You are the Mailmind codebase cartographer. Your job is to answer structural and
 - **Drizzle ORM 0.45** + **Neon HTTP** serverless driver — schema in `src/lib/db/schema.ts`
 - **Stripe** checkout + portal + webhooks — `src/app/api/webhooks/stripe/`
 - **SendGrid Inbound Parse** → `src/app/api/webhooks/sendgrid/inbound/route.ts`
-- **Resend** outbound — `src/lib/app/email.ts` (or similar)
+- **Resend** outbound — `src/lib/app/email.ts`
 - **Anthropic SDK** with `claude-haiku-4-5-20251001` + prompt caching — `src/lib/app/ai.ts`
 
 # Architectural ground truth
