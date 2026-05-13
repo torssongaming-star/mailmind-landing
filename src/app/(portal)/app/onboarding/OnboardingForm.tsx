@@ -3,11 +3,56 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-type Step = "workspace" | "website" | "manual";
+// ── Types ──────────────────────────────────────────────────────────────────────
+
+type Step = "workspace" | "website" | "casetypes" | "webhooks";
 
 type KnowledgeEntry = { question: string; answer: string; category: string };
 
-// ── Step 1: Workspace name ─────────────────────────────────────────────────────
+type CaseTypeOption = {
+  slug:    string;
+  label:   string;
+  checked: boolean;
+  custom?: boolean;
+};
+
+// ── Progress bar ───────────────────────────────────────────────────────────────
+
+const STEPS: Array<{ id: Step; label: string }> = [
+  { id: "workspace", label: "Konto" },
+  { id: "website",   label: "Hemsida" },
+  { id: "casetypes", label: "Ärendetyper" },
+  { id: "webhooks",  label: "Notifikationer" },
+];
+
+function ProgressBar({ current }: { current: Step }) {
+  const idx = STEPS.findIndex(s => s.id === current);
+  return (
+    <div className="flex items-center gap-2">
+      {STEPS.map((s, i) => (
+        <div key={s.id} className="flex items-center gap-2 flex-1">
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors ${
+            i < idx
+              ? "bg-primary text-[#030614]"
+              : i === idx
+                ? "bg-primary/20 text-primary border border-primary/50"
+                : "bg-white/8 text-muted-foreground"
+          }`}>
+            {i < idx ? "✓" : i + 1}
+          </div>
+          <span className={`text-[11px] transition-colors ${i === idx ? "text-white" : "text-muted-foreground"}`}>
+            {s.label}
+          </span>
+          {i < STEPS.length - 1 && (
+            <div className={`flex-1 h-px ${i < idx ? "bg-primary/40" : "bg-white/10"}`} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Step 1: Workspace ──────────────────────────────────────────────────────────
 
 function WorkspaceStep({
   email,
@@ -16,11 +61,11 @@ function WorkspaceStep({
 }: {
   email: string;
   suggestedOrgName: string;
-  onNext: (orgName: string) => void;
+  onNext: () => void;
 }) {
-  const [orgName, setOrgName] = useState(suggestedOrgName);
+  const [orgName, setOrgName]   = useState(suggestedOrgName);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError]       = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,23 +74,29 @@ function WorkspaceStep({
     setError(null);
     try {
       const res = await fetch("/api/app/onboarding", {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orgName: orgName.trim() }),
+        body:    JSON.stringify({ orgName: orgName.trim() }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Could not create your account");
+        throw new Error(data.error || "Kunde inte skapa kontot");
       }
-      onNext(orgName.trim());
+      onNext();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : "Något gick fel");
       setSubmitting(false);
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <h2 className="text-base font-semibold text-white mb-1">Välkommen till Mailmind</h2>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Låt oss sätta upp ert konto. Det tar ungefär två minuter.
+        </p>
+      </div>
       <div>
         <label className="block text-xs font-medium text-muted-foreground mb-1.5">Din e-post</label>
         <input
@@ -84,31 +135,24 @@ function WorkspaceStep({
 
 // ── Step 2: Website scrape ─────────────────────────────────────────────────────
 
-/** Cleans common copy-paste mistakes — accepts "energikompaniet.se", "https://energikompaniet.se/", " www.foo.se". */
 function cleanDomain(input: string): string {
-  return input
-    .trim()
-    .replace(/^https?:\/\//i, "")
-    .replace(/^www\./i, "")
-    .replace(/\/+$/, "");
+  return input.trim().replace(/^https?:\/\//i, "").replace(/^www\./i, "").replace(/\/+$/, "");
 }
 
 function isValidDomain(input: string): boolean {
-  const c = cleanDomain(input);
-  return /^[a-z0-9][\w.-]*\.[a-z]{2,}(\/.*)?$/i.test(c);
+  return /^[a-z0-9][\w.-]*\.[a-z]{2,}(\/.*)?$/i.test(cleanDomain(input));
 }
 
 function WebsiteStep({
-  onScraped,
-  onSkip,
+  onNext,
 }: {
-  onScraped: (entries: KnowledgeEntry[]) => void;
-  onSkip: () => void;
+  onNext: (entries: KnowledgeEntry[]) => void;
 }) {
-  const [domain, setDomain]     = useState("");
-  const [scraping, setScraping] = useState(false);
-  const [error, setError]       = useState<string | null>(null);
-  const [success, setSuccess]   = useState<string | null>(null);
+  const [domain, setDomain]       = useState("");
+  const [noSite, setNoSite]       = useState(false);
+  const [scraping, setScraping]   = useState(false);
+  const [scraped, setScraped]     = useState<KnowledgeEntry[] | null>(null);
+  const [error, setError]         = useState<string | null>(null);
 
   const valid = domain.trim().length === 0 || isValidDomain(domain);
 
@@ -116,21 +160,15 @@ function WebsiteStep({
     if (!domain.trim() || scraping || !isValidDomain(domain)) return;
     setScraping(true);
     setError(null);
-    setSuccess(null);
     try {
       const res = await fetch("/api/app/knowledge/scrape", {
-        method: "POST",
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: cleanDomain(domain) }),
+        body:    JSON.stringify({ url: cleanDomain(domain) }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? "Scrape failed");
-      if (data.inserted > 0) {
-        setSuccess(`✓ Hittade ${data.inserted} svar från din hemsida.`);
-        onScraped(data.entries ?? []);
-      } else {
-        setSuccess("Hittade ingen tydlig info på sidan. Du kan lägga till svar manuellt i nästa steg.");
-      }
+      if (!res.ok) throw new Error(data.error ?? "Kunde inte läsa hemsidan");
+      setScraped(data.entries ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Kunde inte läsa hemsidan");
     } finally {
@@ -138,110 +176,270 @@ function WebsiteStep({
     }
   };
 
+  if (noSite) {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h2 className="text-base font-semibold text-white mb-1">Har ni en hemsida?</h2>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Inga problem — ni kan alltid lägga till information manuellt under Inställningar senare.
+          </p>
+        </div>
+        <div className="rounded-xl border border-white/8 bg-white/[0.02] p-4 text-center space-y-2">
+          <p className="text-sm text-white/60">Ni hoppar över hemsida-steget.</p>
+        </div>
+        <button
+          onClick={() => onNext([])}
+          className="w-full px-4 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors"
+        >
+          Fortsätt →
+        </button>
+        <button onClick={() => setNoSite(false)} className="w-full text-xs text-muted-foreground hover:text-white transition-colors">
+          ← Tillbaka
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-base font-semibold text-white mb-1">Har du en hemsida?</h2>
+        <h2 className="text-base font-semibold text-white mb-1">Har ni en hemsida?</h2>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          Vi läser av din hemsida och fyller automatiskt i vanliga frågor &amp; priser åt dig.
-          Hoppa över om du inte har någon hemsida — du kan alltid lägga till svar senare.
+          Vi läser av er hemsida och fyller i vanliga frågor &amp; svar automatiskt — priser, öppettider, vad ni erbjuder.
+          Det sparar er mycket tid i nästa steg.
         </p>
       </div>
 
-      <div>
-        <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-          Din hemsidas adress
-        </label>
-        <div className="flex items-center gap-0">
-          <span className="text-xs text-muted-foreground/60 px-3 py-2.5 bg-white/5 border border-r-0 border-white/10 rounded-l-lg select-none">
-            https://
-          </span>
-          <input
-            type="text"
-            inputMode="url"
-            autoComplete="url"
-            value={domain}
-            onChange={e => setDomain(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); scrape(); } }}
-            placeholder="energikompaniet.se"
-            className="flex-1 bg-white/5 text-white text-sm rounded-r-lg px-3 py-2.5 border border-white/10 focus:border-primary/50 focus:outline-none placeholder:text-muted-foreground/40"
-          />
-        </div>
-        <p className="text-[11px] text-muted-foreground mt-1.5">
-          Skriv bara <span className="text-white/80 font-mono">energikompaniet.se</span> — du behöver inte skriva <span className="font-mono">https://</span> själv.
-        </p>
-        {!valid && domain.trim().length > 0 && (
-          <p className="text-[11px] text-amber-400 mt-1">
-            Det ser inte ut som en webbadress — försök t.ex. <span className="font-mono">energikompaniet.se</span>.
+      {scraped !== null ? (
+        <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4 space-y-2">
+          <p className="text-sm font-semibold text-green-400">
+            ✓ {scraped.length > 0 ? `${scraped.length} svar importerade från hemsidan` : "Hemsidan scannades — inga tydliga svar hittades"}
           </p>
-        )}
+          <p className="text-xs text-muted-foreground">
+            {scraped.length > 0
+              ? "AI:n kan nu använda denna info direkt. Ni kan alltid redigera under Inställningar."
+              : "Ni kan lägga till svar manuellt under Inställningar → Kunskapsbas senare."}
+          </p>
+        </div>
+      ) : (
+        <>
+          <div>
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+              Hemsidans adress
+            </label>
+            <div className="flex items-center">
+              <span className="text-xs text-muted-foreground/60 px-3 py-2.5 bg-white/5 border border-r-0 border-white/10 rounded-l-lg select-none">
+                https://
+              </span>
+              <input
+                type="text"
+                inputMode="url"
+                value={domain}
+                onChange={e => setDomain(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); scrape(); } }}
+                placeholder="energikompaniet.se"
+                className="flex-1 bg-white/5 text-white text-sm rounded-r-lg px-3 py-2.5 border border-white/10 focus:border-primary/50 focus:outline-none placeholder:text-muted-foreground/40"
+              />
+            </div>
+            {!valid && domain.trim().length > 0 && (
+              <p className="text-[11px] text-amber-400 mt-1">
+                Det ser inte ut som en webbadress — försök t.ex. <span className="font-mono">energikompaniet.se</span>.
+              </p>
+            )}
+          </div>
+          {error && <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>}
+          <button
+            onClick={scrape}
+            disabled={scraping || !domain.trim() || !valid}
+            className="w-full px-4 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40"
+          >
+            {scraping ? "Läser hemsidan…" : "Hämta info från hemsidan →"}
+          </button>
+        </>
+      )}
+
+      {scraped !== null && (
+        <button
+          onClick={() => onNext(scraped)}
+          className="w-full px-4 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors"
+        >
+          Fortsätt →
+        </button>
+      )}
+
+      <button
+        onClick={() => setNoSite(true)}
+        className="w-full text-xs text-muted-foreground hover:text-white transition-colors"
+      >
+        Vi har ingen hemsida →
+      </button>
+    </div>
+  );
+}
+
+// ── Step 3: Case types ─────────────────────────────────────────────────────────
+
+const DEFAULT_CASE_TYPES: CaseTypeOption[] = [
+  { slug: "offert",      label: "Offertförfrågan",   checked: true },
+  { slug: "bokning",     label: "Bokningsförfrågan",  checked: true },
+  { slug: "reklamation", label: "Reklamation",        checked: true },
+  { slug: "ovrigt",      label: "Övrigt",             checked: true },
+];
+
+function CaseTypesStep({ onNext }: { onNext: () => void }) {
+  const [options, setOptions]     = useState<CaseTypeOption[]>(DEFAULT_CASE_TYPES);
+  const [customLabel, setCustomLabel] = useState("");
+  const [saving, setSaving]       = useState(false);
+  const [error, setError]         = useState<string | null>(null);
+
+  const selected = options.filter(o => o.checked);
+
+  const toggle = (slug: string) =>
+    setOptions(prev => prev.map(o => o.slug === slug ? { ...o, checked: !o.checked } : o));
+
+  const addCustom = () => {
+    const label = customLabel.trim();
+    if (!label) return;
+    const slug = label.toLowerCase().replace(/[^a-z0-9]/g, "_").slice(0, 40) + "_" + Date.now().toString(36);
+    setOptions(prev => [...prev, { slug, label, checked: true, custom: true }]);
+    setCustomLabel("");
+  };
+
+  const removeCustom = (slug: string) =>
+    setOptions(prev => prev.filter(o => o.slug !== slug));
+
+  const handleNext = async () => {
+    if (selected.length === 0 || saving) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await Promise.all(
+        selected.map((ct, i) =>
+          fetch("/api/app/case-types", {
+            method:  "POST",
+            headers: { "Content-Type": "application/json" },
+            body:    JSON.stringify({
+              slug:      ct.slug,
+              label:     ct.label,
+              isDefault: ct.slug === "ovrigt",
+              sortOrder: i,
+            }),
+          })
+        )
+      );
+      onNext();
+    } catch {
+      setError("Kunde inte spara ärendetyper. Försök igen.");
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-5">
+      <div>
+        <h2 className="text-base font-semibold text-white mb-1">Vilka typer av ärenden får ni?</h2>
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          AI:n sorterar varje inkommande mejl i rätt ärendetyp automatiskt — så att ni alltid ser vad som är vad
+          och kan hantera rätt ärenden först. Välj de som stämmer in på er verksamhet.
+        </p>
       </div>
 
-      {success && <p className="text-xs text-green-400 bg-green-500/10 border border-green-500/20 rounded-lg px-3 py-2">{success}</p>}
+      <div className="space-y-2">
+        {options.map(opt => (
+          <label
+            key={opt.slug}
+            className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
+              opt.checked
+                ? "border-primary/40 bg-primary/5 text-white"
+                : "border-white/8 bg-white/[0.02] text-white/40 hover:text-white/70"
+            }`}
+          >
+            <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors ${
+              opt.checked ? "bg-primary border-primary" : "border-white/20"
+            }`}>
+              {opt.checked && <span className="text-[#030614] text-[10px] font-bold leading-none">✓</span>}
+            </div>
+            <span className="text-sm font-medium flex-1">{opt.label}</span>
+            {opt.custom && (
+              <button
+                type="button"
+                onClick={e => { e.preventDefault(); removeCustom(opt.slug); }}
+                className="text-[11px] text-red-400 hover:text-red-300 transition-colors"
+              >
+                Ta bort
+              </button>
+            )}
+          </label>
+        ))}
+      </div>
+
+      {/* Add custom */}
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={customLabel}
+          onChange={e => setCustomLabel(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCustom(); } }}
+          placeholder="Lägg till egen ärendetyp…"
+          maxLength={80}
+          className="flex-1 bg-white/5 text-white text-sm rounded-lg px-3 py-2 border border-white/10 focus:border-primary/50 focus:outline-none placeholder:text-muted-foreground/40"
+        />
+        <button
+          type="button"
+          onClick={addCustom}
+          disabled={!customLabel.trim()}
+          className="px-3 py-2 rounded-lg bg-white/8 text-white text-xs hover:bg-white/15 transition-colors disabled:opacity-40"
+        >
+          Lägg till
+        </button>
+      </div>
+
       {error && <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>}
 
-      <div className="flex justify-between items-center pt-2 border-t border-white/8">
+      <div className="pt-1">
         <button
-          onClick={onSkip}
-          className="text-xs text-muted-foreground hover:text-white transition-colors"
+          onClick={handleNext}
+          disabled={selected.length === 0 || saving}
+          className="w-full px-4 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40"
         >
-          Hoppa över →
+          {saving ? "Sparar…" : `Fortsätt med ${selected.length} ärendetyp${selected.length !== 1 ? "er" : ""} →`}
         </button>
-        <div className="flex gap-2">
-          {success ? (
-            <button
-              onClick={onSkip}
-              className="px-4 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors"
-            >
-              Fortsätt →
-            </button>
-          ) : (
-            <button
-              onClick={scrape}
-              disabled={scraping || !domain.trim() || !valid}
-              className="px-4 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40"
-            >
-              {scraping ? "Läser hemsidan…" : "Hämta info"}
-            </button>
-          )}
-        </div>
+        {selected.length === 0 && (
+          <p className="text-center text-[11px] text-amber-400 mt-2">Välj minst en ärendetyp för att fortsätta.</p>
+        )}
       </div>
     </div>
   );
 }
 
-// ── Step 3: Manual FAQ entries ─────────────────────────────────────────────────
+// ── Step 4: Webhooks ───────────────────────────────────────────────────────────
 
-function ManualStep({
-  entries,
-  onAddEntry,
-  onFinish,
-}: {
-  entries: KnowledgeEntry[];
-  onAddEntry: (e: KnowledgeEntry) => void;
-  onFinish: () => void;
-}) {
-  const [newQ, setNewQ]     = useState("");
-  const [newA, setNewA]     = useState("");
-  const [saving, setSaving] = useState(false);
-  const [error, setError]   = useState<string | null>(null);
+function WebhooksStep({ onFinish }: { onFinish: () => void }) {
+  const [url, setUrl]         = useState("");
+  const [saving, setSaving]   = useState(false);
+  const [saved, setSaved]     = useState(false);
+  const [error, setError]     = useState<string | null>(null);
 
-  const add = async () => {
-    if (!newQ.trim() || !newA.trim() || saving) return;
+  const isValidUrl = (s: string) => { try { new URL(s); return true; } catch { return false; } };
+
+  const save = async () => {
+    if (!url.trim() || !isValidUrl(url) || saving) return;
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch("/api/app/knowledge", {
-        method: "POST",
+      const res = await fetch("/api/app/webhooks", {
+        method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: newQ.trim(), answer: newA.trim(), category: "faq" }),
+        body:    JSON.stringify({ url: url.trim(), caseTypeSlug: "*" }),
       });
-      if (!res.ok) throw new Error("Kunde inte spara");
-      onAddEntry({ question: newQ.trim(), answer: newA.trim(), category: "faq" });
-      setNewQ("");
-      setNewA("");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Kunde inte spara");
+      }
+      setSaved(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Kunde inte spara");
+      setError(e instanceof Error ? e.message : "Något gick fel");
     } finally {
       setSaving(false);
     }
@@ -250,78 +448,86 @@ function ManualStep({
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-base font-semibold text-white mb-1">Lägg till vanliga svar</h2>
+        <h2 className="text-base font-semibold text-white mb-1">Vill ni koppla till andra system?</h2>
         <p className="text-xs text-muted-foreground leading-relaxed">
-          AI:n använder dessa när den föreslår svar till dina kunder.
-          {entries.length === 0 && " Lägg till några om du vill — eller hoppa över."}
+          Varje gång ett mejl klassificeras kan Mailmind automatiskt skicka en notis till ett annat system —
+          t.ex. att ett nytt ärende dök upp i Slack, att en reklamation lagts in i ert CRM, eller att
+          en offertförfrågan hamnade i ert affärssystem.
         </p>
       </div>
 
-      {/* Existing entries (from scrape or this step) */}
-      {entries.length > 0 && (
-        <div className="rounded-xl border border-white/8 bg-white/[0.02] p-3 space-y-1.5 max-h-44 overflow-y-auto">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            {entries.length} svar sparade
+      {/* Plain-language explainer */}
+      <div className="rounded-xl border border-white/8 bg-white/[0.02] p-4 space-y-3">
+        <p className="text-xs font-semibold text-white/70">Hur fungerar det?</p>
+        <div className="space-y-2 text-xs text-muted-foreground leading-relaxed">
+          <p>
+            <span className="text-white/60 font-medium">1. Kunden skickar ett mejl</span> — t.ex. en offertförfrågan.
           </p>
-          {entries.map((e, i) => (
-            <div key={i} className="text-xs">
-              <span className="text-white/80 font-medium">{e.question}</span>
-              <span className="text-muted-foreground"> — {e.answer.slice(0, 80)}{e.answer.length > 80 ? "…" : ""}</span>
-            </div>
-          ))}
+          <p>
+            <span className="text-white/60 font-medium">2. Mailmind klassificerar det</span> — AI:n ser att det är en Offertförfrågan.
+          </p>
+          <p>
+            <span className="text-white/60 font-medium">3. Ert system får en notis</span> — inom sekunder skickas informationen
+            vidare till den adress ni anger här, och ert system kan ta emot den och agera.
+          </p>
         </div>
+        <p className="text-[10px] text-muted-foreground pt-1 border-t border-white/5">
+          Teknisk term för detta: <span className="text-white/40">webhook</span>. Fungerar med Slack, Zapier, Make, HubSpot, och de flesta moderna system.
+        </p>
+      </div>
+
+      {saved ? (
+        <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-4">
+          <p className="text-sm font-semibold text-green-400">✓ Notifikation kopplad</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Ni kan lägga till fler kopplingar under Inställningar → Webhooks.
+          </p>
+        </div>
+      ) : (
+        <>
+          <div>
+            <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+              Adress att skicka notisen till (valfritt)
+            </label>
+            <input
+              type="url"
+              value={url}
+              onChange={e => setUrl(e.target.value)}
+              placeholder="https://hooks.slack.com/…"
+              className="w-full bg-white/5 text-white text-sm rounded-lg px-3 py-2.5 border border-white/10 focus:border-primary/50 focus:outline-none placeholder:text-muted-foreground/40"
+            />
+            <p className="text-[10px] text-muted-foreground mt-1">
+              Har ni ingen nu? Hoppa över — det tar 30 sekunder att lägga till senare.
+            </p>
+          </div>
+          {error && <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>}
+          {url.trim() && (
+            <button
+              onClick={save}
+              disabled={saving || !isValidUrl(url)}
+              className="w-full px-4 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40"
+            >
+              {saving ? "Kopplar…" : "Koppla och fortsätt →"}
+            </button>
+          )}
+        </>
       )}
 
-      <div className="space-y-2">
-        <input
-          type="text"
-          value={newQ}
-          onChange={e => setNewQ(e.target.value)}
-          placeholder="Fråga, t.ex. Vad kostar parkering?"
-          className="w-full bg-white/5 text-white text-sm rounded-lg px-3 py-2.5 border border-white/10 focus:border-primary/50 focus:outline-none placeholder:text-muted-foreground/40"
-        />
-        <textarea
-          value={newA}
-          onChange={e => setNewA(e.target.value)}
-          placeholder="Svar, t.ex. Parkering kostar 500 kr/mån. Kontakta receptionen."
-          rows={2}
-          className="w-full bg-white/5 text-white text-sm rounded-lg px-3 py-2.5 border border-white/10 focus:border-primary/50 focus:outline-none placeholder:text-muted-foreground/40 resize-none"
-        />
-        <button
-          onClick={add}
-          disabled={saving || !newQ.trim() || !newA.trim()}
-          className="text-xs px-3 py-1.5 rounded-lg bg-white/8 text-white hover:bg-white/15 transition-colors disabled:opacity-40"
-        >
-          {saving ? "Sparar…" : "+ Lägg till svar"}
-        </button>
-        {error && <p className="text-xs text-red-400">{error}</p>}
-      </div>
-
-      <div className="flex justify-between items-center pt-2 border-t border-white/8">
-        <button
-          onClick={onFinish}
-          className="text-xs text-muted-foreground hover:text-white transition-colors"
-        >
-          Hoppa över →
-        </button>
-        <button
-          onClick={onFinish}
-          className="px-4 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors"
-        >
-          {entries.length > 0 ? "Klart, gå till appen →" : "Fortsätt utan svar →"}
-        </button>
-      </div>
+      <button
+        onClick={onFinish}
+        className={`w-full px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+          saved
+            ? "bg-primary text-[#030614] hover:bg-cyan-300"
+            : "border border-white/10 text-white/50 hover:text-white hover:border-white/30"
+        }`}
+      >
+        {saved ? "Gå till Mailmind →" : "Hoppa över, gå till Mailmind →"}
+      </button>
     </div>
   );
 }
 
-// ── Stepper shell ──────────────────────────────────────────────────────────────
-
-const STEPS: Array<{ id: Step; label: string }> = [
-  { id: "workspace", label: "Konto" },
-  { id: "website",   label: "Hemsida" },
-  { id: "manual",    label: "Svar" },
-];
+// ── Shell ──────────────────────────────────────────────────────────────────────
 
 export function OnboardingForm({
   email,
@@ -332,9 +538,6 @@ export function OnboardingForm({
 }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("workspace");
-  const [entries, setEntries] = useState<KnowledgeEntry[]>([]);
-
-  const currentIdx = STEPS.findIndex(s => s.id === step);
 
   const finish = () => {
     router.push("/app");
@@ -343,30 +546,8 @@ export function OnboardingForm({
 
   return (
     <div className="space-y-6">
-      {/* Progress indicator */}
-      <div className="flex items-center gap-2">
-        {STEPS.map((s, i) => (
-          <div key={s.id} className="flex items-center gap-2 flex-1">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors ${
-              i < currentIdx
-                ? "bg-primary text-[#030614]"
-                : i === currentIdx
-                  ? "bg-primary/20 text-primary border border-primary/50"
-                  : "bg-white/8 text-muted-foreground"
-            }`}>
-              {i < currentIdx ? "✓" : i + 1}
-            </div>
-            <span className={`text-[11px] transition-colors ${i === currentIdx ? "text-white" : "text-muted-foreground"}`}>
-              {s.label}
-            </span>
-            {i < STEPS.length - 1 && (
-              <div className={`flex-1 h-px ${i < currentIdx ? "bg-primary/40" : "bg-white/10"}`} />
-            )}
-          </div>
-        ))}
-      </div>
+      <ProgressBar current={step} />
 
-      {/* Step content */}
       {step === "workspace" && (
         <WorkspaceStep
           email={email}
@@ -376,16 +557,16 @@ export function OnboardingForm({
       )}
       {step === "website" && (
         <WebsiteStep
-          onScraped={list => { setEntries(prev => [...prev, ...list]); setStep("manual"); }}
-          onSkip={() => setStep("manual")}
+          onNext={() => setStep("casetypes")}
         />
       )}
-      {step === "manual" && (
-        <ManualStep
-          entries={entries}
-          onAddEntry={e => setEntries(prev => [...prev, e])}
-          onFinish={finish}
+      {step === "casetypes" && (
+        <CaseTypesStep
+          onNext={() => setStep("webhooks")}
         />
+      )}
+      {step === "webhooks" && (
+        <WebhooksStep onFinish={finish} />
       )}
     </div>
   );
