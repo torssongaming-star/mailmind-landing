@@ -84,7 +84,6 @@ export async function POST(req: NextRequest) {
   // ── 2. Look up inbox ───────────────────────────────────────────────────────
   const inbox = await getInboxByEmail(emailAddress);
   if (!inbox || inbox.provider !== "gmail") {
-    // Not our inbox — ack silently (returning 2xx prevents Pub/Sub retries)
     return NextResponse.json({ ok: true, skipped: "no_inbox" });
   }
 
@@ -92,6 +91,14 @@ export async function POST(req: NextRequest) {
   if (!config?.encryptedTokens) {
     console.error(`[gmail/push] inbox ${inbox.id} has no encrypted tokens`);
     return NextResponse.json({ ok: true, skipped: "no_tokens" });
+  }
+
+  // ── 2b. Stale-notification guard ──────────────────────────────────────────
+  // Pub/Sub guarantees at-least-once delivery — skip if we've already
+  // processed this historyId or newer.
+  if (config.historyId && Number(newHistoryId) <= Number(config.historyId)) {
+    console.log(`[gmail/push] stale historyId ${newHistoryId} <= stored ${config.historyId}, skipping`);
+    return NextResponse.json({ ok: true, skipped: "stale_history_id" });
   }
 
   // ── 3. Decrypt + refresh tokens if needed ─────────────────────────────────

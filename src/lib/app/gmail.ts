@@ -375,7 +375,7 @@ export type GmailSendParams = {
 };
 
 export type GmailSendResult =
-  | { ok: true;  messageId: string }
+  | { ok: true;  messageId: string; gmailThreadId: string }
   | { ok: false; error: string };
 
 /**
@@ -420,8 +420,8 @@ export async function sendViaGmail(
     return { ok: false, error: `Gmail send failed (${res.status}): ${err}` };
   }
 
-  const data = await res.json() as { id: string };
-  return { ok: true, messageId: data.id };
+  const data = await res.json() as { id: string; threadId: string };
+  return { ok: true, messageId: data.id, gmailThreadId: data.threadId };
 }
 
 // ---------------------------------------------------------------------------

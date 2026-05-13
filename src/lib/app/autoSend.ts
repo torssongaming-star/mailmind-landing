@@ -206,6 +206,10 @@ export async function executeSendDraft(params: {
         return { ok: false, error: `gmail_send_error: ${gmailResult.error}` };
       }
       sentMessageId = gmailResult.messageId;
+      // Ensure thread is linked to the Gmail thread so replies are grouped correctly
+      if (!thread.externalThreadId) {
+        await setThreadExternalId(orgId, draft.threadId, gmailResult.gmailThreadId);
+      }
     } else {
       // ── Send via Resend ──────────────────────────────────────────────────
       const headers: Record<string, string> = {};
@@ -234,7 +238,8 @@ export async function executeSendDraft(params: {
       sentAt:            now,
     });
 
-    if (!thread.externalThreadId && sentMessageId) {
+    // For Resend (non-gmail): use the Resend message ID as external thread ID if not set
+    if (inboxProvider !== "gmail" && !thread.externalThreadId && sentMessageId) {
       await setThreadExternalId(orgId, draft.threadId, sentMessageId);
     }
   }
