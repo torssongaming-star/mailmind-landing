@@ -22,7 +22,7 @@ Target: Swedish SMBs (5–50 employees) drowning in support email who don't want
 | Auth | Clerk (middleware in `proxy.ts`) |
 | DB | Neon Postgres + Drizzle ORM 0.45 (HTTP serverless driver) |
 | Billing | Stripe (checkout + portal + webhooks) |
-| Inbound email | SendGrid Inbound Parse → `/api/webhooks/sendgrid/inbound` |
+| Inbound email | SendGrid Inbound Parse → `/api/webhooks/sendgrid/inbound` (temporary — Resend Inbound kostar $20/mån Pro, planerar migration när intäkter motiverar) |
 | Outbound email | Resend |
 | AI | Anthropic SDK, `claude-haiku-4-5-20251001`, prompt caching (`cache_control: ephemeral`) |
 | Hosting | Vercel |
@@ -41,7 +41,7 @@ Domain: `mailmind.se`. Inbound mail subdomain: `mail.mailmind.se`.
 - **Threading** uses In-Reply-To / References headers; OLDEST reference id is canonical. Closed threads (`resolved` / `escalated`) start fresh on next inbound.
 - **Postgres enum gotcha:** `ALTER TYPE ADD VALUE` requires being outside a transaction. drizzle-kit push silently skips them — must run raw SQL in Neon for new enum values.
 - **`"use server"` constraint:** only `export async function` allowed — no exported constants. Constants shared between server/client live in separate files (e.g. `src/lib/app/constants.ts`).
-- **`usageCounters` not yet written to** — AI draft counts are always read from `aiDrafts` table directly (`getOrgHealth()` does this). The `usageCounters` rows exist but stay at 0 until Phase 3 wires up the increment logic.
+- **`usageCounters` is written on every AI draft.** Manual generate goes through `incrementAiDraftUsage()` in `usage.ts`; auto-triage uses an inline upsert in `autoTriage.ts`. Both paths converge on the same `(organizationId, month)` row. `getOrgHealth()` historically read from `aiDrafts` for sample exactness — either source is correct now.
 
 ---
 
@@ -59,7 +59,13 @@ Fas 6c ✅  Dry-run pipeline + admin dry-run review UI
 Fas 6d ✅  Autosvar-pipeline (canAutoSend, executeSendDraft, AutoSendPanel)
 Fas 6e ⏳  Manuella ops — Live Stripe keys + Resend DNS (Emil, no code)
 Fas 7  ✅  Tags, blocklist-hook, inbox split-pane, settings sidebar, support drawer
-Fas 8  🔲  Kundhistorik, snooze-cron, trådsökning, webhook delivery log, stats-sida
+Fas 8a ✅  Snooze-cron, trådsökning (server-side ILIKE), "Snoozade"-tab i InboxFilters
+Fas 8b ✅  Stats-charts (recharts), webhook delivery log (kräver db:push), mobil-sidebar (hamburger + drawer)
+Fas 8c ✅  Onboarding-wizard split (3 steg) + URL-normalisering, signup-redirect-fix, guidad checklist
+Fas 8d ✅  Connection-tester (polling efter inbox create), cheerio i scrape
+Fas 8e ✅  aiSettings-relation tillagd, listThreads stöder inboxId-filter i SQL (push-down från in-memory)
+Fas 8f ✅  Admin /admin/health visar nu live data, check-logiken extraherad till `src/lib/admin/health.ts` (delas av API + UI)
+Fas 8  🔲  (allt klart för denna fas — nästa runda redo att planera)
 ```
 
 ---
@@ -119,23 +125,28 @@ Fas 8  🔲  Kundhistorik, snooze-cron, trådsökning, webhook delivery log, sta
 > Måste vara klart innan riktiga kunder kan betala och ta emot autosvar.
 
 1. **Live Stripe-nycklar** — byt `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` i Vercel. Registrera live webhook-endpoint i Stripe dashboard → `https://mailmind.se/api/webhooks/stripe`.
-2. **Resend domänverifiering** — lägg till SPF/DKIM DNS-poster för `mail.mailmind.se` i Resend dashboard och bekräfta "Verified".
+2. **Resend domänverifiering (outbound)** — ✅ klar (`mailmind.se` verified i Resend, DKIM+SPF+DMARC gröna).
+3. **SendGrid Inbound Parse-MX** — sätt MX för `mail.mailmind.se` till SendGrid (`mx.sendgrid.net` prio 10) i Loopia, konfigurera Inbound Parse i SendGrid → URL `https://mailmind.se/api/webhooks/sendgrid/inbound`, hostname `mail.mailmind.se`. (Tillfällig lösning — Resend Inbound kräver Pro $20/mån för ny domän, väntar tills intäkter motiverar.)
 
 ---
 
 ## Fas 8 backlog (nästa kod-iteration)
 
-Prioritetsordning:
+✅ Klart denna session:
+- Snooze-cron — `/api/cron/unsnooze` + `wakeUpAllSnoozedThreads()`, cron `*/15 * * * *`. "Snoozade"-tab i `InboxFilters`.
+- Trådsökning — `searchThreads()` ILIKE på subject/fromEmail/fromName/tags (jsonb), aktiveras vid query ≥ 2 tecken.
+- Kundhistorik-panel — fanns redan (`CustomerHistory.tsx`).
+- Prompt-caching — fanns redan (`ai.ts:267`).
+- **Stats-charts** — `recharts` installerat. `DailyThreadsChart` (14 dagar bar), auto-vs-manuell-fördelning, `getThreadsPerDay()` + `getAutoVsManualSent()`.
+- **Webhook delivery log** — ny tabell `webhook_deliveries` i schema, `fireWebhooksForThread` loggar varje försök, `listRecentDeliveries()`, ny route `/api/app/webhooks/[id]/deliveries`, expandable per-rad-logg i `WebhooksEditor`. **KRÄVER `npm run db:push`** innan deploy.
+- **Mobil-sidebar** — hamburger-knapp i sticky top-bar (`lg:hidden`), slide-in drawer från vänster, backdrop-blur, locks body scroll, stänger automatiskt vid route-byte. Portal-layout justerad: `flex` → block, `lg:ml-64` kvarstår.
+- **Onboarding-wizard** — split i 3 steg (Konto → Hemsida → Svar). URL-input med `https://`-prefix-label, accepterar bara `energikompaniet.se`. Backend `normalizeUrl()` i `/api/app/knowledge/scrape`.
+- **Signup-redirect** — `fallbackRedirectUrl="/app"` hårdsatt på `<SignIn>` + `<SignUp>` (överlever felaktig env).
+- **Guidad checklist på /app** — Linear-stil persistent "Kom igång": ett aktivt steg framhävt i taget, andra låsta, "1 / 3"-progress.
 
-1. **Snooze-cron** — `/api/cron/unsnooze` som resettar `status → open` för trådar där `snoozedUntil <= now()`. Vercel Cron i `vercel.json`, kör var 15:e minut. Lägg till "Snoozade" filter i `InboxFilters`.
-2. **Kundhistorik-panel** — kollapsbar sektion på tråd-sidan: "Historik från denna avsändare" — 10 senaste trådar från samma `fromEmail`. Ingen ny DB-kolumn.
-3. **Trådsökning** — sökruta i inbox-header, `/api/app/threads/search?q=`, Postgres `ILIKE` på subject + fromEmail, debounce 300 ms.
-4. **Prompt-caching per org** — `cache_control: { type: "ephemeral" }` på system-blocket i `src/lib/app/ai.ts`. Kommentar finns i filen. Mäter på hög volym.
-5. **Stats-sida fyll ut** — `/app/stats` finns men är tunn. Lägg till: trådar/dag (bar chart, Recharts redan installerat), caseType-fördelning (donut), autosvar vs manuell andel. Serverside SQL-aggregat.
-6. **Webhook delivery log** — ny tabell `webhook_deliveries` (`id`, `endpointId`, `threadId`, `statusCode`, `sentAt`, `error`). Skriv till den i `triggerWebhooks()`. Visa i `WebhooksEditor`.
-7. **Onboarding steg 2** — "Testa anslutningen": kunden skickar testmejl, sidan pollar `/api/app/threads?inboxId=X&limit=1` var 2s i max 60s, visar "✓ Anslutning verifierad!".
-8. **Kunskapsbas-scraping** — `/api/app/knowledge/scrape` (POST `{ url }`): fetch + cheerio (lägg till paket), extrahera h2/h3 + närmaste p som FAQ-par, spara via `createKnowledge()`. Max 30 par.
-9. **Mobilanpassning portal** — `Sidebar` är `hidden` under `lg:`. Bygg `MobileSidebar` med hamburger + slide-in (samma mönster som `SupportDrawer`).
+✅ Allt klart i Fas 8:
+- **Connection-tester** — `ConnectionTester.tsx` pollar `/api/app/threads?inboxId=X&limit=1` var 2s i max 60s efter att man skapat en ny inbox. Tre states: polling (cyan + animerad puls) → verified (grön + länk till tråden) → timeout (amber + "Försök igen"). Endpointet stöder nu `?inboxId=` + `?limit=` query params.
+- **Cheerio scrape** — `cheerio` installerat. `fetchPageText()` i scrape-routen rippar script/style/nav/footer/aside/cookie-banners och behåller bara semantiska block (h1-h4, p, li, dt/dd, summary). Headings prefixas med `## `, listitems med `- `. Caps på 8000 tecken som tidigare.
 
 ---
 
@@ -156,8 +167,8 @@ d0de5e9  fix(admin): remove aiSettings from org query (not in relations → 404)
 
 ## Known caveats
 
-- `usageCounters` är aldrig inkrementerad — läs alltid AI-usage från `aiDrafts` direkt.
-- `aiSettings` saknar relation på `organizations` — lägg INTE till `aiSettings: true` i `db.query.organizations.findFirst({ with: ... })`, det crashar tyst och ger 404.
+- `usageCounters` skrivs nu från både `incrementAiDraftUsage` (manuell draft-route) och inline-upsert i `autoTriage.ts`. Admin-queries kan fortfarande fortsätta läsa från `aiDrafts` direkt om man vill ha exakt sample-precision, men `usage_counters` är auktoritativ för billing-rapporter.
+- `aiSettings` har nu relation på `organizations` (`one(aiSettings, ...)`). `db.query.organizations.findFirst({ with: { aiSettings: true } })` fungerar.
 - AI calls fail closed när over-limit (returnerar `skipped: <reason>`) — retries saknas.
 - Inget test-suite. Introducera inte ett utan att fråga användaren först.
 - `.next`-cache kan bli stale efter directory moves — `rm -rf .next` löser.
