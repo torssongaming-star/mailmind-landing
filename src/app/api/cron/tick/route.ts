@@ -1,12 +1,13 @@
 /**
  * Unified cron endpoint — Vercel Hobby allows exactly one cron per project.
  *
- * Schedule (vercel.json): every 15 minutes  →  "* /15 * * * *"
+ * Schedule (vercel.json): daily at midnight UTC  →  "0 0 * * *"
+ * (Vercel Hobby plan: max once per day)
  *
  * Tasks and when they run:
- *   unsnooze        — every tick (15 min)
- *   expire-trials   — daily at 00:00–00:14 UTC
- *   usage-warning   — weekly on Monday 08:00–08:14 UTC
+ *   unsnooze        — every day
+ *   expire-trials   — every day
+ *   usage-warning   — weekly on Monday
  *
  * Protected by CRON_SECRET (Vercel sets Authorization: Bearer <secret>).
  */
@@ -29,14 +30,9 @@ function currentMonthIso(): string {
   return new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
 }
 
-/** Returns true if the current UTC time falls within [targetHour:00, targetHour:14]. */
-function isUtcWindow(dayOfWeek: number | null, hour: number): boolean {
-  const now = new Date();
-  const utcDay  = now.getUTCDay();   // 0=Sun … 6=Sat
-  const utcHour = now.getUTCHours();
-  const utcMin  = now.getUTCMinutes();
-  if (dayOfWeek !== null && utcDay !== dayOfWeek) return false;
-  return utcHour === hour && utcMin < 15;
+/** Returns true if today is the given UTC day-of-week (0=Sun … 6=Sat). */
+function isUtcDay(dayOfWeek: number): boolean {
+  return new Date().getUTCDay() === dayOfWeek;
 }
 
 // ── task: unsnooze ────────────────────────────────────────────────────────────
@@ -186,16 +182,12 @@ export async function GET(req: NextRequest) {
 
   const results: Record<string, unknown> = {};
 
-  // Always: wake snoozed threads
-  results.unsnooze = await taskUnsnooze();
+  // Daily (midnight UTC): wake snoozed threads + expire ended trials
+  results.unsnooze     = await taskUnsnooze();
+  results.expireTrials = await taskExpireTrials();
 
-  // Daily at midnight UTC: expire ended trials
-  if (isUtcWindow(null, 0)) {
-    results.expireTrials = await taskExpireTrials();
-  }
-
-  // Monday 08:00 UTC: usage warnings
-  if (isUtcWindow(1, 8)) {
+  // Weekly on Monday: usage warnings
+  if (isUtcDay(1)) {
     results.usageWarning = await taskUsageWarning();
   }
 
