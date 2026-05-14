@@ -12,6 +12,8 @@ import { getUserLocale } from "@/lib/i18n/get-locale";
 
 const inter = Inter({ subsets: ["latin"] });
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: {
     default: `Mailmind | AI Email Support for European B2B Teams`,

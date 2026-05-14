@@ -6,6 +6,7 @@ import { getI18n } from "./index";
 
 type I18nContextType = {
   t: (path: TranslationPath, variables?: Record<string, string>) => string;
+  getRaw: (path: string) => any;
   locale: Locale;
 };
 

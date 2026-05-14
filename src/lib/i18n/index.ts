@@ -45,6 +45,27 @@ export function getI18n(locale: Locale = "sv") {
 
       return value;
     },
+    /**
+     * Returns the raw value (array, object, etc) for a given path.
+     */
+    getRaw: (path: string): any => {
+      const keys = path.split(".");
+      let value: unknown = translations;
+
+      for (const key of keys) {
+        value = (value as Record<string, unknown>)?.[key];
+      }
+
+      if (value === undefined && locale !== "sv") {
+        let fallbackValue: unknown = sv;
+        for (const key of keys) {
+          fallbackValue = (fallbackValue as Record<string, unknown>)?.[key];
+        }
+        value = fallbackValue;
+      }
+
+      return value;
+    },
     locale,
   };
 }

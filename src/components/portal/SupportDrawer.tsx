@@ -24,7 +24,8 @@ export function SupportDrawer({
   const [error, setError]       = useState<string | null>(null);
   const drawerRef               = useRef<HTMLDivElement>(null);
 
-  const FAQ = (t("settings.support.faqs" as any) as unknown as { q: string; a: string }[]) || [];
+  const FAQ_RAW = getRaw("settings.support.faqs");
+  const FAQ = Array.isArray(FAQ_RAW) ? FAQ_RAW : [];
 
   // Close on Escape
   useEffect(() => {
