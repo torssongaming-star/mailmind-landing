@@ -100,7 +100,7 @@ export function UseCases() {
 
               {/* Tags always visible — not hover-dependent */}
               <div className="flex flex-wrap gap-1 mt-auto">
-                {industry.tags.map((tag, tagIndex) => (
+                {(industry.tags as string[]).map((tag: string, tagIndex: number) => (
                   <Badge
                     key={tagIndex}
                     variant="outline"
