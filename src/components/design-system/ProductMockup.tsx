@@ -197,7 +197,7 @@ export function ProductMockup() {
                       {email.preview}
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {email.tags.map(tag => (
+                      {(email.tags as any[]).map((tag: any) => (
                         <Badge key={tag.label} variant="outline" className={cn("text-[9px] h-4 px-1.5 py-0 border font-medium uppercase tracking-wider", tag.color)}>
                           {tag.label}
                         </Badge>
