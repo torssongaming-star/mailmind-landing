@@ -14,7 +14,7 @@ export function SupportDrawer({
   open:    boolean;
   onClose: () => void;
 }) {
-  const { t } = useI18n();
+  const { t, getRaw } = useI18n();
   const [tab, setTab]           = useState<"faq" | "contact">("faq");
   const [openFaq, setOpenFaq]   = useState<number | null>(null);
   const [subject, setSubject]   = useState("");
