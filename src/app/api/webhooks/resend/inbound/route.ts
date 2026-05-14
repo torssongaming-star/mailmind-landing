@@ -114,20 +114,20 @@ export async function POST(req: NextRequest) {
   const fromEmail = extractEmail(fromHdr);
   const toEmail   = pickMailmindAddress(toList);
   if (!fromEmail || !toEmail) {
-    console.warn("[inbound] could not extract from/to:", { fromHdr, toList });
+    console.warn("[inbound] could not extract from/to");
     return NextResponse.json({ error: "Could not parse from/to" }, { status: 400 });
   }
 
   // Inbox lookup — bail early on unknown recipients, no body fetch needed.
   const inbox = await getInboxByEmail(toEmail);
   if (!inbox) {
-    console.warn("[inbound] no inbox registered for", toEmail);
-    return NextResponse.json({ status: "no_inbox", to: toEmail });
+    console.warn("[inbound] no inbox registered for masked address");
+    return NextResponse.json({ status: "no_inbox" });
   }
 
   // Blocklist — drop blocked senders without fetching body.
   if (await isBlocked(inbox.organizationId, fromEmail)) {
-    console.log(`[inbound] blocked sender ${fromEmail} — skipping`);
+    console.log("[inbound] blocked sender — skipping");
     return NextResponse.json({ ok: true, skipped: "blocked" });
   }
 
@@ -136,7 +136,7 @@ export async function POST(req: NextRequest) {
   if (messageId) {
     const dup = await findMessageByExternalId(messageId);
     if (dup) {
-      console.log(`[inbound] duplicate Message-ID ${messageId} — skipping`);
+      console.log("[inbound] duplicate Message-ID — skipping");
       return NextResponse.json({ status: "duplicate", existingMessageId: dup.id });
     }
   }

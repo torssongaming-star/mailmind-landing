@@ -2,6 +2,7 @@ import { Resend } from "resend";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 import { siteConfig } from "@/config/site";
+import { maskEmail } from "@/lib/utils";
 
 // ── Validation Schema ────────────────────────────────────────────────────────
 const demoRequestSchema = z.object({
@@ -24,7 +25,6 @@ const demoRequestSchema = z.object({
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    console.log("[api/demo-request] Received body:", JSON.stringify(body, null, 2));
 
     // 1. Validate with Zod
     const result = demoRequestSchema.safeParse(body);
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     // 2. Honeypot check
     // If 'websiteUrl' is filled, it's likely a bot. Silently return success.
     if (data.websiteUrl) {
-      console.warn("[api/demo-request] Honeypot triggered by:", data.workEmail);
+      console.warn("[api/demo-request] Honeypot triggered by:", maskEmail(data.workEmail));
       return NextResponse.json({ success: true });
     }
     // 3. Check environment variables

@@ -38,3 +38,20 @@ export async function notifyUsageWarning(input: {
 <p><a href="https://mailmind.se/dashboard/billing">Uppgradera din plan →</a></p>`,
   });
 }
+
+export async function notifyTrialExpired(input: {
+  toEmail: string;
+  orgName: string;
+  plan: string;
+}) {
+  await resend.emails.send({
+    from: FROM,
+    to: input.toEmail,
+    subject: `Din gratis provperiod har gått ut – ${input.orgName}`,
+    html: `<p>Hej!</p>
+<p>Din 14-dagars provperiod för <strong>${input.orgName}</strong> har gått ut och AI-funktionerna är nu inaktiverade.</p>
+<p>Välj ett abonnemang för att fortsätta ta emot och svara på kundmejl med AI.</p>
+<p><a href="https://mailmind.se/dashboard/billing">Välj abonnemang →</a></p>
+<p>Har du frågor? Svara på detta mejl så hjälper vi dig.</p>`,
+  });
+}

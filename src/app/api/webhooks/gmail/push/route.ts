@@ -44,6 +44,7 @@ import {
 import { autoTriageNewMessage } from "@/lib/app/autoTriage";
 import { writeAuditLog } from "@/lib/app/audit";
 import { isBlocked } from "@/lib/app/blocklist";
+import { maskEmail } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -79,7 +80,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { emailAddress, historyId: newHistoryId } = pushData;
-  console.log(`[gmail/push] notification for ${emailAddress}, historyId=${newHistoryId}`);
+  console.log(`[gmail/push] notification for ${maskEmail(emailAddress)}, historyId=${newHistoryId}`);
 
   // ── 2. Look up inbox ───────────────────────────────────────────────────────
   const inbox = await getInboxByEmail(emailAddress);

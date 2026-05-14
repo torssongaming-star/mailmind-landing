@@ -132,19 +132,19 @@ export async function POST(req: NextRequest) {
   const toEmail   = pickMailmindAddress(toHeader);
 
   if (!fromEmail || !toEmail) {
-    console.warn("[inbound] could not extract from/to:", { fromHeader, toHeader });
+    console.warn("[inbound] could not extract from/to");
     return NextResponse.json({ error: "Could not parse from/to addresses" }, { status: 400 });
   }
 
   const inbox = await getInboxByEmail(toEmail);
   if (!inbox) {
-    console.warn("[inbound] no inbox registered for", toEmail);
-    return NextResponse.json({ status: "no_inbox", to: toEmail });
+    console.warn("[inbound] no inbox registered for masked address");
+    return NextResponse.json({ status: "no_inbox" });
   }
 
   const blocked = await isBlocked(inbox.organizationId, fromEmail);
   if (blocked) {
-    console.log(`[inbound] blocked sender ${fromEmail} — skipping`);
+    console.log("[inbound] blocked sender — skipping");
     return NextResponse.json({ ok: true, skipped: "blocked" });
   }
 
@@ -152,7 +152,7 @@ export async function POST(req: NextRequest) {
   if (messageIdEarly) {
     const dup = await findMessageByExternalId(messageIdEarly);
     if (dup) {
-      console.log(`[inbound] duplicate Message-ID ${messageIdEarly} — skipping`);
+      console.log("[inbound] duplicate Message-ID — skipping");
       return NextResponse.json({ status: "duplicate", existingMessageId: dup.id });
     }
   }

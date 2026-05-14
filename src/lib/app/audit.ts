@@ -38,7 +38,8 @@ export type AuditAction =
   | "subscription_updated"
   | "subscription_canceled"
   | "payment_succeeded"
-  | "payment_failed";
+  | "payment_failed"
+  | "trial_expired";
 
 export type AuditEntry = {
   organizationId: string;
@@ -55,6 +56,6 @@ export async function writeAuditLog(entry: AuditEntry): Promise<void> {
   try {
     await dbWriteAuditLog(entry);
   } catch (err) {
-    console.error("[audit] write failed:", err, entry);
+    console.error("[audit] write failed:", err, { action: entry.action, organizationId: entry.organizationId });
   }
 }

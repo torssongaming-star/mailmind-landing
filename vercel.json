@@ -1,8 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/cron/unsnooze",
-      "schedule": "0 0 * * *"
+      "path": "/api/cron/tick",
+      "schedule": "*/15 * * * *"
     }
   ]
 }
