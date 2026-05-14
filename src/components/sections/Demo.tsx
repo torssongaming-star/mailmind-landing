@@ -2,7 +2,7 @@
 
 import { Section } from "@/components/ui/section";
 import { ProductMockup } from "@/components/design-system/ProductMockup";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n/context";
 
 export function Demo() {
   const { t } = useI18n();

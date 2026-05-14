@@ -4,7 +4,7 @@ import { Sparkles, FileText, Tag, MessageCircle, Inbox, Globe, BookOpen, ShieldC
 import { Section } from "@/components/ui/section";
 import { FeatureCard } from "@/components/design-system/FeatureCard";
 
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n/context";
 
 export function Features() {
   const { t } = useI18n();

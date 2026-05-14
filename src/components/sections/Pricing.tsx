@@ -4,7 +4,7 @@ import { Section } from "@/components/ui/section";
 import { PricingCard } from "@/components/design-system/PricingCard";
 import { PLAN_LIST } from "@/lib/plans";
 
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n/context";
 
 export function Pricing() {
   const { t } = useI18n();

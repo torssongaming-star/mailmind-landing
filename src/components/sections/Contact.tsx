@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Section } from "@/components/ui/section";
 import { Send, CheckCircle2, AlertCircle, ChevronDown, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n/context";
 
 const inputClass =
   "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm md:text-base placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all";

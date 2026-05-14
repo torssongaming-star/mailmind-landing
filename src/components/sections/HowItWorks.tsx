@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Section } from "@/components/ui/section";
 
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n/context";
 
 export function HowItWorks() {
   const { t } = useI18n();

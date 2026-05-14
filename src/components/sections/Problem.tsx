@@ -5,7 +5,7 @@ import { Clock, Inbox, Repeat } from "lucide-react";
 import { Section } from "@/components/ui/section";
 import { FeatureCard } from "@/components/design-system/FeatureCard";
 
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n/context";
 
 export function Problem() {
   const { t } = useI18n();

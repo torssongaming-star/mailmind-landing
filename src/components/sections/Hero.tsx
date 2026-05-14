@@ -8,7 +8,7 @@ import { ArrowRight, ShieldCheck } from "lucide-react";
 import { Section } from "@/components/ui/section";
 import { HeroMockup } from "@/components/design-system/HeroMockup";
 import { Badge } from "@/components/ui/badge";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n/context";
 
 export function Hero() {
   const { t } = useI18n();

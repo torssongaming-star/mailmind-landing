@@ -4,7 +4,7 @@ import { Shield, Lock, UserCheck, History, Globe, BrainCircuit } from "lucide-re
 import { Section } from "@/components/ui/section";
 import { FeatureCard } from "@/components/design-system/FeatureCard";
 
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n/context";
 
 export function Security() {
   const { t } = useI18n();

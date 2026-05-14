@@ -78,4 +78,5 @@ export function getTranslations(locale: Locale = "sv") {
   return getI18n(locale);
 }
 
-export { useI18n } from "./context";
+// Re-exports
+export type { Locale, TranslationPath } from "./types";

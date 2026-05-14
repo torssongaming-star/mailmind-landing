@@ -5,59 +5,59 @@ import { Shirt, ShoppingBag, Building, Wrench, Stethoscope, Store, Headset, Truc
 import { Section } from "@/components/ui/section";
 import { GradientCard } from "@/components/design-system/GradientCard";
 import { Badge } from "@/components/ui/badge";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n/context";
 
 export function UseCases() {
-  const { t } = useI18n();
+  const { t, getRaw } = useI18n();
 
   const industries = [
     {
       icon: <ShoppingBag className="w-5 h-5" />,
       title: t("landing.useCases.ecommerce"),
       description: t("landing.useCases.ecommerceDesc"),
-      tags: t("landing.useCases.ecommerceTags" as any) as unknown as string[]
+      tags: getRaw("landing.useCases.ecommerceTags") || []
     },
     {
       icon: <Headset className="w-5 h-5" />,
       title: t("landing.useCases.support"),
       description: t("landing.useCases.supportDesc"),
-      tags: t("landing.useCases.supportTags" as any) as unknown as string[]
+      tags: getRaw("landing.useCases.supportTags") || []
     },
     {
       icon: <Truck className="w-5 h-5" />,
       title: t("landing.useCases.logistics"),
       description: t("landing.useCases.logisticsDesc"),
-      tags: t("landing.useCases.logisticsTags" as any) as unknown as string[]
+      tags: getRaw("landing.useCases.logisticsTags") || []
     },
     {
       icon: <Building className="w-5 h-5" />,
       title: t("landing.useCases.property"),
       description: t("landing.useCases.propertyDesc"),
-      tags: t("landing.useCases.propertyTags" as any) as unknown as string[]
+      tags: getRaw("landing.useCases.propertyTags") || []
     },
     {
       icon: <Wrench className="w-5 h-5" />,
       title: t("landing.useCases.repair"),
       description: t("landing.useCases.repairDesc"),
-      tags: t("landing.useCases.repairTags" as any) as unknown as string[]
+      tags: getRaw("landing.useCases.repairTags") || []
     },
     {
       icon: <Stethoscope className="w-5 h-5" />,
       title: t("landing.useCases.clinics"),
       description: t("landing.useCases.clinicsDesc"),
-      tags: t("landing.useCases.clinicsTags" as any) as unknown as string[]
+      tags: getRaw("landing.useCases.clinicsTags") || []
     },
     {
       icon: <Store className="w-5 h-5" />,
       title: t("landing.useCases.services"),
       description: t("landing.useCases.servicesDesc"),
-      tags: t("landing.useCases.servicesTags" as any) as unknown as string[]
+      tags: getRaw("landing.useCases.servicesTags") || []
     },
     {
       icon: <Shirt className="w-5 h-5" />,
       title: t("landing.useCases.textile"),
       description: t("landing.useCases.textileDesc"),
-      tags: t("landing.useCases.textileTags" as any) as unknown as string[]
+      tags: getRaw("landing.useCases.textileTags") || []
     },
   ];
 

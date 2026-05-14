@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Mail } from "lucide-react";
 import { siteConfig } from "@/config/site";
-import { useI18n } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n/context";
 
 function FooterLinkGroup({ title, links }: { title: string; links: { href: string; label: string }[] }) {
   return (
