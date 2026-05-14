@@ -32,7 +32,7 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: siteConfig.ogImage,
+        url: "/favicon.png",
         width: 1200,
         height: 630,
         alt: "Mailmind — AI email support",

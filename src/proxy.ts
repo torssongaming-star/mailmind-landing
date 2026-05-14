@@ -32,15 +32,9 @@ export default proxy;
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths EXCEPT:
-     * - _next/static  (static files)
-     * - _next/image   (image optimization)
-     * - favicon.ico   (favicon)
-     * - public folder files (images, fonts, etc.)
-     * - api/webhooks  (Stripe + Clerk webhooks — unauthenticated)
-     * - api/db-test   (Database health check — unauthenticated)
-     */
-    "/((?!_next/static|_next/image|favicon\\.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    // Skip Next.js internals and all static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
   ],
 };
