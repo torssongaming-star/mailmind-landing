@@ -12,7 +12,8 @@ import {
   aiDrafts,
   aiSettings,
   usageCounters,
-  auditLogs
+  auditLogs,
+  inboxes,
 } from "@/lib/db/schema";
 import { desc, eq, count, and, or, ilike, max, gte, sql } from "drizzle-orm";
 
@@ -424,16 +425,44 @@ export async function listAdminNotes(targetId: string, type: "user" | "organizat
 /**
  * Lists admin audit logs.
  */
-export async function listAdminAuditLogs() {
+export async function listAdminAuditLogs(limit = 200) {
   if (!isDbConnected()) return [];
 
   try {
     return await db.select()
       .from(adminAuditLogs)
       .orderBy(desc(adminAuditLogs.createdAt))
-      .limit(200);
+      .limit(limit);
   } catch (error) {
     console.error("Failed to list admin audit logs:", error);
+    return [];
+  }
+}
+
+/**
+ * Lists inboxes with status="error" across all organizations, newest first.
+ */
+export async function listFailedInboxes(limit = 50) {
+  if (!isDbConnected()) return [];
+
+  try {
+    return await db.select({
+      id:           inboxes.id,
+      email:        inboxes.email,
+      displayName:  inboxes.displayName,
+      provider:     inboxes.provider,
+      lastSyncedAt: inboxes.lastSyncedAt,
+      updatedAt:    inboxes.updatedAt,
+      orgName:      organizations.name,
+      organizationId: inboxes.organizationId,
+    })
+      .from(inboxes)
+      .innerJoin(organizations, eq(inboxes.organizationId, organizations.id))
+      .where(eq(inboxes.status, "error"))
+      .orderBy(desc(inboxes.updatedAt))
+      .limit(limit);
+  } catch (error) {
+    console.error("Failed to list failed inboxes:", error);
     return [];
   }
 }
