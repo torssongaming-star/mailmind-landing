@@ -50,21 +50,31 @@ Domain: `mailmind.se`. Inbound mail subdomain: `mail.mailmind.se`.
 
 ## Phase roadmap
 
+> Detaljerade task-beskrivningar för Antigravity: **`docs/antigravity-tasks.md`**
+
 ```
-Fas 1  ✅  Landing page + waitlist
-Fas 2  ✅  Auth (Clerk) + org/user sync
-Fas 3  ✅  Stripe billing (checkout, portal, webhooks, entitlements)
-Fas 4  ✅  Inbox creation + SendGrid inbound
-Fas 5  ✅  AI draft pipeline (auto-triage, manual generate, approve/send)
-Fas 6a ✅  Internal notes + reply templates
-Fas 6b ✅  Outlook sideload guide + manifest.xml (Mailbox 1.3)
-Fas 6c ✅  Dry-run pipeline + admin dry-run review UI
-Fas 6d ✅  Autosvar-pipeline (canAutoSend, executeSendDraft, AutoSendPanel)
-Fas 6e ⏳  Manuella ops — Live Stripe keys + Resend DNS (Emil, no code)
-Fas 7  ✅  Tags, blocklist-hook, inbox split-pane, settings sidebar, support drawer
-Fas 8  ✅  Stats, webhooks, snooze, search, onboarding-wizard, mobile-sidebar
-Fas 9  ✅  Gmail OAuth — connect, receive, send via Gmail API + Pub/Sub push
-Fas 10 ✅  Onboarding redesign — 5 obligatoriska steg + AI-kunskapsbas wizard
+Fas 1   ✅  Landing page + waitlist
+Fas 2   ✅  Auth (Clerk) + org/user sync
+Fas 3   ✅  Stripe billing (checkout, portal, webhooks, entitlements)
+Fas 4   ✅  Inbox creation + SendGrid inbound
+Fas 5   ✅  AI draft pipeline (auto-triage, manual generate, approve/send)
+Fas 6a  ✅  Internal notes + reply templates
+Fas 6b  ✅  Outlook sideload guide + manifest.xml (Mailbox 1.3)
+Fas 6c  ✅  Dry-run pipeline + admin dry-run review UI
+Fas 6d  ✅  Autosvar-pipeline (canAutoSend, executeSendDraft, AutoSendPanel)
+Fas 6e  ⏳  Manuella ops — Live Stripe keys + SendGrid MX + Neon index (Emil, ingen kod)
+Fas 7   ✅  Tags, blocklist-hook, inbox split-pane, settings sidebar, support drawer
+Fas 8   ✅  Stats, webhooks, snooze, search, onboarding-wizard, mobile-sidebar
+Fas 9   ✅  Gmail OAuth — connect, receive, send via Gmail API + Pub/Sub push
+Fas 10  ✅  Onboarding redesign — 5 obligatoriska steg + AI-kunskapsbas wizard
+Fas 11  🔲  Petitesser & fixar — cron, PII-logs, svenska strängar, admin-dashboard
+Fas 12  🔲  Säkerhet & stabilitet — SendGrid HMAC, AI-retry, type safety
+Fas 13  🔲  Microsoft 365 / Outlook OAuth (låst beslut — högsta prioritet efter Fas 12)
+Fas 14  🔲  Veckovis e-postrapport — retention-cron + Resend-mall
+Fas 15  🔲  Team & roller — bjud in kollegor, admin/agent-roller
+Fas 16  🔲  Kundhistorik & AI-kontext — injicera historik i AI-prompt
+Fas 17  🔲  Prissättning & konvertering — trial-banner, referral-kod
+Fas 18  🔲  PWA & mobilnotiser — offline, Web Push
 ```
 
 ---
