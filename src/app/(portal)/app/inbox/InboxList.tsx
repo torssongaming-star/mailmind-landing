@@ -27,7 +27,7 @@ const POLL_INTERVAL_MS = 30_000; // 30 seconds
 
 import { useI18n } from "@/lib/i18n/context";
 
-export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; slaByCaseType?: Record<string, number> }) {
+export function InboxList({ threads = [], slaByCaseType = {} }: { threads: Thread[]; slaByCaseType?: Record<string, number> }) {
   const { t, locale } = useI18n();
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
