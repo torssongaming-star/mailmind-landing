@@ -1,5 +1,5 @@
-import { sv } from "./dictionaries/sv";
-import { en } from "./dictionaries/en";
+import { sv } from "./locales/sv";
+import { en } from "./locales/en";
 import { Locale, TranslationPath } from "./types";
 
 const dictionaries: Record<Locale, any> = { sv, en };
