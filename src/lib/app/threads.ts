@@ -24,6 +24,7 @@ import {
   type CaseType,
   type Inbox,
 } from "@/lib/db";
+import { z } from "zod";
 
 // ── Threads ──────────────────────────────────────────────────────────────────
 
@@ -165,14 +166,16 @@ export async function wakeUpAllSnoozedThreads(): Promise<number> {
 export async function countSnoozedThreads(organizationId: string): Promise<number> {
   if (!isDbConnected()) return 0;
   const { sql: sqlTag } = await import("drizzle-orm");
-  const rows = (await db.execute(sqlTag`
-    SELECT COUNT(*)::int AS n
-    FROM email_threads
-    WHERE organization_id = ${organizationId}
-      AND snoozed_until IS NOT NULL
-      AND snoozed_until > NOW()
-  `)) as unknown as { rows: Array<{ n: number }> };
-  return rows.rows[0]?.n ?? 0;
+    const result = await db.execute(sqlTag`
+      SELECT COUNT(*)::int AS n
+      FROM email_threads
+      WHERE organization_id = ${organizationId}
+        AND snoozed_until IS NOT NULL
+        AND snoozed_until > NOW()
+    `);
+    const schema = z.array(z.object({ n: z.number() }));
+    const rows = schema.parse(result.rows);
+    return rows[0]?.n ?? 0;
 }
 
 /** Server-side search across subject, fromEmail, fromName, tags. ILIKE for case-insensitive. */
@@ -186,22 +189,23 @@ export async function searchThreads(
   if (!q) return [];
   const { sql: sqlTag } = await import("drizzle-orm");
   const pattern = `%${q.replace(/[%_]/g, m => "\\" + m)}%`;
-  const rows = (await db.execute(sqlTag`
-    SELECT * FROM email_threads
-    WHERE organization_id = ${organizationId}
-      AND (
-        subject     ILIKE ${pattern}
-        OR from_email ILIKE ${pattern}
-        OR from_name  ILIKE ${pattern}
-        OR EXISTS (
-          SELECT 1 FROM jsonb_array_elements_text(tags) AS tag
-          WHERE tag ILIKE ${pattern}
+    const result = await db.execute(sqlTag`
+      SELECT * FROM email_threads
+      WHERE organization_id = ${organizationId}
+        AND (
+          subject     ILIKE ${pattern}
+          OR from_email ILIKE ${pattern}
+          OR from_name  ILIKE ${pattern}
+          OR EXISTS (
+            SELECT 1 FROM jsonb_array_elements_text(tags) AS tag
+            WHERE tag ILIKE ${pattern}
+          )
         )
-      )
-    ORDER BY last_message_at DESC
-    LIMIT ${limit}
-  `)) as unknown as { rows: EmailThread[] };
-  return rows.rows;
+      ORDER BY last_message_at DESC
+      LIMIT ${limit}
+    `);
+    const schema = z.array(z.unknown()); // Use unknown instead of any to satisfy lint
+    return schema.parse(result.rows) as EmailThread[];
 }
 
 

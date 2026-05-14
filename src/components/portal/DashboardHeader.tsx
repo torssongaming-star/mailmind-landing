@@ -21,27 +21,29 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { siteConfig } from "@/config/site";
+import { useI18n } from "@/lib/i18n/context";
 
 interface DashboardHeaderProps {
   title: string;
   description?: string;
 }
 
-const navItems = [
-  { href: "/app",                label: "Home",      icon: LayoutDashboard },
-  { href: "/app/inbox",          label: "Inbox",     icon: Mail },
-  { href: "/dashboard/billing",  label: "Billing",   icon: CreditCard },
-  { href: "/app/settings/account", label: "Account", icon: UserCircle },
-  { href: "/app/settings",       label: "Settings",  icon: Settings },
-  { href: "/dashboard/team",     label: "Team",      icon: Users },
-  { href: "/dashboard/usage",    label: "Usage",     icon: BarChart2 },
-  { href: "mailto:support@mailmind.se", label: "Support", icon: HelpCircle },
-];
-
 export function DashboardHeader({ title, description }: DashboardHeaderProps) {
   const { user } = useUser();
+  const { t } = useI18n();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+
+  const navItems = [
+    { href: "/app",                label: t("nav.overview"),      icon: LayoutDashboard },
+    { href: "/app/inbox",          label: t("nav.inbox"),     icon: Mail },
+    { href: "/dashboard/billing",  label: t("nav.billing"),   icon: CreditCard },
+    { href: "/app/settings/account", label: t("nav.account"), icon: UserCircle },
+    { href: "/app/settings",       label: t("nav.settings"),  icon: Settings },
+    { href: "/dashboard/team",     label: t("nav.team"),      icon: Users },
+    { href: "/dashboard/usage",    label: t("nav.usage"),      icon: BarChart2 },
+    { href: "mailto:support@mailmind.se", label: t("common.support"), icon: HelpCircle },
+  ];
 
   // Prevent background scroll while menu is open
   useEffect(() => {
@@ -60,7 +62,7 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className="p-2 -ml-2 text-muted-foreground hover:text-white lg:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded-xl"
-            aria-label="Toggle menu"
+            aria-label={t("nav.mobileOpen")}
           >
             {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
@@ -120,7 +122,7 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="ml-auto p-2 text-muted-foreground hover:text-white rounded-xl active:bg-white/5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
-                  aria-label="Close menu"
+                  aria-label={t("nav.mobileClose")}
                 >
                   <X size={20} />
                 </button>
@@ -158,7 +160,7 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
                   className="flex items-center gap-2.5 px-3 py-3 text-sm text-muted-foreground hover:text-white transition-colors rounded-xl hover:bg-white/[0.04] active:bg-white/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
                 >
                   <ArrowLeft size={16} />
-                  Back to {siteConfig.domain}
+                  {t("common.backTo", { domain: siteConfig.domain })}
                 </Link>
               </div>
             </motion.div>

@@ -32,7 +32,6 @@ import type {
 
 export const AI_MODEL = "claude-haiku-4-5-20251001";
 const TIMEOUT_MS = 15_000;
-const MAX_RETRIES = 3;
 
 /** Fields appended to every AI output for auto-send eligibility. */
 const AutoSendMeta = z.object({
@@ -195,20 +194,61 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   ]);
 }
 
-async function retryWithBackoff<T>(fn: () => Promise<T>, retries = MAX_RETRIES): Promise<T> {
+export class AiTransientError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "AiTransientError";
+  }
+}
+
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  opts: { maxRetries: number; delays: number[] }
+): Promise<T> {
   let lastErr: unknown;
-  for (let attempt = 1; attempt <= retries; attempt++) {
+  for (let attempt = 0; attempt <= opts.maxRetries; attempt++) {
     try {
       return await fn();
-    } catch (err) {
+    } catch (err: unknown) {
       lastErr = err;
-      const status = (err as { status?: number })?.status;
-      const message = (err as { message?: string })?.message ?? "";
-      const retryable = status === 529 || status === 503 || message.includes("Timeout");
-      if (attempt === retries || !retryable) throw err;
-      const wait = Math.min(1000 * 2 ** (attempt - 1), 8000);
-      console.warn(`[ai] attempt ${attempt}/${retries} failed (${message}); retrying in ${wait}ms`);
-      await new Promise(r => setTimeout(r, wait));
+      const error = err as {
+        status?: number;
+        message?: string;
+        headers?: Record<string, string>;
+      };
+      const status = error.status;
+      const message = error.message ?? "";
+
+      // Retry on: status >= 500, ETIMEDOUT, ECONNRESET, Timeout
+      const isTransient =
+        (status && status >= 500) ||
+        message.includes("ETIMEDOUT") ||
+        message.includes("ECONNRESET") ||
+        message.includes("Timeout");
+
+      const isRateLimit = status === 429;
+
+      if (!isTransient && !isRateLimit) {
+        throw err; // Not retryable (e.g. 400, 401)
+      }
+
+      if (attempt === opts.maxRetries) {
+        throw new AiTransientError(message);
+      }
+
+      let wait = opts.delays[attempt] ?? 1000;
+      if (isRateLimit) {
+        const retryAfter = error.headers?.["retry-after"];
+        if (retryAfter) {
+          const parsed = parseInt(retryAfter, 10);
+          if (!isNaN(parsed)) wait = parsed * 1000;
+        }
+      }
+
+      console.warn(
+        `[ai] attempt ${attempt + 1}/${opts.maxRetries + 1} failed (${message}); retrying in ${wait}ms`
+      );
+      await new Promise((r) => setTimeout(r, wait));
     }
   }
   throw lastErr;
@@ -263,22 +303,24 @@ export async function generateDraft(input: GenerateDraftInput): Promise<Generate
     // on cached input tokens + lower latency on the second+ call within the
     // 5-minute TTL window. Saves real money once a customer is processing
     // multiple emails per day.
-    const response = await retryWithBackoff(() =>
-      withTimeout(
-        client.messages.create({
-          model:      AI_MODEL,
-          max_tokens: 1000,
-          system: [
-            {
-              type: "text",
-              text: systemPrompt,
-              cache_control: { type: "ephemeral" },
-            },
-          ],
-          messages: [{ role: "user", content: userMessage }],
-        }),
-        TIMEOUT_MS
-      )
+    const response = await retryWithBackoff(
+      () =>
+        withTimeout(
+          client.messages.create({
+            model: AI_MODEL,
+            max_tokens: 1000,
+            system: [
+              {
+                type: "text",
+                text: systemPrompt,
+                cache_control: { type: "ephemeral" },
+              },
+            ],
+            messages: [{ role: "user", content: userMessage }],
+          }),
+          TIMEOUT_MS
+        ),
+      { maxRetries: 2, delays: [500, 1500] }
     );
 
     rawText = response.content
@@ -294,14 +336,17 @@ export async function generateDraft(input: GenerateDraftInput): Promise<Generate
 
     return { output: validated, rawText, model: AI_MODEL };
   } catch (err) {
+    if (err instanceof AiTransientError) {
+      throw err;
+    }
     const reason = err instanceof Error ? err.message : "Unknown AI error";
     console.error("[ai] error:", reason, "| raw:", rawText.slice(0, 200));
     return {
       output: {
-        action:          "escalate",
-        reason:          `AI fallback: ${reason}`,
-        confidence:      0,
-        risk_level:      "high",
+        action: "escalate",
+        reason: `AI fallback: ${reason}`,
+        confidence: 0,
+        risk_level: "high",
         source_grounded: false,
       },
       rawText,

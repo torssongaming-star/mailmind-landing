@@ -36,6 +36,8 @@ const STATUS_DOT: Record<string, string> = {
 
 const POLL_MS = 30_000;
 
+import { useI18n } from "@/lib/i18n/context";
+
 export function InboxShell({
   threads,
   canGenerate,
@@ -45,6 +47,7 @@ export function InboxShell({
   canGenerate:   boolean;
   slaByCaseType?: Record<string, number>;
 }) {
+  const { t, locale } = useI18n();
   const router  = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(
     threads.length > 0 ? threads[0].id : null
@@ -77,10 +80,10 @@ export function InboxShell({
     () => Object.fromEntries(threads.map(t => [
       t.id,
       t.lastMessageAt
-        ? new Date(t.lastMessageAt).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" })
+        ? new Date(t.lastMessageAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE", { dateStyle: "short", timeStyle: "short" })
         : "—",
     ])),
-    [threads]
+    [threads, locale]
   );
 
   const allSelected = threads.length > 0 && selected.size === threads.length;
@@ -88,7 +91,7 @@ export function InboxShell({
 
   const handleBulk = async (action: "resolve" | "escalate" | "delete") => {
     if (selected.size === 0 || pendingAction) return;
-    if (action === "delete" && !confirm(`Ta bort ${selected.size} tråd${selected.size === 1 ? "" : "ar"}?`)) return;
+    if (action === "delete" && !confirm(t("inbox.bulk.deleteConfirm", { count: selected.size.toString() }))) return;
     setPendingAction(action);
     setBulkError(null);
     try {
@@ -98,11 +101,11 @@ export function InboxShell({
         body:    JSON.stringify({ threadIds: Array.from(selected), action }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? "Misslyckades");
+      if (!res.ok) throw new Error(data.error ?? t("common.error"));
       setSelected(new Set());
       router.refresh();
     } catch (e) {
-      setBulkError(e instanceof Error ? e.message : "Okänt fel");
+      setBulkError(e instanceof Error ? e.message : t("common.error"));
     } finally {
       setPendingAction(null);
     }
@@ -124,12 +127,12 @@ export function InboxShell({
             className="rounded cursor-pointer"
           />
           <span className="text-[10px] text-muted-foreground flex-1">
-            {threads.length} tråd{threads.length === 1 ? "" : "ar"}
+            {threads.length} {t("inbox.title").toLowerCase()}
           </span>
           <button
             onClick={refresh}
             disabled={refreshing}
-            title={`Uppdaterades ${lastRefresh.toLocaleTimeString("sv-SE")}`}
+            title={t("inbox.status.updatedAt", { time: lastRefresh.toLocaleTimeString(locale === "sv" ? "sv-SE" : "en-IE") })}
             className="text-muted-foreground hover:text-white transition-colors disabled:opacity-40"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
@@ -139,18 +142,18 @@ export function InboxShell({
         {/* Bulk bar */}
         {selected.size > 0 && (
           <div className="shrink-0 flex items-center gap-1.5 px-3 py-2 bg-primary/5 border-b border-primary/20 flex-wrap">
-            <span className="text-[10px] text-white font-semibold">{selected.size} valda</span>
-            <button onClick={() => setSelected(new Set())} className="text-[10px] text-muted-foreground hover:text-white ml-1">Rensa</button>
+            <span className="text-[10px] text-white font-semibold">{selected.size} {t("inbox.bulk.selected")}</span>
+            <button onClick={() => setSelected(new Set())} className="text-[10px] text-muted-foreground hover:text-white ml-1">{t("inbox.bulk.clear")}</button>
             {bulkError && <span className="text-[10px] text-red-400">{bulkError}</span>}
             <div className="flex-1" />
             <button onClick={() => handleBulk("resolve")} disabled={!!pendingAction} className="text-[10px] px-2 py-1 rounded-md bg-green-500/15 text-green-400 border border-green-500/30 hover:bg-green-500/25 disabled:opacity-40 transition-colors">
-              {pendingAction === "resolve" ? "…" : "Avsluta"}
+              {pendingAction === "resolve" ? "…" : t("inbox.thread.actions.summarize")}
             </button>
             <button onClick={() => handleBulk("escalate")} disabled={!!pendingAction} className="text-[10px] px-2 py-1 rounded-md bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25 disabled:opacity-40 transition-colors">
-              {pendingAction === "escalate" ? "…" : "Eskalera"}
+              {pendingAction === "escalate" ? "…" : t("inbox.thread.actions.escalate")}
             </button>
             <button onClick={() => handleBulk("delete")} disabled={!!pendingAction} className="text-[10px] px-2 py-1 rounded-md border border-white/10 text-muted-foreground hover:text-white disabled:opacity-40 transition-colors">
-              {pendingAction === "delete" ? "…" : "Ta bort"}
+              {pendingAction === "delete" ? "…" : t("inbox.bulk.delete")}
             </button>
           </div>
         )}
@@ -159,7 +162,7 @@ export function InboxShell({
         <ul className="flex-1 overflow-y-auto divide-y divide-white/5">
           {threads.length === 0 && (
             <li className="px-4 py-8 text-center text-xs text-muted-foreground">
-              Inga trådar matchar filtret
+              {t("inbox.thread.status.noMatch")}
             </li>
           )}
           {threads.map(t => {
@@ -203,7 +206,7 @@ export function InboxShell({
                     {t.fromName ?? t.fromEmail}
                   </p>
                   <p className="text-[11px] text-muted-foreground truncate">
-                    {t.subject ?? "(inget ämne)"}
+                    {t.subject ?? t("inbox.noSubject")}
                   </p>
                   <div className="flex items-center gap-1.5 flex-wrap mt-1">
                     {t.caseTypeSlug && (
@@ -218,7 +221,7 @@ export function InboxShell({
                       <span className="text-[9px] font-bold text-red-400">SLA</span>
                     )}
                     {t.snoozedUntil && new Date(t.snoozedUntil) > new Date() && (
-                      <span className="text-[9px] text-amber-400">snoozad</span>
+                      <span className="text-[9px] text-amber-400">{t("inbox.status.snoozed").toLowerCase()}</span>
                     )}
                   </div>
                 </div>
@@ -247,7 +250,7 @@ export function InboxShell({
               <rect x="2" y="4" width="20" height="16" rx="2"/>
               <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
             </svg>
-            <p className="text-sm">Välj en tråd</p>
+            <p className="text-sm">{t("inbox.thread.status.selectThread")}</p>
           </div>
         )}
       </div>

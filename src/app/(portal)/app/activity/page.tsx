@@ -1,38 +1,12 @@
-/**
- * /app/activity — audit log viewer.
- *
- * Shows the most recent events for the current org. Useful for debugging
- * (which email triggered which AI draft, when usage limits hit, etc.) and
- * for compliance — every state change has a row.
- */
-
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { getAuditLogs } from "@/lib/db/queries";
+import { getTranslations } from "@/lib/i18n";
+import { getUserLocale } from "@/lib/i18n/get-locale";
 
 export const dynamic = "force-dynamic";
-
-const ACTION_LABELS: Record<string, { label: string; tone: string }> = {
-  ai_draft_generated:     { label: "AI draft generated",     tone: "blue" },
-  ai_draft_edited:        { label: "Draft edited",           tone: "neutral" },
-  ai_draft_sent:          { label: "Draft sent to customer", tone: "green" },
-  ai_draft_rejected:      { label: "Draft rejected",         tone: "red" },
-  thread_escalated:       { label: "Thread escalated",       tone: "amber" },
-  thread_resolved:        { label: "Thread resolved",        tone: "green" },
-  email_processed:        { label: "Email received",         tone: "blue" },
-  inbox_connected:        { label: "Inbox connected",        tone: "green" },
-  inbox_disconnected:     { label: "Inbox disconnected",     tone: "neutral" },
-  user_invited:           { label: "User invited",           tone: "neutral" },
-  user_removed:           { label: "User removed",           tone: "neutral" },
-  onboarding_completed:   { label: "Account created",        tone: "green" },
-  checkout_completed:     { label: "Subscription started",   tone: "green" },
-  subscription_updated:   { label: "Subscription updated",   tone: "blue" },
-  subscription_canceled:  { label: "Subscription cancelled", tone: "red" },
-  payment_succeeded:      { label: "Payment succeeded",      tone: "green" },
-  payment_failed:         { label: "Payment failed",         tone: "red" },
-};
 
 function tonClasses(tone: string): string {
   switch (tone) {
@@ -52,32 +26,55 @@ export default async function ActivityPage() {
   if (!account.user) redirect("/app/onboarding");
   if (!account.access.canUseApp) redirect("/app");
 
+  const locale = await getUserLocale();
+  const t = await getTranslations(locale);
+
   const logs = await getAuditLogs(account.organization.id, 100);
+
+  const ACTION_MAP: Record<string, { label: string; tone: string }> = {
+    ai_draft_generated:     { label: t("activity.actions.ai_draft_generated"),     tone: "blue" },
+    ai_draft_edited:        { label: t("activity.actions.ai_draft_edited"),        tone: "neutral" },
+    ai_draft_sent:          { label: t("activity.actions.ai_draft_sent"),          tone: "green" },
+    ai_draft_rejected:      { label: t("activity.actions.ai_draft_rejected"),      tone: "red" },
+    thread_escalated:       { label: t("activity.actions.thread_escalated"),       tone: "amber" },
+    thread_resolved:        { label: t("activity.actions.thread_resolved"),        tone: "green" },
+    email_processed:        { label: t("activity.actions.email_processed"),        tone: "blue" },
+    inbox_connected:        { label: t("activity.actions.inbox_connected"),        tone: "green" },
+    inbox_disconnected:     { label: t("activity.actions.inbox_disconnected"),     tone: "neutral" },
+    user_invited:           { label: t("activity.actions.user_invited"),           tone: "neutral" },
+    user_removed:           { label: t("activity.actions.user_removed"),           tone: "neutral" },
+    onboarding_completed:   { label: t("activity.actions.onboarding_completed"),   tone: "green" },
+    checkout_completed:     { label: t("activity.actions.checkout_completed"),     tone: "green" },
+    subscription_updated:   { label: t("activity.actions.subscription_updated"),   tone: "blue" },
+    subscription_canceled:  { label: t("activity.actions.subscription_canceled"),  tone: "red" },
+    payment_succeeded:      { label: t("activity.actions.payment_succeeded"),      tone: "green" },
+    payment_failed:         { label: t("activity.actions.payment_failed"),         tone: "red" },
+  };
 
   return (
     <main className="max-w-3xl mx-auto p-6 md:p-10 space-y-6">
 
       <header className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">Activity</p>
-          <h1 className="text-2xl font-bold text-white">Recent events</h1>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">{t("activity.header")}</p>
+          <h1 className="text-2xl font-bold text-white">{t("activity.title")}</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Last {logs.length} events
+            {t("activity.lastEvents", { count: logs.length.toString() })}
           </p>
         </div>
         <Link href="/app" className="text-xs text-muted-foreground hover:text-white px-3 py-1.5 transition-colors">
-          ← App home
+          ← {t("nav.app")}
         </Link>
       </header>
 
       {logs.length === 0 ? (
         <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-10 text-center">
-          <p className="text-sm text-white/70">No activity yet</p>
+          <p className="text-sm text-white/70">{t("activity.noActivity")}</p>
         </div>
       ) : (
         <ul className="rounded-2xl border border-white/8 bg-[#050B1C]/60 backdrop-blur-sm divide-y divide-white/5 overflow-hidden">
           {logs.map(log => {
-            const meta = ACTION_LABELS[log.action] ?? { label: log.action, tone: "neutral" };
+            const meta = ACTION_MAP[log.action] ?? { label: log.action, tone: "neutral" };
             return (
               <li key={log.id} className="px-5 py-3 flex items-start gap-3">
                 <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border shrink-0 mt-0.5 ${tonClasses(meta.tone)}`}>
@@ -87,7 +84,7 @@ export default async function ActivityPage() {
                   {log.metadata != null && Object.keys(log.metadata as object).length > 0 && (
                     <details className="text-xs">
                       <summary className="text-muted-foreground cursor-pointer hover:text-white/70">
-                        Details
+                        {t("activity.details")}
                       </summary>
                       <pre className="text-[10px] text-white/50 mt-2 bg-black/30 p-2 rounded font-mono overflow-x-auto">
                         {JSON.stringify(log.metadata, null, 2)}
@@ -96,7 +93,7 @@ export default async function ActivityPage() {
                   )}
                 </div>
                 <span className="text-[10px] text-muted-foreground tabular-nums shrink-0">
-                  {new Date(log.createdAt).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" })}
+                  {new Date(log.createdAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE", { dateStyle: "short", timeStyle: "short" })}
                 </span>
               </li>
             );

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Section } from "@/components/ui/section";
 import { Send, CheckCircle2, AlertCircle, ChevronDown, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { siteConfig } from "@/config/site";
+import { useI18n } from "@/lib/i18n";
 
 const inputClass =
   "w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3.5 text-white text-sm md:text-base placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all";
@@ -16,6 +16,7 @@ const selectClass =
 const labelClass = "block text-xs md:text-sm font-medium text-white/80 mb-1.5";
 
 function SuccessPanel({ onReset }: { onReset: () => void }) {
+  const { t } = useI18n();
   return (
     <motion.div
       key="success"
@@ -29,16 +30,16 @@ function SuccessPanel({ onReset }: { onReset: () => void }) {
         <CheckCircle2 className="w-8 h-8 text-green-400" />
       </div>
       <div>
-        <h3 className="text-xl md:text-2xl font-bold text-white mb-2">Request received!</h3>
+        <h3 className="text-xl md:text-2xl font-bold text-white mb-2">{t("landing.contact.successTitle")}</h3>
         <p className="text-muted-foreground text-sm md:text-base leading-relaxed max-w-sm">
-          Thanks for your interest in {siteConfig.siteName}. We&apos;ll be in touch within one business day to schedule your demo.
+          {t("landing.contact.successDesc")}
         </p>
       </div>
       <button
         onClick={onReset}
         className="text-xs text-muted-foreground hover:text-white underline underline-offset-2 transition-colors mt-2"
       >
-        Submit another request
+        {t("landing.contact.reset")}
       </button>
     </motion.div>
   );
@@ -54,6 +55,21 @@ function ContactForm({
   setIsError: (v: boolean) => void;
 }) {
   const [isLoading, setIsLoading] = useState(false);
+  const { t } = useI18n();
+
+  const volumes = [
+    { value: "<100", label: t("landing.contact.vol1") },
+    { value: "100-500", label: t("landing.contact.vol2") },
+    { value: "500-2000", label: t("landing.contact.vol3") },
+    { value: "2000+", label: t("landing.contact.vol4") },
+  ];
+
+  const systems = [
+    { value: "outlook", label: t("landing.contact.sys1") },
+    { value: "gmail", label: t("landing.contact.sys2") },
+    { value: "imap", label: t("landing.contact.sys3") },
+    { value: "other", label: t("landing.contact.sys4") },
+  ];
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -100,7 +116,7 @@ function ContactForm({
       {/* Row 1: Name + Email */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <label htmlFor="fullName" className={labelClass}>Full name</label>
+          <label htmlFor="fullName" className={labelClass}>{t("landing.contact.fullName")}</label>
           <input
             type="text"
             id="fullName"
@@ -112,7 +128,7 @@ function ContactForm({
           />
         </div>
         <div>
-          <label htmlFor="workEmail" className={labelClass}>Work email</label>
+          <label htmlFor="workEmail" className={labelClass}>{t("landing.contact.workEmail")}</label>
           <input
             type="email"
             id="workEmail"
@@ -128,7 +144,7 @@ function ContactForm({
       {/* Row 2: Company + Website */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>
-          <label htmlFor="companyName" className={labelClass}>Company name</label>
+          <label htmlFor="companyName" className={labelClass}>{t("landing.contact.companyName")}</label>
           <input
             type="text"
             id="companyName"
@@ -141,7 +157,7 @@ function ContactForm({
         </div>
         <div>
           <label htmlFor="companyWebsite" className={labelClass}>
-            Website <span className="text-white/50 font-normal">(optional)</span>
+            {t("landing.contact.website")} <span className="text-white/50 font-normal">({t("landing.contact.optional")})</span>
           </label>
           <input
             type="url"
@@ -156,13 +172,10 @@ function ContactForm({
 
       {/* Email volume */}
       <div>
-        <label htmlFor="emailVolume" className={labelClass}>Approx. customer emails per week</label>
+        <label htmlFor="emailVolume" className={labelClass}>{t("landing.contact.emailVolume")}</label>
         <div className="relative">
           <select id="emailVolume" name="emailVolume" className={selectClass}>
-            <option value="<100">Less than 100</option>
-            <option value="100-500">100 – 500</option>
-            <option value="500-2000">500 – 2,000</option>
-            <option value="2000+">More than 2,000</option>
+            {volumes.map(v => <option key={v.value} value={v.value}>{v.label}</option>)}
           </select>
           <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
         </div>
@@ -170,13 +183,10 @@ function ContactForm({
 
       {/* Current system */}
       <div>
-        <label htmlFor="currentSystem" className={labelClass}>Current email system</label>
+        <label htmlFor="currentSystem" className={labelClass}>{t("landing.contact.currentSystem")}</label>
         <div className="relative">
           <select id="currentSystem" name="currentSystem" className={selectClass}>
-            <option value="outlook">Outlook / Microsoft 365</option>
-            <option value="gmail">Gmail / Google Workspace</option>
-            <option value="imap">Standard IMAP</option>
-            <option value="other">Other / Helpdesk Software</option>
+            {systems.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </select>
           <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/40 pointer-events-none" />
         </div>
@@ -185,14 +195,14 @@ function ContactForm({
       {/* Message */}
       <div>
         <label htmlFor="message" className={labelClass}>
-          Message <span className="text-white/50 font-normal">(optional)</span>
+          {t("landing.contact.message")} <span className="text-white/50 font-normal">({t("landing.contact.optional")})</span>
         </label>
         <textarea
           id="message"
           name="message"
           rows={3}
           className={`${inputClass} resize-none custom-scrollbar`}
-          placeholder="Anything specific you'd like to see on the demo?"
+          placeholder={t("landing.contact.messagePlaceholder")}
         />
       </div>
 
@@ -206,7 +216,7 @@ function ContactForm({
             className="flex items-start gap-3 p-3.5 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm"
           >
             <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-            <span>Something went wrong. Please try again or email us directly.</span>
+            <span>{t("landing.contact.error")}</span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -221,18 +231,18 @@ function ContactForm({
         {isLoading ? (
           <>
             <Loader2 className="w-4 h-4 animate-spin" />
-            Sending…
+            {t("landing.contact.sending")}
           </>
         ) : (
           <>
             <Send className="w-4 h-4" />
-            Submit Request
+            {t("landing.contact.submit")}
           </>
         )}
       </Button>
 
       <p className="text-center text-xs text-muted-foreground pt-1">
-        We&apos;ll reply within one business day. No sales pressure.
+        {t("landing.contact.nudge")}
       </p>
     </motion.form>
   );
@@ -241,6 +251,7 @@ function ContactForm({
 export function Contact() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isError, setIsError] = useState(false);
+  const { t } = useI18n();
 
   return (
     <Section id="contact" className="border-b border-white/5 relative overflow-hidden">
@@ -248,9 +259,9 @@ export function Contact() {
 
       <div className="max-w-2xl mx-auto relative z-10">
         <div className="text-center mb-8 md:mb-12">
-          <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 tracking-tight leading-snug">Book a Demo</h2>
+          <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 tracking-tight leading-snug">{t("landing.contact.title")}</h2>
           <p className="text-muted-foreground text-base md:text-lg leading-relaxed">
-            Tell us a bit about your setup and we&apos;ll show you exactly how much time you could save.
+            {t("landing.contact.description")}
           </p>
         </div>
 
@@ -278,3 +289,4 @@ export function Contact() {
     </Section>
   );
 }
+

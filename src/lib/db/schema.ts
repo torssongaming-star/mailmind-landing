@@ -186,8 +186,10 @@ export const users = pgTable(
     organizationId: uuid("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
     email:          varchar("email", { length: 320 }).notNull(),
     role:           userRoleEnum("role").notNull().default("member"),
+    locale:         varchar("locale", { length: 10 }).notNull().default("sv"),
     createdAt:      timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt:      timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+
   },
   (t) => [
     uniqueIndex("users_clerk_user_id_idx").on(t.clerkUserId),

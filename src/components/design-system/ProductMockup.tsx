@@ -20,62 +20,66 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { siteConfig } from "@/config/site";
-
-const emails = [
-  {
-    id: 1,
-    sender: "Sarah Jenkins",
-    email: "sarah.j@example.com",
-    subject: "Can I change my pickup time?",
-    preview: "Hi, I selected 3 PM for my store pickup today, but...",
-    time: "10:42 AM",
-    tags: [{ label: "Pickup", color: "bg-purple-500/10 text-purple-400 border-purple-500/20" }],
-    status: "unread"
-  },
-  {
-    id: 2,
-    sender: "Tom Halverson",
-    email: "tomh@example.com",
-    subject: "My order is not ready",
-    preview: "I arrived at the location but was told the package...",
-    time: "09:15 AM",
-    tags: [{ label: "Order Status", color: "bg-blue-500/10 text-blue-400 border-blue-500/20" }],
-    status: "read"
-  },
-  {
-    id: 3,
-    sender: "Lisa McDonald",
-    email: "lisa.mcd@corp.com",
-    subject: "Question about invoice #4921",
-    preview: "Hello team, looking at the latest billing cycle...",
-    time: "Yesterday",
-    tags: [{ label: "Pricing", color: "bg-green-500/10 text-green-400 border-green-500/20" }],
-    status: "read"
-  },
-  {
-    id: 4,
-    sender: "James Davies",
-    email: "jdavies99@gmail.com",
-    subject: "Complaint about delivery",
-    preview: "The driver left the package in the rain without...",
-    time: "Yesterday",
-    tags: [{ label: "Complaint", color: "bg-red-500/10 text-red-400 border-red-500/20" }],
-    status: "read"
-  },
-  {
-    id: 5,
-    sender: "Anna Karlsson",
-    email: "anna.k@example.com",
-    subject: "Opening hours this weekend?",
-    preview: "Are you open on Sunday during the public holiday?",
-    time: "Mon",
-    tags: [{ label: "General", color: "bg-slate-500/10 text-slate-400 border-slate-500/20" }],
-    status: "read"
-  }
-];
+import { useI18n } from "@/lib/i18n";
 
 export function ProductMockup() {
+  const { t } = useI18n();
+
+  const emails = [
+    {
+      id: 1,
+      sender: "Sarah Jenkins",
+      email: "sarah.j@example.com",
+      subject: t("landing.demo.emails.sarahSubject"),
+      preview: t("landing.demo.emails.sarahPreview"),
+      time: "10:42 AM",
+      tags: [{ label: t("landing.demo.pickup"), color: "bg-purple-500/10 text-purple-400 border-purple-500/20" }],
+      status: "unread"
+    },
+    {
+      id: 2,
+      sender: "Tom Halverson",
+      email: "tomh@example.com",
+      subject: t("landing.demo.emails.tomSubject"),
+      preview: t("landing.demo.emails.tomPreview"),
+      time: "09:15 AM",
+      tags: [{ label: t("landing.demo.orderStatus"), color: "bg-blue-500/10 text-blue-400 border-blue-500/20" }],
+      status: "read"
+    },
+    {
+      id: 3,
+      sender: "Lisa McDonald",
+      email: "lisa.mcd@corp.com",
+      subject: t("landing.demo.emails.lisaSubject"),
+      preview: t("landing.demo.emails.lisaPreview"),
+      time: "Yesterday",
+      tags: [{ label: t("landing.demo.pricing"), color: "bg-green-500/10 text-green-400 border-green-500/20" }],
+      status: "read"
+    },
+    {
+      id: 4,
+      sender: "James Davies",
+      email: "jdavies99@gmail.com",
+      subject: t("landing.demo.emails.jamesSubject"),
+      preview: t("landing.demo.emails.jamesPreview"),
+      time: "Yesterday",
+      tags: [{ label: t("landing.demo.complaint"), color: "bg-red-500/10 text-red-400 border-red-500/20" }],
+      status: "read"
+    },
+    {
+      id: 5,
+      sender: "Anna Karlsson",
+      email: "anna.k@example.com",
+      subject: t("landing.demo.emails.annaSubject"),
+      preview: t("landing.demo.emails.annaPreview"),
+      time: "Mon",
+      tags: [{ label: t("landing.demo.general"), color: "bg-slate-500/10 text-slate-400 border-slate-500/20" }],
+      status: "read"
+    }
+  ];
+
   const [activeEmail, setActiveEmail] = useState(emails[0]);
+
   const [isTyping, setIsTyping] = useState(true);
 
   useEffect(() => {
@@ -110,7 +114,7 @@ export function ProductMockup() {
               <div className="w-3 h-3 rounded-full bg-[#27C93F] border border-[#1AAB29]" />
             </div>
             <div className="mx-auto flex items-center gap-2 bg-black/40 border border-white/5 rounded-md px-4 py-1.5 text-xs text-muted-foreground w-80 justify-center shadow-inner">
-              <Search size={14} /> Search customers, tickets, or tags...
+              <Search size={14} /> {t("landing.demo.searchPlaceholder")}
             </div>
             <div className="w-16" /> {/* Spacer */}
           </div>
@@ -124,39 +128,39 @@ export function ProductMockup() {
                   {siteConfig.siteName[0]}
                 </div>
                 <div>
-                  <div className="text-sm font-semibold text-white">{siteConfig.siteName} Team</div>
-                  <div className="text-[10px] text-muted-foreground">Pro Plan</div>
+                  <div className="text-sm font-semibold text-white">{t("landing.demo.teamInbox")}</div>
+                  <div className="text-[10px] text-muted-foreground">{t("landing.demo.proPlan")}</div>
                 </div>
               </div>
               
               <div className="p-3 space-y-1 mt-2">
                 <div className="px-3 py-2 bg-primary/10 text-primary rounded-lg text-sm font-medium flex items-center justify-between border border-primary/20 shadow-[inset_0_0_10px_rgba(6,182,212,0.1)] cursor-pointer">
                   <div className="flex items-center gap-3">
-                    <Inbox size={16} /> Inbox
+                    <Inbox size={16} /> {t("landing.demo.inboxLabel")}
                   </div>
                   <span className="text-xs">12</span>
                 </div>
                 <div className="px-3 py-2 text-muted-foreground hover:bg-white/5 rounded-lg text-sm font-medium flex items-center justify-between cursor-pointer transition-colors">
                   <div className="flex items-center gap-3">
-                    <UserCircle size={16} /> Assigned to me
+                    <UserCircle size={16} /> {t("landing.demo.assignedToMe")}
                   </div>
                   <span className="text-xs">4</span>
                 </div>
                 <div className="px-3 py-2 text-muted-foreground hover:bg-white/5 rounded-lg text-sm font-medium flex items-center justify-between cursor-pointer transition-colors">
                   <div className="flex items-center gap-3">
-                    <Clock size={16} /> Waiting on customer
+                    <Clock size={16} /> {t("landing.demo.waitingOnCustomer")}
                   </div>
                 </div>
                 <div className="px-3 py-2 text-muted-foreground hover:bg-white/5 rounded-lg text-sm font-medium flex items-center justify-between cursor-pointer transition-colors">
                   <div className="flex items-center gap-3">
-                    <CheckCircle2 size={16} /> Resolved
+                    <CheckCircle2 size={16} /> {t("landing.demo.resolved")}
                   </div>
                 </div>
               </div>
               
               <div className="mt-auto p-3">
                 <div className="px-3 py-2 text-muted-foreground hover:bg-white/5 rounded-lg text-sm font-medium flex items-center gap-3 cursor-pointer transition-colors">
-                  <Settings size={16} /> Settings
+                  <Settings size={16} /> {t("common.settings")}
                 </div>
               </div>
             </div>
@@ -165,7 +169,7 @@ export function ProductMockup() {
             <div className="w-full md:w-80 border-r border-white/5 bg-[#02040A] flex flex-col shrink-0">
               <div className="p-4 border-b border-white/5 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-white flex items-center gap-2">
-                  <Inbox size={16} className="text-muted-foreground" /> All Conversations
+                  <Inbox size={16} className="text-muted-foreground" /> {t("landing.demo.allConversations")}
                 </h3>
                 <AlignLeft size={16} className="text-muted-foreground" />
               </div>
@@ -230,37 +234,26 @@ export function ProductMockup() {
               <div className="flex-1 overflow-y-auto p-6 relative z-10 custom-scrollbar flex flex-col gap-6">
                 
                 {/* Customer Message */}
-                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 text-sm text-foreground/90 leading-relaxed shadow-sm max-w-[90%]">
+                <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 text-sm text-foreground/90 leading-relaxed shadow-sm max-w-[90%] whitespace-pre-line">
                   <div className="text-xs text-muted-foreground mb-3">{activeEmail.time}</div>
-                  {activeEmail.id === 1 && (
-                    <>
-                      Hi team,<br/><br/>
-                      I selected 3 PM for my store pickup today, but I am stuck at work. Can I change it to tomorrow morning around 10 AM instead?<br/><br/>
-                      Please let me know if I need to do anything in the app.<br/><br/>
-                      Thanks,<br/>
-                      Sarah
-                    </>
-                  )}
-                  {activeEmail.id !== 1 && (
-                    <>{activeEmail.preview} <br/><br/>Please let me know how to proceed.</>
-                  )}
+                  {activeEmail.id === 1 ? t("landing.demo.emails.sarahBody") : activeEmail.preview}
                 </div>
 
                 {/* AI Summary Glass Panel */}
                 <div className="max-w-[90%] ml-auto w-full">
                   <div className="flex items-center gap-2 mb-2 justify-end">
                     <Sparkles size={14} className="text-primary animate-pulse" />
-                    <span className="text-xs font-semibold text-primary uppercase tracking-wider">AI Summary</span>
+                    <span className="text-xs font-semibold text-primary uppercase tracking-wider">{t("landing.demo.aiSummary")}</span>
                   </div>
                   <div className="glass-card rounded-xl p-4 text-xs text-foreground/80 shadow-md border-primary/20 bg-[#030614]/80">
                     <ul className="list-disc list-inside space-y-1">
                       {activeEmail.id === 1 ? (
                         <>
-                          <li>Customer wants to reschedule pickup from today 3 PM to tomorrow 10 AM.</li>
-                          <li>Action required: Confirm reschedule and explain process (no app changes needed).</li>
+                          <li>{t("landing.demo.rescheduleSuccess")}</li>
+                          <li>{t("landing.demo.rescheduleAction")}</li>
                         </>
                       ) : (
-                        <li>Customer inquiry requires standard follow-up procedure.</li>
+                        <li>{t("landing.demo.standardFollowup")}</li>
                       )}
                     </ul>
                   </div>
@@ -274,14 +267,14 @@ export function ProductMockup() {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                       </span>
-                      <span className="text-[10px] font-bold uppercase tracking-wider">Draft ready for review</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider">{t("landing.demo.draftReady")}</span>
                     </div>
                     
                     {/* Safer Labels */}
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] text-muted-foreground font-medium">Context match: High</span>
+                      <span className="text-[10px] text-muted-foreground font-medium">{t("landing.demo.contextMatch")}: {t("landing.demo.contextHigh")}</span>
                       <span className="text-[10px] text-muted-foreground font-medium">•</span>
-                      <span className="text-[10px] text-muted-foreground font-medium">Human approval required</span>
+                      <span className="text-[10px] text-muted-foreground font-medium">{t("landing.demo.humanApproval")}</span>
                     </div>
                   </div>
 
@@ -310,21 +303,9 @@ export function ProductMockup() {
                             transition={{ duration: 0.3 }}
                           >
                             {activeEmail.id === 1 ? (
-                              <>
-                                Hi Sarah,<br/><br/>
-                                No problem at all! I have updated your pickup time to tomorrow morning at 10 AM. <br/><br/>
-                                You don't need to do anything in the app; your order will be safely held for you until you arrive.<br/><br/>
-                                See you tomorrow!<br/><br/>
-                                Best regards,<br/>
-                                Support Team
-                              </>
+                              <div className="whitespace-pre-line">{t("landing.demo.emails.sarahReply")}</div>
                             ) : (
-                              <>
-                                Hi {activeEmail.sender.split(' ')[0]},<br/><br/>
-                                Thank you for reaching out. I'm currently looking into this for you and will get back to you with an update shortly.<br/><br/>
-                                Best regards,<br/>
-                                Support Team
-                              </>
+                              <div className="whitespace-pre-line">{t("landing.demo.emails.genericReply")}</div>
                             )}
                           </motion.div>
                         )}
@@ -334,14 +315,14 @@ export function ProductMockup() {
                     <div className="flex items-center justify-between mt-6 pt-4 border-t border-white/5 relative z-10">
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" className="h-9 px-4 text-xs gap-1.5 border-white/10 bg-white/[0.02] hover:bg-white/5">
-                          <Edit3 size={14} /> Edit
+                          <Edit3 size={14} /> {t("landing.demo.edit")}
                         </Button>
                         <Button variant="outline" size="sm" className="h-9 px-4 text-xs gap-1.5 border-white/10 bg-white/[0.02] hover:bg-white/5">
-                          <UserPlus size={14} /> Assign
+                          <UserPlus size={14} /> {t("landing.demo.assign")}
                         </Button>
                       </div>
                       <Button size="sm" className="h-9 px-6 text-xs gap-2 font-semibold shadow-[0_0_20px_rgba(6,182,212,0.4)] hover:shadow-[0_0_30px_rgba(6,182,212,0.6)]">
-                        <Send size={14} /> Approve reply
+                        <Send size={14} /> {t("landing.demo.approveReply")}
                       </Button>
                     </div>
                   </div>
@@ -368,35 +349,26 @@ export function ProductMockup() {
         </div>
 
         {/* Customer Message */}
-        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4 text-xs text-foreground/90 leading-relaxed shadow-sm relative z-10">
+        <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4 text-xs text-foreground/90 leading-relaxed shadow-sm relative z-10 whitespace-pre-line">
           <div className="text-[10px] text-muted-foreground mb-2">{activeEmail.time}</div>
-          {activeEmail.id === 1 ? (
-            <>
-              Hi team,<br/><br/>
-              I selected 3 PM for my store pickup today, but I am stuck at work. Can I change it to tomorrow morning around 10 AM instead?<br/><br/>
-              Thanks,<br/>
-              Sarah
-            </>
-          ) : (
-            <>{activeEmail.preview} <br/><br/>Please let me know how to proceed.</>
-          )}
+          {activeEmail.id === 1 ? t("landing.demo.emails.sarahBody") : activeEmail.preview}
         </div>
 
         {/* AI Summary */}
         <div className="relative z-10">
           <div className="flex items-center gap-1.5 mb-2">
             <Sparkles size={12} className="text-primary" />
-            <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">AI Summary</span>
+            <span className="text-[10px] font-semibold text-primary uppercase tracking-wider">{t("landing.demo.aiSummary")}</span>
           </div>
           <div className="glass-card rounded-xl p-3 text-xs text-foreground/80 shadow-md border-primary/20 bg-[#030614]/80">
             <ul className="list-disc list-inside space-y-1">
               {activeEmail.id === 1 ? (
                 <>
-                  <li>Customer wants to reschedule pickup to tomorrow 10 AM.</li>
-                  <li>Action: Confirm reschedule (no app changes needed).</li>
+                  <li>{t("landing.demo.rescheduleSuccess")}</li>
+                  <li>{t("landing.demo.rescheduleAction")}</li>
                 </>
               ) : (
-                <li>Customer inquiry requires standard follow-up.</li>
+                <li>{t("landing.demo.standardFollowup")}</li>
               )}
             </ul>
           </div>
@@ -406,31 +378,18 @@ export function ProductMockup() {
         <div className="relative z-10 bg-[#030614] border border-white/10 rounded-xl p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
           <div className="flex flex-col gap-2 mb-4 pb-3 border-b border-white/5">
             <div className="flex items-center gap-2 bg-primary/10 text-primary px-2 py-1 rounded-full border border-primary/20 w-fit">
-              <span className="text-[9px] font-bold uppercase tracking-wider">Draft ready for review</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider">{t("landing.demo.draftReady")}</span>
             </div>
-            <span className="text-[9px] text-muted-foreground font-medium">Context match: High • Approval required</span>
+            <span className="text-[9px] text-muted-foreground font-medium">{t("landing.demo.contextMatch")}: {t("landing.demo.contextHigh")} • {t("landing.demo.humanApproval")}</span>
           </div>
           
-          <div className="text-xs text-foreground/90 leading-relaxed min-h-[100px]">
-            {activeEmail.id === 1 ? (
-              <>
-                Hi Sarah,<br/><br/>
-                No problem! I have updated your pickup time to tomorrow morning at 10 AM.<br/><br/>
-                You don't need to do anything in the app. See you tomorrow!<br/><br/>
-                Best,<br/>Support Team
-              </>
-            ) : (
-              <>
-                Hi {activeEmail.sender.split(' ')[0]},<br/><br/>
-                Thank you for reaching out. I'm currently looking into this for you.<br/><br/>
-                Best,<br/>Support Team
-              </>
-            )}
+          <div className="text-xs text-foreground/90 leading-relaxed min-h-[100px] whitespace-pre-line">
+            {activeEmail.id === 1 ? t("landing.demo.emails.sarahReply") : t("landing.demo.emails.genericReply")}
           </div>
 
           <div className="mt-4 pt-3 border-t border-white/5">
             <Button size="sm" className="w-full text-xs font-semibold shadow-[0_0_20px_rgba(6,182,212,0.4)]">
-              <Send size={14} className="mr-2" /> Approve reply
+              <Send size={14} className="mr-2" /> {t("landing.demo.approveReply")}
             </Button>
           </div>
         </div>

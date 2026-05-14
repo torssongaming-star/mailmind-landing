@@ -19,12 +19,16 @@ import { listThreads, listInboxes, listCaseTypes } from "@/lib/app/threads";
 import { PLANS } from "@/lib/plans";
 import { DashboardHeader } from "@/components/portal/DashboardHeader";
 import { Zap, Mail, Users, CreditCard, Database } from "lucide-react";
+import { getUserLocale } from "@/lib/i18n/get-locale";
+import { getTranslations } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
 
 export default async function AppHomePage() {
   const { userId } = await auth();
   const clerkUser = await currentUser();
+  const locale = await getUserLocale();
+  const { t } = getTranslations(locale);
 
   if (!userId || !clerkUser) {
     redirect("/login");
@@ -46,22 +50,19 @@ export default async function AppHomePage() {
     listInboxes(account.organization.id),
     listCaseTypes(account.organization.id),
   ]);
-
-  // Onboarding not completed (account exists but no case types) → send back.
-  if (caseTypeRows.length === 0) redirect("/app/onboarding");
-
   const setup = {
-    accountReady:   !!account.user,
-    inboxConnected: inboxes.length > 0,
-    firstThread:    threads.length > 0,
+    accountReady:    !!account.user,
+    inboxConnected:  inboxes.length > 0,
+    caseTypesReady:  caseTypeRows.length > 0,
+    firstThread:     threads.length > 0,
   };
   const setupComplete = Object.values(setup).every(Boolean);
 
   return (
     <>
       <DashboardHeader
-        title="Hem"
-        description="Din plan och användning i korthet"
+        title={t("portal.dashboard.title")}
+        description={t("portal.dashboard.description")}
       />
       <main className="flex-1 p-6 space-y-8">
 
@@ -69,16 +70,16 @@ export default async function AppHomePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-white">
-            Välkommen tillbaka{clerkUser.firstName ? `, ${clerkUser.firstName}` : ""}
+            {t("portal.dashboard.welcome")}{clerkUser.firstName ? `, ${clerkUser.firstName}` : ""}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Här är en översikt av {account.organization.name}.
+            {t("portal.dashboard.overview", { org: account.organization.name })}
           </p>
         </div>
         {account.isMock && (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-semibold uppercase tracking-wider">
             <Database size={12} />
-            Förhandsvisning (testdata)
+            {t("portal.dashboard.previewMode")}
           </div>
         )}
       </div>
@@ -86,7 +87,7 @@ export default async function AppHomePage() {
       {/* Mock-data warning */}
       {account.isMock && (
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-400">
-          <strong>Förhandsvisning</strong> — DATABASE_URL är inte satt. Visar testdata.
+          <strong>{t("portal.dashboard.previewMode")}</strong> — {t("portal.dashboard.previewWarning")}
         </div>
       )}
 
@@ -94,35 +95,37 @@ export default async function AppHomePage() {
       <TrialBanner
         status={account.subscription?.status ?? null}
         currentPeriodEnd={account.subscription?.currentPeriodEnd ?? null}
+        locale={locale}
       />
 
       {/* Access banner */}
-      <AccessBanner reason={account.access.reason} />
+      <AccessBanner reason={account.access.reason} locale={locale} />
 
       {/* Getting-started — guided checklist with one active step at a time */}
       {!setupComplete && account.access.canUseApp && (
-        <GettingStarted setup={setup} />
+        <GettingStarted setup={setup} locale={locale} />
       )}
 
       {/* Plan + subscription */}
       <section className="rounded-2xl border border-white/8 bg-[#050B1C]/60 backdrop-blur-sm p-6">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
-          Abonnemang
+          {t("portal.dashboard.subscription")}
         </h2>
         {plan ? (
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-2xl font-bold text-white">{plan.name}</p>
+              <p className="text-2xl font-bold text-white">{t(`plans.${plan.id}.name` as any)}</p>
               <p className="text-sm text-muted-foreground mt-1">
-                {plan.price}/month
+                {plan.price}/{t("portal.dashboard.stats.plan").toLowerCase()}
                 {account.subscription?.status && (
-                  <> · <StatusBadge status={account.subscription.status} /></>
+                  <> · <StatusBadge status={account.subscription.status} locale={locale} /></>
                 )}
               </p>
               {account.subscription?.currentPeriodEnd && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  {account.subscription.cancelAtPeriodEnd ? "Avslutas " : "Förnyas "}
-                  {new Date(account.subscription.currentPeriodEnd).toLocaleDateString("sv-SE", {
+                  {account.subscription.cancelAtPeriodEnd ? t("portal.dashboard.cancelsOn") : t("portal.dashboard.renewsOn")}
+                  {" "}
+                  {new Date(account.subscription.currentPeriodEnd).toLocaleDateString(locale === "sv" ? "sv-SE" : "en-IE", {
                     month: "long", day: "numeric", year: "numeric",
                   })}
                 </p>
@@ -132,20 +135,20 @@ export default async function AppHomePage() {
               href="/dashboard/billing"
               className="text-xs px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/30 transition-colors"
             >
-              Hantera fakturering
+              {t("portal.dashboard.manageBilling")}
             </Link>
           </div>
         ) : (
           <div>
-            <p className="text-sm text-white">Inget aktivt abonnemang</p>
+            <p className="text-sm text-white">{t("portal.dashboard.noActiveSub")}</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Välj en plan för att låsa upp AI-funktionerna.
+              {t("portal.dashboard.choosePlan")}
             </p>
             <Link
               href="/dashboard/billing"
               className="inline-block mt-4 px-4 py-2 rounded-xl bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors"
             >
-              Se planer
+              {t("portal.dashboard.viewPlans")}
             </Link>
           </div>
         )}
@@ -154,39 +157,43 @@ export default async function AppHomePage() {
       {/* Stats grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
-          label="AI-utkast"
+          label={t("portal.dashboard.stats.aiDrafts")}
           value={`${(account.usage?.aiDraftsUsed ?? 0).toLocaleString()}`}
           icon={Zap}
           used={account.usage?.aiDraftsUsed ?? 0}
           limit={account.entitlements?.maxAiDraftsPerMonth ?? plan?.draftsLimit ?? 500}
+          locale={locale}
         />
         <StatCard
-          label="Inkorgar"
+          label={t("portal.dashboard.stats.inboxes")}
           value={`${inboxes.length} / ${account.entitlements?.maxInboxes ?? plan?.inboxLimit ?? 1}`}
-          sub="Anslutna inkorgar"
+          sub={t("portal.dashboard.stats.connectedInboxes")}
           icon={Mail}
+          locale={locale}
         />
         <StatCard
-          label="Platser"
+          label={t("portal.dashboard.stats.seats")}
           value={`1 / ${account.entitlements?.maxUsers ?? plan?.seatLimit ?? 2}`}
-          sub="Teammedlemmar"
+          sub={t("portal.dashboard.stats.teamMembers")}
           icon={Users}
+          locale={locale}
         />
         <StatCard
-          label="Plan"
-          value={plan?.name ?? "—"}
-          sub={plan ? `${plan.price}/månad` : "Inget aktivt abonnemang"}
+          label={t("portal.dashboard.stats.plan")}
+          value={plan ? t(`plans.${plan.id}.name` as any) : "—"}
+          sub={plan ? `${plan.price}/${t("portal.dashboard.stats.plan").toLowerCase()}` : t("portal.dashboard.stats.noPlan")}
           icon={CreditCard}
+          locale={locale}
         />
       </div>
 
       <section className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-6 text-xs text-muted-foreground space-y-1">
-        <p className="font-semibold text-white mb-2 text-sm">Status för din plan</p>
-        <Row k="Du kan använda appen"            v={account.access.canUseApp ? "Ja" : "Nej"} />
-        <Row k="Du kan generera AI-innehåll"    v={account.access.canGenerateAiDraft ? "Ja" : "Nej"} />
-        <Row k="Du kan lägga till inkorgar"     v={account.access.canAddInbox ? "Ja" : "Nej"} />
-        <Row k="Du har tillgång till team"       v={account.access.canInviteUser ? "Ja" : "Nej"} />
-        <Row k="Statuskod"                       v={account.access.reason} />
+        <p className="font-semibold text-white mb-2 text-sm">{t("portal.dashboard.status.title")}</p>
+        <Row k={t("portal.dashboard.status.canUseApp")}            v={account.access.canUseApp ? t("portal.dashboard.status.yes") : t("portal.dashboard.status.no")} />
+        <Row k={t("portal.dashboard.status.canGenerateAi")}    v={account.access.canGenerateAiDraft ? t("portal.dashboard.status.yes") : t("portal.dashboard.status.no")} />
+        <Row k={t("portal.dashboard.status.canAddInbox")}     v={account.access.canAddInbox ? t("portal.dashboard.status.yes") : t("portal.dashboard.status.no")} />
+        <Row k={t("portal.dashboard.status.canInvite")}       v={account.access.canInviteUser ? t("portal.dashboard.status.yes") : t("portal.dashboard.status.no")} />
+        <Row k={t("portal.dashboard.status.statusCode")}                       v={account.access.reason} />
       </section>
 
       {/* Quick actions */}
@@ -196,31 +203,31 @@ export default async function AppHomePage() {
             href="/app/inbox"
             className="px-5 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors"
           >
-            Öppna inkorg →
+            {t("portal.dashboard.quickActions.openInbox")} →
           </Link>
           <Link
             href="/app/inboxes"
             className="px-5 py-2.5 rounded-xl border border-white/10 text-white text-sm font-semibold hover:bg-white/5 transition-colors"
           >
-            Anslut inkorg
+            {t("portal.dashboard.quickActions.connectInbox")}
           </Link>
           <Link
             href="/app/settings"
             className="px-5 py-2.5 rounded-xl border border-white/10 text-white text-sm font-semibold hover:bg-white/5 transition-colors"
           >
-            Inställningar
+            {t("portal.dashboard.quickActions.settings")}
           </Link>
           <Link
             href="/app/stats"
             className="px-5 py-2.5 rounded-xl border border-white/10 text-white text-sm font-semibold hover:bg-white/5 transition-colors"
           >
-            Statistik
+            {t("portal.dashboard.quickActions.stats")}
           </Link>
           <Link
             href="/app/activity"
             className="px-5 py-2.5 rounded-xl border border-white/10 text-white text-sm font-semibold hover:bg-white/5 transition-colors"
           >
-            Aktivitet
+            {t("portal.dashboard.quickActions.activity")}
           </Link>
         </div>
       )}
@@ -229,113 +236,148 @@ export default async function AppHomePage() {
   );
 }
 
+
 // ── Subcomponents ─────────────────────────────────────────────────────────────
 
 type SetupState = {
   accountReady:   boolean;
   inboxConnected: boolean;
+  caseTypesReady: boolean;
   firstThread:    boolean;
 };
 
 type GuidedStep = {
-  key:   keyof SetupState;
+  key:   "accountReady" | "inboxConnected" | "firstThread" | "caseTypeAdjustment";
   label: string;
   hint:  string;
   href:  string;
   cta:   string;
 };
 
-const GUIDED_STEPS: GuidedStep[] = [
-  {
-    key:   "accountReady",
-    label: "Konto & AI konfigurerat",
-    hint:  "Välkommen ombord! Er AI är redan konfigurerad med ärendetyper och kunskapsbas.",
-    href:  "/app",
-    cta:   "Klart",
-  },
-  {
-    key:   "inboxConnected",
-    label: "Anslut din inkorg",
-    hint:  "Koppla Gmail via OAuth eller vidarebefordra er support-adress till en Mailmind-adress.",
-    href:  "/app/inboxes",
-    cta:   "Anslut inkorg",
-  },
-  {
-    key:   "firstThread",
-    label: "Ta emot ditt första ärende",
-    hint:  "Skicka ett testmejl till er inkorg-adress. Det dyker upp här inom 30 sekunder.",
-    href:  "/app/inbox",
-    cta:   "Öppna inkorg",
-  },
-];
+function GettingStarted({ setup, locale }: { setup: SetupState; locale: Locale }) {
+  const { t } = getTranslations(locale);
+  
+  const GUIDED_STEPS: GuidedStep[] = [
+    {
+      key:   "accountReady",
+      label: t("portal.onboarding.steps.account.label"),
+      hint:  t("portal.onboarding.steps.account.hint"),
+      href:  "/app",
+      cta:   t("portal.onboarding.steps.account.cta"),
+    },
+    {
+      key:   "inboxConnected",
+      label: t("portal.onboarding.steps.inbox.label"),
+      hint:  t("portal.onboarding.steps.inbox.hint"),
+      href:  "/app/inboxes",
+      cta:   t("portal.onboarding.steps.inbox.cta"),
+    },
+    {
+      key:   "firstThread",
+      label: t("portal.onboarding.steps.firstThread.label"),
+      hint:  t("portal.onboarding.steps.firstThread.hint"),
+      href:  "/app/inbox",
+      cta:   t("portal.onboarding.steps.firstThread.cta"),
+    },
+    {
+      key:   "caseTypeAdjustment",
+      label: t("portal.onboarding.steps.caseTypes.label"),
+      hint:  t("portal.onboarding.steps.caseTypes.hint"),
+      href:  "/app/settings",
+      cta:   t("portal.onboarding.steps.caseTypes.cta"),
+    },
+  ];
 
-function GettingStarted({ setup }: { setup: SetupState }) {
-  const activeIdx = GUIDED_STEPS.findIndex(s => !setup[s.key]);
-  const doneCount = GUIDED_STEPS.filter(s => setup[s.key]).length;
-  const totalCount = GUIDED_STEPS.length;
+  // Determine the active (first incomplete) step — only that one gets a CTA.
+  const completed: Record<string, boolean> = {
+    accountReady:       setup.accountReady,
+    inboxConnected:     setup.inboxConnected,
+    firstThread:        setup.firstThread,
+    caseTypeAdjustment: setup.caseTypesReady, // optional, doesn't gate
+  };
+  const activeIdx = GUIDED_STEPS.findIndex((s, i) => {
+    // Skip the optional case-types step when determining "next required action".
+    if (s.key === "caseTypeAdjustment") return false;
+    return !completed[s.key];
+  });
+
+  const doneCount = GUIDED_STEPS.filter(s => s.key !== "caseTypeAdjustment" && completed[s.key]).length;
+  const totalCount = GUIDED_STEPS.filter(s => s.key !== "caseTypeAdjustment").length;
 
   return (
     <section className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/[0.08] to-primary/[0.02] p-6 space-y-5">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-base font-bold text-white">Kom igång med Mailmind</h2>
+          <h2 className="text-base font-bold text-white">{t("portal.onboarding.title")}</h2>
           <p className="text-xs text-muted-foreground mt-1">
             {activeIdx === -1
-              ? "Allt klart — välj en sak att justera nedan, eller börja triagera."
-              : "Följ stegen så är du igång på under 5 minuter."}
+              ? t("portal.onboarding.completed")
+              : t("portal.onboarding.todo")}
           </p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">Framsteg</p>
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t("portal.onboarding.progress")}</p>
           <p className="text-sm font-mono text-primary mt-0.5">{doneCount} / {totalCount}</p>
         </div>
       </div>
 
       <ul className="space-y-2">
         {GUIDED_STEPS.map((s, i) => {
-          const isDone   = setup[s.key];
-          const isActive = !isDone && i === activeIdx;
-          const isLocked = !isDone && !isActive;
+          const isDone     = completed[s.key];
+          const isActive   = !isDone && i === activeIdx;
+          const isOptional = s.key === "caseTypeAdjustment";
+          const isLocked   = !isDone && !isActive && !isOptional;
 
           return (
             <li
-              key={s.key}
+              key={s.key as string}
               className={`flex items-center gap-3 rounded-xl px-4 py-3 transition-colors ${
                 isActive
                   ? "bg-primary/10 border border-primary/40"
                   : isDone
                     ? "bg-white/[0.02] border border-white/5"
-                    : "bg-white/[0.02] border border-white/5 opacity-50"
+                    : isLocked
+                      ? "bg-white/[0.02] border border-white/5 opacity-50"
+                      : "bg-white/[0.02] border border-white/5"
               }`}
             >
-              <span className={`shrink-0 w-6 h-6 rounded-full border flex items-center justify-center text-[11px] font-bold ${
-                isDone
-                  ? "bg-green-500/20 border-green-500/40 text-green-400"
-                  : isActive
-                    ? "bg-primary text-[#030614] border-primary"
-                    : "border-white/15 text-muted-foreground"
-              }`}>
+              <span
+                className={`shrink-0 w-6 h-6 rounded-full border flex items-center justify-center text-[11px] font-bold ${
+                  isDone
+                    ? "bg-green-500/20 border-green-500/40 text-green-400"
+                    : isActive
+                      ? "bg-primary text-[#030614] border-primary"
+                      : "border-white/15 text-muted-foreground"
+                }`}
+              >
                 {isDone ? "✓" : i + 1}
               </span>
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-medium ${isDone ? "text-muted-foreground line-through" : "text-white"}`}>
                   {s.label}
+                  {isOptional && !isDone && (
+                    <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground/70 font-normal">{t("portal.onboarding.optional")}</span>
+                  )}
                 </p>
-                {(isActive || isDone) && (
+                {(isActive || isOptional || (!isLocked && !isDone)) && (
                   <p className="text-[11px] text-muted-foreground/80 mt-0.5">{s.hint}</p>
                 )}
               </div>
-              {isActive && (
+              {!isDone && (isActive || isOptional) && (
                 <Link
                   href={s.href}
-                  className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-[#030614] hover:bg-cyan-300 transition-colors"
+                  className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                    isActive
+                      ? "bg-primary text-[#030614] hover:bg-cyan-300"
+                      : "bg-white/10 text-white hover:bg-white/20"
+                  }`}
                 >
                   {s.cta} →
                 </Link>
               )}
               {isLocked && (
                 <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground/50">
-                  Låst
+                  {t("portal.onboarding.locked")}
                 </span>
               )}
             </li>
@@ -349,10 +391,13 @@ function GettingStarted({ setup }: { setup: SetupState }) {
 function TrialBanner({
   status,
   currentPeriodEnd,
+  locale,
 }: {
   status: string | null;
   currentPeriodEnd: Date | null;
+  locale: Locale;
 }) {
+  const { t } = getTranslations(locale);
   if (status !== "trialing" || !currentPeriodEnd) return null;
   const end = new Date(currentPeriodEnd);
   const daysLeft = Math.max(0, Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
@@ -367,12 +412,11 @@ function TrialBanner({
       <div>
         <p className={`text-sm font-semibold ${ending ? "text-amber-200" : "text-blue-200"}`}>
           {daysLeft === 0
-            ? "Din provperiod slutar idag"
-            : `${daysLeft} dag${daysLeft === 1 ? "" : "ar"} kvar av din gratis provperiod`}
+            ? t("portal.trial.endsToday")
+            : t("portal.trial.daysLeft", { days: daysLeft.toString() })}
         </p>
         <p className={`text-xs mt-0.5 ${ending ? "text-amber-200/70" : "text-blue-200/70"}`}>
-          Provperioden slutar {end.toLocaleDateString("sv-SE", { month: "long", day: "numeric", year: "numeric" })}.
-          Uppgradera för att fortsätta använda Mailmind utan avbrott.
+          {t("portal.trial.endsDate", { date: end.toLocaleDateString(locale === "sv" ? "sv-SE" : "en-IE", { month: "long", day: "numeric", year: "numeric" }) })}
         </p>
       </div>
       <Link
@@ -383,20 +427,21 @@ function TrialBanner({
             : "bg-white/10 text-white hover:bg-white/20"
         }`}
       >
-        Uppgradera
+        {t("portal.trial.upgrade")}
       </Link>
     </div>
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, locale }: { status: string; locale: Locale }) {
+  const { t } = getTranslations(locale);
   const map: Record<string, { label: string; cls: string }> = {
-    active:     { label: "Aktiv",      cls: "bg-green-500/15 text-green-400 border-green-500/30" },
-    trialing:   { label: "Provperiod", cls: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
-    past_due:   { label: "Förfallen",  cls: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
-    cancelled:  { label: "Avslutad",   cls: "bg-red-500/15 text-red-400 border-red-500/30" },
-    incomplete: { label: "Ofullständig", cls: "bg-red-500/15 text-red-400 border-red-500/30" },
-    paused:     { label: "Pausad",     cls: "bg-white/10 text-muted-foreground border-white/15" },
+    active:     { label: t("portal.dashboard.subscriptionStatus.active"),     cls: "bg-green-500/15 text-green-400 border-green-500/30" },
+    trialing:   { label: t("portal.dashboard.subscriptionStatus.trialing"),   cls: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
+    past_due:   { label: t("portal.dashboard.subscriptionStatus.past_due"),   cls: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+    cancelled:  { label: t("portal.dashboard.subscriptionStatus.cancelled"),  cls: "bg-red-500/15 text-red-400 border-red-500/30" },
+    incomplete: { label: t("portal.dashboard.subscriptionStatus.incomplete"), cls: "bg-red-500/15 text-red-400 border-red-500/30" },
+    paused:     { label: t("portal.dashboard.subscriptionStatus.paused"),     cls: "bg-white/10 text-muted-foreground border-white/15" },
   };
   const v = map[status] ?? { label: status, cls: "bg-white/10 text-muted-foreground border-white/15" };
   return (
@@ -406,67 +451,32 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-function AccessBanner({ reason }: { reason: string }) {
+function AccessBanner({ reason, locale }: { reason: string; locale: Locale }) {
+  const { t } = getTranslations(locale);
   if (reason === "ok") return null;
 
-  const messages: Record<string, { tone: "warn" | "block"; title: string; body: string; cta?: { label: string; href: string } }> = {
-    no_subscription: {
-      tone:  "block",
-      title: "Abonnemang krävs",
-      body:  "Välj en plan för att börja använda Mailmind.",
-      cta:   { label: "Se planer", href: "/dashboard/billing" },
-    },
-    subscription_incomplete: {
-      tone:  "block",
-      title: "Betalning ofullständig",
-      body:  "Ditt abonnemang väntar på betalningsbekräftelse. Slutför kassan för att fortsätta.",
-      cta:   { label: "Slutför kassan", href: "/dashboard/billing" },
-    },
-    subscription_cancelled: {
-      tone:  "block",
-      title: "Abonnemang avslutat",
-      body:  "Ditt abonnemang har avslutats. Återaktivera för att fortsätta använda Mailmind.",
-      cta:   { label: "Återaktivera", href: "/dashboard/billing" },
-    },
-    subscription_paused: {
-      tone:  "block",
-      title: "Abonnemang pausat",
-      body:  "Ditt abonnemang är pausat. Återuppta faktureringen för att fortsätta.",
-      cta:   { label: "Hantera fakturering", href: "/dashboard/billing" },
-    },
-    past_due: {
-      tone:  "warn",
-      title: "Betalning förfallen",
-      body:  "Uppdatera ditt kort för att fortsätta generera AI-utkast. Läsåtkomst är fortfarande tillgänglig.",
-      cta:   { label: "Uppdatera betalning", href: "/dashboard/billing" },
-    },
-    ai_draft_limit_reached: {
-      tone:  "warn",
-      title: "Månadens AI-utkastsgräns nådd",
-      body:  "Uppgradera din plan för att generera fler utkast denna månad.",
-      cta:   { label: "Uppgradera plan", href: "/dashboard/billing" },
-    },
-  };
+  const title = t(`portal.access.reasons.${reason}.title` as any);
+  const body = t(`portal.access.reasons.${reason}.body` as any);
+  const ctaLabel = t(`portal.access.reasons.${reason}.cta` as any);
 
-  const msg = messages[reason];
-  if (!msg) return null;
+  const tone = (reason === "past_due" || reason === "ai_draft_limit_reached") ? "warn" : "block";
 
-  const cls = msg.tone === "block"
+  const cls = tone === "block"
     ? "border-red-500/30 bg-red-500/5 text-red-200"
     : "border-amber-500/30 bg-amber-500/5 text-amber-200";
 
   return (
     <div className={`rounded-xl border px-5 py-4 flex items-start gap-4 ${cls}`}>
       <div className="flex-1">
-        <p className="font-semibold text-sm text-white">{msg.title}</p>
-        <p className="text-xs mt-1 leading-relaxed">{msg.body}</p>
+        <p className="font-semibold text-sm text-white">{title}</p>
+        <p className="text-xs mt-1 leading-relaxed">{body}</p>
       </div>
-      {msg.cta && (
+      {ctaLabel !== `portal.access.reasons.${reason}.cta` && (
         <Link
-          href={msg.cta.href}
+          href="/dashboard/billing"
           className="shrink-0 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-colors"
         >
-          {msg.cta.label}
+          {ctaLabel}
         </Link>
       )}
     </div>
@@ -480,6 +490,7 @@ function StatCard({
   icon: Icon,
   used,
   limit,
+  locale,
 }: {
   label: string;
   value: string;
@@ -487,7 +498,9 @@ function StatCard({
   icon: React.ComponentType<{ size?: number; className?: string }>;
   used?: number;
   limit?: number;
+  locale: Locale;
 }) {
+  const { t } = getTranslations(locale);
   const pct = used !== undefined && limit ? Math.round((used / limit) * 100) : null;
   const isWarning = pct !== null && pct >= 80;
 
@@ -510,7 +523,7 @@ function StatCard({
             />
           </div>
           <p className={`text-xs mt-1.5 ${isWarning ? "text-amber-400" : "text-muted-foreground"}`}>
-            {used?.toLocaleString()} / {limit?.toLocaleString()} använda
+            {used?.toLocaleString()} / {limit?.toLocaleString()} {t("portal.dashboard.stats.used")}
           </p>
         </div>
       )}

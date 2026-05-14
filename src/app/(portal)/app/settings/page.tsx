@@ -12,6 +12,8 @@ import { listTemplates } from "@/lib/app/notes";
 import { listKnowledge } from "@/lib/app/knowledge";
 import { listBlocklist } from "@/lib/app/blocklist";
 import { listWebhooks } from "@/lib/app/webhooks";
+import { getTranslations } from "@/lib/i18n";
+import { getUserLocale } from "@/lib/i18n/get-locale";
 import { SettingsTabs } from "./SettingsTabs";
 
 export const dynamic = "force-dynamic";
@@ -23,6 +25,9 @@ export default async function SettingsPage() {
   const account = await getCurrentAccount(userId);
   if (!account.user) redirect("/app/onboarding");
   if (!account.access.canUseApp) redirect("/app");
+
+  const locale = await getUserLocale();
+  const t = await getTranslations(locale);
 
   const [settings, caseTypes, templates, knowledge, blocklist, webhooks] = await Promise.all([
     getAiSettings(account.organization.id),
@@ -40,10 +45,10 @@ export default async function SettingsPage() {
       <header className="flex items-center justify-between">
         <div>
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">App</p>
-          <h1 className="text-2xl font-bold text-white">Inställningar</h1>
+          <h1 className="text-2xl font-bold text-white">{t("settings.title")}</h1>
         </div>
         <Link href="/app" className="text-xs text-muted-foreground hover:text-white transition-colors">
-          ← Hem
+          ← {t("nav.overview")}
         </Link>
       </header>
 

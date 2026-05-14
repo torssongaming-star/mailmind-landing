@@ -11,94 +11,94 @@ import {
   BarChart2,
   Mail,
   ArrowLeft,
-  UserCircle,
   HelpCircle,
-  Activity,
-  Inbox,
   ChevronDown,
-  Zap,
   Menu,
   X,
 } from "lucide-react";
+
 import { cn } from "@/lib/utils";
 import { SupportDrawer } from "./SupportDrawer";
 import { siteConfig } from "@/config/site";
+import { useI18n } from "@/lib/i18n/context";
+import { TranslationPath } from "@/lib/i18n/types";
 
 // ── Nav structure ─────────────────────────────────────────────────────────────
-
+ 
 type NavLeaf = {
-  kind:  "leaf";
-  href:  string;
-  label: string;
-  icon:  React.ElementType;
+  kind:     "leaf";
+  href:     string;
+  labelKey: TranslationPath;
+  icon:     React.ElementType;
 };
-
+ 
 type NavGroup = {
   kind:     "group";
   id:       string;
-  label:    string;
+  labelKey: TranslationPath;
   icon:     React.ElementType;
   /** href of the "root" item shown as the first child */
   rootHref: string;
-  children: { href: string; label: string }[];
+  children: { href: string; labelKey: TranslationPath }[];
 };
-
+ 
 type NavItem = NavLeaf | NavGroup;
-
+ 
 const NAV: NavItem[] = [
   {
     kind:     "group",
     id:       "home",
-    label:    "Home",
+    labelKey: "nav.overview",
     icon:     LayoutDashboard,
     rootHref: "/app",
     children: [
-      { href: "/app",           label: "Översikt"  },
-      { href: "/app/stats",     label: "Stats"     },
-      { href: "/app/activity",  label: "Aktivitet" },
+      { href: "/app",           labelKey: "nav.overview" },
+      { href: "/app/stats",     labelKey: "nav.stats"    },
+      { href: "/app/activity",  labelKey: "nav.activity" },
     ],
   },
   {
     kind:     "group",
     id:       "inbox",
-    label:    "Inbox",
+    labelKey: "nav.inbox",
     icon:     Mail,
     rootHref: "/app/inbox",
     children: [
-      { href: "/app/inbox",   label: "Alla trådar" },
-      { href: "/app/inboxes", label: "Anslutna inboxes" },
+      { href: "/app/inbox",   labelKey: "nav.allThreads" },
+      { href: "/app/inboxes", labelKey: "nav.connectedInboxes" },
     ],
   },
   {
-    kind:  "leaf",
-    href:  "/dashboard/billing",
-    label: "Billing",
-    icon:  CreditCard,
+    kind:     "leaf",
+    href:     "/dashboard/billing",
+    labelKey: "nav.billing",
+    icon:     CreditCard,
   },
   {
     kind:     "group",
     id:       "settings",
-    label:    "Settings",
+    labelKey: "nav.settings",
     icon:     Settings,
     rootHref: "/app/settings",
     children: [
-      { href: "/app/settings",         label: "Arbetsyta" },
-      { href: "/app/settings/account", label: "Konto"     },
+      { href: "/app/settings",         labelKey: "nav.workspace" },
+      { href: "/app/settings/account", labelKey: "nav.account"   },
     ],
   },
   {
-    kind:  "leaf",
-    href:  "/dashboard/team",
-    label: "Team",
-    icon:  Users,
+    kind:     "leaf",
+    href:     "/dashboard/team",
+    labelKey: "nav.team",
+    icon:     Users,
   },
   {
-    kind:  "leaf",
-    href:  "/dashboard/usage",
-    label: "Usage",
-    icon:  BarChart2,
+    kind:     "leaf",
+    href:     "/dashboard/usage",
+    labelKey: "nav.usage",
+    icon:     BarChart2,
   },
 ];
+
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -131,19 +131,20 @@ function groupIsActive(group: NavGroup, pathname: string): boolean {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export function Sidebar() {
-  const pathname                  = usePathname();
+  const pathname                      = usePathname();
+  const { t }                         = useI18n();
   const [supportOpen, setSupportOpen] = useState(false);
   const [mobileOpen, setMobileOpen]   = useState(false);
-
+ 
   // Track which groups are manually expanded. Auto-open active group on mount/nav.
   const defaultOpen = () =>
     Object.fromEntries(
       NAV.filter((n): n is NavGroup => n.kind === "group")
          .map(g => [g.id, groupIsActive(g, pathname)])
     );
-
+ 
   const [expanded, setExpanded] = useState<Record<string, boolean>>(defaultOpen);
-
+ 
   // Whenever the route changes, make sure the active group is open + close the
   // mobile drawer (so it doesn't sit on top of the just-navigated page).
   useEffect(() => {
@@ -158,17 +159,17 @@ export function Sidebar() {
     });
     setMobileOpen(false);
   }, [pathname]);
-
+ 
   // Lock body scroll while mobile drawer is open
   useEffect(() => {
     if (typeof document === "undefined") return;
     document.body.style.overflow = mobileOpen ? "hidden" : "";
     return () => { document.body.style.overflow = ""; };
   }, [mobileOpen]);
-
+ 
   const toggle = (id: string) =>
     setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
-
+ 
   // Shared nav body for both desktop sidebar and mobile drawer
   const navBody = (
     <>
@@ -192,16 +193,16 @@ export function Sidebar() {
                   )}
                 >
                   <Icon size={17} className={isActive ? "text-primary" : "text-muted-foreground"} />
-                  {item.label}
+                  {t(item.labelKey)}
                 </Link>
               );
             }
-
+ 
             // Group
             const isOpen   = !!expanded[item.id];
             const active   = groupIsActive(item, pathname);
             const Icon     = item.icon;
-
+ 
             return (
               <div key={item.id}>
                 {/* Group header */}
@@ -218,7 +219,7 @@ export function Sidebar() {
                     size={17}
                     className={active ? "text-primary" : "text-muted-foreground"}
                   />
-                  <span className="flex-1 text-left">{item.label}</span>
+                  <span className="flex-1 text-left">{t(item.labelKey)}</span>
                   <ChevronDown
                     size={13}
                     className={cn(
@@ -227,7 +228,7 @@ export function Sidebar() {
                     )}
                   />
                 </button>
-
+ 
                 {/* Children */}
                 {isOpen && (
                   <div className="ml-8 mt-0.5 mb-1 space-y-0.5 border-l border-white/[0.06] pl-3">
@@ -246,7 +247,7 @@ export function Sidebar() {
                               : "text-white/40 hover:text-white/80 hover:bg-white/[0.03]"
                           )}
                         >
-                          {child.label}
+                          {t(child.labelKey)}
                         </Link>
                       );
                     });
@@ -257,7 +258,7 @@ export function Sidebar() {
             );
           })}
       </nav>
-
+ 
       {/* Support + Back to site */}
       <div className="p-4 border-t border-white/5 space-y-0.5">
         <button
@@ -265,18 +266,19 @@ export function Sidebar() {
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-muted-foreground hover:text-white hover:bg-white/[0.04] transition-all duration-200"
         >
           <HelpCircle size={17} className="text-muted-foreground" />
-          Support
+          {t("common.support")}
         </button>
         <Link
           href="/"
           className="flex items-center gap-2.5 px-3 py-2.5 text-xs text-muted-foreground hover:text-white transition-colors rounded-xl hover:bg-white/[0.04]"
         >
           <ArrowLeft size={14} />
-          Back to {siteConfig.domain}
+          {t("common.backTo", { domain: siteConfig.domain })}
         </Link>
       </div>
     </>
   );
+
 
   const logo = (
     <Link href="/" className="flex items-center gap-2.5 group" onClick={() => setMobileOpen(false)}>

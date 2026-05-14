@@ -14,6 +14,7 @@ import {
   aiDrafts,
   caseTypes,
 } from "@/lib/db";
+import { z } from "zod";
 
 export type ThreadStats = {
   total:        number;
@@ -245,17 +246,20 @@ export async function getThreadsPerDay(
   const since = new Date(today);
   since.setDate(today.getDate() - (days - 1));
 
-  const rows = (await db.execute(sql`
-    SELECT to_char(date_trunc('day', created_at AT TIME ZONE 'UTC'), 'YYYY-MM-DD') AS day,
-           COUNT(*)::int AS count
-    FROM email_threads
-    WHERE organization_id = ${organizationId}
-      AND created_at >= ${since.toISOString()}
-    GROUP BY day
-    ORDER BY day ASC
-  `)) as unknown as { rows: Array<{ day: string; count: number }> };
-
-  const byDay = new Map(rows.rows.map(r => [r.day, Number(r.count)]));
+    const result = await db.execute(sql`
+      SELECT to_char(date_trunc('day', created_at AT TIME ZONE 'UTC'), 'YYYY-MM-DD') AS day,
+             COUNT(*)::int AS count
+      FROM email_threads
+      WHERE organization_id = ${organizationId}
+        AND created_at >= ${since.toISOString()}
+      GROUP BY day
+      ORDER BY day ASC
+    `);
+  
+    const schema = z.array(z.object({ day: z.string(), count: z.number() }));
+    const rows = schema.parse(result.rows);
+  
+    const byDay = new Map(rows.map(r => [r.day, Number(r.count)]));
   return skeleton.map(s => ({ date: s.date, count: byDay.get(s.date) ?? 0 }));
 }
 
@@ -270,18 +274,24 @@ export async function getAutoVsManualSent(organizationId: string): Promise<AutoV
   if (!isDbConnected()) return { auto: 0, manual: 0, rejected: 0 };
 
   const monthStart = startOf("month");
-  const rows = (await db.execute(sql`
-    SELECT
-      COUNT(*) FILTER (WHERE status IN ('sent','approved','edited') AND user_id IS NULL)     AS auto,
-      COUNT(*) FILTER (WHERE status IN ('sent','approved','edited') AND user_id IS NOT NULL) AS manual,
-      COUNT(*) FILTER (WHERE status = 'rejected')                                            AS rejected
-    FROM ai_drafts
-    WHERE organization_id = ${organizationId}
-      AND generated_at >= ${monthStart.toISOString()}
-      AND is_dry_run = false
-  `)) as unknown as { rows: Array<{ auto: string | number; manual: string | number; rejected: string | number }> };
-
-  const row = rows.rows[0];
+    const result = await db.execute(sql`
+      SELECT
+        COUNT(*) FILTER (WHERE status IN ('sent','approved','edited') AND user_id IS NULL)     AS auto,
+        COUNT(*) FILTER (WHERE status IN ('sent','approved','edited') AND user_id IS NOT NULL) AS manual,
+        COUNT(*) FILTER (WHERE status = 'rejected')                                            AS rejected
+      FROM ai_drafts
+      WHERE organization_id = ${organizationId}
+        AND generated_at >= ${monthStart.toISOString()}
+        AND is_dry_run = false
+    `);
+  
+    const schema = z.array(z.object({ 
+      auto: z.union([z.string(), z.number()]), 
+      manual: z.union([z.string(), z.number()]), 
+      rejected: z.union([z.string(), z.number()]) 
+    }));
+    const rows = schema.parse(result.rows);
+    const row = rows[0];
   return {
     auto:     Number(row?.auto ?? 0),
     manual:   Number(row?.manual ?? 0),
@@ -301,34 +311,39 @@ export async function getAutoVsManualSent(organizationId: string): Promise<AutoV
 export async function getResponseStats(organizationId: string): Promise<ResponseStat> {
   if (!isDbConnected()) return { medianMinutes: null, sampleSize: 0 };
 
-  const result = (await db.execute(sql`
-    WITH pairs AS (
+    const result = await db.execute(sql`
+      WITH pairs AS (
+        SELECT
+          m.thread_id,
+          m.sent_at AS customer_at,
+          (SELECT MIN(m2.sent_at)
+           FROM ${emailMessages} m2
+           WHERE m2.thread_id = m.thread_id
+             AND m2.role = 'assistant'
+             AND m2.sent_at > m.sent_at
+          ) AS assistant_at
+        FROM ${emailMessages} m
+        JOIN ${emailThreads} t ON t.id = m.thread_id
+        WHERE t.organization_id = ${organizationId}
+          AND m.role = 'customer'
+      ),
+      deltas AS (
+        SELECT EXTRACT(EPOCH FROM (assistant_at - customer_at)) / 60 AS minutes
+        FROM pairs
+        WHERE assistant_at IS NOT NULL
+      )
       SELECT
-        m.thread_id,
-        m.sent_at AS customer_at,
-        (SELECT MIN(m2.sent_at)
-         FROM ${emailMessages} m2
-         WHERE m2.thread_id = m.thread_id
-           AND m2.role = 'assistant'
-           AND m2.sent_at > m.sent_at
-        ) AS assistant_at
-      FROM ${emailMessages} m
-      JOIN ${emailThreads} t ON t.id = m.thread_id
-      WHERE t.organization_id = ${organizationId}
-        AND m.role = 'customer'
-    ),
-    deltas AS (
-      SELECT EXTRACT(EPOCH FROM (assistant_at - customer_at)) / 60 AS minutes
-      FROM pairs
-      WHERE assistant_at IS NOT NULL
-    )
-    SELECT
-      COUNT(*)                                        AS sample,
-      PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY minutes) AS median
-    FROM deltas
-  `)) as unknown as { rows: Array<{ sample: string | number; median: string | number | null }> };
-
-  const row = result.rows?.[0];
+        COUNT(*)                                        AS sample,
+        PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY minutes) AS median
+      FROM deltas
+    `);
+  
+    const schema = z.array(z.object({ 
+      sample: z.union([z.string(), z.number()]), 
+      median: z.union([z.string(), z.number()]).nullable() 
+    }));
+    const rows = schema.parse(result.rows);
+    const row = rows[0];
   if (!row || !row.sample) return { medianMinutes: null, sampleSize: 0 };
   return {
     medianMinutes: row.median !== null ? Number(row.median) : null,

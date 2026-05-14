@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { useI18n } from "@/lib/i18n/context";
+
 type Counts = {
   all: number;
   open: number;
@@ -12,15 +14,6 @@ type Counts = {
   resolved: number;
   snoozed: number;
 };
-
-const TABS: Array<{ value: "all" | "open" | "waiting" | "escalated" | "resolved" | "snoozed"; label: string }> = [
-  { value: "all",       label: "Alla" },
-  { value: "open",      label: "Öppna" },
-  { value: "waiting",   label: "Väntar" },
-  { value: "escalated", label: "Eskalerade" },
-  { value: "resolved",  label: "Lösta" },
-  { value: "snoozed",   label: "Snoozade" },
-];
 
 export function InboxFilters({
   currentStatus,
@@ -35,9 +28,19 @@ export function InboxFilters({
   counts: Counts;
   compact?: boolean;
 }) {
+  const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(currentQuery);
+
+  const TABS: Array<{ value: keyof Counts; label: string }> = [
+    { value: "all",       label: t("inbox.filters.all") },
+    { value: "open",      label: t("inbox.filters.open") },
+    { value: "waiting",   label: t("inbox.filters.waiting") },
+    { value: "escalated", label: t("inbox.filters.escalated") },
+    { value: "resolved",  label: t("inbox.filters.resolved") },
+    { value: "snoozed",   label: t("inbox.filters.snoozed") },
+  ];
 
   // Debounced URL update on query change
   useEffect(() => {
@@ -111,7 +114,7 @@ export function InboxFilters({
           type="search"
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Sök ämne, avsändare, typ…"
+          placeholder={t("inbox.search")}
           className="w-full bg-white/5 text-white text-xs rounded-lg pl-8 pr-3 py-1.5 border border-white/10 focus:border-primary/50 focus:outline-none placeholder:text-muted-foreground/40"
         />
         <svg

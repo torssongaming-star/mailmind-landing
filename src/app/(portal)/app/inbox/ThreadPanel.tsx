@@ -60,6 +60,8 @@ const STATUS_CLASSES: Record<string, string> = {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+import { useI18n } from "@/lib/i18n/context";
+
 export function ThreadPanel({
   threadId,
   canGenerate,
@@ -67,6 +69,7 @@ export function ThreadPanel({
   threadId:    string;
   canGenerate: boolean;
 }) {
+  const { t, locale } = useI18n();
   const router = useRouter();
   const [thread,   setThread]   = useState<Thread | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -83,7 +86,7 @@ export function ThreadPanel({
         fetch(`/api/app/threads/${threadId}`),
         fetch(`/api/app/threads/${threadId}/notes`),
       ]);
-      if (!threadRes.ok) throw new Error("Kunde inte ladda tråden");
+      if (!threadRes.ok) throw new Error(t("inbox.thread.status.loadError"));
       const [td, nd] = await Promise.all([threadRes.json(), notesRes.json()]);
       setThread(td.thread);
       setMessages(td.messages ?? []);
@@ -93,11 +96,11 @@ export function ThreadPanel({
         createdAt: new Date(n.createdAt),
       })));
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Okänt fel");
+      setError(e instanceof Error ? e.message : t("common.error"));
     } finally {
       setLoading(false);
     }
-  }, [threadId]);
+  }, [threadId, t]);
 
   // Reload when threadId changes or after a router.refresh()
   useEffect(() => { load(); }, [load]);
@@ -114,9 +117,9 @@ export function ThreadPanel({
   if (error || !thread) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
-        <p className="text-sm">{error ?? "Tråden hittades inte"}</p>
+        <p className="text-sm">{error ?? t("inbox.thread.status.notFound")}</p>
         <button onClick={load} className="text-xs text-primary hover:text-white transition-colors">
-          Försök igen
+          {t("inbox.thread.status.tryAgain")}
         </button>
       </div>
     );
@@ -138,7 +141,7 @@ export function ThreadPanel({
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-bold text-white truncate">
-              {thread.subject ?? "(inget ämne)"}
+              {thread.subject ?? t("inbox.noSubject")}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
               {thread.fromName
@@ -157,7 +160,7 @@ export function ThreadPanel({
             href={`/app/thread/${thread.id}`}
             className="shrink-0 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-white transition-colors border border-white/10 hover:border-white/20 rounded-lg px-2.5 py-1.5"
           >
-            Öppna
+            {t("inbox.thread.status.open")}
             <ExternalLink className="w-3 h-3" />
           </Link>
         </div>
@@ -189,10 +192,10 @@ export function ThreadPanel({
           >
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {m.role === "customer" ? "Kund" : m.role === "assistant" ? "AI" : "Agent"}
+                {m.role === "customer" ? t("inbox.thread.roles.customer") : m.role === "assistant" ? t("inbox.thread.roles.ai") : t("inbox.thread.roles.agent")}
               </span>
               <span className="text-[10px] text-muted-foreground">
-                {new Date(m.sentAt).toLocaleString("sv-SE")}
+                {new Date(m.sentAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE")}
               </span>
             </div>
             <p className="text-sm text-white/90 whitespace-pre-wrap leading-relaxed">{m.bodyText}</p>
@@ -206,9 +209,9 @@ export function ThreadPanel({
         <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-3">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <p className="text-sm font-semibold text-white">AI-utkast</p>
+              <p className="text-sm font-semibold text-white">{t("inbox.thread.draft")}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {canGenerate ? "Generera ett svarsutkast för granskning." : "Din plan tillåter inte fler utkast denna månad."}
+                {canGenerate ? t("inbox.thread.status.canGenerate") : t("inbox.thread.status.limitReached")}
               </p>
             </div>
             {canGenerate && (
@@ -224,15 +227,15 @@ export function ThreadPanel({
         {drafts.length > 0 && (
           <div className="space-y-3">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              Utkast ({drafts.length})
+              {t("inbox.thread.status.drafts")} ({drafts.length})
             </p>
             {drafts.map(d => (
               <div key={d.id} className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-3">
                 <div className="flex items-center gap-2">
-                  <ActionBadge action={d.action} />
+                  <ActionBadge action={d.action} t={t} />
                   <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{d.status}</span>
                   <span className="ml-auto text-[10px] text-muted-foreground">
-                    {new Date(d.generatedAt).toLocaleString("sv-SE")}
+                    {new Date(d.generatedAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE")}
                   </span>
                 </div>
 
@@ -242,7 +245,7 @@ export function ThreadPanel({
 
                 {d.action === "summarize" && d.metadata && (
                   <div className="border-t border-white/5 pt-3 space-y-1">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Intern sammanfattning</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("inbox.thread.status.summary")}</p>
                     <p className="text-xs text-white/70 leading-relaxed">
                       {String((d.metadata as Record<string, unknown>).summary ?? "")}
                     </p>
@@ -251,7 +254,7 @@ export function ThreadPanel({
 
                 {d.action === "escalate" && (
                   <p className="text-xs text-red-400">
-                    {String(d.metadata?.reason ?? "Eskalerat")}
+                    {String(d.metadata?.reason ?? t("inbox.thread.actions.escalate"))}
                   </p>
                 )}
 
@@ -266,7 +269,7 @@ export function ThreadPanel({
 
                 <p className="text-[10px] text-muted-foreground border-t border-white/5 pt-2">
                   {d.aiModel}
-                  {d.status === "sent" && d.sentAt && <> · skickat {new Date(d.sentAt).toLocaleString("sv-SE")}</>}
+                  {d.status === "sent" && d.sentAt && <> · {t("inbox.thread.status.sent", { time: new Date(d.sentAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE") })}</>}
                 </p>
               </div>
             ))}
@@ -278,11 +281,11 @@ export function ThreadPanel({
   );
 }
 
-function ActionBadge({ action }: { action: "ask" | "summarize" | "escalate" }) {
+function ActionBadge({ action, t }: { action: "ask" | "summarize" | "escalate"; t: any }) {
   const map = {
-    ask:       { label: "Fråga",     cls: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
-    summarize: { label: "Avsluta",   cls: "bg-green-500/15 text-green-400 border-green-500/30" },
-    escalate:  { label: "Eskalera",  cls: "bg-red-500/15 text-red-400 border-red-500/30" },
+    ask:       { label: t("inbox.thread.actions.ask"),     cls: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
+    summarize: { label: t("inbox.thread.actions.summarize"),   cls: "bg-green-500/15 text-green-400 border-green-500/30" },
+    escalate:  { label: t("inbox.thread.actions.escalate"),  cls: "bg-red-500/15 text-red-400 border-red-500/30" },
   };
   const v = map[action];
   return (

@@ -5,68 +5,71 @@ import { Shirt, ShoppingBag, Building, Wrench, Stethoscope, Store, Headset, Truc
 import { Section } from "@/components/ui/section";
 import { GradientCard } from "@/components/design-system/GradientCard";
 import { Badge } from "@/components/ui/badge";
-import { siteConfig } from "@/config/site";
+import { useI18n } from "@/lib/i18n";
 
 export function UseCases() {
+  const { t } = useI18n();
+
   const industries = [
     {
       icon: <ShoppingBag className="w-5 h-5" />,
-      title: "E-commerce",
-      description: "Answer order queries, process returns and handle product questions.",
-      tags: ["Order Status", "Returns", "Product Info"]
+      title: t("landing.useCases.ecommerce"),
+      description: t("landing.useCases.ecommerceDesc"),
+      tags: t("landing.useCases.ecommerceTags" as any) as unknown as string[]
     },
     {
       icon: <Headset className="w-5 h-5" />,
-      title: "Customer support",
-      description: "Triage tickets, route to the right department, draft standard replies.",
-      tags: ["Triage", "Routing", "Support"]
+      title: t("landing.useCases.support"),
+      description: t("landing.useCases.supportDesc"),
+      tags: t("landing.useCases.supportTags" as any) as unknown as string[]
     },
     {
       icon: <Truck className="w-5 h-5" />,
-      title: "Logistics",
-      description: "Update customers on delays, missing packages and customs clearance.",
-      tags: ["Tracking", "Delay", "Customs"]
+      title: t("landing.useCases.logistics"),
+      description: t("landing.useCases.logisticsDesc"),
+      tags: t("landing.useCases.logisticsTags" as any) as unknown as string[]
     },
     {
       icon: <Building className="w-5 h-5" />,
-      title: "Property service",
-      description: "Manage maintenance requests, tenant complaints and lease questions.",
-      tags: ["Maintenance", "Complaint", "Lease"]
+      title: t("landing.useCases.property"),
+      description: t("landing.useCases.propertyDesc"),
+      tags: t("landing.useCases.propertyTags" as any) as unknown as string[]
     },
     {
       icon: <Wrench className="w-5 h-5" />,
-      title: "Repair shops",
-      description: "Send cost estimates, give status updates and manage bookings.",
-      tags: ["Status", "Estimate", "Booking"]
+      title: t("landing.useCases.repair"),
+      description: t("landing.useCases.repairDesc"),
+      tags: t("landing.useCases.repairTags" as any) as unknown as string[]
     },
     {
       icon: <Stethoscope className="w-5 h-5" />,
-      title: "Clinics",
-      description: "Handle rescheduling, pre-visit instructions and billing queries.",
-      tags: ["Reschedule", "Billing", "Instructions"]
+      title: t("landing.useCases.clinics"),
+      description: t("landing.useCases.clinicsDesc"),
+      tags: t("landing.useCases.clinicsTags" as any) as unknown as string[]
     },
     {
       icon: <Store className="w-5 h-5" />,
-      title: "Local services",
-      description: "Quote jobs, schedule visits and answer common service questions.",
-      tags: ["Quote", "Scheduling", "FAQ"]
+      title: t("landing.useCases.services"),
+      description: t("landing.useCases.servicesDesc"),
+      tags: t("landing.useCases.servicesTags" as any) as unknown as string[]
     },
     {
       icon: <Shirt className="w-5 h-5" />,
-      title: "Textile service",
-      description: "Handle pickup times, missing items, delivery and invoice questions.",
-      tags: ["Pickup", "Delivery", "Invoice"]
+      title: t("landing.useCases.textile"),
+      description: t("landing.useCases.textileDesc"),
+      tags: t("landing.useCases.textileTags" as any) as unknown as string[]
     },
   ];
 
   return (
     <Section className="border-b border-white/5 overflow-hidden">
       <div className="text-center max-w-4xl mx-auto mb-10 md:mb-20">
-        <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 tracking-tight leading-snug">Built for companies that handle real customer questions</h2>
+        <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 tracking-tight leading-snug">{t("landing.useCases.title")}</h2>
         <p className="text-muted-foreground text-base md:text-xl leading-relaxed">
-          {siteConfig.siteName} adapts to your industry workflow and learns from your responses.
+          {t("landing.useCases.description")}
         </p>
       </div>
+
 
       {/* 2-col on mobile, 2-col on md, 4-col on lg */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">

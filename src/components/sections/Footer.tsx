@@ -1,25 +1,7 @@
 import Link from "next/link";
 import { Mail } from "lucide-react";
 import { siteConfig } from "@/config/site";
-
-const productLinks = [
-  { href: "#features",    label: "Features"    },
-  { href: "#how-it-works", label: "How it works" },
-  { href: "#pricing",     label: "Pricing"     },
-  { href: "#security",    label: "Security"    },
-  { href: "#faq",         label: "FAQ"         },
-];
-
-const companyLinks = [
-  { href: "#contact", label: "Book a demo" },
-  { href: "#contact", label: "Contact"     },
-];
-
-const legalLinks = [
-  { href: "/privacy",  label: "Privacy"  },
-  { href: "/terms",    label: "Terms"    },
-  { href: "/security", label: "Security" },
-];
+import { useI18n } from "@/lib/i18n";
 
 function FooterLinkGroup({ title, links }: { title: string; links: { href: string; label: string }[] }) {
   return (
@@ -42,6 +24,28 @@ function FooterLinkGroup({ title, links }: { title: string; links: { href: strin
 }
 
 export function Footer() {
+
+  const { t } = useI18n();
+
+  const productLinks = [
+    { href: "#features",    label: t("nav.features")    },
+    { href: "#how-it-works", label: t("nav.howItWorks") },
+    { href: "#pricing",     label: t("nav.pricing")     },
+    { href: "#security",    label: t("nav.security")    },
+    { href: "#faq",         label: "FAQ"         },
+  ];
+
+  const companyLinks = [
+    { href: "#contact", label: t("nav.bookDemo") },
+    { href: "#contact", label: t("common.support")     },
+  ];
+
+  const legalLinks = [
+    { href: "/privacy",  label: "Privacy"  },
+    { href: "/terms",    label: "Terms"    },
+    { href: "/security", label: t("nav.security") },
+  ];
+
   return (
     <footer className="relative pt-12 md:pt-20 pb-8 md:pb-10 border-t border-white/5 overflow-hidden">
       {/* Top glow */}
@@ -73,21 +77,22 @@ export function Footer() {
 
           {/* Link groups — 3-col on mobile, 1-col each on desktop */}
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 lg:col-span-2 gap-8">
-            <FooterLinkGroup title="Product" links={productLinks} />
-            <FooterLinkGroup title="Company" links={companyLinks} />
-            <FooterLinkGroup title="Legal" links={legalLinks} />
+            <FooterLinkGroup title={t("landing.footer.product")} links={productLinks} />
+            <FooterLinkGroup title={t("landing.footer.company")} links={companyLinks} />
+            <FooterLinkGroup title={t("landing.footer.legal")} links={legalLinks} />
           </div>
         </div>
 
         {/* ── Copyright ── */}
         <div className="pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} {siteConfig.siteName}. All rights reserved.
+            © {new Date().getFullYear()} {siteConfig.siteName}. {t("landing.footer.rights")}
           </p>
           <p className="text-xs text-muted-foreground/60">
-            Built for European teams.
+            {t("landing.footer.builtFor")}
           </p>
         </div>
+
 
       </div>
     </footer>

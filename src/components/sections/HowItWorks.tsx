@@ -3,27 +3,31 @@
 import { motion } from "framer-motion";
 import { Section } from "@/components/ui/section";
 
+import { useI18n } from "@/lib/i18n";
+
 export function HowItWorks() {
+  const { t } = useI18n();
+
   const steps = [
     {
       number: "1",
-      title: "Connect your inbox",
-      description: "Use Outlook, Gmail or IMAP. No need to replace your current email setup.",
+      title: t("landing.howItWorks.step1Title"),
+      description: t("landing.howItWorks.step1Desc"),
     },
     {
       number: "2",
-      title: "AI understands the message",
-      description: "The system detects intent, summarizes the thread and finds the right context.",
+      title: t("landing.howItWorks.step2Title"),
+      description: t("landing.howItWorks.step2Desc"),
     },
     {
       number: "3",
-      title: "AI drafts the reply",
-      description: "Your team gets a ready-to-edit answer in your company's tone of voice.",
+      title: t("landing.howItWorks.step3Title"),
+      description: t("landing.howItWorks.step3Desc"),
     },
     {
       number: "4",
-      title: "Human approves",
-      description: "Nothing is sent automatically unless you decide to enable it.",
+      title: t("landing.howItWorks.step4Title"),
+      description: t("landing.howItWorks.step4Desc"),
     },
   ];
 
@@ -32,11 +36,12 @@ export function HowItWorks() {
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl h-[400px] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="text-center max-w-4xl mx-auto mb-10 md:mb-24 relative z-10">
-        <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 tracking-tight leading-snug">From customer email to approved reply in seconds</h2>
+        <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 tracking-tight leading-snug">{t("landing.howItWorks.title")}</h2>
         <p className="text-muted-foreground text-base md:text-xl leading-relaxed">
-          Start saving hours every week with a seamless, automated workflow.
+          {t("landing.howItWorks.description")}
         </p>
       </div>
+
 
       <div className="relative max-w-6xl mx-auto z-10">
         {/* Connecting line for desktop (horizontal) */}

@@ -35,50 +35,9 @@ type Props = {
   webhooks:        WebhookEndpoint[];
 };
 
-// ── Nav items ──────────────────────────────────────────────────────────────────
+import { useI18n } from "@/lib/i18n/context";
 
-const NAV = [
-  {
-    id:    "general",
-    label: "Arbetsyta",
-    icon:  Building2,
-    desc:  "Namn, AI-ton och språk",
-  },
-  {
-    id:    "casetypes",
-    label: "Ärendetyper",
-    icon:  Tag,
-    desc:  "Kategorier och obligatoriska fält",
-  },
-  {
-    id:    "knowledge",
-    label: "Kunskapsbas",
-    icon:  BookOpen,
-    desc:  "FAQ injicerade i varje AI-anrop",
-  },
-  {
-    id:    "templates",
-    label: "Svarsmallar",
-    icon:  FileText,
-    desc:  "Sparade standardsvar",
-  },
-  {
-    id:    "blocklist",
-    label: "Blocklista",
-    icon:  ShieldOff,
-    desc:  "Ignorerade avsändare",
-  },
-  {
-    id:    "webhooks",
-    label: "Webhooks",
-    icon:  Webhook,
-    desc:  "Notifikationer till externa system",
-  },
-] as const;
-
-type SectionId = (typeof NAV)[number]["id"];
-
-// ── Component ──────────────────────────────────────────────────────────────────
+type SectionId = "general" | "casetypes" | "knowledge" | "templates" | "blocklist" | "webhooks";
 
 export function SettingsTabs({
   orgName,
@@ -89,63 +48,88 @@ export function SettingsTabs({
   blocklist,
   webhooks,
 }: Props) {
+  const { t } = useI18n();
   const [active, setActive] = useState<SectionId>("general");
+
+  const NAV = [
+    {
+      id:    "general",
+      label: t("settings.tabs.general"),
+      icon:  Building2,
+      desc:  t("settings.tabs.generalDesc"),
+    },
+    {
+      id:    "casetypes",
+      label: t("settings.tabs.caseTypes"),
+      icon:  Tag,
+      desc:  t("settings.tabs.caseTypesDesc"),
+    },
+    {
+      id:    "knowledge",
+      label: t("settings.tabs.knowledge"),
+      icon:  BookOpen,
+      desc:  t("settings.tabs.knowledgeDesc"),
+    },
+    {
+      id:    "templates",
+      label: t("settings.tabs.templates"),
+      icon:  FileText,
+      desc:  t("settings.tabs.templatesDesc"),
+    },
+    {
+      id:    "blocklist",
+      label: t("settings.tabs.blocklist"),
+      icon:  ShieldOff,
+      desc:  t("settings.tabs.blocklistDesc"),
+    },
+    {
+      id:    "webhooks",
+      label: t("settings.tabs.webhooks"),
+      icon:  Webhook,
+      desc:  t("settings.tabs.webhooksDesc"),
+    },
+  ] as const;
+
   const current = NAV.find(n => n.id === active)!;
 
   return (
-    <div className="rounded-2xl border border-white/8 overflow-hidden">
+    <div className="flex gap-0 min-h-[600px] rounded-2xl border border-white/8 overflow-hidden">
 
-      {/* ── Mobile: dropdown selector ──────────────────────────────────────── */}
-      <div className="lg:hidden border-b border-white/8 bg-[#020510] p-3">
-        <select
-          value={active}
-          onChange={e => setActive(e.target.value as SectionId)}
-          className="w-full bg-white/5 text-white text-sm rounded-lg px-3 py-2.5 border border-white/10 focus:border-primary/50 outline-none"
-          style={{ colorScheme: "dark" }}
-        >
-          {NAV.map(item => (
-            <option key={item.id} value={item.id}>{item.label}</option>
-          ))}
-        </select>
-      </div>
-
-      {/* ── Desktop: sidebar + content ─────────────────────────────────────── */}
-      <div className="flex min-h-[600px]">
-
-        {/* Sidebar — hidden on mobile */}
-        <nav className="hidden lg:block w-52 shrink-0 border-r border-white/8 bg-[#020510] py-3">
-          <p className="px-4 pb-2 text-[10px] font-semibold uppercase tracking-widest text-white/20">
-            Inställningar
-          </p>
-          {NAV.map(item => {
-            const Icon     = item.icon;
-            const isActive = item.id === active;
-            return (
-              <button
-                key={item.id}
-                onClick={() => setActive(item.id)}
-                className={[
-                  "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors group relative",
-                  isActive
-                    ? "text-white bg-white/[0.05]"
-                    : "text-white/40 hover:text-white/70 hover:bg-white/[0.02]",
-                ].join(" ")}
-              >
-                {isActive && (
-                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
-                )}
-                <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : "text-white/30 group-hover:text-white/50"}`} />
-                <span className="text-xs font-medium truncate">{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
+      {/* ── Sidebar ───────────────────────────────────────────────────────── */}
+      <nav className="w-52 shrink-0 border-r border-white/8 bg-[#020510] py-3">
+        <p className="px-4 pb-2 text-[10px] font-semibold uppercase tracking-widest text-white/20">
+          {t("settings.title")}
+        </p>
+        {NAV.map(item => {
+          const Icon     = item.icon;
+          const isActive = item.id === active;
+          return (
+            <button
+              key={item.id}
+              onClick={() => setActive(item.id)}
+              className={[
+                "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors group relative",
+                isActive
+                  ? "text-white bg-white/[0.05]"
+                  : "text-white/40 hover:text-white/70 hover:bg-white/[0.02]",
+              ].join(" ")}
+            >
+              {/* Active indicator */}
+              {isActive && (
+                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
+              )}
+              <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : "text-white/30 group-hover:text-white/50"}`} />
+              <span className="text-xs font-medium truncate">{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
 
       {/* ── Content ───────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto min-w-0">
+      <div className="flex-1 overflow-y-auto">
 
-        {/* Section header */}
-        <div className="sticky top-0 z-10 px-4 sm:px-8 py-4 sm:py-5 border-b border-white/8 bg-[#030614]/95 backdrop-blur-sm flex items-center gap-3">
+        {/* Section header — always visible, changes with active section */}
+        <div className="sticky top-0 z-10 px-8 py-5 border-b border-white/8 bg-[#030614]/95 backdrop-blur-sm flex items-center gap-3">
           <current.icon className="w-5 h-5 text-primary shrink-0" />
           <div>
             <h2 className="text-sm font-semibold text-white leading-none">{current.label}</h2>
@@ -154,19 +138,19 @@ export function SettingsTabs({
         </div>
 
         {/* Panels — mounted but hidden when inactive */}
-        <div className="px-4 sm:px-8 py-5 sm:py-7 space-y-8">
+        <div className="px-8 py-7 space-y-8">
 
           <div className={active === "general" ? "space-y-8" : "hidden"}>
             <SettingsRow
-              title="Namn på arbetsyta"
-              desc="Visas i appen och i mejl skickade från Mailmind."
+              title={t("settings.workspace.name")}
+              desc={t("settings.workspace.nameDesc")}
             >
               <OrganizationEditor initialName={orgName} />
             </SettingsRow>
             <Divider />
             <SettingsRow
-              title="AI-beteende"
-              desc="Ton, språk och hur många frågor AI:n max ställer innan den eskalerar."
+              title={t("settings.workspace.aiBehavior")}
+              desc={t("settings.workspace.aiBehaviorDesc")}
             >
               <AiSettingsEditor initial={initialSettings} />
             </SettingsRow>
@@ -174,27 +158,26 @@ export function SettingsTabs({
 
           <div className={active === "casetypes" ? "" : "hidden"}>
             <SettingsRow
-              title="Ärendetyper"
-              desc="Kategorier AI:n klassificerar inkommande mejl i. Ange vilka fält som måste samlas in från kunden innan ärendet routas vidare."
+              title={t("settings.workspace.caseTypes")}
+              desc={t("settings.workspace.caseTypesDesc")}
             >
               <CaseTypesEditor initial={caseTypes} />
             </SettingsRow>
           </div>
 
-          <div className={active === "knowledge" ? "space-y-4" : "hidden"}>
-            <div>
-              <h3 className="text-sm font-semibold text-white">Kunskapsbas</h3>
-              <p className="text-xs text-white/35 leading-relaxed mt-0.5">
-                FAQ och företagsfakta som injiceras i varje AI-anrop. Priser, öppettider, policyer — lägg till det AI:n bör kunna svara direkt på.
-              </p>
-            </div>
-            <KnowledgeEditor initial={knowledge} />
+          <div className={active === "knowledge" ? "" : "hidden"}>
+            <SettingsRow
+              title={t("settings.workspace.knowledge")}
+              desc={t("settings.workspace.knowledgeDesc")}
+            >
+              <KnowledgeEditor initial={knowledge} />
+            </SettingsRow>
           </div>
 
           <div className={active === "templates" ? "" : "hidden"}>
             <SettingsRow
-              title="Svarsmallar"
-              desc='Sparade canned responses som agenter kan klistra in snabbt. T.ex. "Offert mottagen" eller "Bokning bekräftad".'
+              title={t("settings.workspace.templates")}
+              desc={t("settings.workspace.templatesDesc")}
             >
               <TemplatesEditor initial={templates} />
             </SettingsRow>
@@ -202,8 +185,8 @@ export function SettingsTabs({
 
           <div className={active === "blocklist" ? "" : "hidden"}>
             <SettingsRow
-              title="Blocklista"
-              desc="Mejl från dessa avsändare ignoreras helt av AI:n och räknas inte mot autosvar-gränsen. Stöder exakt adress (user@example.com) och domän (@example.com)."
+              title={t("settings.workspace.blocklist")}
+              desc={t("settings.workspace.blocklistDesc")}
             >
               <BlocklistEditor
                 initial={blocklist.map(b => ({
@@ -218,8 +201,8 @@ export function SettingsTabs({
 
           <div className={active === "webhooks" ? "" : "hidden"}>
             <SettingsRow
-              title="Webhooks"
-              desc="Skicka ett HTTP POST till en extern URL när ett ärende klassificeras. Användbart för att trigga egna automationer i t.ex. Slack, CRM eller ticketsystem."
+              title={t("settings.workspace.webhooks")}
+              desc={t("settings.workspace.webhooksDesc")}
             >
               <WebhooksEditor
                 initial={webhooks}
@@ -230,7 +213,6 @@ export function SettingsTabs({
 
         </div>
       </div>
-      </div>{/* end desktop flex */}
 
     </div>
   );

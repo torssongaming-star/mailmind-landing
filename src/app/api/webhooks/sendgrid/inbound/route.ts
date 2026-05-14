@@ -109,7 +109,57 @@ function pickMailmindAddress(toHeader: string): string | null {
   return candidates.length > 0 ? extractEmail(candidates[0]) : null;
 }
 
+import crypto from "crypto";
+
+function verifySendGridSignature(
+  publicKey: string,
+  signature: string,
+  timestamp: string,
+  payload: string
+): boolean {
+  try {
+    const verifier = crypto.createVerify("sha256");
+    verifier.update(timestamp + payload);
+    const key = `-----BEGIN PUBLIC KEY-----\n${publicKey}\n-----END PUBLIC KEY-----`;
+    return verifier.verify(key, signature, "base64");
+  } catch (err) {
+    console.error("[inbound] signature verification error:", err);
+    return false;
+  }
+}
+
 export async function POST(req: NextRequest) {
+  // 1. Signature Verification (Fas 12.1)
+  const publicKey = process.env.SENDGRID_WEBHOOK_VERIFICATION_KEY;
+  const signature = req.headers.get("x-twilio-email-event-webhook-signature");
+  const timestamp = req.headers.get("x-twilio-email-event-webhook-timestamp");
+
+  if (publicKey) {
+    if (!signature || !timestamp) {
+      console.warn("[inbound] missing signature or timestamp headers");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const rawBody = await req.clone().text();
+    const isValid = verifySendGridSignature(publicKey, signature, timestamp, rawBody);
+
+    if (!isValid) {
+      console.warn("[inbound] invalid signature");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  } else {
+    // Fallback to secret token in URL if HMAC is not configured (Alternative from task)
+    const secret = process.env.SENDGRID_INBOUND_SECRET;
+    if (secret) {
+      const url = new URL(req.url);
+      const providedSecret = url.searchParams.get("secret");
+      if (providedSecret !== secret) {
+        console.warn("[inbound] invalid secret token");
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+    }
+  }
+
   let payload: Record<string, string>;
   try {
     payload = await readPayload(req);

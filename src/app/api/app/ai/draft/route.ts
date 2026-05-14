@@ -29,7 +29,7 @@ import {
   createDraft,
   defaultAiSettings,
 } from "@/lib/app/threads";
-import { generateDraft } from "@/lib/app/ai";
+import { generateDraft, AiTransientError } from "@/lib/app/ai";
 
 export const runtime = "nodejs";
 
@@ -87,14 +87,25 @@ export async function POST(req: NextRequest) {
   const caseTypes = await listCaseTypes(orgId);
 
   // Generate
-  const ai = await generateDraft({
-    organizationName: account.organization.name,
-    settings,
-    caseTypes,
-    thread,
-    messages,
-    newEmailBody,
-  });
+  let ai;
+  try {
+    ai = await generateDraft({
+      organizationName: account.organization.name,
+      settings,
+      caseTypes,
+      thread,
+      messages,
+      newEmailBody,
+    });
+  } catch (err) {
+    if (err instanceof AiTransientError) {
+      return NextResponse.json(
+        { error: "AI service is temporarily unavailable. Please try again in a few moments." },
+        { status: 503 }
+      );
+    }
+    throw err;
+  }
 
   // Persist as pending draft. body_text varies by action:
   //   ask        -> the question

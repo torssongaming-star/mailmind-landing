@@ -22,6 +22,7 @@ export function ConnectionTester({
   email:   string;
   onDismiss: () => void;
 }) {
+  const { t } = useI18n();
   const [state, setState] = useState<"polling" | "verified" | "timeout">("polling");
   const [firstThreadId, setFirstThreadId] = useState<string | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(60);
@@ -42,9 +43,9 @@ export function ConnectionTester({
         });
         if (res.ok) {
           const data = await res.json();
-          const t = (data.threads ?? [])[0];
-          if (t && !cancelled) {
-            setFirstThreadId(t.id);
+          const tArr = (data.threads ?? [])[0];
+          if (tArr && !cancelled) {
+            setFirstThreadId(tArr.id);
             setState("verified");
             return;
           }
@@ -74,14 +75,14 @@ export function ConnectionTester({
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-400" />
           </span>
           <p className="text-xs text-cyan-100 truncate">
-            Väntar på testmejl till <span className="font-mono">{email}</span>… <span className="text-cyan-300/60 tabular-nums">{secondsLeft}s</span>
+            {t("inboxes.tester.waiting", { email })} <span className="text-cyan-300/60 tabular-nums">{secondsLeft}s</span>
           </p>
         </div>
         <button
           onClick={onDismiss}
           className="text-[10px] text-cyan-300/70 hover:text-cyan-200 transition-colors shrink-0"
         >
-          Hoppa över
+          {t("inboxes.tester.skip")}
         </button>
       </div>
     );
@@ -91,21 +92,21 @@ export function ConnectionTester({
     return (
       <div className="rounded-lg border border-green-500/30 bg-green-500/8 px-3 py-2.5 flex items-center justify-between gap-3">
         <p className="text-xs text-green-200">
-          <span className="font-semibold">✓ Anslutning verifierad!</span> Första mejlet kom in.
+          <span className="font-semibold">{t("inboxes.tester.verified")}</span> {t("inboxes.tester.firstThreadArrived")}
         </p>
         {firstThreadId ? (
           <Link
             href={`/app/thread/${firstThreadId}`}
             className="text-[10px] font-semibold px-2.5 py-1 rounded-md bg-green-500/20 text-green-200 hover:bg-green-500/30 transition-colors shrink-0"
           >
-            Öppna tråden →
+            {t("inboxes.tester.openThread")}
           </Link>
         ) : (
           <button
             onClick={onDismiss}
             className="text-[10px] text-green-300/70 hover:text-green-200 transition-colors shrink-0"
           >
-            Stäng
+            {t("inboxes.tester.close")}
           </button>
         )}
       </div>
@@ -116,20 +117,20 @@ export function ConnectionTester({
   return (
     <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 flex items-center justify-between gap-3">
       <p className="text-xs text-amber-100/90">
-        Inget mejl mottaget på 60s. Kolla att vidarebefordringen är aktiv hos din e-postleverantör.
+        {t("inboxes.tester.timeout")}
       </p>
       <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={() => { setState("polling"); setSecondsLeft(60); }}
           className="text-[10px] font-semibold px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-200 hover:bg-amber-500/30 transition-colors"
         >
-          Försök igen
+          {t("inboxes.tester.retry")}
         </button>
         <button
           onClick={onDismiss}
           className="text-[10px] text-amber-300/70 hover:text-amber-200 transition-colors"
         >
-          Stäng
+          {t("inboxes.tester.close")}
         </button>
       </div>
     </div>

@@ -9,6 +9,7 @@
 
 import { sql } from "drizzle-orm";
 import { db, isDbConnected } from "@/lib/db";
+import { z } from "zod";
 
 export type HealthStatus = "ok" | "warn" | "fail";
 
@@ -39,8 +40,10 @@ async function checkDb(): Promise<HealthCheck> {
     return { name: "Database connection", status: "fail", detail: "DATABASE_URL not set" };
   }
   try {
-    const rows = (await db.execute(sql`SELECT 1 as ok`)) as unknown as { rows: Array<{ ok: number }> };
-    const okValue = (rows?.rows?.[0]?.ok ?? null) as number | null;
+    const result = await db.execute(sql`SELECT 1 as ok`);
+    const schema = z.array(z.object({ ok: z.number() }));
+    const rows = schema.parse(result.rows);
+    const okValue = rows[0]?.ok ?? null;
     if (okValue !== 1) {
       return { name: "Database connection", status: "warn", detail: "Unexpected query result" };
     }
@@ -59,10 +62,12 @@ async function checkInboxProviderEnum(): Promise<HealthCheck> {
     return { name: "inbox_provider enum has 'mailmind'", status: "fail", detail: "no DB" };
   }
   try {
-    const result = (await db.execute(
+    const result = await db.execute(
       sql`SELECT enum_range(NULL::inbox_provider) AS values`
-    )) as unknown as { rows: Array<{ values: string }> };
-    const raw = result?.rows?.[0]?.values ?? "";
+    );
+    const schema = z.array(z.object({ values: z.string() }));
+    const rows = schema.parse(result.rows);
+    const raw = rows[0]?.values ?? "";
     if (raw.includes("mailmind")) {
       return { name: "inbox_provider enum has 'mailmind'", status: "ok", detail: raw };
     }

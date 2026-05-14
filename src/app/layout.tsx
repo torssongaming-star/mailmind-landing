@@ -8,6 +8,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { siteConfig } from "@/config/site";
+import { getUserLocale } from "@/lib/i18n/get-locale";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -51,13 +52,16 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getUserLocale();
+
   return (
-    <html lang="sv" className="dark">
+    <html lang={locale} className="dark">
+
       <body className={`${inter.className} min-h-screen bg-background antialiased`}>
         <script
           type="application/ld+json"
@@ -84,11 +88,12 @@ export default function RootLayout({
           }}
         />
         <AnimatedBackground />
-        <Providers>
+        <Providers locale={locale}>
           <MotionProvider>
             {children}
           </MotionProvider>
         </Providers>
+
         <Analytics />
         <SpeedInsights />
       </body>

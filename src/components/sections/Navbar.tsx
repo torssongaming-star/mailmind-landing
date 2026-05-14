@@ -8,18 +8,19 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAuth, UserButton } from "@clerk/nextjs";
 
-import { siteConfig } from "@/config/site";
-
-const navLinks = [
-  { href: "#how-it-works", label: "How it works" },
-  { href: "#features",     label: "Features"      },
-  { href: "#security",     label: "Security"      },
-  { href: "#pricing",      label: "Pricing"       },
-];
+import { useI18n } from "@/lib/i18n";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const { isSignedIn } = useAuth();
+  const { t } = useI18n();
+
+  const navLinks = [
+    { href: "#how-it-works", label: t("nav.howItWorks") },
+    { href: "#features",     label: t("nav.features")    },
+    { href: "#security",     label: t("nav.security")    },
+    { href: "#pricing",      label: t("nav.pricing")     },
+  ];
 
   // Prevent background scroll while menu is open
   useEffect(() => {
@@ -78,7 +79,7 @@ export function Navbar() {
                     className="text-sm text-muted-foreground hover:text-white transition-colors flex items-center gap-2"
                   >
                     <LayoutDashboard size={14} />
-                    App
+                    {t("nav.app")}
                   </Link>
                   <UserButton
                     appearance={{
@@ -94,13 +95,13 @@ export function Navbar() {
                     href="/login"
                     className="text-sm text-muted-foreground hover:text-white transition-colors font-medium"
                   >
-                    Login
+                    {t("nav.login")}
                   </Link>
                   <Link
                     href="/signup"
                     className="text-sm text-muted-foreground hover:text-white transition-colors font-medium"
                   >
-                    Sign up
+                    {t("nav.signup")}
                   </Link>
                 </>
               )}
@@ -110,7 +111,7 @@ export function Navbar() {
             <div className="hidden sm:block">
               <Button size="default" asChild className="gap-2">
                 <Link href="#contact">
-                  Book a demo
+                  {t("nav.bookDemo")}
                   <ArrowRight size={14} className="opacity-60" />
                 </Link>
               </Button>
@@ -121,9 +122,10 @@ export function Navbar() {
               onClick={() => setIsOpen((v) => !v)}
               aria-expanded={isOpen}
               aria-controls="mobile-menu"
-              aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-label={isOpen ? t("nav.mobileClose") : t("nav.mobileOpen")}
               className="md:hidden relative flex items-center justify-center w-11 h-11 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
             >
+
               <AnimatePresence mode="wait" initial={false}>
                 {isOpen ? (
                   <motion.span
@@ -200,7 +202,7 @@ export function Navbar() {
                     onClick={close}
                     className="flex items-center justify-between w-full py-4 border-b border-white/8 text-lg font-medium text-white/80 hover:text-white active:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded"
                   >
-                    <span>{isSignedIn ? "App" : "Login"}</span>
+                    <span>{isSignedIn ? t("nav.app") : t("nav.login")}</span>
                     {isSignedIn ? <LayoutDashboard size={18} className="text-primary/60" /> : <ArrowRight size={18} className="text-white/20" />}
                   </Link>
                 </motion.li>
@@ -216,7 +218,7 @@ export function Navbar() {
                       onClick={close}
                       className="flex items-center justify-between w-full py-4 border-b border-white/8 text-lg font-medium text-white/80 hover:text-white active:text-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 rounded"
                     >
-                      <span>Sign up</span>
+                      <span>{t("nav.signup")}</span>
                       <ArrowRight size={18} className="text-white/20" />
                     </Link>
                   </motion.li>
@@ -237,7 +239,7 @@ export function Navbar() {
                   onClick={close}
                 >
                   <Link href="#contact">
-                    Book a demo
+                    {t("nav.bookDemo")}
                   </Link>
                 </Button>
               </motion.div>
@@ -249,8 +251,9 @@ export function Navbar() {
                 transition={{ delay: 0.45, duration: 0.2 }}
                 className="text-center text-xs text-muted-foreground mt-4"
               >
-                No commitment. 30-minute session.
+                {t("nav.trustNudge")}
               </motion.p>
+
             </nav>
           </motion.div>
         )}

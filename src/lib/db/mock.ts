@@ -49,9 +49,11 @@ export const MOCK_USER: User = {
   organizationId: MOCK_ORG_ID,
   email:          "demo@mailmind.se",
   role:           "owner",
+  locale:         "sv",
   createdAt:      new Date("2025-01-15T09:00:00Z"),
   updatedAt:      new Date(),
 };
+
 
 export const MOCK_SUBSCRIPTION: Subscription = {
   id:                   MOCK_SUB_ID,

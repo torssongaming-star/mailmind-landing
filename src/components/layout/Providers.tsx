@@ -2,15 +2,27 @@
 
 import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
+import { I18nProvider } from "@/lib/i18n/context";
+import { Locale } from "@/lib/i18n/types";
+
+
 
 /**
  * Client-side provider wrapper.
  * Wraps the app in ClerkProvider with custom appearance variables
  * matching the Mailmind dark glass design system.
  */
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ 
+  children,
+  locale = "sv" 
+}: { 
+  children: React.ReactNode;
+  locale?: string;
+}) {
   return (
     <ClerkProvider
+
+
       localization={{
         errors: {
           user_exists_with_different_provider: "Den här e-postadressen används redan av ett annat konto.",
@@ -44,10 +56,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
           // Header
           headerTitle: "text-2xl font-bold tracking-tight text-white",
           headerSubtitle: "text-base font-normal text-slate-400",
-
+ 
           // Logo Fix: Brighten the logo on dark background
           logoImage: "brightness-0 invert opacity-90 hover:opacity-100 transition-opacity",
-
+ 
           // Social auth buttons - Subtle dark style matching Google
           socialButtonsIconButton:
             "bg-white/5 border border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200 shadow-none",
@@ -61,7 +73,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           // divider
           dividerLine: "bg-white/10",
           dividerText: "uppercase text-[10px] font-bold tracking-widest text-slate-500",
-
+ 
           // Form fields
           formFieldLabel: "text-xs font-semibold uppercase tracking-wider mb-1.5 text-slate-300",
           formFieldInput: 
@@ -72,7 +84,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           formButtonPrimary: 
             "bg-cyan-500 hover:bg-cyan-400 active:bg-cyan-600 text-[#09090b] font-bold py-3 " +
             "shadow-[0_0_20px_rgba(6,182,212,0.2)] hover:shadow-[0_0_25px_rgba(6,182,212,0.3)] transition-all",
-
+ 
           // Footer links
           footer: "text-slate-300",
           footerPages: "text-slate-300",
@@ -83,7 +95,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           // Badges
           lastAuthenticationStrategyBadge:
             "text-slate-100 bg-white/10 border border-white/20 font-semibold px-1.5 py-0.5 rounded",
-
+ 
           // Misc contrast fixes
           identityPreviewText: "text-white",
           identityPreviewEditButton: "text-cyan-400 hover:text-cyan-300",
@@ -104,7 +116,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       }}
     >
-      {children}
+      <I18nProvider locale={locale as Locale}>
+
+        {children}
+      </I18nProvider>
+
     </ClerkProvider>
   );
 }
+

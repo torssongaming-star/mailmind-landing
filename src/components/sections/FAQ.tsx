@@ -5,51 +5,54 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Section } from "@/components/ui/section";
-import { siteConfig } from "@/config/site";
-
-const faqs = [
-  {
-    question: "Is this a replacement for Outlook or Gmail?",
-    answer: `No. ${siteConfig.siteName} connects to your existing email setup and adds an AI-assisted workspace on top.`
-  },
-  {
-    question: "Does AI send emails automatically?",
-    answer: "By default, no. AI creates a draft and your team approves it before sending."
-  },
-  {
-    question: "Which companies is this for?",
-    answer: "Companies that handle customer emails from private customers, especially service businesses, e-commerce, support teams and local operators."
-  },
-  {
-    question: "Does it work in multiple languages?",
-    answer: "Yes. The product is designed for European teams that handle customer emails in different languages."
-  },
-  {
-    question: "Can we use our own templates and policies?",
-    answer: "Yes. Your company information, policies and standard replies can be used to guide AI drafts."
-  },
-  {
-    question: "Is it GDPR compliant?",
-    answer: "The product is designed with GDPR-focused workflows, access controls and data handling in mind. Final compliance depends on your configuration, data processing setup and agreements."
-  },
-  {
-    question: "Can we try it before committing?",
-    answer: "Yes. The goal is to make it easy to test with your real customer email workflows."
-  }
-];
+import { useI18n } from "@/lib/i18n";
 
 export function FAQ() {
+  const { t } = useI18n();
+
+  const faqs = [
+    {
+      question: t("landing.faq.q1"),
+      answer: t("landing.faq.a1")
+    },
+    {
+      question: t("landing.faq.q2"),
+      answer: t("landing.faq.a2")
+    },
+    {
+      question: t("landing.faq.q3"),
+      answer: t("landing.faq.a3")
+    },
+    {
+      question: t("landing.faq.q4"),
+      answer: t("landing.faq.a4")
+    },
+    {
+      question: t("landing.faq.q5"),
+      answer: t("landing.faq.a5")
+    },
+    {
+      question: t("landing.faq.q6"),
+      answer: t("landing.faq.a6")
+    },
+    {
+      question: t("landing.faq.q7"),
+      answer: t("landing.faq.a7")
+    }
+  ];
+
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
     <Section id="faq" className="border-b border-white/5 relative">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-10 md:mb-20">
-          <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 tracking-tight leading-snug">Frequently Asked Questions</h2>
+          <h2 className="text-3xl md:text-5xl font-bold mb-3 md:mb-6 tracking-tight leading-snug">{t("landing.faq.title")}</h2>
           <p className="text-muted-foreground text-base md:text-xl leading-relaxed">
-            Got questions? We've got answers.
+            {t("landing.faq.description")}
           </p>
         </div>
+
 
         <div className="space-y-4 md:space-y-6">
           {faqs.map((faq, index) => (

@@ -32,7 +32,7 @@ import {
   defaultAiSettings,
 } from "./threads";
 import { listActiveKnowledge } from "./knowledge";
-import { generateDraft } from "./ai";
+import { generateDraft, AiTransientError } from "./ai";
 import { writeAuditLog } from "./audit";
 import { computeAccess } from "./entitlements";
 import { fireWebhooksForThread } from "./webhooks";
@@ -79,8 +79,9 @@ export async function autoTriageNewMessage(input: {
 
   // Compute access — passing a stub user since this is a system-triggered call
   const access = computeAccess({
-    user:         { id: "system", clerkUserId: "", organizationId, email: "", role: "owner", createdAt: new Date(), updatedAt: new Date() },
+    user:         { id: "system", clerkUserId: "", organizationId, email: "", role: "owner", locale: "sv", createdAt: new Date(), updatedAt: new Date() },
     subscription: subRow,
+
     entitlements: entitlementsRow,
     usage:        usageRow,
   });
@@ -112,15 +113,33 @@ export async function autoTriageNewMessage(input: {
   const isDryRun = settings?.dryRunEnabled ?? false;
 
   // Generate
-  const ai = await generateDraft({
-    organizationName: orgRow.name,
-    settings:         settings ?? defaultAiSettings(organizationId),
-    caseTypes:        caseTypesList,
-    knowledge,
-    thread,
-    messages,
-    newEmailBody,
-  });
+  let ai;
+  try {
+    ai = await generateDraft({
+      organizationName: orgRow.name,
+      settings: settings ?? defaultAiSettings(organizationId),
+      caseTypes: caseTypesList,
+      knowledge,
+      thread,
+      messages,
+      newEmailBody,
+    });
+  } catch (err) {
+    if (err instanceof AiTransientError) {
+      await writeAuditLog({
+        organizationId,
+        userId: null,
+        action: "ai_draft_skipped",
+        metadata: {
+          threadId,
+          reason: "ai_transient_error",
+          error: err.message,
+        },
+      });
+      return { ok: false, reason: "ai_transient_error" };
+    }
+    throw err; // Re-throw other errors
+  }
 
   // Persist as pending draft
   let bodyText: string | null = null;

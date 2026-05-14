@@ -19,6 +19,7 @@ export type AuditAction =
   // App actions (Mailmind email triage)
   | "ai_draft_generated"
   | "ai_dry_run_generated"
+  | "ai_draft_skipped"
   | "ai_draft_edited"
   | "ai_draft_sent"
   | "ai_draft_rejected"

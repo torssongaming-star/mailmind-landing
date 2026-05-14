@@ -1,17 +1,27 @@
 import { UserProfile } from "@clerk/nextjs";
 import { DashboardHeader } from "@/components/portal/DashboardHeader";
+import { LanguageSelector } from "./LanguageSelector";
+import { getTranslations } from "@/lib/i18n";
+import { getUserLocale } from "@/lib/i18n/get-locale";
 
-export default function AccountPage() {
+export default async function AccountPage() {
+  const locale = await getUserLocale();
+  const t = await getTranslations(locale);
+
   return (
     <>
       <DashboardHeader
-        title="Account"
-        description="Manage your profile and security settings"
+        title={t("settings.account.title")}
+        description={t("settings.account.description")}
       />
 
       <main className="flex-1 p-6 md:p-8">
-        <div className="mx-auto w-full max-w-5xl mailmind-account-profile">
-          <UserProfile
+        <div className="mx-auto w-full max-w-5xl space-y-8">
+          <LanguageSelector />
+          
+          <div className="mailmind-account-profile">
+            <UserProfile
+
             routing="hash"
             appearance={{
               variables: {
@@ -50,9 +60,11 @@ export default function AccountPage() {
                 developmentMode: "hidden",
               },
             }}
-          />
+            />
+          </div>
         </div>
       </main>
+
     </>
   );
 }

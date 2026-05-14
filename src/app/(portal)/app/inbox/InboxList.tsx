@@ -23,16 +23,12 @@ const STATUS_CLASSES: Record<string, string> = {
   resolved:  "bg-white/10 text-muted-foreground border-white/15",
 };
 
-const STATUS_LABELS: Record<string, string> = {
-  open:      "Öppen",
-  waiting:   "Väntar",
-  escalated: "Eskalerad",
-  resolved:  "Löst",
-};
-
 const POLL_INTERVAL_MS = 30_000; // 30 seconds
 
+import { useI18n } from "@/lib/i18n/context";
+
 export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; slaByCaseType?: Record<string, number> }) {
+  const { t, locale } = useI18n();
   const router = useRouter();
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pendingAction, setPendingAction] = useState<"resolve" | "escalate" | "delete" | null>(null);
@@ -77,7 +73,7 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
   const handleBulk = async (action: "resolve" | "escalate" | "delete") => {
     if (selected.size === 0 || pendingAction) return;
 
-    if (action === "delete" && !confirm(`Ta bort ${selected.size} tråd${selected.size === 1 ? "" : "ar"}? Detta går inte att ångra.`)) {
+    if (action === "delete" && !confirm(t("inbox.bulk.deleteConfirm", { count: selected.size.toString() }))) {
       return;
     }
 
@@ -90,11 +86,11 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
         body: JSON.stringify({ threadIds: Array.from(selected), action }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? "Åtgärden misslyckades");
+      if (!res.ok) throw new Error(data.error ?? "Bulk action failed");
       setSelected(new Set());
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Okänt fel");
+      setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
       setPendingAction(null);
     }
@@ -107,10 +103,10 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
     () => Object.fromEntries(threads.map(t => [
       t.id,
       t.lastMessageAt
-        ? new Date(t.lastMessageAt).toLocaleString("sv-SE", { dateStyle: "short", timeStyle: "short" })
+        ? new Date(t.lastMessageAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE", { dateStyle: "short", timeStyle: "short" })
         : "—",
     ])),
-    [threads]
+    [threads, locale]
   );
 
   return (
@@ -119,13 +115,13 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
       {selectedCount > 0 && (
         <div className="sticky top-2 z-10 rounded-2xl border border-primary/30 bg-[#050B1C]/95 backdrop-blur-md px-4 py-2.5 flex items-center gap-3 shadow-lg">
           <span className="text-sm text-white">
-            <span className="font-semibold">{selectedCount}</span> markerade
+            <span className="font-semibold">{selectedCount}</span> {t("inbox.bulk.selected")}
           </span>
           <button
             onClick={() => setSelected(new Set())}
             className="text-xs text-muted-foreground hover:text-white"
           >
-            Rensa
+            {t("inbox.bulk.clear")}
           </button>
           {error && <span className="text-xs text-red-400 ml-2">{error}</span>}
           <div className="flex-1" />
@@ -134,21 +130,21 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
             disabled={!!pendingAction}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-500/15 text-green-400 border border-green-500/30 hover:bg-green-500/25 transition-colors disabled:opacity-40"
           >
-            {pendingAction === "resolve" ? "Löser…" : "Markera löst"}
+            {pendingAction === "resolve" ? t("inbox.bulk.resolving") : t("inbox.bulk.resolve")}
           </button>
           <button
             onClick={() => handleBulk("escalate")}
             disabled={!!pendingAction}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25 transition-colors disabled:opacity-40"
           >
-            {pendingAction === "escalate" ? "Eskalerar…" : "Eskalera"}
+            {pendingAction === "escalate" ? t("inbox.bulk.escalating") : t("inbox.bulk.escalate")}
           </button>
           <button
             onClick={() => handleBulk("delete")}
             disabled={!!pendingAction}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/10 text-muted-foreground hover:text-white hover:border-white/30 transition-colors disabled:opacity-40"
           >
-            {pendingAction === "delete" ? "Tar bort…" : "Ta bort"}
+            {pendingAction === "delete" ? t("inbox.bulk.deleting") : t("inbox.bulk.delete")}
           </button>
         </div>
       )}
@@ -164,12 +160,12 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
             className="rounded cursor-pointer"
             aria-label={allSelected ? "Deselect all" : "Select all"}
           />
-          <span>{threads.length} tråd{threads.length === 1 ? "" : "ar"}</span>
+          <span>{threads.length} {t("inbox.title").toLowerCase()}</span>
           <div className="flex-1" />
           <button
             onClick={refresh}
             disabled={refreshing}
-            title={`Uppdaterades ${lastRefresh.toLocaleTimeString("sv-SE")}`}
+            title={t("inbox.status.updatedAt", { time: lastRefresh.toLocaleTimeString(locale === "sv" ? "sv-SE" : "en-IE") })}
             className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-white transition-colors disabled:opacity-40"
           >
             <svg
@@ -180,7 +176,7 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
               <polyline points="23 4 23 10 17 10"/>
               <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
             </svg>
-            {refreshing ? "Uppdaterar…" : lastRefresh.toLocaleTimeString("sv-SE", { timeStyle: "short" })}
+            {refreshing ? t("inbox.status.updating") : lastRefresh.toLocaleTimeString(locale === "sv" ? "sv-SE" : "en-IE", { timeStyle: "short" })}
           </button>
         </li>
 
@@ -215,7 +211,7 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-white truncate">
-                    {t.subject ?? "(inget ämne)"}
+                    {t.subject ?? t("inbox.noSubject")}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
                     {t.fromName ? `${t.fromName} ` : ""}
@@ -226,12 +222,12 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
                 <div className="flex items-center gap-3 shrink-0">
                   {slaBadge === "breached" && (
                     <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-red-500/15 text-red-400 border-red-500/30">
-                      SLA
+                      {t("inbox.sla.breached")}
                     </span>
                   )}
                   {slaBadge === "warning" && (
                     <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-amber-500/15 text-amber-400 border-amber-500/30">
-                      SLA snart
+                      {t("inbox.sla.warning")}
                     </span>
                   )}
                   {t.snoozedUntil && new Date(t.snoozedUntil) > new Date() && (
@@ -239,7 +235,7 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
                       <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                       </svg>
-                      Snoozad
+                      {t("inbox.status.snoozed")}
                     </span>
                   )}
                   {t.tags.slice(0, 3).map(tag => (
@@ -250,7 +246,7 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
                   <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                     STATUS_CLASSES[t.status] ?? STATUS_CLASSES.resolved
                   }`}>
-                    {STATUS_LABELS[t.status] ?? t.status}
+                    {t.status}
                   </span>
                   <span className="text-[10px] text-muted-foreground tabular-nums">
                     {formattedDates[t.id]}
