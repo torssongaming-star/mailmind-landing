@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useI18n } from "@/lib/i18n";
 import { ForwardingGuide } from "./ForwardingGuide";
 import { ConnectionTester } from "./ConnectionTester";
 
@@ -23,7 +24,7 @@ export function InboxesEditor({
   canAddMore: boolean;
   limit: number;
 }) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
   const [showForm, setShowForm] = useState(initial.length === 0);
   const [pending, setPending]   = useState(false);
@@ -67,7 +68,7 @@ export function InboxesEditor({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("inboxes.editor.disconnectConfirm"))) return;
+    if (!confirm(t("portal.inboxes.editor.disconnectConfirm"))) return;
     setPending(true);
     setError(null);
     try {
@@ -109,8 +110,8 @@ export function InboxesEditor({
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white">{inbox.displayName ?? inbox.email}</p>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {inbox.provider} · {t(`inboxes.status.${inbox.status.toLowerCase()}` as any)}
-                  {inbox.forwardedFrom && <> · {t("inboxes.labels.forwardedFrom").toLowerCase()} <span className="text-white/70">{inbox.forwardedFrom}</span></>}
+                  {inbox.provider} · {t(`portal.inboxes.status.${inbox.status.toLowerCase()}` as any)}
+                  {inbox.forwardedFrom && <> · {t("portal.inboxes.labels.forwardedFrom").toLowerCase()} <span className="text-white/70">{inbox.forwardedFrom}</span></>}
                 </p>
               </div>
               <button
@@ -118,14 +119,14 @@ export function InboxesEditor({
                 disabled={pending}
                 className="text-xs text-red-400 hover:text-red-300 transition-colors"
               >
-                {t("inboxes.editor.disconnect")}
+                {t("portal.inboxes.editor.disconnect")}
               </button>
             </div>
 
             <div className="rounded-lg bg-black/30 px-3 py-2.5 flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
-                  {t("inboxes.editor.forwardTo")}
+                  {t("portal.inboxes.editor.forwardTo")}
                 </p>
                 <p className="text-sm font-mono text-cyan-300 truncate">{inbox.email}</p>
               </div>
@@ -133,7 +134,7 @@ export function InboxesEditor({
                 onClick={() => copyToClipboard(inbox.email, inbox.id)}
                 className="px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-[10px] text-white transition-colors shrink-0"
               >
-                {copiedId === inbox.id ? t("inboxes.editor.copied") : t("inboxes.editor.copy")}
+                {copiedId === inbox.id ? t("portal.inboxes.editor.copied") : t("portal.inboxes.editor.copy")}
               </button>
             </div>
 
@@ -159,11 +160,11 @@ export function InboxesEditor({
       {/* New inbox form */}
       {showForm && canAddMore && (
         <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-4">
-          <h3 className="text-sm font-semibold text-white">{t("inboxes.editor.connectTitle")}</h3>
+          <h3 className="text-sm font-semibold text-white">{t("portal.inboxes.editor.connectTitle")}</h3>
 
           <div>
             <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-              {t("inboxes.labels.displayName")}
+              {t("portal.inboxes.labels.displayName")}
             </label>
             <input
               type="text"
@@ -189,13 +190,13 @@ export function InboxesEditor({
               <span className="text-xs text-muted-foreground whitespace-nowrap">@mail.mailmind.se</span>
             </div>
             <p className="text-[10px] text-muted-foreground mt-1">
-              {t("inboxes.editor.slugHint")}
+              {t("portal.inboxes.editor.slugHint")}
             </p>
           </div>
 
           <div>
             <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-              {t("inboxes.labels.forwardedFrom")} ({t("portal.onboarding.optional")}, {locale === "sv" ? "bara för din referens" : "just for your reference"})
+              {t("portal.inboxes.labels.forwardedFrom")} ({t("portal.onboarding.optional")}, {locale === "sv" ? "bara för din referens" : "just for your reference"})
             </label>
             <input
               type="email"
@@ -207,8 +208,8 @@ export function InboxesEditor({
           </div>
 
           <div className="rounded-lg bg-cyan-500/5 border border-cyan-500/20 px-3 py-2.5 text-xs text-cyan-200/80 leading-relaxed">
-            <p className="font-semibold text-cyan-200 mb-1">{t("inboxes.editor.afterCreateTitle")}</p>
-            <p>{t("inboxes.editor.afterCreateDesc", { address: "@mail.mailmind.se" })}</p>
+            <p className="font-semibold text-cyan-200 mb-1">{t("portal.inboxes.editor.afterCreateTitle")}</p>
+            <p>{t("portal.inboxes.editor.afterCreateDesc", { address: "@mail.mailmind.se" })}</p>
           </div>
 
           <div className="flex justify-end gap-2 pt-2 border-t border-white/5">
@@ -224,7 +225,7 @@ export function InboxesEditor({
               disabled={pending || !slug.trim() || !displayName.trim()}
               className="px-4 py-1.5 rounded-lg bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40"
             >
-              {pending ? t("inboxes.editor.creating") : t("inboxes.editor.create")}
+              {pending ? t("portal.inboxes.editor.creating") : t("portal.inboxes.editor.create")}
             </button>
           </div>
         </div>
@@ -235,14 +236,14 @@ export function InboxesEditor({
           onClick={() => setShowForm(true)}
           className="w-full rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-3 text-xs text-muted-foreground hover:text-white hover:border-white/30 transition-colors"
         >
-          {t("inboxes.editor.connectAnother")}
+          {t("portal.inboxes.editor.connectAnother")}
         </button>
       )}
 
       {!canAddMore && (
         <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-300">
-          {t("inboxes.editor.limitReached", { limit: limit.toString() })}{" "}
-          <a href="/dashboard/billing" className="underline">{t("inboxes.editor.upgrade")}</a>
+          {t("portal.inboxes.editor.limitReached", { limit: limit.toString() })}{" "}
+          <a href="/dashboard/billing" className="underline">{t("portal.inboxes.editor.upgrade")}</a>
         </div>
       )}
 

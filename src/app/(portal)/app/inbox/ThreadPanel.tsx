@@ -86,7 +86,7 @@ export function ThreadPanel({
         fetch(`/api/app/threads/${threadId}`),
         fetch(`/api/app/threads/${threadId}/notes`),
       ]);
-      if (!threadRes.ok) throw new Error(t("inbox.thread.status.loadError"));
+      if (!threadRes.ok) throw new Error(t("inbox.thread.statusLabels.loadError"));
       const [td, nd] = await Promise.all([threadRes.json(), notesRes.json()]);
       setThread(td.thread);
       setMessages(td.messages ?? []);
@@ -117,9 +117,9 @@ export function ThreadPanel({
   if (error || !thread) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
-        <p className="text-sm">{error ?? t("inbox.thread.status.notFound")}</p>
+        <p className="text-sm">{error ?? t("inbox.thread.statusLabels.notFound")}</p>
         <button onClick={load} className="text-xs text-primary hover:text-white transition-colors">
-          {t("inbox.thread.status.tryAgain")}
+          {t("inbox.thread.statusLabels.tryAgain")}
         </button>
       </div>
     );
@@ -160,7 +160,7 @@ export function ThreadPanel({
             href={`/app/thread/${thread.id}`}
             className="shrink-0 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-white transition-colors border border-white/10 hover:border-white/20 rounded-lg px-2.5 py-1.5"
           >
-            {t("inbox.thread.status.open")}
+            {t("inbox.thread.statusLabels.open")}
             <ExternalLink className="w-3 h-3" />
           </Link>
         </div>
@@ -211,7 +211,7 @@ export function ThreadPanel({
             <div>
               <p className="text-sm font-semibold text-white">{t("inbox.thread.draft")}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {canGenerate ? t("inbox.thread.status.canGenerate") : t("inbox.thread.status.limitReached")}
+                {canGenerate ? t("inbox.thread.statusLabels.canGenerate") : t("inbox.thread.statusLabels.limitReached")}
               </p>
             </div>
             {canGenerate && (
@@ -227,7 +227,7 @@ export function ThreadPanel({
         {drafts.length > 0 && (
           <div className="space-y-3">
             <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              {t("inbox.thread.status.drafts")} ({drafts.length})
+              {t("inbox.thread.statusLabels.drafts")} ({drafts.length})
             </p>
             {drafts.map(d => (
               <div key={d.id} className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-3">
@@ -245,7 +245,7 @@ export function ThreadPanel({
 
                 {d.action === "summarize" && d.metadata && (
                   <div className="border-t border-white/5 pt-3 space-y-1">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("inbox.thread.status.summary")}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("inbox.thread.statusLabels.summary")}</p>
                     <p className="text-xs text-white/70 leading-relaxed">
                       {String((d.metadata as Record<string, unknown>).summary ?? "")}
                     </p>
@@ -269,7 +269,7 @@ export function ThreadPanel({
 
                 <p className="text-[10px] text-muted-foreground border-t border-white/5 pt-2">
                   {d.aiModel}
-                  {d.status === "sent" && d.sentAt && <> · {t("inbox.thread.status.sent", { time: new Date(d.sentAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE") })}</>}
+                  {d.status === "sent" && d.sentAt && <> · {t("inbox.thread.statusLabels.sent", { time: new Date(d.sentAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE") })}</>}
                 </p>
               </div>
             ))}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n";
 
 /**
  * Polls /api/app/threads?inboxId=X for up to 60s after an inbox is created.
@@ -75,14 +76,14 @@ export function ConnectionTester({
             <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-cyan-400" />
           </span>
           <p className="text-xs text-cyan-100 truncate">
-            {t("inboxes.tester.waiting", { email })} <span className="text-cyan-300/60 tabular-nums">{secondsLeft}s</span>
+            {t("portal.inboxes.tester.waiting", { email })} <span className="text-cyan-300/60 tabular-nums">{secondsLeft}s</span>
           </p>
         </div>
         <button
           onClick={onDismiss}
           className="text-[10px] text-cyan-300/70 hover:text-cyan-200 transition-colors shrink-0"
         >
-          {t("inboxes.tester.skip")}
+          {t("portal.inboxes.tester.skip")}
         </button>
       </div>
     );
@@ -92,21 +93,21 @@ export function ConnectionTester({
     return (
       <div className="rounded-lg border border-green-500/30 bg-green-500/8 px-3 py-2.5 flex items-center justify-between gap-3">
         <p className="text-xs text-green-200">
-          <span className="font-semibold">{t("inboxes.tester.verified")}</span> {t("inboxes.tester.firstThreadArrived")}
+          <span className="font-semibold">{t("portal.inboxes.tester.verified")}</span> {t("portal.inboxes.tester.firstThreadArrived")}
         </p>
         {firstThreadId ? (
           <Link
             href={`/app/thread/${firstThreadId}`}
             className="text-[10px] font-semibold px-2.5 py-1 rounded-md bg-green-500/20 text-green-200 hover:bg-green-500/30 transition-colors shrink-0"
           >
-            {t("inboxes.tester.openThread")}
+            {t("portal.inboxes.tester.openThread")}
           </Link>
         ) : (
           <button
             onClick={onDismiss}
             className="text-[10px] text-green-300/70 hover:text-green-200 transition-colors shrink-0"
           >
-            {t("inboxes.tester.close")}
+            {t("portal.inboxes.tester.close")}
           </button>
         )}
       </div>
@@ -117,20 +118,20 @@ export function ConnectionTester({
   return (
     <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 flex items-center justify-between gap-3">
       <p className="text-xs text-amber-100/90">
-        {t("inboxes.tester.timeout")}
+        {t("portal.inboxes.tester.timeout")}
       </p>
       <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={() => { setState("polling"); setSecondsLeft(60); }}
           className="text-[10px] font-semibold px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-200 hover:bg-amber-500/30 transition-colors"
         >
-          {t("inboxes.tester.retry")}
+          {t("portal.inboxes.tester.retry")}
         </button>
         <button
           onClick={onDismiss}
           className="text-[10px] text-amber-300/70 hover:text-amber-200 transition-colors"
         >
-          {t("inboxes.tester.close")}
+          {t("portal.inboxes.tester.close")}
         </button>
       </div>
     </div>

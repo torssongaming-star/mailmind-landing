@@ -18,7 +18,7 @@ export default async function InboxesPage() {
   if (!account.access.canUseApp) redirect("/app");
 
   const locale = await getUserLocale();
-  const t = await getTranslations(locale);
+  const { t } = getTranslations(locale);
 
   const inboxes = await listInboxes(account.organization.id);
   const limit = account.entitlements?.maxInboxes ?? 0;
@@ -28,10 +28,10 @@ export default async function InboxesPage() {
 
       <header className="flex items-center justify-between">
         <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">{t("inboxes.header")}</p>
-          <h1 className="text-2xl font-bold text-white">{t("inboxes.title")}</h1>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">{t("portal.inboxes.header")}</p>
+          <h1 className="text-2xl font-bold text-white">{t("portal.inboxes.title")}</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            {t("inboxes.usage", { count: inboxes.length.toString(), limit: limit.toString() })}
+            {t("portal.inboxes.usage", { count: inboxes.length.toString(), limit: limit.toString() })}
           </p>
         </div>
         <div className="flex gap-2">
@@ -43,7 +43,7 @@ export default async function InboxesPage() {
 
       <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5">
         <p className="text-xs text-muted-foreground leading-relaxed">
-          {t("inboxes.description")}
+          {t("portal.inboxes.description")}
         </p>
       </div>
 

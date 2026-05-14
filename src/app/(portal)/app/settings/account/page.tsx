@@ -6,7 +6,7 @@ import { getUserLocale } from "@/lib/i18n/get-locale";
 
 export default async function AccountPage() {
   const locale = await getUserLocale();
-  const t = await getTranslations(locale);
+  const { t } = getTranslations(locale);
 
   return (
     <>

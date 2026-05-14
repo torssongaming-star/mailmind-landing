@@ -39,7 +39,7 @@ export default async function ThreadPage({
   if (!thread) notFound();
 
   const locale = await getUserLocale();
-  const t = await getTranslations(locale);
+  const { t } = getTranslations(locale);
 
   const [messages, drafts, notes, priorThreads] = await Promise.all([
     listMessages(id),
@@ -65,7 +65,7 @@ export default async function ThreadPage({
           <span className="uppercase">{thread.status}</span>
           {thread.caseTypeSlug && <> · <span>{thread.caseTypeSlug}</span></>}
           {" · "}
-          <span>{thread.interactionCount} {thread.interactionCount === 1 ? t("inbox.thread.status.interaction") : t("inbox.thread.status.interactions")}</span>
+          <span>{thread.interactionCount} {thread.interactionCount === 1 ? t("inbox.thread.statusLabels.interaction") : t("inbox.thread.statusLabels.interactions")}</span>
         </p>
         <div className="flex items-center gap-3 flex-wrap">
           <SnoozeButton
@@ -123,7 +123,7 @@ export default async function ThreadPage({
           <div>
             <p className="text-sm font-semibold text-white">{t("inbox.thread.draft")}</p>
             <p className="text-xs text-muted-foreground mt-0.5">
-              {t("inbox.thread.status.canGenerate")}
+              {t("inbox.thread.statusLabels.canGenerate")}
             </p>
           </div>
           {canGenerate ? (
@@ -133,7 +133,7 @@ export default async function ThreadPage({
               href="/dashboard/billing"
               className="text-xs text-amber-400 underline underline-offset-2"
             >
-              {blockedReason === "no_subscription" ? t("inbox.thread.status.choosePlan") : t("inbox.thread.status.blocked", { reason: blockedReason ?? "" })}
+              {blockedReason === "no_subscription" ? t("inbox.thread.statusLabels.choosePlan") : t("inbox.thread.statusLabels.blocked", { reason: blockedReason ?? "" })}
             </Link>
           )}
         </div>
@@ -149,7 +149,7 @@ export default async function ThreadPage({
       {drafts.length > 0 && (
         <section className="space-y-3">
           <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">
-            {t("inbox.thread.status.drafts")} ({drafts.length})
+            {t("inbox.thread.statusLabels.drafts")} ({drafts.length})
           </h2>
           {drafts.map(d => (
             <div
@@ -169,7 +169,7 @@ export default async function ThreadPage({
               {d.bodyText && (
                 <div>
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-                    {d.action === "summarize" ? t("inbox.thread.status.customerReply") : t("inbox.thread.status.question")}
+                    {d.action === "summarize" ? t("inbox.thread.statusLabels.customerReply") : t("inbox.thread.statusLabels.question")}
                   </p>
                   <p className="text-sm text-white/90 whitespace-pre-wrap leading-relaxed">
                     {d.bodyText}
@@ -180,7 +180,7 @@ export default async function ThreadPage({
               {d.action === "summarize" && d.metadata && (
                 <div className="border-t border-white/5 pt-3 space-y-2">
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                    {t("inbox.thread.status.summary")}
+                    {t("inbox.thread.statusLabels.summary")}
                   </p>
                   <p className="text-xs text-white/70 leading-relaxed">
                     {String((d.metadata as { summary?: string }).summary ?? "")}
@@ -217,8 +217,8 @@ export default async function ThreadPage({
 
               <p className="text-[10px] text-muted-foreground border-t border-white/5 pt-2">
                 {d.aiModel}
-                {d.status === "sent" && d.sentAt && <> · {t("inbox.thread.status.sent", { time: new Date(d.sentAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE") })}</>}
-                {d.status === "rejected" && <> · {t("inbox.thread.status.rejected")}</>}
+                {d.status === "sent" && d.sentAt && <> · {t("inbox.thread.statusLabels.sent", { time: new Date(d.sentAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE") })}</>}
+                {d.status === "rejected" && <> · {t("inbox.thread.statusLabels.rejected")}</>}
               </p>
             </div>
           ))}

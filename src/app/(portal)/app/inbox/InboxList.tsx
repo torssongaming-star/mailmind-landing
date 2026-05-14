@@ -57,7 +57,7 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
     if (allSelected) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(threads.map(t => t.id)));
+      setSelected(new Set(threads.map(thread => thread.id)));
     }
   };
 
@@ -100,10 +100,10 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
 
   // Pre-compute formatted date strings (no per-render recompute)
   const formattedDates = useMemo(
-    () => Object.fromEntries(threads.map(t => [
-      t.id,
-      t.lastMessageAt
-        ? new Date(t.lastMessageAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE", { dateStyle: "short", timeStyle: "short" })
+    () => Object.fromEntries(threads.map(thread => [
+      thread.id,
+      thread.lastMessageAt
+        ? new Date(thread.lastMessageAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE", { dateStyle: "short", timeStyle: "short" })
         : "—",
     ])),
     [threads, locale]
@@ -180,19 +180,19 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
           </button>
         </li>
 
-        {threads.map(t => {
-          const isSelected = selected.has(t.id);
+        {threads.map(thread => {
+          const isSelected = selected.has(thread.id);
           // SLA badge computation
-          const slaHours = t.caseTypeSlug ? slaByCaseType[t.caseTypeSlug] : undefined;
+          const slaHours = thread.caseTypeSlug ? slaByCaseType[thread.caseTypeSlug] : undefined;
           let slaBadge: "breached" | "warning" | null = null;
-          if (slaHours && t.lastMessageAt) {
-            const elapsedHours = (Date.now() - new Date(t.lastMessageAt).getTime()) / 3_600_000;
+          if (slaHours && thread.lastMessageAt) {
+            const elapsedHours = (Date.now() - new Date(thread.lastMessageAt).getTime()) / 3_600_000;
             if (elapsedHours >= slaHours) slaBadge = "breached";
             else if (elapsedHours >= slaHours * 0.8) slaBadge = "warning";
           }
           return (
             <li
-              key={t.id}
+              key={thread.id}
               className={`flex items-center gap-3 px-5 py-3 transition-colors ${
                 isSelected ? "bg-primary/[0.06]" : "hover:bg-white/[0.03]"
               }`}
@@ -200,23 +200,23 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
               <input
                 type="checkbox"
                 checked={isSelected}
-                onChange={() => toggle(t.id)}
+                onChange={() => toggle(thread.id)}
                 onClick={e => e.stopPropagation()}
                 className="rounded cursor-pointer shrink-0"
-                aria-label={`Select ${t.subject ?? t.fromEmail}`}
+                aria-label={`Select ${thread.subject ?? thread.fromEmail}`}
               />
               <Link
-                href={`/app/thread/${t.id}`}
+                href={`/app/thread/${thread.id}`}
                 className="flex-1 min-w-0 flex items-center justify-between gap-3"
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-white truncate">
-                    {t.subject ?? t("inbox.noSubject")}
+                    {thread.subject ?? t("inbox.noSubject")}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {t.fromName ? `${t.fromName} ` : ""}
-                    <span className="text-white/30">&lt;{t.fromEmail}&gt;</span>
-                    {t.caseTypeSlug && <> · <span className="text-white/40">{t.caseTypeSlug}</span></>}
+                    {thread.fromName ? `${thread.fromName} ` : ""}
+                    <span className="text-white/30">&lt;{thread.fromEmail}&gt;</span>
+                    {thread.caseTypeSlug && <> · <span className="text-white/40">{thread.caseTypeSlug}</span></>}
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
@@ -230,7 +230,7 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
                       {t("inbox.sla.warning")}
                     </span>
                   )}
-                  {t.snoozedUntil && new Date(t.snoozedUntil) > new Date() && (
+                  {thread.snoozedUntil && new Date(thread.snoozedUntil) > new Date() && (
                     <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-amber-500/15 text-amber-400 border-amber-500/30 inline-flex items-center gap-1">
                       <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
@@ -238,18 +238,18 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
                       {t("inbox.status.snoozed")}
                     </span>
                   )}
-                  {t.tags.slice(0, 3).map(tag => (
+                  {thread.tags.slice(0, 3).map(tag => (
                     <span key={tag} className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full border bg-primary/10 text-primary border-primary/20">
                       {tag}
                     </span>
                   ))}
                   <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                    STATUS_CLASSES[t.status] ?? STATUS_CLASSES.resolved
+                    STATUS_CLASSES[thread.status] ?? STATUS_CLASSES.resolved
                   }`}>
-                    {t.status}
+                    {thread.status}
                   </span>
                   <span className="text-[10px] text-muted-foreground tabular-nums">
-                    {formattedDates[t.id]}
+                    {formattedDates[thread.id]}
                   </span>
                 </div>
               </Link>

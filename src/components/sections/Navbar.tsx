@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAuth, UserButton } from "@clerk/nextjs";
-
+import { siteConfig } from "@/config/site";
 import { useI18n } from "@/lib/i18n";
 
 export function Navbar() {

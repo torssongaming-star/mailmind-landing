@@ -27,7 +27,7 @@ export default async function SettingsPage() {
   if (!account.access.canUseApp) redirect("/app");
 
   const locale = await getUserLocale();
-  const t = await getTranslations(locale);
+  const { t } = getTranslations(locale);
 
   const [settings, caseTypes, templates, knowledge, blocklist, webhooks] = await Promise.all([
     getAiSettings(account.organization.id),

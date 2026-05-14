@@ -160,7 +160,7 @@ export function ProductMockup() {
               
               <div className="mt-auto p-3">
                 <div className="px-3 py-2 text-muted-foreground hover:bg-white/5 rounded-lg text-sm font-medium flex items-center gap-3 cursor-pointer transition-colors">
-                  <Settings size={16} /> {t("common.settings")}
+                  <Settings size={16} /> {t("settings.title")}
                 </div>
               </div>
             </div>

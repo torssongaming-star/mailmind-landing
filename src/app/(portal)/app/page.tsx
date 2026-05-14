@@ -21,6 +21,7 @@ import { DashboardHeader } from "@/components/portal/DashboardHeader";
 import { Zap, Mail, Users, CreditCard, Database } from "lucide-react";
 import { getUserLocale } from "@/lib/i18n/get-locale";
 import { getTranslations } from "@/lib/i18n";
+import { Locale } from "@/lib/i18n/types";
 
 export const dynamic = "force-dynamic";
 

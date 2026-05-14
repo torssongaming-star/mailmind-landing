@@ -24,7 +24,7 @@ export function SupportDrawer({
   const [error, setError]       = useState<string | null>(null);
   const drawerRef               = useRef<HTMLDivElement>(null);
 
-  const FAQ = (t("support.faqs") as unknown as { q: string; a: string }[]) || [];
+  const FAQ = (t("settings.support.faqs" as any) as unknown as { q: string; a: string }[]) || [];
 
   // Close on Escape
   useEffect(() => {
@@ -49,12 +49,12 @@ export function SupportDrawer({
         body:    JSON.stringify({ subject: subject.trim(), message: message.trim() }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? t("common.error"));
+      if (!res.ok) throw new Error(data.error ?? t("settings.common.error"));
       setSent(true);
       setSubject("");
       setMessage("");
     } catch (e) {
-      setError(e instanceof Error ? e.message : t("common.error"));
+      setError(e instanceof Error ? e.message : t("settings.common.error"));
     } finally {
       setSending(false);
     }
@@ -84,7 +84,7 @@ export function SupportDrawer({
         <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-white/8">
           <div className="flex items-center gap-2.5">
             <HelpCircle className="w-4 h-4 text-primary" />
-            <span className="text-sm font-semibold text-white">{t("support.title")}</span>
+            <span className="text-sm font-semibold text-white">{t("settings.support.title")}</span>
           </div>
           <button
             onClick={onClose}
@@ -107,7 +107,7 @@ export function SupportDrawer({
                   : "text-white/35 border-transparent hover:text-white/60",
               ].join(" ")}
             >
-              {tabName === "faq" ? t("support.faq") : t("support.contact")}
+              {tabName === "faq" ? t("settings.support.faq") : t("settings.support.contact")}
             </button>
           ))}
         </div>
@@ -148,7 +148,7 @@ export function SupportDrawer({
                   className="flex items-center gap-2 text-xs text-white/35 hover:text-primary transition-colors"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
-                  {t("support.docs")}
+                  {t("settings.support.docs")}
                 </a>
               </div>
             </div>
@@ -162,15 +162,15 @@ export function SupportDrawer({
                   <div className="w-12 h-12 rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
                     <Check className="w-5 h-5 text-green-400" />
                   </div>
-                  <p className="text-sm font-semibold text-white">{t("support.sent")}</p>
+                  <p className="text-sm font-semibold text-white">{t("settings.support.sent")}</p>
                   <p className="text-xs text-white/40 max-w-xs">
-                    {t("support.sentDesc")}
+                    {t("settings.support.sentDesc")}
                   </p>
                   <button
                     onClick={() => setSent(false)}
                     className="mt-2 text-xs text-primary hover:text-white transition-colors"
                   >
-                    {t("support.sendNew")}
+                    {t("settings.support.sendNew")}
                   </button>
                 </div>
               ) : (
@@ -178,31 +178,31 @@ export function SupportDrawer({
                   <div className="flex items-start gap-3 p-3 rounded-xl bg-primary/5 border border-primary/15">
                     <MessageSquare className="w-4 h-4 text-primary mt-0.5 shrink-0" />
                     <p className="text-xs text-white/50 leading-relaxed">
-                      {t("support.contactNudge")}
+                      {t("settings.support.contactNudge")}
                     </p>
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-semibold uppercase tracking-wider text-white/30">
-                      {t("support.subject")}
+                      {t("settings.support.subject")}
                     </label>
                     <input
                       type="text"
                       value={subject}
                       onChange={e => setSubject(e.target.value)}
-                      placeholder={t("support.subjectPlaceholder")}
+                      placeholder={t("settings.support.subjectPlaceholder")}
                       className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:border-primary/40 focus:outline-none transition-colors"
                     />
                   </div>
 
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-semibold uppercase tracking-wider text-white/30">
-                      {t("support.message")}
+                      {t("settings.support.message")}
                     </label>
                     <textarea
                       value={message}
                       onChange={e => setMessage(e.target.value)}
-                      placeholder={t("support.messagePlaceholder")}
+                      placeholder={t("settings.support.messagePlaceholder")}
                       rows={6}
                       className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-white/20 focus:border-primary/40 focus:outline-none transition-colors resize-none"
                     />
@@ -218,7 +218,7 @@ export function SupportDrawer({
                     className="w-full py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {sending && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {sending ? t("support.sending") : t("support.sendMessage")}
+                    {sending ? t("settings.support.sending") : t("settings.support.sendMessage")}
                   </button>
                 </>
               )}

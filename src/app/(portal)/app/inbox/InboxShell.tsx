@@ -162,21 +162,21 @@ export function InboxShell({
         <ul className="flex-1 overflow-y-auto divide-y divide-white/5">
           {threads.length === 0 && (
             <li className="px-4 py-8 text-center text-xs text-muted-foreground">
-              {t("inbox.thread.status.noMatch")}
+              {t("inbox.thread.statusLabels.noMatch")}
             </li>
           )}
-          {threads.map(t => {
-            const isSelected  = selectedId === t.id;
-            const isChecked   = selected.has(t.id);
-            const slaHours    = t.caseTypeSlug ? slaByCaseType[t.caseTypeSlug] : undefined;
+          {threads.map(thread => {
+            const isSelected  = selectedId === thread.id;
+            const isChecked   = selected.has(thread.id);
+            const slaHours    = thread.caseTypeSlug ? slaByCaseType[thread.caseTypeSlug] : undefined;
             let slaBreached   = false;
-            if (slaHours && t.lastMessageAt) {
-              slaBreached = (Date.now() - new Date(t.lastMessageAt).getTime()) / 3_600_000 >= slaHours;
+            if (slaHours && thread.lastMessageAt) {
+              slaBreached = (Date.now() - new Date(thread.lastMessageAt).getTime()) / 3_600_000 >= slaHours;
             }
             return (
               <li
-                key={t.id}
-                onClick={() => setSelectedId(t.id)}
+                key={thread.id}
+                onClick={() => setSelectedId(thread.id)}
                 className={[
                   "flex items-start gap-2.5 px-3 py-3 cursor-pointer transition-colors",
                   isSelected
@@ -190,7 +190,7 @@ export function InboxShell({
                   checked={isChecked}
                   onChange={() => setSelected(prev => {
                     const next = new Set(prev);
-                    next.has(t.id) ? next.delete(t.id) : next.add(t.id);
+                    next.has(thread.id) ? next.delete(thread.id) : next.add(thread.id);
                     return next;
                   })}
                   onClick={e => e.stopPropagation()}
@@ -198,21 +198,21 @@ export function InboxShell({
                 />
 
                 {/* Status dot */}
-                <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${STATUS_DOT[t.status] ?? STATUS_DOT.resolved}`} />
+                <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${STATUS_DOT[thread.status] ?? STATUS_DOT.resolved}`} />
 
                 {/* Content */}
                 <div className="flex-1 min-w-0 space-y-0.5">
                   <p className={`text-xs font-semibold truncate ${isSelected ? "text-white" : "text-white/80"}`}>
-                    {t.fromName ?? t.fromEmail}
+                    {thread.fromName ?? thread.fromEmail}
                   </p>
                   <p className="text-[11px] text-muted-foreground truncate">
-                    {t.subject ?? t("inbox.noSubject")}
+                    {thread.subject ?? t("inbox.noSubject")}
                   </p>
                   <div className="flex items-center gap-1.5 flex-wrap mt-1">
-                    {t.caseTypeSlug && (
-                      <span className="text-[9px] text-white/30">{t.caseTypeSlug}</span>
+                    {thread.caseTypeSlug && (
+                      <span className="text-[9px] text-white/30">{thread.caseTypeSlug}</span>
                     )}
-                    {t.tags.slice(0, 2).map(tag => (
+                    {thread.tags.slice(0, 2).map(tag => (
                       <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                         {tag}
                       </span>
@@ -220,7 +220,7 @@ export function InboxShell({
                     {slaBreached && (
                       <span className="text-[9px] font-bold text-red-400">SLA</span>
                     )}
-                    {t.snoozedUntil && new Date(t.snoozedUntil) > new Date() && (
+                    {thread.snoozedUntil && new Date(thread.snoozedUntil) > new Date() && (
                       <span className="text-[9px] text-amber-400">{t("inbox.status.snoozed").toLowerCase()}</span>
                     )}
                   </div>
@@ -228,7 +228,7 @@ export function InboxShell({
 
                 {/* Date */}
                 <span className="shrink-0 text-[9px] text-muted-foreground tabular-nums mt-0.5">
-                  {formattedDates[t.id]}
+                  {formattedDates[thread.id]}
                 </span>
               </li>
             );
@@ -250,7 +250,7 @@ export function InboxShell({
               <rect x="2" y="4" width="20" height="16" rx="2"/>
               <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
             </svg>
-            <p className="text-sm">{t("inbox.thread.status.selectThread")}</p>
+            <p className="text-sm">{t("inbox.thread.statusLabels.selectThread")}</p>
           </div>
         )}
       </div>
