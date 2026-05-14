@@ -55,8 +55,8 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
 
     try {
       if (row._isNew) {
-        if (!SLUG_PATTERN.test(row.slug)) throw new Error("Slug must be lowercase letters, numbers and underscore only");
-        if (!row.label.trim()) throw new Error("Label required");
+        if (!SLUG_PATTERN.test(row.slug)) throw new Error("Slug får bara innehålla gemener, siffror och understreck");
+        if (!row.label.trim()) throw new Error("Etikett krävs");
 
         const res = await fetch("/api/app/case-types", {
           method: "POST",
@@ -71,7 +71,7 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
           }),
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error ?? "Create failed");
+        if (!res.ok) throw new Error(data.error ?? "Kunde inte skapa ärendetyp");
         // Replace the row with the saved one
         setRows(prev => prev.map((r, i) => i === idx ? {
           ...r, id: data.caseType.id, _isNew: false, _isDirty: false,
@@ -89,12 +89,12 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
           }),
         });
         const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.error ?? "Update failed");
+        if (!res.ok) throw new Error(data.error ?? "Kunde inte uppdatera ärendetyp");
         updateRow(idx, { _isDirty: false });
       }
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      setError(e instanceof Error ? e.message : "Okänt fel");
     } finally {
       setPending(null);
     }
@@ -108,19 +108,19 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
       setAddingNew(false);
       return;
     }
-    if (!confirm(`Delete "${row.label}"?`)) return;
+    if (!confirm(`Ta bort "${row.label}"?`)) return;
     setError(null);
     setPending(row.id);
     try {
       const res = await fetch(`/api/app/case-types/${row.id}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Delete failed");
+        throw new Error(data.error ?? "Kunde inte ta bort ärendetyp");
       }
       setRows(prev => prev.filter((_, i) => i !== idx));
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      setError(e instanceof Error ? e.message : "Okänt fel");
     } finally {
       setPending(null);
     }
@@ -145,7 +145,7 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
       <div className="space-y-2">
         {rows.length === 0 && (
           <p className="text-xs text-muted-foreground italic px-1 py-3">
-            No case types yet. Click "Add case type" below to create your first.
+            Inga ärendetyper än. Klicka "+ Lägg till ärendetyp" nedan för att skapa den första.
           </p>
         )}
 
@@ -156,7 +156,7 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Slug (internal)</label>
+                <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Slug (internt)</label>
                 <input
                   type="text"
                   value={row.slug}
@@ -167,7 +167,7 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
                 />
               </div>
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Label</label>
+                <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Etikett</label>
                 <input
                   type="text"
                   value={row.label}
@@ -183,7 +183,7 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
 
             <div>
               <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-                Required fields (comma-separated)
+                Obligatoriska fält (kommaseparerade)
               </label>
               <input
                 type="text"
@@ -195,13 +195,13 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
                 className="ct-input"
               />
               <p className="text-[10px] text-muted-foreground mt-1">
-                AI will ask the customer for these fields before routing the case.
+                AI:n ber kunden om dessa uppgifter innan ärendet dirigeras vidare.
               </p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <div>
-                <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Route finished cases to (optional)</label>
+                <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Skicka färdiga ärenden till (valfritt)</label>
                 <input
                   type="email"
                   value={row.routeToEmail ?? ""}
@@ -230,7 +230,7 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
                     onChange={e => updateRow(idx, { isDefault: e.target.checked })}
                     className="rounded"
                   />
-                  Default fallback (used when AI can&apos;t classify)
+                  Standardfallback (används när AI:n inte kan klassificera)
                 </label>
               </div>
             </div>
@@ -241,14 +241,14 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
                 disabled={pending === (row.id ?? "new")}
                 className="px-3 py-1.5 rounded-lg text-xs text-red-400 hover:text-red-300 transition-colors"
               >
-                Delete
+                Ta bort
               </button>
               <button
                 onClick={() => handleSave(idx)}
                 disabled={pending === (row.id ?? "new") || !row._isDirty}
                 className="px-3 py-1.5 rounded-lg bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40"
               >
-                {pending === (row.id ?? "new") ? "Saving…" : (row._isNew ? "Create" : (row._isDirty ? "Save" : "Saved"))}
+                {pending === (row.id ?? "new") ? "Sparar…" : (row._isNew ? "Skapa" : (row._isDirty ? "Spara" : "Sparat"))}
               </button>
             </div>
           </div>
@@ -260,7 +260,7 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
           onClick={addNew}
           className="w-full rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-3 text-xs text-muted-foreground hover:text-white hover:border-white/30 transition-colors"
         >
-          + Add case type
+          + Lägg till ärendetyp
         </button>
       )}
 

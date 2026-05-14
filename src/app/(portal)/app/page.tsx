@@ -60,8 +60,8 @@ export default async function AppHomePage() {
   return (
     <>
       <DashboardHeader
-        title="Home"
-        description="Your plan and usage at a glance"
+        title="Hem"
+        description="Din plan och användning i korthet"
       />
       <main className="flex-1 p-6 space-y-8">
 
@@ -69,16 +69,16 @@ export default async function AppHomePage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold text-white">
-            Welcome back{clerkUser.firstName ? `, ${clerkUser.firstName}` : ""}
+            Välkommen tillbaka{clerkUser.firstName ? `, ${clerkUser.firstName}` : ""}
           </h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Here&apos;s an overview of your {account.organization.name} account.
+            Här är en översikt av {account.organization.name}.
           </p>
         </div>
         {account.isMock && (
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-[10px] font-semibold uppercase tracking-wider">
             <Database size={12} />
-            Preview Mode (Mock Data)
+            Förhandsvisning (testdata)
           </div>
         )}
       </div>
@@ -86,7 +86,7 @@ export default async function AppHomePage() {
       {/* Mock-data warning */}
       {account.isMock && (
         <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-400">
-          <strong>Preview Mode</strong> — DATABASE_URL is not set. Showing mock data.
+          <strong>Förhandsvisning</strong> — DATABASE_URL är inte satt. Visar testdata.
         </div>
       )}
 
@@ -107,7 +107,7 @@ export default async function AppHomePage() {
       {/* Plan + subscription */}
       <section className="rounded-2xl border border-white/8 bg-[#050B1C]/60 backdrop-blur-sm p-6">
         <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
-          Subscription
+          Abonnemang
         </h2>
         {plan ? (
           <div className="flex items-start justify-between gap-4">
@@ -121,8 +121,8 @@ export default async function AppHomePage() {
               </p>
               {account.subscription?.currentPeriodEnd && (
                 <p className="text-xs text-muted-foreground mt-2">
-                  {account.subscription.cancelAtPeriodEnd ? "Cancels on " : "Renews on "}
-                  {new Date(account.subscription.currentPeriodEnd).toLocaleDateString("en-IE", {
+                  {account.subscription.cancelAtPeriodEnd ? "Avslutas " : "Förnyas "}
+                  {new Date(account.subscription.currentPeriodEnd).toLocaleDateString("sv-SE", {
                     month: "long", day: "numeric", year: "numeric",
                   })}
                 </p>
@@ -132,20 +132,20 @@ export default async function AppHomePage() {
               href="/dashboard/billing"
               className="text-xs px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/30 transition-colors"
             >
-              Manage billing
+              Hantera fakturering
             </Link>
           </div>
         ) : (
           <div>
-            <p className="text-sm text-white">No active subscription</p>
+            <p className="text-sm text-white">Inget aktivt abonnemang</p>
             <p className="text-xs text-muted-foreground mt-1">
-              Choose a plan to unlock the AI features.
+              Välj en plan för att låsa upp AI-funktionerna.
             </p>
             <Link
               href="/dashboard/billing"
               className="inline-block mt-4 px-4 py-2 rounded-xl bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors"
             >
-              View plans
+              Se planer
             </Link>
           </div>
         )}
@@ -154,28 +154,28 @@ export default async function AppHomePage() {
       {/* Stats grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
-          label="AI Drafts"
+          label="AI-utkast"
           value={`${(account.usage?.aiDraftsUsed ?? 0).toLocaleString()}`}
           icon={Zap}
           used={account.usage?.aiDraftsUsed ?? 0}
           limit={account.entitlements?.maxAiDraftsPerMonth ?? plan?.draftsLimit ?? 500}
         />
         <StatCard
-          label="Inboxes"
+          label="Inkorgar"
           value={`${inboxes.length} / ${account.entitlements?.maxInboxes ?? plan?.inboxLimit ?? 1}`}
-          sub="Connected inboxes"
+          sub="Anslutna inkorgar"
           icon={Mail}
         />
         <StatCard
-          label="Seats"
+          label="Platser"
           value={`1 / ${account.entitlements?.maxUsers ?? plan?.seatLimit ?? 2}`}
-          sub="Team members"
+          sub="Teammedlemmar"
           icon={Users}
         />
         <StatCard
           label="Plan"
           value={plan?.name ?? "—"}
-          sub={plan ? `${plan.price}/month` : "No active plan"}
+          sub={plan ? `${plan.price}/månad` : "Inget aktivt abonnemang"}
           icon={CreditCard}
         />
       </div>
@@ -196,31 +196,31 @@ export default async function AppHomePage() {
             href="/app/inbox"
             className="px-5 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors"
           >
-            Open inbox →
+            Öppna inkorg →
           </Link>
           <Link
             href="/app/inboxes"
             className="px-5 py-2.5 rounded-xl border border-white/10 text-white text-sm font-semibold hover:bg-white/5 transition-colors"
           >
-            Connect inbox
+            Anslut inkorg
           </Link>
           <Link
             href="/app/settings"
             className="px-5 py-2.5 rounded-xl border border-white/10 text-white text-sm font-semibold hover:bg-white/5 transition-colors"
           >
-            Settings
+            Inställningar
           </Link>
           <Link
             href="/app/stats"
             className="px-5 py-2.5 rounded-xl border border-white/10 text-white text-sm font-semibold hover:bg-white/5 transition-colors"
           >
-            Stats
+            Statistik
           </Link>
           <Link
             href="/app/activity"
             className="px-5 py-2.5 rounded-xl border border-white/10 text-white text-sm font-semibold hover:bg-white/5 transition-colors"
           >
-            Activity
+            Aktivitet
           </Link>
         </div>
       )}
@@ -367,12 +367,12 @@ function TrialBanner({
       <div>
         <p className={`text-sm font-semibold ${ending ? "text-amber-200" : "text-blue-200"}`}>
           {daysLeft === 0
-            ? "Your trial ends today"
-            : `${daysLeft} day${daysLeft === 1 ? "" : "s"} left in your free trial`}
+            ? "Din provperiod slutar idag"
+            : `${daysLeft} dag${daysLeft === 1 ? "" : "ar"} kvar av din gratis provperiod`}
         </p>
         <p className={`text-xs mt-0.5 ${ending ? "text-amber-200/70" : "text-blue-200/70"}`}>
-          Trial ends {end.toLocaleDateString("en-IE", { month: "long", day: "numeric", year: "numeric" })}.
-          Upgrade to continue using Mailmind without interruption.
+          Provperioden slutar {end.toLocaleDateString("sv-SE", { month: "long", day: "numeric", year: "numeric" })}.
+          Uppgradera för att fortsätta använda Mailmind utan avbrott.
         </p>
       </div>
       <Link
@@ -383,7 +383,7 @@ function TrialBanner({
             : "bg-white/10 text-white hover:bg-white/20"
         }`}
       >
-        Upgrade
+        Uppgradera
       </Link>
     </div>
   );
@@ -391,12 +391,12 @@ function TrialBanner({
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; cls: string }> = {
-    active:     { label: "Active",     cls: "bg-green-500/15 text-green-400 border-green-500/30" },
-    trialing:   { label: "Trial",      cls: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
-    past_due:   { label: "Past due",   cls: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
-    cancelled:  { label: "Cancelled",  cls: "bg-red-500/15 text-red-400 border-red-500/30" },
-    incomplete: { label: "Incomplete", cls: "bg-red-500/15 text-red-400 border-red-500/30" },
-    paused:     { label: "Paused",     cls: "bg-white/10 text-muted-foreground border-white/15" },
+    active:     { label: "Aktiv",      cls: "bg-green-500/15 text-green-400 border-green-500/30" },
+    trialing:   { label: "Provperiod", cls: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
+    past_due:   { label: "Förfallen",  cls: "bg-amber-500/15 text-amber-400 border-amber-500/30" },
+    cancelled:  { label: "Avslutad",   cls: "bg-red-500/15 text-red-400 border-red-500/30" },
+    incomplete: { label: "Ofullständig", cls: "bg-red-500/15 text-red-400 border-red-500/30" },
+    paused:     { label: "Pausad",     cls: "bg-white/10 text-muted-foreground border-white/15" },
   };
   const v = map[status] ?? { label: status, cls: "bg-white/10 text-muted-foreground border-white/15" };
   return (
@@ -412,39 +412,39 @@ function AccessBanner({ reason }: { reason: string }) {
   const messages: Record<string, { tone: "warn" | "block"; title: string; body: string; cta?: { label: string; href: string } }> = {
     no_subscription: {
       tone:  "block",
-      title: "Subscription required",
-      body:  "Choose a plan to start using Mailmind.",
-      cta:   { label: "View plans", href: "/dashboard/billing" },
+      title: "Abonnemang krävs",
+      body:  "Välj en plan för att börja använda Mailmind.",
+      cta:   { label: "Se planer", href: "/dashboard/billing" },
     },
     subscription_incomplete: {
       tone:  "block",
-      title: "Payment incomplete",
-      body:  "Your subscription is awaiting payment confirmation. Complete checkout to continue.",
-      cta:   { label: "Resume checkout", href: "/dashboard/billing" },
+      title: "Betalning ofullständig",
+      body:  "Ditt abonnemang väntar på betalningsbekräftelse. Slutför kassan för att fortsätta.",
+      cta:   { label: "Slutför kassan", href: "/dashboard/billing" },
     },
     subscription_cancelled: {
       tone:  "block",
-      title: "Subscription cancelled",
-      body:  "Your subscription has been cancelled. Reactivate to continue using Mailmind.",
-      cta:   { label: "Reactivate", href: "/dashboard/billing" },
+      title: "Abonnemang avslutat",
+      body:  "Ditt abonnemang har avslutats. Återaktivera för att fortsätta använda Mailmind.",
+      cta:   { label: "Återaktivera", href: "/dashboard/billing" },
     },
     subscription_paused: {
       tone:  "block",
-      title: "Subscription paused",
-      body:  "Your subscription is paused. Resume billing to continue using Mailmind.",
-      cta:   { label: "Manage billing", href: "/dashboard/billing" },
+      title: "Abonnemang pausat",
+      body:  "Ditt abonnemang är pausat. Återuppta faktureringen för att fortsätta.",
+      cta:   { label: "Hantera fakturering", href: "/dashboard/billing" },
     },
     past_due: {
       tone:  "warn",
-      title: "Payment past due",
-      body:  "Update your card to keep generating AI drafts. Read access is still available.",
-      cta:   { label: "Update payment", href: "/dashboard/billing" },
+      title: "Betalning förfallen",
+      body:  "Uppdatera ditt kort för att fortsätta generera AI-utkast. Läsåtkomst är fortfarande tillgänglig.",
+      cta:   { label: "Uppdatera betalning", href: "/dashboard/billing" },
     },
     ai_draft_limit_reached: {
       tone:  "warn",
-      title: "Monthly AI draft limit reached",
-      body:  "Upgrade your plan to generate more drafts this month.",
-      cta:   { label: "Upgrade plan", href: "/dashboard/billing" },
+      title: "Månadens AI-utkastsgräns nådd",
+      body:  "Uppgradera din plan för att generera fler utkast denna månad.",
+      cta:   { label: "Uppgradera plan", href: "/dashboard/billing" },
     },
   };
 
@@ -510,7 +510,7 @@ function StatCard({
             />
           </div>
           <p className={`text-xs mt-1.5 ${isWarning ? "text-amber-400" : "text-muted-foreground"}`}>
-            {used?.toLocaleString()} / {limit?.toLocaleString()} used
+            {used?.toLocaleString()} / {limit?.toLocaleString()} använda
           </p>
         </div>
       )}

@@ -24,12 +24,12 @@ export function OrganizationEditor({ initialName }: { initialName: string }) {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Save failed");
+        throw new Error(data.error ?? "Kunde inte spara");
       }
       setSavedAt(new Date());
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      setError(e instanceof Error ? e.message : "Okänt fel");
     } finally {
       setSaving(false);
     }
@@ -39,7 +39,7 @@ export function OrganizationEditor({ initialName }: { initialName: string }) {
     <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-4">
       <div>
         <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
-          Workspace name
+          Namn på arbetsyta
         </label>
         <input
           type="text"
@@ -49,21 +49,21 @@ export function OrganizationEditor({ initialName }: { initialName: string }) {
           className="w-full bg-white/5 text-white text-sm rounded-lg px-3 py-2 border border-white/10 focus:border-primary/50 focus:outline-none"
         />
         <p className="text-[10px] text-muted-foreground mt-1">
-          Shown in the app header and on outgoing receipts.
+          Visas i appens rubrik och på utgående mejl.
         </p>
       </div>
 
       <div className="flex items-center justify-between border-t border-white/5 pt-3">
         <div className="text-xs">
           {error && <span className="text-red-400">{error}</span>}
-          {!error && savedAt && <span className="text-green-400">Saved {savedAt.toLocaleTimeString("sv-SE")}</span>}
+          {!error && savedAt && <span className="text-green-400">Sparades {savedAt.toLocaleTimeString("sv-SE")}</span>}
         </div>
         <button
           onClick={handleSave}
           disabled={!dirty || saving}
           className="px-4 py-1.5 rounded-lg bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          {saving ? "Saving…" : "Save"}
+          {saving ? "Sparar…" : "Spara"}
         </button>
       </div>
     </div>

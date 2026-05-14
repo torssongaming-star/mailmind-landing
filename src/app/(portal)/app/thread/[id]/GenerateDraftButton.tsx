@@ -26,12 +26,12 @@ export function GenerateDraftButton({
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error ?? "Generation failed");
+        throw new Error(data.error ?? "Genereringen misslyckades");
       }
       router.refresh();
       onDone?.();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      setError(e instanceof Error ? e.message : "Okänt fel");
     } finally {
       setPending(false);
     }
@@ -44,7 +44,7 @@ export function GenerateDraftButton({
         disabled={pending}
         className="px-4 py-2 rounded-lg bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        {pending ? "Generating…" : "Generate AI draft"}
+        {pending ? "Genererar…" : "Generera AI-utkast"}
       </button>
       {error && <p className="text-[10px] text-red-400">{error}</p>}
     </div>

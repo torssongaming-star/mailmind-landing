@@ -48,7 +48,7 @@ function TemplatePicker({ onInsert, templateVars }: { onInsert: (text: string) =
         onClick={() => setOpen(true)}
         className="text-xs text-muted-foreground hover:text-white inline-flex items-center gap-1.5"
       >
-        <span>＋</span> Insert template
+        <span>＋</span> Infoga mall
       </button>
     );
   }
@@ -56,19 +56,19 @@ function TemplatePicker({ onInsert, templateVars }: { onInsert: (text: string) =
   return (
     <div className="rounded-lg border border-white/10 bg-black/40 p-2 max-h-48 overflow-y-auto">
       <div className="flex items-center justify-between px-1 py-1 mb-1">
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Templates</span>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Mallar</span>
         <button
           onClick={() => setOpen(false)}
           className="text-[11px] text-muted-foreground hover:text-white"
         >
-          Close
+          Stäng
         </button>
       </div>
-      {loading && <p className="text-xs text-muted-foreground italic px-2 py-1">Loading…</p>}
+      {loading && <p className="text-xs text-muted-foreground italic px-2 py-1">Laddar…</p>}
       {!loading && templates && templates.length === 0 && (
         <p className="text-xs text-muted-foreground italic px-2 py-1">
-          No templates yet.{" "}
-          <a href="/app/settings" className="text-primary hover:underline">Create one in settings →</a>
+          Inga mallar ännu.{" "}
+          <a href="/app/settings" className="text-primary hover:underline">Skapa en i inställningar →</a>
         </p>
       )}
       {!loading && templates && templates.length > 0 && (
@@ -127,11 +127,11 @@ export function DraftActions({
         body: JSON.stringify(payload),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? "Action failed");
+      if (!res.ok) throw new Error(data.error ?? "Åtgärden misslyckades");
       router.refresh();
       onDone?.();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      setError(e instanceof Error ? e.message : "Okänt fel");
     } finally {
       setPending(false);
     }
@@ -154,7 +154,7 @@ export function DraftActions({
             disabled={pending}
             className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-white transition-colors"
           >
-            Cancel
+            Avbryt
           </button>
           <button
             onClick={async () => {
@@ -164,7 +164,7 @@ export function DraftActions({
             disabled={pending || !body.trim()}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 text-white hover:bg-white/20 transition-colors disabled:opacity-40"
           >
-            {pending ? "Saving…" : "Save edit"}
+            {pending ? "Sparar…" : "Spara"}
           </button>
           <button
             onClick={async () => {
@@ -174,7 +174,7 @@ export function DraftActions({
             disabled={pending || !body.trim()}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-[#030614] hover:bg-cyan-300 transition-colors disabled:opacity-40"
           >
-            Save & send
+            Spara och skicka
           </button>
         </div>
       </div>
@@ -189,7 +189,7 @@ export function DraftActions({
           disabled={pending}
           className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-white border border-white/10 hover:border-white/20 transition-colors"
         >
-          Edit
+          Redigera
         </button>
       )}
       <button
@@ -197,7 +197,7 @@ export function DraftActions({
         disabled={pending}
         className="px-3 py-1.5 rounded-lg text-xs text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 transition-colors"
       >
-        Reject
+        Avvisa
       </button>
       <div className="flex-1" />
       {error && <p className="text-xs text-red-400 mr-2">{error}</p>}
@@ -207,12 +207,12 @@ export function DraftActions({
         className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-primary text-[#030614] hover:bg-cyan-300 transition-colors disabled:opacity-40"
       >
         {pending
-          ? "Sending…"
+          ? "Skickar…"
           : action === "escalate"
-            ? "Mark escalated"
+            ? "Eskalera"
             : action === "summarize"
-              ? "Send confirmation"
-              : "Send reply"}
+              ? "Skicka bekräftelse"
+              : "Skicka svar"}
       </button>
     </div>
   );

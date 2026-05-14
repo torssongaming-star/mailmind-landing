@@ -14,11 +14,11 @@ type Counts = {
 };
 
 const TABS: Array<{ value: "all" | "open" | "waiting" | "escalated" | "resolved" | "snoozed"; label: string }> = [
-  { value: "all",       label: "All" },
-  { value: "open",      label: "Open" },
-  { value: "waiting",   label: "Waiting" },
-  { value: "escalated", label: "Escalated" },
-  { value: "resolved",  label: "Resolved" },
+  { value: "all",       label: "Alla" },
+  { value: "open",      label: "Öppna" },
+  { value: "waiting",   label: "Väntar" },
+  { value: "escalated", label: "Eskalerade" },
+  { value: "resolved",  label: "Lösta" },
   { value: "snoozed",   label: "Snoozade" },
 ];
 
@@ -111,7 +111,7 @@ export function InboxFilters({
           type="search"
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Search subject, sender, type…"
+          placeholder="Sök ämne, avsändare, typ…"
           className="w-full bg-white/5 text-white text-xs rounded-lg pl-8 pr-3 py-1.5 border border-white/10 focus:border-primary/50 focus:outline-none placeholder:text-muted-foreground/40"
         />
         <svg

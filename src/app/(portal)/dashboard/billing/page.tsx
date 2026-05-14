@@ -10,7 +10,7 @@ import { siteConfig } from "@/config/site";
 
 function formatDate(date: Date | string | number | undefined): string {
   if (!date) return "—";
-  return new Date(date).toLocaleDateString("en-IE", {
+  return new Date(date).toLocaleDateString("sv-SE", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -19,13 +19,13 @@ function formatDate(date: Date | string | number | undefined): string {
 
 function StatusBadge({ status }: { status: string | undefined }) {
   const map: Record<string, { label: string; className: string }> = {
-    active:     { label: "Active",     className: "text-green-400 bg-green-500/10 border-green-500/20" },
-    trialing:   { label: "Trial",      className: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" },
-    past_due:   { label: "Past due",   className: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
-    cancelled:  { label: "Cancelled",  className: "text-red-400 bg-red-500/10 border-red-500/20" },
-    incomplete: { label: "Incomplete", className: "text-slate-400 bg-slate-500/10 border-slate-500/20" },
+    active:     { label: "Aktiv",        className: "text-green-400 bg-green-500/10 border-green-500/20" },
+    trialing:   { label: "Provperiod",   className: "text-cyan-400 bg-cyan-500/10 border-cyan-500/20" },
+    past_due:   { label: "Förfallen",    className: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
+    cancelled:  { label: "Avslutad",     className: "text-red-400 bg-red-500/10 border-red-500/20" },
+    incomplete: { label: "Ofullständig", className: "text-slate-400 bg-slate-500/10 border-slate-500/20" },
   };
-  const s = map[status ?? ""] ?? { label: "No plan", className: "text-slate-400 bg-slate-500/10 border-slate-500/20" };
+  const s = map[status ?? ""] ?? { label: "Ingen plan", className: "text-slate-400 bg-slate-500/10 border-slate-500/20" };
   return (
     <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${s.className}`}>
       {s.label}
@@ -58,7 +58,7 @@ export default async function BillingPage({
 
   return (
     <>
-      <DashboardHeader title="Billing" description="Manage your subscription and payment details" />
+      <DashboardHeader title="Fakturering" description="Hantera ditt abonnemang och betalningsuppgifter" />
 
       <main className="flex-1 p-6 space-y-6 max-w-3xl">
 
@@ -67,8 +67,8 @@ export default async function BillingPage({
           <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm">
             <Database size={16} className="shrink-0" />
             <div>
-              <p className="font-semibold">Preview Mode</p>
-              <p className="text-xs opacity-80 mt-0.5">Showing mock data. Connect your database to see live Stripe data.</p>
+              <p className="font-semibold">Förhandsvisning</p>
+              <p className="text-xs opacity-80 mt-0.5">Visar testdata. Anslut din databas för att se riktig Stripe-data.</p>
             </div>
           </div>
         )}
@@ -77,19 +77,19 @@ export default async function BillingPage({
         {checkoutSuccess && (
           <div className="flex items-center gap-3 p-4 rounded-xl bg-green-500/10 border border-green-500/20 text-green-400 text-sm">
             <CheckCircle2 size={16} className="shrink-0" />
-            Subscription activated! Your plan is now live.
+            Abonnemang aktiverat! Din plan är nu aktiv.
           </div>
         )}
         {checkoutCancelled && (
           <div className="flex items-center gap-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 text-sm">
             <AlertTriangle size={16} className="shrink-0" />
-            Checkout was cancelled. Your plan has not changed.
+            Kassan avbröts. Din plan har inte ändrats.
           </div>
         )}
         {status === "past_due" && (
           <div className="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
             <AlertTriangle size={16} className="shrink-0" />
-            Payment failed. Please update your payment method to keep your account active.
+            Betalning misslyckades. Uppdatera din betalningsmetod för att hålla kontot aktivt.
           </div>
         )}
 
@@ -100,17 +100,17 @@ export default async function BillingPage({
               <CreditCard size={16} className="text-primary" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-white">Subscription</h2>
-              <p className="text-xs text-muted-foreground">Your current {siteConfig.siteName} plan</p>
+              <h2 className="text-base font-semibold text-white">Abonnemang</h2>
+              <p className="text-xs text-muted-foreground">Din nuvarande {siteConfig.siteName}-plan</p>
             </div>
           </div>
 
           <div className="space-y-0 mb-8 divide-y divide-white/5">
             {[
-              ["Plan",             currentPlan?.name ?? "No active plan"],
-              ["Status",          <StatusBadge key="status" status={status} />],
-              ["Price",           currentPlan ? `${currentPlan.price}/month` : "—"],
-              ["Renews",          periodEnd ? formatDate(periodEnd) : "—"],
+              ["Plan",        currentPlan?.name ?? "Ingen aktiv plan"],
+              ["Status",      <StatusBadge key="status" status={status} />],
+              ["Pris",        currentPlan ? `${currentPlan.price}/månad` : "—"],
+              ["Förnyas",     periodEnd ? formatDate(periodEnd) : "—"],
             ].map(([label, value]) => (
               <div key={String(label)} className="flex justify-between items-center py-3.5">
                 <span className="text-sm text-muted-foreground">{label}</span>
@@ -123,7 +123,7 @@ export default async function BillingPage({
             <ManageBillingButton />
           ) : (
             <p className="text-sm text-muted-foreground">
-              No active subscription. Choose a plan below to get started.
+              Inget aktivt abonnemang. Välj en plan nedan för att komma igång.
             </p>
           )}
         </div>
@@ -131,7 +131,7 @@ export default async function BillingPage({
         {/* Plan comparison */}
         <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 backdrop-blur-sm p-6">
           <h3 className="text-sm font-semibold text-white mb-5">
-            {hasSubscription ? "Switch plan" : "Choose a plan"}
+            {hasSubscription ? "Byt plan" : "Välj en plan"}
           </h3>
           <div className="grid sm:grid-cols-3 gap-4">
             {(Object.entries(PLANS) as [keyof typeof PLANS, typeof PLANS[keyof typeof PLANS]][]).map(([key, plan]) => {
@@ -149,7 +149,7 @@ export default async function BillingPage({
                     <span className="text-sm font-semibold text-white">{plan.name}</span>
                     {isCurrent && (
                       <span className="text-[10px] text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full font-medium">
-                        Current
+                        Aktiv
                       </span>
                     )}
                   </div>
@@ -158,9 +158,9 @@ export default async function BillingPage({
                     <span className="text-xs text-muted-foreground font-normal">/mo</span>
                   </p>
                   <ul className="text-xs text-muted-foreground space-y-1 mb-3">
-                    <li>{plan.draftsLimit.toLocaleString()} AI drafts/mo</li>
-                    <li>{plan.inboxLimit} inbox{plan.inboxLimit > 1 ? "es" : ""}</li>
-                    <li>{plan.seatLimit} seats</li>
+                    <li>{plan.draftsLimit.toLocaleString()} AI-utkast/mån</li>
+                    <li>{plan.inboxLimit} inkorg{plan.inboxLimit > 1 ? "ar" : ""}</li>
+                    <li>{plan.seatLimit} platser</li>
                   </ul>
                   <div className="mt-auto">
                     {key === "enterprise" ? (
@@ -168,10 +168,10 @@ export default async function BillingPage({
                         href={`mailto:${siteConfig.supportEmail}?subject=Enterprise Plan Inquiry`}
                         className="mt-3 block w-full py-2 rounded-lg text-xs font-semibold text-center bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-all active:scale-[0.98]"
                       >
-                        Talk to sales
+                        Kontakta sälj
                       </a>
                     ) : (
-                      <CheckoutButton plan={key} label={`Subscribe to ${plan.name}`} isCurrent={isCurrent} />
+                      <CheckoutButton plan={key} label={`Välj ${plan.name}`} isCurrent={isCurrent} />
                     )}
                   </div>
                 </div>
@@ -180,13 +180,13 @@ export default async function BillingPage({
           </div>
           {hasSubscription && (
             <p className="text-xs text-muted-foreground mt-4">
-              Upgrades take effect immediately. Downgrades will be applied at the start of the next billing cycle.
+              Uppgraderingar träder i kraft omedelbart. Nedgraderingar börjar gälla i nästa faktureringsperiod.
             </p>
           )}
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Billing questions?{" "}
+          Faktureringsfrågor?{" "}
           <a href={`mailto:${siteConfig.billingEmail}`} className="text-primary hover:underline">
             {siteConfig.billingEmail}
           </a>

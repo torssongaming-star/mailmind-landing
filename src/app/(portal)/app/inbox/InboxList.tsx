@@ -23,6 +23,13 @@ const STATUS_CLASSES: Record<string, string> = {
   resolved:  "bg-white/10 text-muted-foreground border-white/15",
 };
 
+const STATUS_LABELS: Record<string, string> = {
+  open:      "Öppen",
+  waiting:   "Väntar",
+  escalated: "Eskalerad",
+  resolved:  "Löst",
+};
+
 const POLL_INTERVAL_MS = 30_000; // 30 seconds
 
 export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; slaByCaseType?: Record<string, number> }) {
@@ -70,7 +77,7 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
   const handleBulk = async (action: "resolve" | "escalate" | "delete") => {
     if (selected.size === 0 || pendingAction) return;
 
-    if (action === "delete" && !confirm(`Delete ${selected.size} thread${selected.size === 1 ? "" : "s"}? This cannot be undone.`)) {
+    if (action === "delete" && !confirm(`Ta bort ${selected.size} tråd${selected.size === 1 ? "" : "ar"}? Detta går inte att ångra.`)) {
       return;
     }
 
@@ -83,11 +90,11 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
         body: JSON.stringify({ threadIds: Array.from(selected), action }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error ?? "Bulk action failed");
+      if (!res.ok) throw new Error(data.error ?? "Åtgärden misslyckades");
       setSelected(new Set());
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
+      setError(e instanceof Error ? e.message : "Okänt fel");
     } finally {
       setPendingAction(null);
     }
@@ -112,13 +119,13 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
       {selectedCount > 0 && (
         <div className="sticky top-2 z-10 rounded-2xl border border-primary/30 bg-[#050B1C]/95 backdrop-blur-md px-4 py-2.5 flex items-center gap-3 shadow-lg">
           <span className="text-sm text-white">
-            <span className="font-semibold">{selectedCount}</span> selected
+            <span className="font-semibold">{selectedCount}</span> markerade
           </span>
           <button
             onClick={() => setSelected(new Set())}
             className="text-xs text-muted-foreground hover:text-white"
           >
-            Clear
+            Rensa
           </button>
           {error && <span className="text-xs text-red-400 ml-2">{error}</span>}
           <div className="flex-1" />
@@ -127,21 +134,21 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
             disabled={!!pendingAction}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-green-500/15 text-green-400 border border-green-500/30 hover:bg-green-500/25 transition-colors disabled:opacity-40"
           >
-            {pendingAction === "resolve" ? "Resolving…" : "Mark resolved"}
+            {pendingAction === "resolve" ? "Löser…" : "Markera löst"}
           </button>
           <button
             onClick={() => handleBulk("escalate")}
             disabled={!!pendingAction}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25 transition-colors disabled:opacity-40"
           >
-            {pendingAction === "escalate" ? "Escalating…" : "Escalate"}
+            {pendingAction === "escalate" ? "Eskalerar…" : "Eskalera"}
           </button>
           <button
             onClick={() => handleBulk("delete")}
             disabled={!!pendingAction}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-white/10 text-muted-foreground hover:text-white hover:border-white/30 transition-colors disabled:opacity-40"
           >
-            {pendingAction === "delete" ? "Deleting…" : "Delete"}
+            {pendingAction === "delete" ? "Tar bort…" : "Ta bort"}
           </button>
         </div>
       )}
@@ -157,7 +164,7 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
             className="rounded cursor-pointer"
             aria-label={allSelected ? "Deselect all" : "Select all"}
           />
-          <span>{threads.length} thread{threads.length === 1 ? "" : "s"}</span>
+          <span>{threads.length} tråd{threads.length === 1 ? "" : "ar"}</span>
           <div className="flex-1" />
           <button
             onClick={refresh}
@@ -208,7 +215,7 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
               >
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-white truncate">
-                    {t.subject ?? "(no subject)"}
+                    {t.subject ?? "(inget ämne)"}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
                     {t.fromName ? `${t.fromName} ` : ""}
@@ -243,7 +250,7 @@ export function InboxList({ threads, slaByCaseType = {} }: { threads: Thread[]; 
                   <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                     STATUS_CLASSES[t.status] ?? STATUS_CLASSES.resolved
                   }`}>
-                    {t.status}
+                    {STATUS_LABELS[t.status] ?? t.status}
                   </span>
                   <span className="text-[10px] text-muted-foreground tabular-nums">
                     {formattedDates[t.id]}

@@ -26,14 +26,14 @@ export function NewThreadButton({ compact }: { compact?: boolean }) {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "Failed to create thread");
+        throw new Error(data.error || "Kunde inte skapa tråd");
       }
       const { thread } = await res.json();
       setOpen(false);
       router.push(`/app/thread/${thread.id}`);
       router.refresh();
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Unknown error");
+      setErr(e instanceof Error ? e.message : "Okänt fel");
     } finally {
       setSubmitting(false);
     }
@@ -45,7 +45,7 @@ export function NewThreadButton({ compact }: { compact?: boolean }) {
         onClick={() => setOpen(true)}
         className="px-3 py-1.5 rounded-lg bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors whitespace-nowrap"
       >
-        {compact ? "New" : "New test thread"}
+        {compact ? "Ny" : "Ny testtråd"}
       </button>
 
       {open && (
@@ -55,19 +55,19 @@ export function NewThreadButton({ compact }: { compact?: boolean }) {
             onClick={e => e.stopPropagation()}
           >
             <header>
-              <h2 className="text-lg font-bold text-white">New test thread</h2>
+              <h2 className="text-lg font-bold text-white">Ny testtråd</h2>
               <p className="text-xs text-muted-foreground mt-1">
-                Simulates an inbound email so you can try the AI draft flow.
+                Simulerar ett inkommande mejl så du kan prova AI-utkast-flödet.
               </p>
             </header>
 
             <div className="grid grid-cols-2 gap-3">
-              <Field label="From email" value={fromEmail} onChange={setFromEmail} type="email" />
-              <Field label="From name"  value={fromName}  onChange={setFromName} />
+              <Field label="Avsändare (e-post)" value={fromEmail} onChange={setFromEmail} type="email" />
+              <Field label="Avsändare (namn)"   value={fromName}  onChange={setFromName} />
             </div>
-            <Field label="Subject" value={subject} onChange={setSubject} />
+            <Field label="Ämne" value={subject} onChange={setSubject} />
             <div>
-              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Message body</label>
+              <label className="block text-xs font-medium text-muted-foreground mb-1.5">Meddelande</label>
               <textarea
                 value={body}
                 onChange={e => setBody(e.target.value)}
@@ -83,14 +83,14 @@ export function NewThreadButton({ compact }: { compact?: boolean }) {
                 onClick={() => setOpen(false)}
                 className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-white transition-colors"
               >
-                Cancel
+                Avbryt
               </button>
               <button
                 onClick={handleCreate}
                 disabled={submitting || !fromEmail || !subject || !body}
                 className="px-4 py-1.5 rounded-lg bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {submitting ? "Creating…" : "Create"}
+                {submitting ? "Skapar…" : "Skapa"}
               </button>
             </div>
           </div>
