@@ -46,11 +46,14 @@ export default async function AppHomePage() {
     listInboxes(account.organization.id),
     listCaseTypes(account.organization.id),
   ]);
+
+  // Onboarding not completed (account exists but no case types) → send back.
+  if (caseTypeRows.length === 0) redirect("/app/onboarding");
+
   const setup = {
-    accountReady:    !!account.user,
-    inboxConnected:  inboxes.length > 0,
-    caseTypesReady:  caseTypeRows.length > 0,
-    firstThread:     threads.length > 0,
+    accountReady:   !!account.user,
+    inboxConnected: inboxes.length > 0,
+    firstThread:    threads.length > 0,
   };
   const setupComplete = Object.values(setup).every(Boolean);
 
@@ -231,12 +234,11 @@ export default async function AppHomePage() {
 type SetupState = {
   accountReady:   boolean;
   inboxConnected: boolean;
-  caseTypesReady: boolean;
   firstThread:    boolean;
 };
 
 type GuidedStep = {
-  key:   "accountReady" | "inboxConnected" | "firstThread" | "caseTypeAdjustment";
+  key:   keyof SetupState;
   label: string;
   hint:  string;
   href:  string;
@@ -246,50 +248,31 @@ type GuidedStep = {
 const GUIDED_STEPS: GuidedStep[] = [
   {
     key:   "accountReady",
-    label: "Konto skapat",
-    hint:  "Välkommen ombord!",
+    label: "Konto & AI konfigurerat",
+    hint:  "Välkommen ombord! Er AI är redan konfigurerad med ärendetyper och kunskapsbas.",
     href:  "/app",
     cta:   "Klart",
   },
   {
     key:   "inboxConnected",
-    label: "Anslut din första inkorg",
-    hint:  "Vidarebefordra support@dittforetag.se till en Mailmind-adress — vi ger dig instruktioner.",
+    label: "Anslut din inkorg",
+    hint:  "Koppla Gmail via OAuth eller vidarebefordra er support-adress till en Mailmind-adress.",
     href:  "/app/inboxes",
     cta:   "Anslut inkorg",
   },
   {
     key:   "firstThread",
     label: "Ta emot ditt första ärende",
-    hint:  "Skicka ett testmejl till din nya inkorg-adress. Det dyker upp här inom 30 sekunder.",
+    hint:  "Skicka ett testmejl till er inkorg-adress. Det dyker upp här inom 30 sekunder.",
     href:  "/app/inbox",
     cta:   "Öppna inkorg",
-  },
-  {
-    key:   "caseTypeAdjustment",
-    label: "Anpassa ärendetyper (valfritt)",
-    hint:  "Vi har lagt in en grunduppsättning. Justera kategorier och SLA i inställningarna när du vill.",
-    href:  "/app/settings",
-    cta:   "Öppna inställningar",
   },
 ];
 
 function GettingStarted({ setup }: { setup: SetupState }) {
-  // Determine the active (first incomplete) step — only that one gets a CTA.
-  const completed: Record<string, boolean> = {
-    accountReady:       setup.accountReady,
-    inboxConnected:     setup.inboxConnected,
-    firstThread:        setup.firstThread,
-    caseTypeAdjustment: setup.caseTypesReady, // optional, doesn't gate
-  };
-  const activeIdx = GUIDED_STEPS.findIndex((s, i) => {
-    // Skip the optional case-types step when determining "next required action".
-    if (s.key === "caseTypeAdjustment") return false;
-    return !completed[s.key];
-  });
-
-  const doneCount = GUIDED_STEPS.filter(s => s.key !== "caseTypeAdjustment" && completed[s.key]).length;
-  const totalCount = GUIDED_STEPS.filter(s => s.key !== "caseTypeAdjustment").length;
+  const activeIdx = GUIDED_STEPS.findIndex(s => !setup[s.key]);
+  const doneCount = GUIDED_STEPS.filter(s => setup[s.key]).length;
+  const totalCount = GUIDED_STEPS.length;
 
   return (
     <section className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/[0.08] to-primary/[0.02] p-6 space-y-5">
@@ -310,54 +293,42 @@ function GettingStarted({ setup }: { setup: SetupState }) {
 
       <ul className="space-y-2">
         {GUIDED_STEPS.map((s, i) => {
-          const isDone     = completed[s.key];
-          const isActive   = !isDone && i === activeIdx;
-          const isOptional = s.key === "caseTypeAdjustment";
-          const isLocked   = !isDone && !isActive && !isOptional;
+          const isDone   = setup[s.key];
+          const isActive = !isDone && i === activeIdx;
+          const isLocked = !isDone && !isActive;
 
           return (
             <li
-              key={s.key as string}
+              key={s.key}
               className={`flex items-center gap-3 rounded-xl px-4 py-3 transition-colors ${
                 isActive
                   ? "bg-primary/10 border border-primary/40"
                   : isDone
                     ? "bg-white/[0.02] border border-white/5"
-                    : isLocked
-                      ? "bg-white/[0.02] border border-white/5 opacity-50"
-                      : "bg-white/[0.02] border border-white/5"
+                    : "bg-white/[0.02] border border-white/5 opacity-50"
               }`}
             >
-              <span
-                className={`shrink-0 w-6 h-6 rounded-full border flex items-center justify-center text-[11px] font-bold ${
-                  isDone
-                    ? "bg-green-500/20 border-green-500/40 text-green-400"
-                    : isActive
-                      ? "bg-primary text-[#030614] border-primary"
-                      : "border-white/15 text-muted-foreground"
-                }`}
-              >
+              <span className={`shrink-0 w-6 h-6 rounded-full border flex items-center justify-center text-[11px] font-bold ${
+                isDone
+                  ? "bg-green-500/20 border-green-500/40 text-green-400"
+                  : isActive
+                    ? "bg-primary text-[#030614] border-primary"
+                    : "border-white/15 text-muted-foreground"
+              }`}>
                 {isDone ? "✓" : i + 1}
               </span>
               <div className="flex-1 min-w-0">
                 <p className={`text-sm font-medium ${isDone ? "text-muted-foreground line-through" : "text-white"}`}>
                   {s.label}
-                  {isOptional && !isDone && (
-                    <span className="ml-2 text-[10px] uppercase tracking-wider text-muted-foreground/70 font-normal">valfritt</span>
-                  )}
                 </p>
-                {(isActive || isOptional || (!isLocked && !isDone)) && (
+                {(isActive || isDone) && (
                   <p className="text-[11px] text-muted-foreground/80 mt-0.5">{s.hint}</p>
                 )}
               </div>
-              {!isDone && (isActive || isOptional) && (
+              {isActive && (
                 <Link
                   href={s.href}
-                  className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-                    isActive
-                      ? "bg-primary text-[#030614] hover:bg-cyan-300"
-                      : "bg-white/10 text-white hover:bg-white/20"
-                  }`}
+                  className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-[#030614] hover:bg-cyan-300 transition-colors"
                 >
                   {s.cta} →
                 </Link>

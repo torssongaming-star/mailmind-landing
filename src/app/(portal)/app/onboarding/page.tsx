@@ -16,6 +16,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getCurrentAccount } from "@/lib/app/entitlements";
+import { listCaseTypes } from "@/lib/app/threads";
 import { OnboardingForm } from "./OnboardingForm";
 
 export const dynamic = "force-dynamic";
@@ -28,10 +29,13 @@ export default async function OnboardingPage() {
     redirect("/login");
   }
 
-  // If the user is already provisioned, skip straight to the app.
   const account = await getCurrentAccount(userId);
+
+  // Already fully onboarded (user + at least one case type) → send to app.
   if (account.user) {
-    redirect("/app");
+    const caseTypes = await listCaseTypes(account.organization.id);
+    if (caseTypes.length > 0) redirect("/app");
+    // else: user exists but onboarding was interrupted — fall through to show form
   }
 
   const email = clerkUser.primaryEmailAddress?.emailAddress ?? "";

@@ -93,43 +93,59 @@ export function SettingsTabs({
   const current = NAV.find(n => n.id === active)!;
 
   return (
-    <div className="flex gap-0 min-h-[600px] rounded-2xl border border-white/8 overflow-hidden">
+    <div className="rounded-2xl border border-white/8 overflow-hidden">
 
-      {/* ── Sidebar ───────────────────────────────────────────────────────── */}
-      <nav className="w-52 shrink-0 border-r border-white/8 bg-[#020510] py-3">
-        <p className="px-4 pb-2 text-[10px] font-semibold uppercase tracking-widest text-white/20">
-          Inställningar
-        </p>
-        {NAV.map(item => {
-          const Icon     = item.icon;
-          const isActive = item.id === active;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActive(item.id)}
-              className={[
-                "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors group relative",
-                isActive
-                  ? "text-white bg-white/[0.05]"
-                  : "text-white/40 hover:text-white/70 hover:bg-white/[0.02]",
-              ].join(" ")}
-            >
-              {/* Active indicator */}
-              {isActive && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
-              )}
-              <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : "text-white/30 group-hover:text-white/50"}`} />
-              <span className="text-xs font-medium truncate">{item.label}</span>
-            </button>
-          );
-        })}
-      </nav>
+      {/* ── Mobile: dropdown selector ──────────────────────────────────────── */}
+      <div className="lg:hidden border-b border-white/8 bg-[#020510] p-3">
+        <select
+          value={active}
+          onChange={e => setActive(e.target.value as SectionId)}
+          className="w-full bg-white/5 text-white text-sm rounded-lg px-3 py-2.5 border border-white/10 focus:border-primary/50 outline-none"
+          style={{ colorScheme: "dark" }}
+        >
+          {NAV.map(item => (
+            <option key={item.id} value={item.id}>{item.label}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* ── Desktop: sidebar + content ─────────────────────────────────────── */}
+      <div className="flex min-h-[600px]">
+
+        {/* Sidebar — hidden on mobile */}
+        <nav className="hidden lg:block w-52 shrink-0 border-r border-white/8 bg-[#020510] py-3">
+          <p className="px-4 pb-2 text-[10px] font-semibold uppercase tracking-widest text-white/20">
+            Inställningar
+          </p>
+          {NAV.map(item => {
+            const Icon     = item.icon;
+            const isActive = item.id === active;
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActive(item.id)}
+                className={[
+                  "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors group relative",
+                  isActive
+                    ? "text-white bg-white/[0.05]"
+                    : "text-white/40 hover:text-white/70 hover:bg-white/[0.02]",
+                ].join(" ")}
+              >
+                {isActive && (
+                  <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
+                )}
+                <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : "text-white/30 group-hover:text-white/50"}`} />
+                <span className="text-xs font-medium truncate">{item.label}</span>
+              </button>
+            );
+          })}
+        </nav>
 
       {/* ── Content ───────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-w-0">
 
-        {/* Section header — always visible, changes with active section */}
-        <div className="sticky top-0 z-10 px-8 py-5 border-b border-white/8 bg-[#030614]/95 backdrop-blur-sm flex items-center gap-3">
+        {/* Section header */}
+        <div className="sticky top-0 z-10 px-4 sm:px-8 py-4 sm:py-5 border-b border-white/8 bg-[#030614]/95 backdrop-blur-sm flex items-center gap-3">
           <current.icon className="w-5 h-5 text-primary shrink-0" />
           <div>
             <h2 className="text-sm font-semibold text-white leading-none">{current.label}</h2>
@@ -138,7 +154,7 @@ export function SettingsTabs({
         </div>
 
         {/* Panels — mounted but hidden when inactive */}
-        <div className="px-8 py-7 space-y-8">
+        <div className="px-4 sm:px-8 py-5 sm:py-7 space-y-8">
 
           <div className={active === "general" ? "space-y-8" : "hidden"}>
             <SettingsRow
@@ -214,6 +230,7 @@ export function SettingsTabs({
 
         </div>
       </div>
+      </div>{/* end desktop flex */}
 
     </div>
   );
