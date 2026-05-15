@@ -15,49 +15,49 @@ export function UseCases() {
       icon: <ShoppingBag className="w-5 h-5" />,
       title: t("landing.useCases.ecommerce"),
       description: t("landing.useCases.ecommerceDesc"),
-      tags: getRaw("landing.useCases.ecommerceTags") || []
+      tags: getRaw("landing.useCases.ecommerceTags")
     },
     {
       icon: <Headset className="w-5 h-5" />,
       title: t("landing.useCases.support"),
       description: t("landing.useCases.supportDesc"),
-      tags: getRaw("landing.useCases.supportTags") || []
+      tags: getRaw("landing.useCases.supportTags")
     },
     {
       icon: <Truck className="w-5 h-5" />,
       title: t("landing.useCases.logistics"),
       description: t("landing.useCases.logisticsDesc"),
-      tags: getRaw("landing.useCases.logisticsTags") || []
+      tags: getRaw("landing.useCases.logisticsTags")
     },
     {
       icon: <Building className="w-5 h-5" />,
       title: t("landing.useCases.property"),
       description: t("landing.useCases.propertyDesc"),
-      tags: getRaw("landing.useCases.propertyTags") || []
+      tags: getRaw("landing.useCases.propertyTags")
     },
     {
       icon: <Wrench className="w-5 h-5" />,
       title: t("landing.useCases.repair"),
       description: t("landing.useCases.repairDesc"),
-      tags: getRaw("landing.useCases.repairTags") || []
+      tags: getRaw("landing.useCases.repairTags")
     },
     {
       icon: <Stethoscope className="w-5 h-5" />,
       title: t("landing.useCases.clinics"),
       description: t("landing.useCases.clinicsDesc"),
-      tags: getRaw("landing.useCases.clinicsTags") || []
+      tags: getRaw("landing.useCases.clinicsTags")
     },
     {
       icon: <Store className="w-5 h-5" />,
       title: t("landing.useCases.services"),
       description: t("landing.useCases.servicesDesc"),
-      tags: getRaw("landing.useCases.servicesTags") || []
+      tags: getRaw("landing.useCases.servicesTags")
     },
     {
       icon: <Shirt className="w-5 h-5" />,
       title: t("landing.useCases.textile"),
       description: t("landing.useCases.textileDesc"),
-      tags: getRaw("landing.useCases.textileTags") || []
+      tags: getRaw("landing.useCases.textileTags")
     },
   ];
 
@@ -100,7 +100,7 @@ export function UseCases() {
 
               {/* Tags always visible — not hover-dependent */}
               <div className="flex flex-wrap gap-1 mt-auto">
-                {(industry.tags as string[]).map((tag: string, tagIndex: number) => (
+                {Array.isArray(industry.tags) && industry.tags.map((tag: string, tagIndex: number) => (
                   <Badge
                     key={tagIndex}
                     variant="outline"

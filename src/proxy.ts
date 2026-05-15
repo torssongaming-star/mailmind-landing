@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 /** Routes that require authentication */
 const isProtectedRoute = createRouteMatcher([
@@ -10,7 +11,7 @@ const isProtectedRoute = createRouteMatcher([
   "/api/admin(.*)",
 ]);
 
-const proxy = clerkMiddleware(async (auth, req) => {
+export const proxy = clerkMiddleware(async (auth, req) => {
   // Always allow the health check even if it matches /api/admin(.*)
   // because it handles its own ADMIN_HEALTH_SECRET auth.
   if (req.nextUrl.pathname === "/api/admin/health") {
@@ -23,12 +24,10 @@ const proxy = clerkMiddleware(async (auth, req) => {
       // Force redirect to /login if not authenticated, preserving search params
       const loginUrl = new URL("/login", req.url);
       loginUrl.search = req.nextUrl.search;
-      return Response.redirect(loginUrl);
+      return NextResponse.redirect(loginUrl);
     }
   }
 });
-
-export default proxy;
 
 export const config = {
   matcher: [
