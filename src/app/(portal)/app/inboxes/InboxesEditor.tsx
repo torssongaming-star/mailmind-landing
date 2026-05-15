@@ -232,12 +232,37 @@ export function InboxesEditor({
       )}
 
       {!showForm && canAddMore && (
-        <button
-          onClick={() => setShowForm(true)}
-          className="w-full rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-3 text-xs text-muted-foreground hover:text-white hover:border-white/30 transition-colors"
-        >
-          {t("portal.inboxes.editor.connectAnother")}
-        </button>
+        <div className="grid sm:grid-cols-3 gap-3">
+          {/* Forwarding (mailmind address) */}
+          <button
+            onClick={() => setShowForm(true)}
+            className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-4 text-xs text-muted-foreground hover:text-white hover:border-white/30 transition-colors flex flex-col items-center gap-2"
+          >
+            <span className="text-lg">📧</span>
+            <span className="font-medium">{t("portal.inboxes.editor.connectAnother")}</span>
+            <span className="text-[10px] opacity-60">{locale === "sv" ? "Vidarebefordra e-post" : "Forward emails"}</span>
+          </button>
+
+          {/* Gmail OAuth */}
+          <a
+            href="/api/app/inboxes/gmail/auth"
+            className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-4 text-xs text-muted-foreground hover:text-white hover:border-white/30 transition-colors flex flex-col items-center gap-2"
+          >
+            <span className="text-lg">🔴</span>
+            <span className="font-medium">{locale === "sv" ? "Koppla Gmail" : "Connect Gmail"}</span>
+            <span className="text-[10px] opacity-60">OAuth 2.0</span>
+          </a>
+
+          {/* Outlook / Microsoft 365 OAuth */}
+          <a
+            href="/api/app/inboxes/outlook/auth"
+            className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-4 text-xs text-muted-foreground hover:text-white hover:border-cyan-400/40 hover:border-solid transition-colors flex flex-col items-center gap-2"
+          >
+            <span className="text-lg">🔵</span>
+            <span className="font-medium">{locale === "sv" ? "Koppla Outlook / M365" : "Connect Outlook / M365"}</span>
+            <span className="text-[10px] opacity-60">OAuth 2.0 · Microsoft Graph</span>
+          </a>
+        </div>
       )}
 
       {!canAddMore && (

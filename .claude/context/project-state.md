@@ -67,8 +67,8 @@ Fas 7   ✅  Tags, blocklist-hook, inbox split-pane, settings sidebar, support d
 Fas 8   ✅  Stats, webhooks, snooze, search, onboarding-wizard, mobile-sidebar
 Fas 9   ✅  Gmail OAuth — connect, receive, send via Gmail API + Pub/Sub push
 Fas 10  ✅  Onboarding redesign — 5 obligatoriska steg + AI-kunskapsbas wizard
-Fas 11  🔲  Petitesser & fixar — cron, PII-logs, svenska strängar, admin-dashboard
-Fas 12  🔲  Säkerhet & stabilitet — SendGrid HMAC, AI-retry, type safety
+Fas 11  ✅  Petitesser & fixar — cron, PII-logs, svenska strängar, admin-dashboard
+Fas 12  ✅  Säkerhet & stabilitet — SendGrid HMAC, AI-retry, type safety + i18n (sv/en)
 Fas 13  🔲  Microsoft 365 / Outlook OAuth (låst beslut — högsta prioritet efter Fas 12)
 Fas 14  🔲  Veckovis e-postrapport — retention-cron + Resend-mall
 Fas 15  🔲  Team & roller — bjud in kollegor, admin/agent-roller

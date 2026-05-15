@@ -33,12 +33,19 @@ import {
 import { sendEmail, replySubject, appendSignature } from "./email";
 import { writeAuditLog } from "./audit";
 import {
-  decryptTokens,
-  encryptTokens,
-  getValidAccessToken,
+  decryptTokens as gmailDecryptTokens,
+  encryptTokens as gmailEncryptTokens,
+  getValidAccessToken as gmailGetValidAccessToken,
   sendViaGmail,
   type GmailInboxConfig,
 } from "./gmail";
+import {
+  decryptTokens as outlookDecryptTokens,
+  encryptTokens as outlookEncryptTokens,
+  getValidAccessToken as outlookGetValidAccessToken,
+  sendViaOutlook,
+  type OutlookInboxConfig,
+} from "./outlook";
 
 // ── Rule 1: confidence threshold ─────────────────────────────────────────────
 export const AUTO_SEND_CONFIDENCE_THRESHOLD = 0.90;
@@ -182,13 +189,13 @@ export async function executeSendDraft(params: {
         return { ok: false, error: "gmail_no_tokens" };
       }
 
-      let tokens = decryptTokens(config.encryptedTokens);
-      const { token: accessToken, updated } = await getValidAccessToken(tokens);
+      let tokens = gmailDecryptTokens(config.encryptedTokens);
+      const { token: accessToken, updated } = await gmailGetValidAccessToken(tokens);
       if (updated) {
         tokens = updated;
         await updateInboxConfig(inboxRow.id, {
           ...config,
-          encryptedTokens: encryptTokens(tokens),
+          encryptedTokens: gmailEncryptTokens(tokens),
         } as Record<string, unknown>);
       }
 
@@ -210,6 +217,38 @@ export async function executeSendDraft(params: {
       if (!thread.externalThreadId) {
         await setThreadExternalId(orgId, draft.threadId, gmailResult.gmailThreadId);
       }
+
+    } else if (inboxProvider === "outlook" && inboxRow) {
+      // ── Send via Microsoft Graph API ─────────────────────────────────────
+      const config = inboxRow.config as OutlookInboxConfig | null;
+      if (!config?.encryptedTokens) {
+        return { ok: false, error: "outlook_no_tokens" };
+      }
+
+      let tokens = outlookDecryptTokens(config.encryptedTokens);
+      const { token: accessToken, updated } = await outlookGetValidAccessToken(tokens);
+      if (updated) {
+        tokens = updated;
+        await updateInboxConfig(inboxRow.id, {
+          ...config,
+          encryptedTokens: outlookEncryptTokens(tokens),
+        } as Record<string, unknown>);
+      }
+
+      const outlookResult = await sendViaOutlook(accessToken, {
+        from:       inboxEmail!,
+        to:         thread.fromEmail,
+        subject,
+        text:       finalBody,
+        inReplyTo,
+        references,
+      });
+
+      if (!outlookResult.ok) {
+        return { ok: false, error: `outlook_send_error: ${outlookResult.error}` };
+      }
+      sentMessageId = outlookResult.messageId;
+
     } else {
       // ── Send via Resend ──────────────────────────────────────────────────
       const headers: Record<string, string> = {};
@@ -238,8 +277,8 @@ export async function executeSendDraft(params: {
       sentAt:            now,
     });
 
-    // For Resend (non-gmail): use the Resend message ID as external thread ID if not set
-    if (inboxProvider !== "gmail" && !thread.externalThreadId && sentMessageId) {
+    // For forwarded inboxes (Resend): use the message ID as external thread ID if not set
+    if (inboxProvider !== "gmail" && inboxProvider !== "outlook" && !thread.externalThreadId && sentMessageId) {
       await setThreadExternalId(orgId, draft.threadId, sentMessageId);
     }
   }

@@ -13,12 +13,19 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { db, isDbConnected, organizations, users, subscriptions, licenseEntitlements, usageCounters } from "@/lib/db";
-import { eq, and, lt, desc } from "drizzle-orm";
-import { wakeUpAllSnoozedThreads } from "@/lib/app/threads";
+import { db, isDbConnected, organizations, users, subscriptions, licenseEntitlements, usageCounters, inboxes } from "@/lib/db";
+import { eq, and, lt, lte, desc } from "drizzle-orm";
+import { wakeUpAllSnoozedThreads, updateInboxConfig } from "@/lib/app/threads";
 import { notifyUsageWarning, notifyTrialExpired } from "@/lib/app/notify";
 import { PLANS } from "@/lib/plans";
 import { writeAuditLog } from "@/lib/app/audit";
+import {
+  decryptTokens as outlookDecryptTokens,
+  encryptTokens as outlookEncryptTokens,
+  getValidAccessToken as outlookGetValidAccessToken,
+  renewMailSubscription,
+  type OutlookInboxConfig,
+} from "@/lib/app/outlook";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -168,6 +175,57 @@ async function taskUsageWarning() {
   return { checked: counters.length, sent, errors: errors.length > 0 ? errors : undefined };
 }
 
+// ── task: renew Outlook subscriptions expiring within 24h ─────────────────────
+
+async function taskRenewOutlookSubscriptions() {
+  if (!process.env.OUTLOOK_CLIENT_ID) return { skipped: "not_configured" };
+
+  const cutoff = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h from now
+
+  const outlookInboxes = await db
+    .select()
+    .from(inboxes)
+    .where(eq(inboxes.provider, "outlook"));
+
+  let renewed = 0;
+  let skipped = 0;
+  const errors: string[] = [];
+
+  for (const inbox of outlookInboxes) {
+    try {
+      const config = inbox.config as OutlookInboxConfig | null;
+      if (!config?.encryptedTokens || !config.subscriptionId || !config.subscriptionExpiry) {
+        skipped++;
+        continue;
+      }
+
+      const expiry = new Date(config.subscriptionExpiry);
+      if (expiry > cutoff) {
+        skipped++;
+        continue; // Not expiring soon — nothing to do
+      }
+
+      let tokens = outlookDecryptTokens(config.encryptedTokens);
+      const { token: accessToken, updated } = await outlookGetValidAccessToken(tokens);
+      if (updated) tokens = updated;
+
+      const newExpiry = await renewMailSubscription(accessToken, config.subscriptionId);
+
+      await updateInboxConfig(inbox.id, {
+        ...config,
+        subscriptionExpiry:  newExpiry,
+        encryptedTokens:     outlookEncryptTokens(tokens),
+      } as Record<string, unknown>);
+
+      renewed++;
+    } catch (err) {
+      errors.push(`inbox=${inbox.id}: ${String(err)}`);
+    }
+  }
+
+  return { renewed, skipped, errors: errors.length > 0 ? errors : undefined };
+}
+
 // ── handler ───────────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
@@ -185,6 +243,9 @@ export async function GET(req: NextRequest) {
   // Daily (midnight UTC): wake snoozed threads + expire ended trials
   results.unsnooze     = await taskUnsnooze();
   results.expireTrials = await taskExpireTrials();
+
+  // Daily: renew Outlook Graph subscriptions expiring within 24h
+  results.renewOutlookSubscriptions = await taskRenewOutlookSubscriptions();
 
   // Weekly on Monday: usage warnings
   if (isUtcDay(1)) {

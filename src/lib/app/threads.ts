@@ -429,6 +429,44 @@ export async function createGmailInbox(input: {
   return rows[0] ?? null;
 }
 
+export async function createOutlookInbox(input: {
+  organizationId: string;
+  email:          string;
+  displayName:    string;
+  config:         Record<string, unknown>;
+}): Promise<Inbox | null> {
+  if (!isDbConnected()) return null;
+  const rows = await db
+    .insert(inboxes)
+    .values({
+      organizationId: input.organizationId,
+      provider:       "outlook",
+      email:          input.email.toLowerCase(),
+      displayName:    input.displayName,
+      status:         "active",
+      config:         input.config,
+    })
+    .returning();
+  return rows[0] ?? null;
+}
+
+/** Look up an inbox by its Microsoft Graph subscriptionId (stored in config jsonb). */
+export async function getInboxBySubscriptionId(subscriptionId: string): Promise<Inbox | null> {
+  if (!isDbConnected()) return null;
+  const rows = await db
+    .select()
+    .from(inboxes)
+    .where(
+      and(
+        eq(inboxes.provider, "outlook"),
+        // JSONB containment: config @> '{"subscriptionId": "<id>"}'
+        sql`${inboxes.config} @> ${JSON.stringify({ subscriptionId })}::jsonb`,
+      )
+    )
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 export async function deleteInbox(organizationId: string, inboxId: string) {
   if (!isDbConnected()) return;
   await db
