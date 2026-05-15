@@ -25,7 +25,7 @@ export function getI18n(locale: Locale = "sv") {
 
     if (variables) {
       return Object.entries(variables).reduce(
-        (acc, [key, val]) => acc.replace(new RegExp(`{{${key}}}`, "g"), val),
+        (acc, [key, val]) => acc.replace(new RegExp(`\\{+${key}\\}+`, "g"), val),
         value
       );
     }
