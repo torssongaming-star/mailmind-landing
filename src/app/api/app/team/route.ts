@@ -93,7 +93,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Database unavailable" }, { status: 503 });
   }
 
-  // Send invite email (non-fatal)
+  // Send invite email (non-fatal — invite is created regardless)
+  let emailSent = false;
   try {
     await notifyInvite({
       toEmail:   email,
@@ -102,6 +103,7 @@ export async function POST(req: NextRequest) {
       role,
       token:     invite.token,
     });
+    emailSent = true;
   } catch (err) {
     console.error("[team/invite] email send failed:", err);
   }
@@ -110,8 +112,14 @@ export async function POST(req: NextRequest) {
     organizationId: orgId,
     userId:         account.user.id,
     action:         "team_invite_sent",
-    metadata:       { email, role, inviteId: invite.id },
+    metadata:       { email, role, inviteId: invite.id, emailSent },
   });
 
-  return NextResponse.json({ ok: true, invite: { id: invite.id, email, role } });
+  return NextResponse.json({
+    ok: true,
+    invite:      { id: invite.id, email, role },
+    emailSent,
+    // Accept link so owner can copy-paste if email failed
+    acceptLink:  `${process.env.NEXT_PUBLIC_APP_URL ?? "https://mailmind.se"}/api/app/team/accept?token=${invite.token}`,
+  });
 }

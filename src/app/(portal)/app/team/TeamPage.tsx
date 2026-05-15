@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserPlus, X, ChevronDown } from "lucide-react";
+import { useToast, ToastContainer } from "@/components/ui/Toast";
 
 type Member = {
   id:        string;
@@ -70,14 +71,13 @@ export function TeamPage({
   orgName:         string;
 }) {
   const router = useRouter();
+  const { toasts, toast, dismiss } = useToast();
   const [members, setMembers]   = useState(initialMembers);
   const [invites, setInvites]   = useState(initialInvites);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [email, setEmail]       = useState("");
   const [role, setRole]         = useState<"admin" | "member">("member");
   const [pending, setPending]   = useState<string | null>(null);
-  const [error, setError]       = useState<string | null>(null);
-  const [success, setSuccess]   = useState<string | null>(null);
 
   const isOwner    = currentUserRole === "owner";
   const isAdmin    = currentUserRole === "admin";
@@ -89,7 +89,7 @@ export function TeamPage({
 
   const sendInvite = async () => {
     if (!email.trim()) return;
-    setError(null); setSuccess(null); setPending("invite");
+    setPending("invite");
     try {
       const res = await fetch("/api/app/team", {
         method: "POST",
@@ -98,38 +98,53 @@ export function TeamPage({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Kunde inte skicka inbjudan");
+
       setInvites(prev => [...prev, {
         ...data.invite,
         createdAt: new Date(),
         expiresAt: new Date(Date.now() + 72 * 3600 * 1000),
       }]);
       setEmail("");
-      setSuccess(`Inbjudan skickad till ${data.invite.email}`);
       setInviteOpen(false);
       refresh();
+
+      if (data.emailSent) {
+        toast.success(`Inbjudan skickad till ${data.invite.email}`);
+      } else {
+        // Email failed — show link to copy manually
+        toast.warning("Inbjudan skapad men mejlet gick inte att skicka.", {
+          detail: "Kopiera länken nedan och skicka den manuellt.",
+          duration: 12000,
+        });
+        if (data.acceptLink) {
+          navigator.clipboard.writeText(data.acceptLink).catch(() => {});
+          toast.info("Inbjudningslänken kopierades till urklipp.", { duration: 8000 });
+        }
+      }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Okänt fel");
+      toast.error(e instanceof Error ? e.message : "Okänt fel");
     } finally {
       setPending(null);
     }
   };
 
   const cancelInvite = async (inviteId: string) => {
-    setError(null); setPending(`cancel-${inviteId}`);
+    setPending(`cancel-${inviteId}`);
     try {
       const res = await fetch(`/api/app/team/invites/${inviteId}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Kunde inte avbryta inbjudan");
       setInvites(prev => prev.filter(i => i.id !== inviteId));
+      toast.info("Inbjudan avbruten.");
       refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Okänt fel");
+      toast.error(e instanceof Error ? e.message : "Okänt fel");
     } finally {
       setPending(null);
     }
   };
 
   const changeRole = async (memberId: string, newRole: "admin" | "member") => {
-    setError(null); setPending(`role-${memberId}`);
+    setPending(`role-${memberId}`);
     try {
       const res = await fetch(`/api/app/team/members/${memberId}`, {
         method: "PATCH",
@@ -141,9 +156,10 @@ export function TeamPage({
         throw new Error(data.error ?? "Kunde inte ändra roll");
       }
       setMembers(prev => prev.map(m => m.id === memberId ? { ...m, role: newRole } : m));
+      toast.success(`Roll uppdaterad till ${newRole === "admin" ? "Admin" : "Medlem"}.`);
       refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Okänt fel");
+      toast.error(e instanceof Error ? e.message : "Okänt fel");
     } finally {
       setPending(null);
     }
@@ -151,7 +167,7 @@ export function TeamPage({
 
   const removeMember = async (memberId: string, memberEmail: string) => {
     if (!confirm(`Ta bort ${memberEmail} från ${orgName}?`)) return;
-    setError(null); setPending(`remove-${memberId}`);
+    setPending(`remove-${memberId}`);
     try {
       const res = await fetch(`/api/app/team/members/${memberId}`, { method: "DELETE" });
       if (!res.ok) {
@@ -159,9 +175,10 @@ export function TeamPage({
         throw new Error(data.error ?? "Kunde inte ta bort medlem");
       }
       setMembers(prev => prev.filter(m => m.id !== memberId));
+      toast.success(`${memberEmail} har tagits bort.`);
       refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Okänt fel");
+      toast.error(e instanceof Error ? e.message : "Okänt fel");
     } finally {
       setPending(null);
     }
@@ -169,6 +186,7 @@ export function TeamPage({
 
   return (
     <main className="max-w-3xl mx-auto p-6 md:p-10 space-y-8">
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
 
       {/* ── Page header ─────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4">
@@ -193,7 +211,7 @@ export function TeamPage({
           {/* Invite CTA */}
           {canManage && !seatsFull && (
             <button
-              onClick={() => { setInviteOpen(v => !v); setError(null); setSuccess(null); }}
+              onClick={() => setInviteOpen(v => !v)}
               className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors"
             >
               <UserPlus size={13} />
@@ -202,20 +220,6 @@ export function TeamPage({
           )}
         </div>
       </div>
-
-      {/* ── Feedback banners ────────────────────────────────────────────── */}
-      {error   && (
-        <div className="rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-red-400 flex items-center justify-between">
-          {error}
-          <button onClick={() => setError(null)} className="text-red-400/60 hover:text-red-400"><X size={12} /></button>
-        </div>
-      )}
-      {success && (
-        <div className="rounded-lg border border-green-500/20 bg-green-500/5 px-3 py-2 text-xs text-green-400 flex items-center justify-between">
-          {success}
-          <button onClick={() => setSuccess(null)} className="text-green-400/60 hover:text-green-400"><X size={12} /></button>
-        </div>
-      )}
 
       {/* ── Invite panel (inline, no modal) ─────────────────────────────── */}
       {inviteOpen && (

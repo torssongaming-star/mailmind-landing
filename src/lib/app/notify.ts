@@ -6,7 +6,7 @@ import { Resend } from "resend";
 import type { WeeklyStats } from "./stats";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = "Mailmind <notiser@mail.mailmind.se>";
+const FROM = "Mailmind <noreply@mailmind.se>";
 
 export async function notifyNewThread(input: {
   toEmail: string;
