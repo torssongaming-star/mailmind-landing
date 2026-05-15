@@ -15,6 +15,8 @@ type InboxRow = {
   forwardedFrom: string | null;
 };
 
+type View = "idle" | "picker" | "form";
+
 export function InboxesEditor({
   initial,
   canAddMore,
@@ -26,7 +28,9 @@ export function InboxesEditor({
 }) {
   const { t, locale } = useI18n();
   const router = useRouter();
-  const [showForm, setShowForm] = useState(initial.length === 0);
+
+  // Empty state → jump straight to picker so users choose type first
+  const [view, setView] = useState<View>(initial.length === 0 ? "picker" : "idle");
   const [pending, setPending]   = useState(false);
   const [error, setError]       = useState<string | null>(null);
 
@@ -34,9 +38,6 @@ export function InboxesEditor({
   const [displayName, setDisplayName]   = useState("");
   const [forwardedFrom, setForwardedFrom] = useState("");
   const [copiedId, setCopiedId]         = useState<string | null>(null);
-  /** IDs of inboxes the user just created in this session — we show the
-   *  ConnectionTester on these until the user dismisses it. Keyed by id so
-   *  it survives router.refresh(). */
   const [testingIds, setTestingIds]     = useState<Set<string>>(new Set());
 
   const handleCreate = async () => {
@@ -58,7 +59,7 @@ export function InboxesEditor({
         setTestingIds(prev => new Set(prev).add(data.inbox.id));
       }
       setSlug(""); setDisplayName(""); setForwardedFrom("");
-      setShowForm(false);
+      setView("idle");
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : t("common.error"));
@@ -91,6 +92,8 @@ export function InboxesEditor({
     setTimeout(() => setCopiedId(null), 1500);
   };
 
+  const sv = locale === "sv";
+
   return (
     <div className="space-y-4">
       {error && (
@@ -99,7 +102,7 @@ export function InboxesEditor({
         </div>
       )}
 
-      {/* Inbox list */}
+      {/* ── Inbox list ──────────────────────────────────────────────────── */}
       <div className="space-y-2">
         {initial.map(inbox => (
           <div
@@ -108,37 +111,45 @@ export function InboxesEditor({
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-white">{inbox.displayName ?? inbox.email}</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-base">{providerIcon(inbox.provider)}</span>
+                  <p className="text-sm font-semibold text-white">{inbox.displayName ?? inbox.email}</p>
+                </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {inbox.provider} · {t(`portal.inboxes.status.${inbox.status.toLowerCase()}` as any)}
-                  {inbox.forwardedFrom && <> · {t("portal.inboxes.labels.forwardedFrom").toLowerCase()} <span className="text-white/70">{inbox.forwardedFrom}</span></>}
+                  {providerLabel(inbox.provider, sv)} · {t(`portal.inboxes.status.${inbox.status.toLowerCase()}` as any)}
+                  {inbox.forwardedFrom && (
+                    <> · {t("portal.inboxes.labels.forwardedFrom").toLowerCase()}{" "}
+                    <span className="text-white/70">{inbox.forwardedFrom}</span></>
+                  )}
                 </p>
               </div>
               <button
                 onClick={() => handleDelete(inbox.id)}
                 disabled={pending}
-                className="text-xs text-red-400 hover:text-red-300 transition-colors"
+                className="text-xs text-red-400 hover:text-red-300 transition-colors shrink-0"
               >
                 {t("portal.inboxes.editor.disconnect")}
               </button>
             </div>
 
-            <div className="rounded-lg bg-black/30 px-3 py-2.5 flex items-center justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
-                  {t("portal.inboxes.editor.forwardTo")}
-                </p>
-                <p className="text-sm font-mono text-cyan-300 truncate">{inbox.email}</p>
+            {/* Only forwarding inboxes show the mailmind address */}
+            {inbox.provider === "mailmind" && (
+              <div className="rounded-lg bg-black/30 px-3 py-2.5 flex items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-0.5">
+                    {t("portal.inboxes.editor.forwardTo")}
+                  </p>
+                  <p className="text-sm font-mono text-cyan-300 truncate">{inbox.email}</p>
+                </div>
+                <button
+                  onClick={() => copyToClipboard(inbox.email, inbox.id)}
+                  className="px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-[10px] text-white transition-colors shrink-0"
+                >
+                  {copiedId === inbox.id ? t("portal.inboxes.editor.copied") : t("portal.inboxes.editor.copy")}
+                </button>
               </div>
-              <button
-                onClick={() => copyToClipboard(inbox.email, inbox.id)}
-                className="px-2 py-1 rounded-md bg-white/5 hover:bg-white/10 text-[10px] text-white transition-colors shrink-0"
-              >
-                {copiedId === inbox.id ? t("portal.inboxes.editor.copied") : t("portal.inboxes.editor.copy")}
-              </button>
-            </div>
+            )}
 
-            {/* Live connection tester — only on inboxes created this session */}
             {testingIds.has(inbox.id) && (
               <ConnectionTester
                 inboxId={inbox.id}
@@ -151,16 +162,125 @@ export function InboxesEditor({
               />
             )}
 
-            {/* Forwarding setup guide — expandable */}
-            <ForwardingGuide mailmindAddress={inbox.email} />
+            {inbox.provider === "mailmind" && (
+              <ForwardingGuide mailmindAddress={inbox.email} />
+            )}
           </div>
         ))}
       </div>
 
-      {/* New inbox form */}
-      {showForm && canAddMore && (
+      {/* ── Connection type picker ───────────────────────────────────────── */}
+      {view === "picker" && canAddMore && (
         <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-4">
-          <h3 className="text-sm font-semibold text-white">{t("portal.inboxes.editor.connectTitle")}</h3>
+          <div>
+            <h3 className="text-sm font-semibold text-white">
+              {sv ? "Hur vill du koppla din inkorg?" : "How do you want to connect your inbox?"}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              {sv
+                ? "Välj direktintegration (OAuth) eller vidarebefordran om du inte kan ge oss tillgång."
+                : "Choose direct integration (OAuth) or email forwarding if you prefer not to grant access."}
+            </p>
+          </div>
+
+          <div className="grid gap-3">
+            {/* Outlook / Microsoft 365 — recommended for Swedish B2B */}
+            <a
+              href="/api/app/inboxes/outlook/auth"
+              className="flex items-start gap-4 rounded-xl border border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-500/10 px-4 py-3.5 transition-colors group"
+            >
+              <span className="text-2xl mt-0.5">🔵</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white group-hover:text-cyan-300 transition-colors">
+                  {sv ? "Koppla Outlook / Microsoft 365" : "Connect Outlook / Microsoft 365"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {sv
+                    ? "Direktintegration via Microsoft Graph API. Vi läser och skickar mejl i ditt namn."
+                    : "Direct integration via Microsoft Graph API. We read and send mail on your behalf."}
+                </p>
+                <span className="inline-block mt-1.5 text-[10px] font-semibold text-cyan-400 bg-cyan-500/10 border border-cyan-500/20 px-1.5 py-0.5 rounded-full">
+                  {sv ? "Rekommenderas" : "Recommended"}
+                </span>
+              </div>
+              <span className="text-white/40 group-hover:text-white/70 text-sm self-center">→</span>
+            </a>
+
+            {/* Gmail */}
+            <a
+              href="/api/app/inboxes/gmail/auth"
+              className="flex items-start gap-4 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] px-4 py-3.5 transition-colors group"
+            >
+              <span className="text-2xl mt-0.5">🔴</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white group-hover:text-white transition-colors">
+                  {sv ? "Koppla Gmail / Google Workspace" : "Connect Gmail / Google Workspace"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {sv
+                    ? "Direktintegration via Gmail API. Vi läser och skickar mejl i ditt namn."
+                    : "Direct integration via Gmail API. We read and send mail on your behalf."}
+                </p>
+              </div>
+              <span className="text-white/40 group-hover:text-white/70 text-sm self-center">→</span>
+            </a>
+
+            {/* Forwarding — advanced option */}
+            <button
+              onClick={() => setView("form")}
+              className="flex items-start gap-4 rounded-xl border border-white/8 bg-white/[0.01] hover:bg-white/[0.03] px-4 py-3.5 transition-colors group text-left"
+            >
+              <span className="text-2xl mt-0.5">📧</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-white/70 group-hover:text-white transition-colors">
+                  {sv ? "Vidarebefordra e-post (avancerat)" : "Email forwarding (advanced)"}
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {sv
+                    ? "Vi skapar en unik Mailmind-adress. Du ställer in vidarebefordring i ditt egna mailsystem."
+                    : "We create a unique Mailmind address. You configure forwarding in your own mail system."}
+                </p>
+              </div>
+              <span className="text-white/40 group-hover:text-white/70 text-sm self-center">→</span>
+            </button>
+          </div>
+
+          {initial.length > 0 && (
+            <div className="pt-1 border-t border-white/5 flex justify-end">
+              <button
+                onClick={() => setView("idle")}
+                className="text-xs text-muted-foreground hover:text-white transition-colors"
+              >
+                {sv ? "Avbryt" : "Cancel"}
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Forwarding form ──────────────────────────────────────────────── */}
+      {view === "form" && canAddMore && (
+        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setView("picker")}
+              className="text-xs text-muted-foreground hover:text-white transition-colors"
+            >
+              ← {sv ? "Tillbaka" : "Back"}
+            </button>
+            <h3 className="text-sm font-semibold text-white">{t("portal.inboxes.editor.connectTitle")}</h3>
+          </div>
+
+          <div className="rounded-lg bg-amber-500/5 border border-amber-500/20 px-3 py-2.5 text-xs text-amber-200/80 leading-relaxed">
+            <p className="font-semibold text-amber-200 mb-1">
+              {sv ? "Hur vidarebefordran fungerar" : "How forwarding works"}
+            </p>
+            <p>
+              {sv
+                ? "Vi skapar en adress som t.ex. support@mail.mailmind.se. Du sätter sedan upp en vidarebefordringsregel i Gmail, Outlook eller ditt mailsystem så att mejl till din supportadress skickas hit. Mailmind tar emot dem och skapar AI-svarsutkast."
+                : "We create an address like support@mail.mailmind.se. You then set up a forwarding rule in Gmail, Outlook or your mail system so that emails to your support address are sent here. Mailmind receives them and creates AI reply drafts."}
+            </p>
+          </div>
 
           <div>
             <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
@@ -170,14 +290,14 @@ export function InboxesEditor({
               type="text"
               value={displayName}
               onChange={e => setDisplayName(e.target.value)}
-              placeholder="Customer support"
+              placeholder={sv ? "t.ex. Kundsupport" : "e.g. Customer support"}
               className="ix-input"
             />
           </div>
 
           <div>
             <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-              {locale === "sv" ? "Välj en slug" : "Choose a slug"}
+              {sv ? "Välj en slug (del av adressen)" : "Choose a slug (part of the address)"}
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -196,7 +316,7 @@ export function InboxesEditor({
 
           <div>
             <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-              {t("portal.inboxes.labels.forwardedFrom")} ({t("portal.onboarding.optional")}, {locale === "sv" ? "bara för din referens" : "just for your reference"})
+              {t("portal.inboxes.labels.forwardedFrom")} ({t("portal.onboarding.optional")}, {sv ? "bara för din referens" : "just for your reference"})
             </label>
             <input
               type="email"
@@ -207,18 +327,13 @@ export function InboxesEditor({
             />
           </div>
 
-          <div className="rounded-lg bg-cyan-500/5 border border-cyan-500/20 px-3 py-2.5 text-xs text-cyan-200/80 leading-relaxed">
-            <p className="font-semibold text-cyan-200 mb-1">{t("portal.inboxes.editor.afterCreateTitle")}</p>
-            <p>{t("portal.inboxes.editor.afterCreateDesc", { address: "@mail.mailmind.se" })}</p>
-          </div>
-
           <div className="flex justify-end gap-2 pt-2 border-t border-white/5">
             <button
-              onClick={() => { setShowForm(false); setSlug(""); setDisplayName(""); setForwardedFrom(""); }}
+              onClick={() => { setView("picker"); setSlug(""); setDisplayName(""); setForwardedFrom(""); }}
               disabled={pending}
               className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-white transition-colors"
             >
-              {t("common.cancel" as any) || (locale === "sv" ? "Avbryt" : "Cancel")}
+              {sv ? "Avbryt" : "Cancel"}
             </button>
             <button
               onClick={handleCreate}
@@ -231,40 +346,17 @@ export function InboxesEditor({
         </div>
       )}
 
-      {!showForm && canAddMore && (
-        <div className="grid sm:grid-cols-3 gap-3">
-          {/* Forwarding (mailmind address) */}
-          <button
-            onClick={() => setShowForm(true)}
-            className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-4 text-xs text-muted-foreground hover:text-white hover:border-white/30 transition-colors flex flex-col items-center gap-2"
-          >
-            <span className="text-lg">📧</span>
-            <span className="font-medium">{t("portal.inboxes.editor.connectAnother")}</span>
-            <span className="text-[10px] opacity-60">{locale === "sv" ? "Vidarebefordra e-post" : "Forward emails"}</span>
-          </button>
-
-          {/* Gmail OAuth */}
-          <a
-            href="/api/app/inboxes/gmail/auth"
-            className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-4 text-xs text-muted-foreground hover:text-white hover:border-white/30 transition-colors flex flex-col items-center gap-2"
-          >
-            <span className="text-lg">🔴</span>
-            <span className="font-medium">{locale === "sv" ? "Koppla Gmail" : "Connect Gmail"}</span>
-            <span className="text-[10px] opacity-60">OAuth 2.0</span>
-          </a>
-
-          {/* Outlook / Microsoft 365 OAuth */}
-          <a
-            href="/api/app/inboxes/outlook/auth"
-            className="rounded-2xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-4 text-xs text-muted-foreground hover:text-white hover:border-cyan-400/40 hover:border-solid transition-colors flex flex-col items-center gap-2"
-          >
-            <span className="text-lg">🔵</span>
-            <span className="font-medium">{locale === "sv" ? "Koppla Outlook / M365" : "Connect Outlook / M365"}</span>
-            <span className="text-[10px] opacity-60">OAuth 2.0 · Microsoft Graph</span>
-          </a>
-        </div>
+      {/* ── Add another button (has inboxes, can add more, not in picker) ── */}
+      {view === "idle" && canAddMore && (
+        <button
+          onClick={() => setView("picker")}
+          className="w-full rounded-2xl border border-dashed border-white/15 bg-white/[0.01] px-4 py-3 text-xs text-muted-foreground hover:text-white hover:border-white/30 transition-colors"
+        >
+          + {t("portal.inboxes.editor.connectAnother")}
+        </button>
       )}
 
+      {/* ── Limit reached ────────────────────────────────────────────────── */}
       {!canAddMore && (
         <div className="rounded-2xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-300">
           {t("portal.inboxes.editor.limitReached", { limit: limit.toString() })}{" "}
@@ -287,4 +379,22 @@ export function InboxesEditor({
       `}</style>
     </div>
   );
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function providerIcon(provider: string): string {
+  switch (provider) {
+    case "gmail":   return "🔴";
+    case "outlook": return "🔵";
+    default:        return "📧";
+  }
+}
+
+function providerLabel(provider: string, sv: boolean): string {
+  switch (provider) {
+    case "gmail":   return "Gmail";
+    case "outlook": return "Outlook / M365";
+    default:        return sv ? "Vidarebefordran" : "Forwarding";
+  }
 }
