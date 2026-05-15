@@ -8,6 +8,7 @@
  */
 
 import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   Building2, Bot, Tag, BookOpen, FileText, ShieldOff, Webhook, Users,
 } from "lucide-react";
@@ -62,7 +63,13 @@ export function SettingsTabs({
   seatLimit,
 }: Props) {
   const { t } = useI18n();
-  const [active, setActive] = useState<SectionId>("general");
+  const searchParams = useSearchParams();
+  const initialTab = (searchParams.get("tab") as SectionId | null) ?? "general";
+  const [active, setActive] = useState<SectionId>(
+    ["general","casetypes","knowledge","templates","blocklist","webhooks","team"].includes(initialTab)
+      ? initialTab
+      : "general"
+  );
 
   const NAV = [
     {
