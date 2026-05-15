@@ -5,7 +5,7 @@
  * can render directly. Falls back to zeros when DATABASE_URL isn't set.
  */
 
-import { sql, eq, and, gte, desc, count } from "drizzle-orm";
+import { sql, eq, and, gte, lt, desc, count } from "drizzle-orm";
 import {
   db,
   isDbConnected,
@@ -348,5 +348,113 @@ export async function getResponseStats(organizationId: string): Promise<Response
   return {
     medianMinutes: row.median !== null ? Number(row.median) : null,
     sampleSize:    Number(row.sample),
+  };
+}
+
+// ── Weekly report stats ───────────────────────────────────────────────────────
+
+export type WeeklyStats = {
+  orgName:          string;
+  weekStart:        Date;
+  weekEnd:          Date;
+  newThreads:       number;
+  resolvedThreads:  number;
+  escalatedThreads: number;
+  draftsSent:       number;
+  topCaseType:      string | null;
+};
+
+/**
+ * Returns the stats for the past 7 days for a given org.
+ * Used by the weekly email report cron task.
+ */
+export async function getWeeklyStats(
+  organizationId: string,
+  orgName: string,
+): Promise<WeeklyStats> {
+  const weekEnd   = new Date();
+  const weekStart = new Date(weekEnd.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const empty: WeeklyStats = {
+    orgName, weekStart, weekEnd,
+    newThreads: 0, resolvedThreads: 0, escalatedThreads: 0,
+    draftsSent: 0, topCaseType: null,
+  };
+
+  if (!isDbConnected()) return empty;
+
+  const [newRows, resolvedRows, escalatedRows, draftRows, caseRows] = await Promise.all([
+    // New threads this week
+    db.select({ c: count() })
+      .from(emailThreads)
+      .where(and(
+        eq(emailThreads.organizationId, organizationId),
+        gte(emailThreads.createdAt, weekStart),
+        lt(emailThreads.createdAt, weekEnd),
+      )),
+
+    // Resolved threads this week
+    db.select({ c: count() })
+      .from(emailThreads)
+      .where(and(
+        eq(emailThreads.organizationId, organizationId),
+        eq(emailThreads.status, "resolved"),
+        gte(emailThreads.updatedAt, weekStart),
+        lt(emailThreads.updatedAt, weekEnd),
+      )),
+
+    // Escalated threads this week
+    db.select({ c: count() })
+      .from(emailThreads)
+      .where(and(
+        eq(emailThreads.organizationId, organizationId),
+        eq(emailThreads.status, "escalated"),
+        gte(emailThreads.updatedAt, weekStart),
+        lt(emailThreads.updatedAt, weekEnd),
+      )),
+
+    // AI drafts sent this week
+    db.select({ c: count() })
+      .from(aiDrafts)
+      .where(and(
+        eq(aiDrafts.organizationId, organizationId),
+        eq(aiDrafts.status, "sent"),
+        gte(aiDrafts.generatedAt, weekStart),
+        lt(aiDrafts.generatedAt, weekEnd),
+      )),
+
+    // Top case type this week (by thread count)
+    db.select({
+        slug:  emailThreads.caseTypeSlug,
+        label: caseTypes.label,
+        c:     count(),
+      })
+      .from(emailThreads)
+      .leftJoin(caseTypes, and(
+        eq(caseTypes.organizationId, organizationId),
+        eq(caseTypes.slug, emailThreads.caseTypeSlug),
+      ))
+      .where(and(
+        eq(emailThreads.organizationId, organizationId),
+        gte(emailThreads.createdAt, weekStart),
+        lt(emailThreads.createdAt, weekEnd),
+      ))
+      .groupBy(emailThreads.caseTypeSlug, caseTypes.label)
+      .orderBy(desc(count()))
+      .limit(1),
+  ]);
+
+  const topRow     = caseRows[0];
+  const topCaseType = topRow?.label ?? topRow?.slug ?? null;
+
+  return {
+    orgName,
+    weekStart,
+    weekEnd,
+    newThreads:       Number(newRows[0]?.c       ?? 0),
+    resolvedThreads:  Number(resolvedRows[0]?.c  ?? 0),
+    escalatedThreads: Number(escalatedRows[0]?.c ?? 0),
+    draftsSent:       Number(draftRows[0]?.c      ?? 0),
+    topCaseType,
   };
 }

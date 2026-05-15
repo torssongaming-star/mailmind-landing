@@ -16,7 +16,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { db, isDbConnected, organizations, users, subscriptions, licenseEntitlements, usageCounters, inboxes } from "@/lib/db";
 import { eq, and, lt, lte, desc } from "drizzle-orm";
 import { wakeUpAllSnoozedThreads, updateInboxConfig } from "@/lib/app/threads";
-import { notifyUsageWarning, notifyTrialExpired } from "@/lib/app/notify";
+import { notifyUsageWarning, notifyTrialExpired, notifyWeeklyReport } from "@/lib/app/notify";
+import { getWeeklyStats } from "@/lib/app/stats";
 import { PLANS } from "@/lib/plans";
 import { writeAuditLog } from "@/lib/app/audit";
 import {
@@ -175,6 +176,70 @@ async function taskUsageWarning() {
   return { checked: counters.length, sent, errors: errors.length > 0 ? errors : undefined };
 }
 
+// ── task: weekly report ───────────────────────────────────────────────────────
+
+async function taskWeeklyReport() {
+  // Fetch all active/trialing orgs with at least one owner email
+  const activeOrgs = await db
+    .select({
+      orgId:   organizations.id,
+      orgName: organizations.name,
+      email:   users.email,
+    })
+    .from(subscriptions)
+    .innerJoin(organizations, eq(organizations.id, subscriptions.organizationId))
+    .innerJoin(users, and(
+      eq(users.organizationId, subscriptions.organizationId),
+      eq(users.role, "owner"),
+    ))
+    .where(
+      and(
+        eq(subscriptions.status, "active"),
+      )
+    );
+
+  // Also include trialing orgs
+  const trialingOrgs = await db
+    .select({
+      orgId:   organizations.id,
+      orgName: organizations.name,
+      email:   users.email,
+    })
+    .from(subscriptions)
+    .innerJoin(organizations, eq(organizations.id, subscriptions.organizationId))
+    .innerJoin(users, and(
+      eq(users.organizationId, subscriptions.organizationId),
+      eq(users.role, "owner"),
+    ))
+    .where(eq(subscriptions.status, "trialing"));
+
+  const allOrgs = [...activeOrgs, ...trialingOrgs];
+  if (allOrgs.length === 0) return { sent: 0, skipped: 0 };
+
+  let sent = 0;
+  let skipped = 0;
+  const errors: string[] = [];
+
+  await Promise.allSettled(allOrgs.map(async (org) => {
+    try {
+      const stats = await getWeeklyStats(org.orgId, org.orgName);
+
+      // Skip if no activity this week — don't send empty reports
+      if (stats.newThreads === 0 && stats.draftsSent === 0) {
+        skipped++;
+        return;
+      }
+
+      await notifyWeeklyReport(org.email, stats);
+      sent++;
+    } catch (err) {
+      errors.push(`org=${org.orgId}: ${String(err)}`);
+    }
+  }));
+
+  return { sent, skipped, errors: errors.length > 0 ? errors : undefined };
+}
+
 // ── task: renew Outlook subscriptions expiring within 24h ─────────────────────
 
 async function taskRenewOutlookSubscriptions() {
@@ -247,9 +312,10 @@ export async function GET(req: NextRequest) {
   // Daily: renew Outlook Graph subscriptions expiring within 24h
   results.renewOutlookSubscriptions = await taskRenewOutlookSubscriptions();
 
-  // Weekly on Monday: usage warnings
+  // Weekly on Monday: usage warnings + weekly report
   if (isUtcDay(1)) {
-    results.usageWarning = await taskUsageWarning();
+    results.usageWarning  = await taskUsageWarning();
+    results.weeklyReport  = await taskWeeklyReport();
   }
 
   return NextResponse.json({ ok: true, ...results });

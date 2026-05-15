@@ -3,6 +3,7 @@
  */
 
 import { Resend } from "resend";
+import type { WeeklyStats } from "./stats";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = "Mailmind <notiser@mail.mailmind.se>";
@@ -53,5 +54,84 @@ export async function notifyTrialExpired(input: {
 <p>Välj ett abonnemang för att fortsätta ta emot och svara på kundmejl med AI.</p>
 <p><a href="https://mailmind.se/dashboard/billing">Välj abonnemang →</a></p>
 <p>Har du frågor? Svara på detta mejl så hjälper vi dig.</p>`,
+  });
+}
+
+export async function notifyWeeklyReport(toEmail: string, stats: WeeklyStats) {
+  const fmt = (d: Date) =>
+    d.toLocaleDateString("sv-SE", { day: "numeric", month: "long" });
+
+  const aiRate = stats.newThreads > 0
+    ? Math.round((stats.draftsSent / stats.newThreads) * 100)
+    : 0;
+
+  const rows = [
+    ["📨 Nya ärenden",       stats.newThreads],
+    ["✅ Lösta ärenden",     stats.resolvedThreads],
+    ["⚡ Eskalerade",        stats.escalatedThreads],
+    ["🤖 AI-svar skickade",  stats.draftsSent],
+    ["📊 AI-svarsfrekvens",  `${aiRate}%`],
+    ...(stats.topCaseType ? [["🏷️ Vanligaste typ", stats.topCaseType]] : []),
+  ] as [string, string | number][];
+
+  const tableRows = rows.map(([label, value]) => `
+    <tr>
+      <td style="padding:10px 16px;color:#94a3b8;font-size:13px;border-bottom:1px solid #1e293b;">${label}</td>
+      <td style="padding:10px 16px;color:#f1f5f9;font-size:13px;font-weight:600;text-align:right;border-bottom:1px solid #1e293b;">${value}</td>
+    </tr>`).join("");
+
+  const html = `<!DOCTYPE html>
+<html lang="sv">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#0f172a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;padding:40px 0;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+
+        <!-- Header -->
+        <tr>
+          <td style="padding:0 0 24px 0;">
+            <p style="margin:0;color:#06b6d4;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Mailmind</p>
+            <h1 style="margin:8px 0 4px;color:#f1f5f9;font-size:22px;font-weight:700;">Veckans sammanfattning</h1>
+            <p style="margin:0;color:#64748b;font-size:13px;">${fmt(stats.weekStart)} – ${fmt(stats.weekEnd)} &nbsp;·&nbsp; ${stats.orgName}</p>
+          </td>
+        </tr>
+
+        <!-- Stats table -->
+        <tr>
+          <td style="background:#1e293b;border-radius:12px;overflow:hidden;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              ${tableRows}
+            </table>
+          </td>
+        </tr>
+
+        <!-- CTA -->
+        <tr>
+          <td style="padding:24px 0 0 0;text-align:center;">
+            <a href="https://mailmind.se/app" style="display:inline-block;background:#06b6d4;color:#030614;font-size:13px;font-weight:700;text-decoration:none;padding:10px 24px;border-radius:8px;">
+              Öppna inkorgen →
+            </a>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="padding:32px 0 0 0;text-align:center;color:#475569;font-size:11px;">
+            Du får detta mejl varje måndag. <a href="https://mailmind.se/app/settings" style="color:#475569;">Hantera notiser</a>
+          </td>
+        </tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  await resend.emails.send({
+    from: FROM,
+    to:   toEmail,
+    subject: `Veckans sammanfattning – ${stats.orgName}`,
+    html,
   });
 }
