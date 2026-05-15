@@ -22,6 +22,7 @@ import { Zap, Mail, Users, CreditCard, Database } from "lucide-react";
 import { getUserLocale } from "@/lib/i18n/get-locale";
 import { getTranslations } from "@/lib/i18n";
 import { Locale } from "@/lib/i18n/types";
+import { AppBanners } from "./AppBanners";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,8 @@ export default async function AppHomePage() {
         description={t("portal.dashboard.description")}
       />
       <main className="flex-1 p-6 space-y-8">
+
+      <AppBanners account={account} />
 
       {/* Welcome */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

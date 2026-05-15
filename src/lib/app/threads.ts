@@ -498,6 +498,60 @@ export async function listThreadsByEmail(
     .then(rows => rows.filter(r => r.id !== excludeThreadId).slice(0, limit));
 }
 
+/**
+ * Customer history summary — compact view of past interactions with the same
+ * email address. Used to inject context into the AI prompt so it knows whether
+ * the sender is a returning customer with prior issues.
+ *
+ * Performance: capped to 5 most-recent past threads, ordered by lastMessageAt.
+ * Keeps the prompt budget tight while still useful.
+ */
+export type CustomerHistorySummary = {
+  pastThreadCount: number;
+  threads: Array<{
+    subject:      string | null;
+    caseTypeSlug: string | null;
+    status:       string;
+    lastMessageAt: Date | null;
+  }>;
+};
+
+export async function getCustomerHistory(
+  organizationId: string,
+  fromEmail: string,
+  excludeThreadId: string,
+  maxThreads = 5,
+): Promise<CustomerHistorySummary> {
+  if (!isDbConnected()) return { pastThreadCount: 0, threads: [] };
+
+  const rows = await db
+    .select({
+      id:            emailThreads.id,
+      subject:       emailThreads.subject,
+      caseTypeSlug:  emailThreads.caseTypeSlug,
+      status:        emailThreads.status,
+      lastMessageAt: emailThreads.lastMessageAt,
+    })
+    .from(emailThreads)
+    .where(and(
+      eq(emailThreads.organizationId, organizationId),
+      eq(emailThreads.fromEmail, fromEmail.toLowerCase()),
+    ))
+    .orderBy(desc(emailThreads.lastMessageAt))
+    .limit(maxThreads + 5); // fetch a few extra so we can filter current + cap
+
+  const filtered = rows.filter(r => r.id !== excludeThreadId);
+  return {
+    pastThreadCount: filtered.length,
+    threads: filtered.slice(0, maxThreads).map(r => ({
+      subject:       r.subject,
+      caseTypeSlug:  r.caseTypeSlug,
+      status:        r.status,
+      lastMessageAt: r.lastMessageAt,
+    })),
+  };
+}
+
 /** Find an already-stored message by its external id (for webhook idempotency). */
 export async function findMessageByExternalId(externalMessageId: string): Promise<EmailMessage | null> {
   if (!isDbConnected()) return null;

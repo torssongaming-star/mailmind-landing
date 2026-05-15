@@ -72,8 +72,8 @@ Fas 12  ✅  Säkerhet & stabilitet — SendGrid HMAC, AI-retry, type safety + i
 Fas 13  ✅  Microsoft 365 / Outlook OAuth (Graph API, AES-krypterade tokens, subscription-renewal i cron)
 Fas 14  ✅  Veckovis e-postrapport — getWeeklyStats + notifyWeeklyReport i Monday-cron
 Fas 15  ✅  Team & roller — orgInvites-tabell, invite-flow, TeamEditor UI, owner/admin/member-hierarki
-Fas 16  🔲  Kundhistorik & AI-kontext — injicera historik i AI-prompt
-Fas 17  🔲  Prissättning & konvertering — trial-banner, referral-kod
+Fas 16  ✅  Kundhistorik & AI-kontext — getCustomerHistory + injection i buildUserMessage
+Fas 17  ✅  Prissättning & konvertering — AppBanners (trial-countdown, past-due, usage-warning)
 Fas 18  🔲  PWA & mobilnotiser — offline, Web Push
 ```
 

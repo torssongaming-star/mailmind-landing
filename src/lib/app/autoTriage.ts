@@ -30,6 +30,7 @@ import {
   findPendingDraft,
   updateThread,
   defaultAiSettings,
+  getCustomerHistory,
 } from "./threads";
 import { listActiveKnowledge } from "./knowledge";
 import { generateDraft, AiTransientError } from "./ai";
@@ -101,11 +102,12 @@ export async function autoTriageNewMessage(input: {
     return { ok: false, reason: "draft_already_pending" };
   }
 
-  const [messages, settings, caseTypesList, knowledge] = await Promise.all([
+  const [messages, settings, caseTypesList, knowledge, customerHistory] = await Promise.all([
     listMessages(threadId),
     getAiSettings(organizationId),
     listCaseTypes(organizationId),
     listActiveKnowledge(organizationId),
+    getCustomerHistory(organizationId, thread.fromEmail, threadId),
   ]);
 
   // Dry-run mode: generate + log but do NOT auto-send.
@@ -123,6 +125,7 @@ export async function autoTriageNewMessage(input: {
       thread,
       messages,
       newEmailBody,
+      customerHistory,
     });
   } catch (err) {
     if (err instanceof AiTransientError) {

@@ -27,6 +27,7 @@ import type {
   EmailThread,
   KnowledgeEntry,
 } from "@/lib/db/schema";
+import type { CustomerHistorySummary } from "./threads";
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -158,12 +159,10 @@ export function buildUserMessage(opts: {
   thread: EmailThread;
   messages: EmailMessage[];
   newEmailBody: string;
+  customerHistory?: CustomerHistorySummary;
 }): string {
-  const { thread, messages, newEmailBody } = opts;
+  const { thread, messages, newEmailBody, customerHistory } = opts;
 
-  // Build conversation history. Skip the very last customer message if it's
-  // identical to newEmailBody (avoid duplication when caller passes the latest
-  // message both as DB row + standalone text).
   const history = messages
     .map(m => {
       const speaker = m.role === "customer"  ? "KUND"
@@ -173,7 +172,29 @@ export function buildUserMessage(opts: {
     })
     .join("\n\n");
 
-  return `ÄRENDEHISTORIK:
+  // Customer context — only emitted when there are past threads from this email.
+  // Goal: give the AI signal that this is a returning customer + what their
+  // past concerns were, without bloating the prompt.
+  let customerContext = "";
+  if (customerHistory && customerHistory.threads.length > 0) {
+    const pastLines = customerHistory.threads.map(t => {
+      const date = t.lastMessageAt
+        ? t.lastMessageAt.toISOString().slice(0, 10)
+        : "okänt datum";
+      const subj = t.subject ?? "(inget ämne)";
+      const cat  = t.caseTypeSlug ? ` [${t.caseTypeSlug}]` : "";
+      return `- ${date}: "${subj}"${cat} — status: ${t.status}`;
+    }).join("\n");
+
+    customerContext = `\nKUNDHISTORIK (tidigare ärenden från samma e-postadress):
+Antal tidigare ärenden: ${customerHistory.pastThreadCount}
+${pastLines}
+
+Anpassa tonen mot återkommande kunder. Hänvisa till tidigare ärenden om relevant.
+`;
+  }
+
+  return `${customerContext}ÄRENDEHISTORIK:
 ${history || "(inget tidigare)"}
 
 NYTT MEJL FRÅN KUND:
@@ -264,6 +285,8 @@ export type GenerateDraftInput = {
   thread: EmailThread;
   messages: EmailMessage[];
   newEmailBody: string;
+  /** Past threads from same customer — optional, injected into prompt when present. */
+  customerHistory?: CustomerHistorySummary;
 };
 
 export type GenerateDraftResult = {
@@ -288,9 +311,10 @@ export async function generateDraft(input: GenerateDraftInput): Promise<Generate
     knowledge:        input.knowledge ?? [],
   });
   const userMessage = buildUserMessage({
-    thread:       input.thread,
-    messages:     input.messages,
-    newEmailBody: input.newEmailBody,
+    thread:          input.thread,
+    messages:        input.messages,
+    newEmailBody:    input.newEmailBody,
+    customerHistory: input.customerHistory,
   });
 
   let rawText = "";

@@ -28,7 +28,9 @@ import {
   listCaseTypes,
   createDraft,
   defaultAiSettings,
+  getCustomerHistory,
 } from "@/lib/app/threads";
+import { listActiveKnowledge } from "@/lib/app/knowledge";
 import { generateDraft, AiTransientError } from "@/lib/app/ai";
 
 export const runtime = "nodejs";
@@ -82,9 +84,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Thread has no customer message to reply to" }, { status: 400 });
   }
 
-  // Load org-specific AI config
-  const settings = (await getAiSettings(orgId)) ?? defaultAiSettings(orgId);
-  const caseTypes = await listCaseTypes(orgId);
+  // Load org-specific AI config + customer history in parallel
+  const [settings, caseTypes, knowledge, customerHistory] = await Promise.all([
+    getAiSettings(orgId).then(s => s ?? defaultAiSettings(orgId)),
+    listCaseTypes(orgId),
+    listActiveKnowledge(orgId),
+    getCustomerHistory(orgId, thread.fromEmail, threadId),
+  ]);
 
   // Generate
   let ai;
@@ -93,9 +99,11 @@ export async function POST(req: NextRequest) {
       organizationName: account.organization.name,
       settings,
       caseTypes,
+      knowledge,
       thread,
       messages,
       newEmailBody,
+      customerHistory,
     });
   } catch (err) {
     if (err instanceof AiTransientError) {
