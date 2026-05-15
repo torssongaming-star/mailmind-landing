@@ -48,10 +48,13 @@ export const metadata: Metadata = {
     creator: siteConfig.twitterHandle || undefined,
   },
   icons: {
-    icon: "/favicon.png",
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
+  manifest: "/site.webmanifest",
 };
 
 export default async function RootLayout({
