@@ -74,7 +74,7 @@ Fas 14  ✅  Veckovis e-postrapport — getWeeklyStats + notifyWeeklyReport i Mo
 Fas 15  ✅  Team & roller — orgInvites-tabell, invite-flow, TeamEditor UI, owner/admin/member-hierarki
 Fas 16  ✅  Kundhistorik & AI-kontext — getCustomerHistory + injection i buildUserMessage
 Fas 17  ✅  Prissättning & konvertering — AppBanners (trial-countdown, past-due, usage-warning)
-Fas 18  🔲  PWA & mobilnotiser — offline, Web Push
+Fas 18  ✅  PWA & mobilnotiser — manifest, service worker, Web Push (VAPID)
 ```
 
 ---

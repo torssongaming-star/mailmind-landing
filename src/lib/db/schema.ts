@@ -515,6 +515,30 @@ export const orgInvites = pgTable(
   ]
 );
 
+/**
+ * Web Push subscriptions. Each user can have multiple (one per device/browser).
+ * Endpoint is unique per browser+VAPID-key combo, so we dedupe on it.
+ */
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id:              uuid("id").primaryKey().defaultRandom(),
+    userId:          uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    organizationId:  uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    endpoint:        text("endpoint").notNull(),
+    p256dh:          varchar("p256dh", { length: 255 }).notNull(),
+    auth:            varchar("auth", { length: 255 }).notNull(),
+    userAgent:       varchar("user_agent", { length: 255 }),
+    createdAt:       timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    lastUsedAt:      timestamp("last_used_at", { withTimezone: true }),
+  },
+  (t) => [
+    uniqueIndex("push_subscriptions_endpoint_idx").on(t.endpoint),
+    index("push_subscriptions_user_idx").on(t.userId),
+    index("push_subscriptions_org_idx").on(t.organizationId),
+  ]
+);
+
 // ── Relations ─────────────────────────────────────────────────────────────────
 
 export const organizationsRelations = relations(organizations, ({ many, one }) => ({
@@ -701,3 +725,6 @@ export type NewAdminKnowledgeArticle = typeof adminKnowledgeArticles.$inferInser
 
 export type OrgInvite = typeof orgInvites.$inferSelect;
 export type NewOrgInvite = typeof orgInvites.$inferInsert;
+
+export type PushSubscription = typeof pushSubscriptions.$inferSelect;
+export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;

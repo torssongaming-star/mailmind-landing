@@ -40,6 +40,7 @@ import { fireWebhooksForThread } from "./webhooks";
 import { notifyNewThread } from "./notify";
 import { canAutoSend, executeSendDraft } from "./autoSend";
 import { isBlocked } from "./blocklist";
+import { sendPushToOrg } from "./push";
 
 function currentMonthIso(): string {
   const now = new Date();
@@ -277,6 +278,15 @@ export async function autoTriageNewMessage(input: {
           threadId,
         }).catch(() => {});
       }
+
+      // Fire push notification to all team members with active subscriptions
+      const senderLabel = thread.fromName ?? thread.fromEmail;
+      sendPushToOrg(organizationId, {
+        title: `Nytt ärende från ${senderLabel}`,
+        body:  thread.subject ?? "(inget ämne)",
+        url:   `/app/inbox?thread=${threadId}`,
+        tag:   `thread-${threadId}`,
+      }).catch(() => {});
     } catch {
       // Never let notification failure break the triage flow
     }

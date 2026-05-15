@@ -1,12 +1,15 @@
 import { UserProfile } from "@clerk/nextjs";
 import { DashboardHeader } from "@/components/portal/DashboardHeader";
 import { LanguageSelector } from "./LanguageSelector";
+import { PushNotifications } from "@/components/app/PushNotifications";
 import { getTranslations } from "@/lib/i18n";
 import { getUserLocale } from "@/lib/i18n/get-locale";
 
 export default async function AccountPage() {
   const locale = await getUserLocale();
   const { t } = getTranslations(locale);
+
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null;
 
   return (
     <>
@@ -18,7 +21,9 @@ export default async function AccountPage() {
       <main className="flex-1 p-6 md:p-8">
         <div className="mx-auto w-full max-w-5xl space-y-8">
           <LanguageSelector />
-          
+
+          <PushNotifications vapidPublicKey={vapidPublicKey} variant="card" />
+
           <div className="mailmind-account-profile">
             <UserProfile
 
