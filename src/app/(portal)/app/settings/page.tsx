@@ -12,6 +12,7 @@ import { listTemplates } from "@/lib/app/notes";
 import { listKnowledge } from "@/lib/app/knowledge";
 import { listBlocklist } from "@/lib/app/blocklist";
 import { listWebhooks } from "@/lib/app/webhooks";
+import { listMembers, listPendingInvites } from "@/lib/app/team";
 import { getTranslations } from "@/lib/i18n";
 import { getUserLocale } from "@/lib/i18n/get-locale";
 import { SettingsTabs } from "./SettingsTabs";
@@ -29,13 +30,15 @@ export default async function SettingsPage() {
   const locale = await getUserLocale();
   const { t } = getTranslations(locale);
 
-  const [settings, caseTypes, templates, knowledge, blocklist, webhooks] = await Promise.all([
+  const [settings, caseTypes, templates, knowledge, blocklist, webhooks, teamMembers, teamInvites] = await Promise.all([
     getAiSettings(account.organization.id),
     listCaseTypes(account.organization.id),
     listTemplates(account.organization.id),
     listKnowledge(account.organization.id),
     listBlocklist(account.organization.id),
     listWebhooks(account.organization.id),
+    listMembers(account.organization.id),
+    listPendingInvites(account.organization.id),
   ]);
 
   const initialSettings = settings ?? defaultAiSettings(account.organization.id);
@@ -76,7 +79,22 @@ export default async function SettingsPage() {
           createdAt: b.createdAt,
         }))}
         webhooks={webhooks}
-
+        teamMembers={teamMembers.map(m => ({
+          id:        m.id,
+          email:     m.email,
+          role:      m.role,
+          createdAt: m.createdAt,
+        }))}
+        teamInvites={teamInvites.map(i => ({
+          id:        i.id,
+          email:     i.email,
+          role:      i.role,
+          expiresAt: i.expiresAt,
+          createdAt: i.createdAt,
+        }))}
+        currentUserId={account.user.id}
+        currentUserRole={account.user.role}
+        seatLimit={account.entitlements?.maxUsers ?? 5}
       />
     </main>
   );

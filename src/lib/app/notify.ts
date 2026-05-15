@@ -57,6 +57,26 @@ export async function notifyTrialExpired(input: {
   });
 }
 
+export async function notifyInvite(input: {
+  toEmail:   string;
+  invitedBy: string;
+  orgName:   string;
+  role:      string;
+  token:     string;
+}) {
+  const url = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://mailmind.se"}/api/app/team/accept?token=${input.token}`;
+  const roleLabel = input.role === "admin" ? "Administratör" : "Medlem";
+  await resend.emails.send({
+    from: FROM,
+    to:   input.toEmail,
+    subject: `Du har bjudits in till ${input.orgName} på Mailmind`,
+    html: `<p>Hej!</p>
+<p><strong>${input.invitedBy}</strong> har bjudit in dig att gå med i <strong>${input.orgName}</strong> på Mailmind som <strong>${roleLabel}</strong>.</p>
+<p><a href="${url}" style="display:inline-block;background:#06b6d4;color:#030614;font-weight:700;padding:10px 24px;border-radius:8px;text-decoration:none;">Acceptera inbjudan →</a></p>
+<p style="color:#64748b;font-size:12px;">Länken är giltig i 72 timmar. Om du inte har ett konto skapar du ett kostnadsfritt.</p>`,
+  });
+}
+
 export async function notifyWeeklyReport(toEmail: string, stats: WeeklyStats) {
   const fmt = (d: Date) =>
     d.toLocaleDateString("sv-SE", { day: "numeric", month: "long" });

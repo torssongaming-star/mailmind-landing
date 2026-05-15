@@ -197,11 +197,13 @@ export function computeAccess(input: {
   const inboxesUsed = 0;
   const usersUsed   = 1; // current user themselves
 
+  const canManageTeam = user.role === "owner" || user.role === "admin";
+
   return {
     canUseApp:           true,
     canGenerateAiDraft:  draftsUsed < draftsLimit,
     canAddInbox:         inboxesUsed < inboxLimit,
-    canInviteUser:       usersUsed < userLimit,
+    canInviteUser:       canManageTeam && usersUsed < userLimit,
     reason: draftsUsed >= draftsLimit
       ? "ai_draft_limit_reached"
       : inboxesUsed >= inboxLimit

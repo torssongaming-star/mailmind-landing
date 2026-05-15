@@ -494,6 +494,27 @@ export const webhookDeliveries = pgTable(
   ]
 );
 
+// ── Team invites ──────────────────────────────────────────────────────────────
+
+export const orgInvites = pgTable(
+  "org_invites",
+  {
+    id:              uuid("id").primaryKey().defaultRandom(),
+    organizationId:  uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    email:           varchar("email", { length: 320 }).notNull(),
+    role:            userRoleEnum("role").notNull().default("member"),
+    token:           varchar("token", { length: 64 }).notNull(),
+    invitedByUserId: uuid("invited_by_user_id").references(() => users.id, { onDelete: "set null" }),
+    expiresAt:       timestamp("expires_at", { withTimezone: true }).notNull(),
+    acceptedAt:      timestamp("accepted_at", { withTimezone: true }),
+    createdAt:       timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("org_invites_token_idx").on(t.token),
+    index("org_invites_org_idx").on(t.organizationId),
+  ]
+);
+
 // ── Relations ─────────────────────────────────────────────────────────────────
 
 export const organizationsRelations = relations(organizations, ({ many, one }) => ({
@@ -677,3 +698,6 @@ export type AdminAuditLog = typeof adminAuditLogs.$inferSelect;
 export type NewAdminAuditLog = typeof adminAuditLogs.$inferInsert;
 export type AdminKnowledgeArticle = typeof adminKnowledgeArticles.$inferSelect;
 export type NewAdminKnowledgeArticle = typeof adminKnowledgeArticles.$inferInsert;
+
+export type OrgInvite = typeof orgInvites.$inferSelect;
+export type NewOrgInvite = typeof orgInvites.$inferInsert;

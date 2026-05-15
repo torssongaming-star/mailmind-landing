@@ -9,7 +9,7 @@
 
 import { useState } from "react";
 import {
-  Building2, Bot, Tag, BookOpen, FileText, ShieldOff, Webhook,
+  Building2, Bot, Tag, BookOpen, FileText, ShieldOff, Webhook, Users,
 } from "lucide-react";
 import { AiSettingsEditor } from "./AiSettingsEditor";
 import { CaseTypesEditor } from "./CaseTypesEditor";
@@ -18,26 +18,34 @@ import { TemplatesEditor } from "./TemplatesEditor";
 import { KnowledgeEditor } from "./KnowledgeEditor";
 import { BlocklistEditor } from "./BlocklistEditor";
 import { WebhooksEditor } from "./WebhooksEditor";
+import { TeamEditor } from "./TeamEditor";
 import type {
   AiSettings, CaseType, KnowledgeEntry,
   ReplyTemplate, WebhookEndpoint,
 } from "@/lib/db/schema";
 
-type BlockEntry = { id: string; pattern: string; reason: string | null; createdAt: Date };
+type BlockEntry  = { id: string; pattern: string; reason: string | null; createdAt: Date };
+type TeamMember  = { id: string; email: string; role: string; createdAt: Date | string };
+type TeamInvite  = { id: string; email: string; role: string; expiresAt: Date | string; createdAt: Date | string };
 
 type Props = {
-  orgName:         string;
-  initialSettings: Pick<AiSettings, "tone" | "language" | "maxInteractions" | "signature">;
-  caseTypes:       CaseType[];
-  knowledge:       Pick<KnowledgeEntry, "id" | "question" | "answer" | "category" | "isActive">[];
-  templates:       ReplyTemplate[];
-  blocklist:       BlockEntry[];
-  webhooks:        WebhookEndpoint[];
+  orgName:          string;
+  initialSettings:  Pick<AiSettings, "tone" | "language" | "maxInteractions" | "signature">;
+  caseTypes:        CaseType[];
+  knowledge:        Pick<KnowledgeEntry, "id" | "question" | "answer" | "category" | "isActive">[];
+  templates:        ReplyTemplate[];
+  blocklist:        BlockEntry[];
+  webhooks:         WebhookEndpoint[];
+  teamMembers:      TeamMember[];
+  teamInvites:      TeamInvite[];
+  currentUserId:    string;
+  currentUserRole:  string;
+  seatLimit:        number;
 };
 
 import { useI18n } from "@/lib/i18n/context";
 
-type SectionId = "general" | "casetypes" | "knowledge" | "templates" | "blocklist" | "webhooks";
+type SectionId = "general" | "casetypes" | "knowledge" | "templates" | "blocklist" | "webhooks" | "team";
 
 export function SettingsTabs({
   orgName,
@@ -47,6 +55,11 @@ export function SettingsTabs({
   templates,
   blocklist,
   webhooks,
+  teamMembers,
+  teamInvites,
+  currentUserId,
+  currentUserRole,
+  seatLimit,
 }: Props) {
   const { t } = useI18n();
   const [active, setActive] = useState<SectionId>("general");
@@ -87,6 +100,12 @@ export function SettingsTabs({
       label: t("settings.tabs.webhooks"),
       icon:  Webhook,
       desc:  t("settings.tabs.webhooksDesc"),
+    },
+    {
+      id:    "team",
+      label: "Team",
+      icon:  Users,
+      desc:  "Hantera medlemmar och inbjudningar",
     },
   ] as const;
 
@@ -207,6 +226,21 @@ export function SettingsTabs({
               <WebhooksEditor
                 initial={webhooks}
                 caseTypes={caseTypes.map(c => ({ slug: c.slug, label: c.label }))}
+              />
+            </SettingsRow>
+          </div>
+
+          <div className={active === "team" ? "" : "hidden"}>
+            <SettingsRow
+              title="Teammedlemmar"
+              desc="Bjud in kollegor och hantera roller för din arbetsyta."
+            >
+              <TeamEditor
+                initialMembers={teamMembers}
+                initialInvites={teamInvites}
+                currentUserId={currentUserId}
+                currentUserRole={currentUserRole}
+                seatLimit={seatLimit}
               />
             </SettingsRow>
           </div>
