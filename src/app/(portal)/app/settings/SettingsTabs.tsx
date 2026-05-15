@@ -5,12 +5,14 @@
  *
  * Vertical sidebar nav on the left, content area on the right.
  * All panels stay mounted (hidden via CSS) so switching is instant.
+ *
+ * Team management lives at /app/team (its own dedicated page).
  */
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  Building2, Bot, Tag, BookOpen, FileText, ShieldOff, Webhook, Users,
+  Building2, Tag, BookOpen, FileText, ShieldOff, Webhook,
 } from "lucide-react";
 import { AiSettingsEditor } from "./AiSettingsEditor";
 import { CaseTypesEditor } from "./CaseTypesEditor";
@@ -19,34 +21,28 @@ import { TemplatesEditor } from "./TemplatesEditor";
 import { KnowledgeEditor } from "./KnowledgeEditor";
 import { BlocklistEditor } from "./BlocklistEditor";
 import { WebhooksEditor } from "./WebhooksEditor";
-import { TeamEditor } from "./TeamEditor";
 import type {
   AiSettings, CaseType, KnowledgeEntry,
   ReplyTemplate, WebhookEndpoint,
 } from "@/lib/db/schema";
 
-type BlockEntry  = { id: string; pattern: string; reason: string | null; createdAt: Date };
-type TeamMember  = { id: string; email: string; role: string; createdAt: Date | string };
-type TeamInvite  = { id: string; email: string; role: string; expiresAt: Date | string; createdAt: Date | string };
+type BlockEntry = { id: string; pattern: string; reason: string | null; createdAt: Date };
 
 type Props = {
-  orgName:          string;
-  initialSettings:  Pick<AiSettings, "tone" | "language" | "maxInteractions" | "signature">;
-  caseTypes:        CaseType[];
-  knowledge:        Pick<KnowledgeEntry, "id" | "question" | "answer" | "category" | "isActive">[];
-  templates:        ReplyTemplate[];
-  blocklist:        BlockEntry[];
-  webhooks:         WebhookEndpoint[];
-  teamMembers:      TeamMember[];
-  teamInvites:      TeamInvite[];
-  currentUserId:    string;
-  currentUserRole:  string;
-  seatLimit:        number;
+  orgName:         string;
+  initialSettings: Pick<AiSettings, "tone" | "language" | "maxInteractions" | "signature">;
+  caseTypes:       CaseType[];
+  knowledge:       Pick<KnowledgeEntry, "id" | "question" | "answer" | "category" | "isActive">[];
+  templates:       ReplyTemplate[];
+  blocklist:       BlockEntry[];
+  webhooks:        WebhookEndpoint[];
 };
 
 import { useI18n } from "@/lib/i18n/context";
 
-type SectionId = "general" | "casetypes" | "knowledge" | "templates" | "blocklist" | "webhooks" | "team";
+type SectionId = "general" | "casetypes" | "knowledge" | "templates" | "blocklist" | "webhooks";
+
+const VALID_TABS: SectionId[] = ["general", "casetypes", "knowledge", "templates", "blocklist", "webhooks"];
 
 export function SettingsTabs({
   orgName,
@@ -56,64 +52,21 @@ export function SettingsTabs({
   templates,
   blocklist,
   webhooks,
-  teamMembers,
-  teamInvites,
-  currentUserId,
-  currentUserRole,
-  seatLimit,
 }: Props) {
   const { t } = useI18n();
   const searchParams = useSearchParams();
-  const initialTab = (searchParams.get("tab") as SectionId | null) ?? "general";
+  const initialTab = searchParams.get("tab") as SectionId | null;
   const [active, setActive] = useState<SectionId>(
-    ["general","casetypes","knowledge","templates","blocklist","webhooks","team"].includes(initialTab)
-      ? initialTab
-      : "general"
+    initialTab && VALID_TABS.includes(initialTab) ? initialTab : "general"
   );
 
   const NAV = [
-    {
-      id:    "general",
-      label: t("settings.tabs.general"),
-      icon:  Building2,
-      desc:  t("settings.tabs.generalDesc"),
-    },
-    {
-      id:    "casetypes",
-      label: t("settings.tabs.caseTypes"),
-      icon:  Tag,
-      desc:  t("settings.tabs.caseTypesDesc"),
-    },
-    {
-      id:    "knowledge",
-      label: t("settings.tabs.knowledge"),
-      icon:  BookOpen,
-      desc:  t("settings.tabs.knowledgeDesc"),
-    },
-    {
-      id:    "templates",
-      label: t("settings.tabs.templates"),
-      icon:  FileText,
-      desc:  t("settings.tabs.templatesDesc"),
-    },
-    {
-      id:    "blocklist",
-      label: t("settings.tabs.blocklist"),
-      icon:  ShieldOff,
-      desc:  t("settings.tabs.blocklistDesc"),
-    },
-    {
-      id:    "webhooks",
-      label: t("settings.tabs.webhooks"),
-      icon:  Webhook,
-      desc:  t("settings.tabs.webhooksDesc"),
-    },
-    {
-      id:    "team",
-      label: "Team",
-      icon:  Users,
-      desc:  "Hantera medlemmar och inbjudningar",
-    },
+    { id: "general",   label: t("settings.tabs.general"),   icon: Building2, desc: t("settings.tabs.generalDesc")   },
+    { id: "casetypes", label: t("settings.tabs.caseTypes"),  icon: Tag,       desc: t("settings.tabs.caseTypesDesc") },
+    { id: "knowledge", label: t("settings.tabs.knowledge"),  icon: BookOpen,  desc: t("settings.tabs.knowledgeDesc") },
+    { id: "templates", label: t("settings.tabs.templates"),  icon: FileText,  desc: t("settings.tabs.templatesDesc") },
+    { id: "blocklist", label: t("settings.tabs.blocklist"),  icon: ShieldOff, desc: t("settings.tabs.blocklistDesc") },
+    { id: "webhooks",  label: t("settings.tabs.webhooks"),   icon: Webhook,   desc: t("settings.tabs.webhooksDesc")  },
   ] as const;
 
   const current = NAV.find(n => n.id === active)!;
@@ -140,7 +93,6 @@ export function SettingsTabs({
                   : "text-white/40 hover:text-white/70 hover:bg-white/[0.02]",
               ].join(" ")}
             >
-              {/* Active indicator */}
               {isActive && (
                 <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
               )}
@@ -153,8 +105,6 @@ export function SettingsTabs({
 
       {/* ── Content ───────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">
-
-        {/* Section header — always visible, changes with active section */}
         <div className="sticky top-0 z-10 px-8 py-5 border-b border-white/8 bg-[#030614]/95 backdrop-blur-sm flex items-center gap-3">
           <current.icon className="w-5 h-5 text-primary shrink-0" />
           <div>
@@ -163,57 +113,38 @@ export function SettingsTabs({
           </div>
         </div>
 
-        {/* Panels — mounted but hidden when inactive */}
         <div className="px-8 py-7 space-y-8">
 
           <div className={active === "general" ? "space-y-8" : "hidden"}>
-            <SettingsRow
-              title={t("settings.workspace.name")}
-              desc={t("settings.workspace.nameDesc")}
-            >
+            <SettingsRow title={t("settings.workspace.name")} desc={t("settings.workspace.nameDesc")}>
               <OrganizationEditor initialName={orgName} />
             </SettingsRow>
             <Divider />
-            <SettingsRow
-              title={t("settings.workspace.aiBehavior")}
-              desc={t("settings.workspace.aiBehaviorDesc")}
-            >
+            <SettingsRow title={t("settings.workspace.aiBehavior")} desc={t("settings.workspace.aiBehaviorDesc")}>
               <AiSettingsEditor initial={initialSettings} />
             </SettingsRow>
           </div>
 
           <div className={active === "casetypes" ? "" : "hidden"}>
-            <SettingsRow
-              title={t("settings.workspace.caseTypes")}
-              desc={t("settings.workspace.caseTypesDesc")}
-            >
+            <SettingsRow title={t("settings.workspace.caseTypes")} desc={t("settings.workspace.caseTypesDesc")}>
               <CaseTypesEditor initial={caseTypes} />
             </SettingsRow>
           </div>
 
           <div className={active === "knowledge" ? "" : "hidden"}>
-            <SettingsRow
-              title={t("settings.workspace.knowledge")}
-              desc={t("settings.workspace.knowledgeDesc")}
-            >
+            <SettingsRow title={t("settings.workspace.knowledge")} desc={t("settings.workspace.knowledgeDesc")}>
               <KnowledgeEditor initial={knowledge} />
             </SettingsRow>
           </div>
 
           <div className={active === "templates" ? "" : "hidden"}>
-            <SettingsRow
-              title={t("settings.workspace.templates")}
-              desc={t("settings.workspace.templatesDesc")}
-            >
+            <SettingsRow title={t("settings.workspace.templates")} desc={t("settings.workspace.templatesDesc")}>
               <TemplatesEditor initial={templates} />
             </SettingsRow>
           </div>
 
           <div className={active === "blocklist" ? "" : "hidden"}>
-            <SettingsRow
-              title={t("settings.workspace.blocklist")}
-              desc={t("settings.workspace.blocklistDesc")}
-            >
+            <SettingsRow title={t("settings.workspace.blocklist")} desc={t("settings.workspace.blocklistDesc")}>
               <BlocklistEditor
                 initial={blocklist.map(b => ({
                   id:        b.id,
@@ -226,28 +157,10 @@ export function SettingsTabs({
           </div>
 
           <div className={active === "webhooks" ? "" : "hidden"}>
-            <SettingsRow
-              title={t("settings.workspace.webhooks")}
-              desc={t("settings.workspace.webhooksDesc")}
-            >
+            <SettingsRow title={t("settings.workspace.webhooks")} desc={t("settings.workspace.webhooksDesc")}>
               <WebhooksEditor
                 initial={webhooks}
                 caseTypes={caseTypes.map(c => ({ slug: c.slug, label: c.label }))}
-              />
-            </SettingsRow>
-          </div>
-
-          <div className={active === "team" ? "" : "hidden"}>
-            <SettingsRow
-              title="Teammedlemmar"
-              desc="Bjud in kollegor och hantera roller för din arbetsyta."
-            >
-              <TeamEditor
-                initialMembers={teamMembers}
-                initialInvites={teamInvites}
-                currentUserId={currentUserId}
-                currentUserRole={currentUserRole}
-                seatLimit={seatLimit}
               />
             </SettingsRow>
           </div>
@@ -261,15 +174,7 @@ export function SettingsTabs({
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
-function SettingsRow({
-  title,
-  desc,
-  children,
-}: {
-  title:    string;
-  desc:     string;
-  children: React.ReactNode;
-}) {
+function SettingsRow({ title, desc, children }: { title: string; desc: string; children: React.ReactNode }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
       <div className="space-y-1">

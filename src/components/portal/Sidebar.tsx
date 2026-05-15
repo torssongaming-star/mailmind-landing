@@ -87,7 +87,7 @@ const NAV: NavItem[] = [
   },
   {
     kind:     "leaf",
-    href:     "/dashboard/team",
+    href:     "/app/team",
     labelKey: "nav.team",
     icon:     Users,
   },
