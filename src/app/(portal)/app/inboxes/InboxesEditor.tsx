@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n/context";
 import { ForwardingGuide } from "./ForwardingGuide";
 import { ConnectionTester } from "./ConnectionTester";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 type InboxRow = {
   id: string;
@@ -39,6 +40,7 @@ export function InboxesEditor({
   const [forwardedFrom, setForwardedFrom] = useState("");
   const [copiedId, setCopiedId]         = useState<string | null>(null);
   const [testingIds, setTestingIds]     = useState<Set<string>>(new Set());
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const handleCreate = async () => {
     setPending(true);
@@ -69,7 +71,6 @@ export function InboxesEditor({
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t("portal.inboxes.editor.disconnectConfirm"))) return;
     setPending(true);
     setError(null);
     try {
@@ -79,6 +80,7 @@ export function InboxesEditor({
         throw new Error(data.error ?? t("common.error"));
       }
       router.refresh();
+      setPendingDeleteId(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : t("common.error"));
     } finally {
@@ -96,6 +98,21 @@ export function InboxesEditor({
 
   return (
     <div className="space-y-4">
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        onClose={() => setPendingDeleteId(null)}
+        onConfirm={async () => {
+          if (pendingDeleteId) await handleDelete(pendingDeleteId);
+        }}
+        title={t("portal.inboxes.editor.disconnectConfirm")}
+        body={locale === "sv"
+          ? "Vi slutar ta emot nya mejl från denna inkorg. Befintliga trådar finns kvar."
+          : "We'll stop receiving new mail from this inbox. Existing threads remain."}
+        confirmLabel={t("portal.inboxes.editor.disconnect")}
+        tone="danger"
+        pending={pending}
+      />
+
       {error && (
         <div className="rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2 text-xs text-red-400">
           {error}
@@ -124,9 +141,9 @@ export function InboxesEditor({
                 </p>
               </div>
               <button
-                onClick={() => handleDelete(inbox.id)}
+                onClick={() => setPendingDeleteId(inbox.id)}
                 disabled={pending}
-                className="text-xs text-red-400 hover:text-red-300 transition-colors shrink-0"
+                className="text-xs text-red-400 hover:text-red-300 transition-colors shrink-0 focus-visible:outline-none focus-visible:underline disabled:opacity-50"
               >
                 {t("portal.inboxes.editor.disconnect")}
               </button>

@@ -82,14 +82,15 @@ export function InboxFilters({
             <Link
               key={tab.value}
               href={buildHref(tab.value)}
-              className={`${compact ? "px-2 py-1" : "px-3 py-1.5"} rounded-lg text-[10px] font-medium transition-colors flex items-center gap-1.5 ${
+              aria-current={isActive ? "page" : undefined}
+              className={`${compact ? "px-2 py-1" : "px-3 py-1.5"} rounded-lg text-[11px] font-semibold transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
                 isActive
-                  ? "bg-primary text-[#030614]"
-                  : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-white"
+                  ? "bg-primary/[0.12] text-primary border border-primary/25"
+                  : "text-white/55 hover:text-white hover:bg-white/[0.04] border border-transparent"
               }`}
             >
               <span>{tab.label}</span>
-              <span className={`text-[9px] tabular-nums ${isActive ? "opacity-70" : "opacity-50"}`}>
+              <span className={`text-[10px] tabular-nums px-1 rounded ${isActive ? "bg-primary/15 text-primary" : "text-white/35"}`}>
                 {count}
               </span>
             </Link>
@@ -127,7 +128,8 @@ export function InboxFilters({
         {query && (
           <button
             onClick={() => setQuery("")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-white text-sm leading-none"
+            aria-label="Rensa sökning"
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 rounded-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             ×
           </button>

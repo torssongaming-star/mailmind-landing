@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { UserPlus, X, ChevronDown } from "lucide-react";
 import { useToast, ToastContainer } from "@/components/ui/Toast";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 type Member = {
   id:        string;
@@ -78,6 +79,7 @@ export function TeamPage({
   const [email, setEmail]       = useState("");
   const [role, setRole]         = useState<"admin" | "member">("member");
   const [pending, setPending]   = useState<string | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<{ id: string; email: string } | null>(null);
 
   const isOwner    = currentUserRole === "owner";
   const isAdmin    = currentUserRole === "admin";
@@ -165,8 +167,9 @@ export function TeamPage({
     }
   };
 
-  const removeMember = async (memberId: string, memberEmail: string) => {
-    if (!confirm(`Ta bort ${memberEmail} från ${orgName}?`)) return;
+  const confirmRemoveMember = async () => {
+    if (!removeTarget) return;
+    const { id: memberId, email: memberEmail } = removeTarget;
     setPending(`remove-${memberId}`);
     try {
       const res = await fetch(`/api/app/team/members/${memberId}`, { method: "DELETE" });
@@ -176,6 +179,7 @@ export function TeamPage({
       }
       setMembers(prev => prev.filter(m => m.id !== memberId));
       toast.success(`${memberEmail} har tagits bort.`);
+      setRemoveTarget(null);
       refresh();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Okänt fel");
@@ -187,6 +191,17 @@ export function TeamPage({
   return (
     <main className="max-w-3xl mx-auto p-6 md:p-10 space-y-8">
       <ToastContainer toasts={toasts} onDismiss={dismiss} />
+
+      <ConfirmDialog
+        open={removeTarget !== null}
+        onClose={() => setRemoveTarget(null)}
+        onConfirm={confirmRemoveMember}
+        title={`Ta bort ${removeTarget?.email ?? ""}?`}
+        body={`${removeTarget?.email ?? ""} förlorar omedelbart åtkomst till ${orgName}.`}
+        confirmLabel="Ta bort"
+        tone="danger"
+        pending={pending === `remove-${removeTarget?.id}`}
+      />
 
       {/* ── Page header ─────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4">
@@ -325,7 +340,7 @@ export function TeamPage({
 
                   {canManage && !isThisOwner && !isSelf && (
                     <button
-                      onClick={() => removeMember(m.id, m.email)}
+                      onClick={() => setRemoveTarget({ id: m.id, email: m.email })}
                       disabled={!!pending}
                       className="opacity-0 group-hover:opacity-100 text-[11px] text-red-400/70 hover:text-red-300 transition-all"
                     >
