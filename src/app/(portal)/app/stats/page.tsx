@@ -23,6 +23,9 @@ import { DailyThreadsChart } from "./DailyThreadsChart";
 import { getTranslations } from "@/lib/i18n";
 import { getUserLocale } from "@/lib/i18n/get-locale";
 
+import type { Metadata } from "next";
+export const metadata: Metadata = { title: "Statistik" };
+
 export const dynamic = "force-dynamic";
 
 export default async function StatsPage() {

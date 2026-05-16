@@ -18,6 +18,9 @@ import { getTranslations } from "@/lib/i18n";
 import { getUserLocale } from "@/lib/i18n/get-locale";
 import { SettingsTabs } from "./SettingsTabs";
 
+import type { Metadata } from "next";
+export const metadata: Metadata = { title: "Inställningar" };
+
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {

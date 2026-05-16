@@ -56,19 +56,21 @@ export function InboxShell({
 }) {
   const { t, locale } = useI18n();
   const router  = useRouter();
-  const [selectedId, setSelectedId] = useState<string | null>(
-    threads.length > 0 ? threads[0].id : null
-  );
+  // Initial selection is null — auto-selected on desktop after mount
+  // so mobile users see the list first, desktop sees first thread.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pendingAction, setPendingAction] = useState<"resolve" | "escalate" | "delete" | null>(null);
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
 
-  // Auto-select first thread if current selection disappears after refresh
+  // Desktop: auto-select first thread for fast preview.
+  // Mobile: start with no selection so list is full-screen.
   useEffect(() => {
     if (selectedId && threads.some(t => t.id === selectedId)) return;
-    setSelectedId(threads[0]?.id ?? null);
+    const isDesktop = typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches;
+    setSelectedId(isDesktop ? (threads[0]?.id ?? null) : null);
   }, [threads, selectedId]);
 
   const refresh = useCallback(() => {
@@ -118,11 +120,18 @@ export function InboxShell({
     }
   };
 
+  // On mobile (< md): hide list when a thread is selected, hide panel when not
+  const mobileShowPanel = !!selectedId;
+
   return (
     <div className="flex h-full overflow-hidden">
 
       {/* ── Left panel — thread list ───────────────────────────────────── */}
-      <div className="w-80 shrink-0 flex flex-col border-r border-white/8 overflow-hidden">
+      <div className={[
+        "flex flex-col border-r border-white/8 overflow-hidden",
+        "w-full md:w-80 md:shrink-0",
+        mobileShowPanel ? "hidden md:flex" : "flex",
+      ].join(" ")}>
 
         {/* List toolbar */}
         <div className="shrink-0 flex items-center gap-2 px-3 py-2 border-b border-white/8 bg-white/[0.01]">
@@ -271,12 +280,16 @@ export function InboxShell({
       </div>
 
       {/* ── Right panel — thread content ───────────────────────────────── */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className={[
+        "flex-1 flex flex-col overflow-hidden",
+        mobileShowPanel ? "flex" : "hidden md:flex",
+      ].join(" ")}>
         {selectedId ? (
           <ThreadPanel
             key={selectedId}
             threadId={selectedId}
             canGenerate={canGenerate}
+            onBack={() => setSelectedId(null)}
           />
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6">

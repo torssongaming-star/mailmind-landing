@@ -9,6 +9,9 @@ import { getCurrentAccount } from "@/lib/app/entitlements";
 import { getTranslations } from "@/lib/i18n";
 import { getUserLocale } from "@/lib/i18n/get-locale";
 
+import type { Metadata } from "next";
+export const metadata: Metadata = { title: "Mitt konto" };
+
 export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {

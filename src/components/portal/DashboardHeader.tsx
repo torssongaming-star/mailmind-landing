@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { siteConfig } from "@/config/site";
 import { useI18n } from "@/lib/i18n/context";
+import { CommandPaletteTrigger } from "./CommandPalette";
 
 interface DashboardHeaderProps {
   title: string;
@@ -74,7 +75,8 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <CommandPaletteTrigger className="hidden md:inline-flex" />
           {user && (
             <span className="text-xs text-muted-foreground hidden md:block">
               {user.primaryEmailAddress?.emailAddress}

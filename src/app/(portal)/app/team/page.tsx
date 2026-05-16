@@ -4,6 +4,9 @@ import { getCurrentAccount } from "@/lib/app/entitlements";
 import { listMembers, listPendingInvites } from "@/lib/app/team";
 import { TeamPage } from "./TeamPage";
 
+import type { Metadata } from "next";
+export const metadata: Metadata = { title: "Team" };
+
 export const dynamic = "force-dynamic";
 
 export default async function TeamRoute() {

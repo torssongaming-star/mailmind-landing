@@ -23,8 +23,10 @@ import { getUserLocale } from "@/lib/i18n/get-locale";
 import { getTranslations } from "@/lib/i18n";
 import { Locale } from "@/lib/i18n/types";
 import { AppBanners } from "./AppBanners";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = { title: "Översikt" };
 
 export default async function AppHomePage() {
   const { userId } = await auth();

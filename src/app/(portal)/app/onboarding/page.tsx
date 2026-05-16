@@ -19,6 +19,9 @@ import { getCurrentAccount } from "@/lib/app/entitlements";
 import { listCaseTypes } from "@/lib/app/threads";
 import { OnboardingForm } from "./OnboardingForm";
 
+import type { Metadata } from "next";
+export const metadata: Metadata = { title: "Välkommen" };
+
 export const dynamic = "force-dynamic";
 
 export default async function OnboardingPage() {

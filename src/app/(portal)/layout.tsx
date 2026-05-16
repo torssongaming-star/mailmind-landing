@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Sidebar } from "@/components/portal/Sidebar";
 import { SidebarSubscriptionBadge } from "@/components/portal/SidebarSubscriptionBadge";
+import { CommandPalette } from "@/components/portal/CommandPalette";
 import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
       <div className="flex flex-col min-h-screen lg:ml-64">
         {children}
       </div>
+      <CommandPalette />
     </div>
   );
 }

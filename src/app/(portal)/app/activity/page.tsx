@@ -6,6 +6,9 @@ import { getAuditLogs } from "@/lib/db/queries";
 import { getTranslations } from "@/lib/i18n";
 import { getUserLocale } from "@/lib/i18n/get-locale";
 
+import type { Metadata } from "next";
+export const metadata: Metadata = { title: "Aktivitet" };
+
 export const dynamic = "force-dynamic";
 
 function tonClasses(tone: string): string {

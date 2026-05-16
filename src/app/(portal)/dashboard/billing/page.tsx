@@ -8,6 +8,9 @@ import { CreditCard, AlertTriangle, CheckCircle2, Database } from "lucide-react"
 
 import { siteConfig } from "@/config/site";
 
+import type { Metadata } from "next";
+export const metadata: Metadata = { title: "Fakturering" };
+
 function formatDate(date: Date | string | number | undefined): string {
   if (!date) return "—";
   return new Date(date).toLocaleDateString("sv-SE", {

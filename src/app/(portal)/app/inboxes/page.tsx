@@ -7,6 +7,9 @@ import { InboxesEditor } from "./InboxesEditor";
 import { getTranslations } from "@/lib/i18n";
 import { getUserLocale } from "@/lib/i18n/get-locale";
 
+import type { Metadata } from "next";
+export const metadata: Metadata = { title: "Anslutna inkorgar" };
+
 export const dynamic = "force-dynamic";
 
 export default async function InboxesPage() {

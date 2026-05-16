@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, ExternalLink } from "lucide-react";
+import { Loader2, ExternalLink, ArrowLeft } from "lucide-react";
 import { DraftActions } from "../thread/[id]/DraftActions";
 import { GenerateDraftButton } from "../thread/[id]/GenerateDraftButton";
 import { InternalNotes, type Note } from "../thread/[id]/InternalNotes";
@@ -65,9 +65,12 @@ import { useI18n } from "@/lib/i18n/context";
 export function ThreadPanel({
   threadId,
   canGenerate,
+  onBack,
 }: {
   threadId:    string;
   canGenerate: boolean;
+  /** Optional callback for mobile back-to-list button */
+  onBack?:     () => void;
 }) {
   const { t, locale } = useI18n();
   const router = useRouter();
@@ -181,8 +184,18 @@ export function ThreadPanel({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="shrink-0 px-6 py-4 border-b border-white/8 bg-[hsl(var(--surface-base))]/80 backdrop-blur-md space-y-3">
+      <div className="shrink-0 px-4 md:px-6 py-4 border-b border-white/8 bg-[hsl(var(--surface-base))]/80 backdrop-blur-md space-y-3">
         <div className="flex items-start justify-between gap-3">
+          {/* Mobile back button */}
+          {onBack && (
+            <button
+              onClick={onBack}
+              aria-label="Tillbaka till listan"
+              className="md:hidden shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white/60 hover:text-white hover:bg-white/[0.05] -ml-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            >
+              <ArrowLeft size={16} />
+            </button>
+          )}
           <div className="flex-1 min-w-0">
             <h2 className="text-base font-semibold text-white truncate tracking-tight">
               {thread.subject ?? t("inbox.noSubject")}
@@ -224,7 +237,7 @@ export function ThreadPanel({
       </div>
 
       {/* ── Scrollable body ──────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+      <div className="flex-1 overflow-y-auto px-4 md:px-6 py-5 space-y-4">
 
         {/* Conversation */}
         {messages.map(m => (

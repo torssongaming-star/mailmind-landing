@@ -12,6 +12,9 @@ import { NewThreadButton } from "./NewThreadButton";
 import { InboxFilters } from "./InboxFilters";
 import { InboxShell } from "./InboxShell";
 
+import type { Metadata } from "next";
+export const metadata: Metadata = { title: "Inkorg" };
+
 export const dynamic = "force-dynamic";
 
 const VALID_STATUSES = ["open", "waiting", "escalated", "resolved"] as const;
