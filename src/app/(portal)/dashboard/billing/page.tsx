@@ -94,7 +94,7 @@ export default async function BillingPage({
         )}
 
         {/* Subscription card */}
-        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 backdrop-blur-sm p-6">
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm p-6">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
               <CreditCard size={16} className="text-primary" />
@@ -129,7 +129,7 @@ export default async function BillingPage({
         </div>
 
         {/* Plan comparison */}
-        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 backdrop-blur-sm p-6">
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm p-6">
           <h3 className="text-sm font-semibold text-white mb-5">
             {hasSubscription ? "Byt plan" : "Välj en plan"}
           </h3>
@@ -139,28 +139,28 @@ export default async function BillingPage({
               return (
                 <div
                   key={key}
-                  className={`rounded-xl border p-4 flex flex-col ${
+                  className={`relative rounded-xl border p-4 flex flex-col transition-all duration-200 ${
                     isCurrent
-                      ? "border-primary/40 bg-primary/5"
-                      : "border-white/5 bg-white/[0.02]"
+                      ? "border-primary/40 bg-primary/[0.06] shadow-[0_4px_20px_-4px_hsl(189_94%_43%/0.25)]"
+                      : "border-white/8 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-semibold text-white">{plan.name}</span>
                     {isCurrent && (
-                      <span className="text-[10px] text-primary bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full font-medium">
+                      <span className="text-[10px] text-primary bg-primary/15 border border-primary/30 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">
                         Aktiv
                       </span>
                     )}
                   </div>
-                  <p className="text-xl font-bold text-white mb-1">
+                  <p className="text-2xl font-bold text-white mb-1 tracking-tight tabular-nums">
                     {plan.price}
-                    <span className="text-xs text-muted-foreground font-normal">/mo</span>
+                    <span className="text-xs text-white/40 font-normal">/mån</span>
                   </p>
-                  <ul className="text-xs text-muted-foreground space-y-1 mb-3">
-                    <li>{plan.draftsLimit.toLocaleString()} AI-utkast/mån</li>
-                    <li>{plan.inboxLimit} inkorg{plan.inboxLimit > 1 ? "ar" : ""}</li>
-                    <li>{plan.seatLimit} platser</li>
+                  <ul className="text-xs text-white/55 space-y-1 mb-3 mt-1">
+                    <li className="tabular-nums">{plan.draftsLimit.toLocaleString()} AI-utkast/mån</li>
+                    <li className="tabular-nums">{plan.inboxLimit} inkorg{plan.inboxLimit > 1 ? "ar" : ""}</li>
+                    <li className="tabular-nums">{plan.seatLimit} platser</li>
                   </ul>
                   <div className="mt-auto">
                     {key === "enterprise" ? (

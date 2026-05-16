@@ -278,15 +278,15 @@ export function ThreadPanel({
         {/* Drafts */}
         {drafts.length > 0 && (
           <div className="space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-              {t("inbox.thread.statusLabels.drafts")} ({drafts.length})
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/45">
+              {t("inbox.thread.statusLabels.drafts")} <span className="tabular-nums text-white/30">({drafts.length})</span>
             </p>
             {drafts.map(d => (
-              <div key={d.id} className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-3">
-                <div className="flex items-center gap-2">
+              <div key={d.id} className="rounded-2xl border border-primary/15 bg-primary/[0.03] backdrop-blur-sm p-5 space-y-3 shadow-[0_2px_24px_-12px_hsl(189_94%_43%/0.3)]">
+                <div className="flex items-center gap-2 flex-wrap">
                   <ActionBadge action={d.action} t={t} />
-                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider">{d.status}</span>
-                  <span className="ml-auto text-[10px] text-muted-foreground">
+                  <span className="text-[9px] text-white/45 uppercase tracking-widest font-semibold px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/8">{d.status}</span>
+                  <span className="ml-auto text-[10px] text-white/35 tabular-nums">
                     {new Date(d.generatedAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE")}
                   </span>
                 </div>
@@ -297,7 +297,7 @@ export function ThreadPanel({
 
                 {d.action === "summarize" && d.metadata && (
                   <div className="border-t border-white/5 pt-3 space-y-1">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("inbox.thread.statusLabels.summary")}</p>
+                    <p className="text-[10px] text-white/45 uppercase tracking-widest font-semibold">{t("inbox.thread.statusLabels.summary")}</p>
                     <p className="text-xs text-white/70 leading-relaxed">
                       {String((d.metadata as Record<string, unknown>).summary ?? "")}
                     </p>
@@ -305,9 +305,11 @@ export function ThreadPanel({
                 )}
 
                 {d.action === "escalate" && (
-                  <p className="text-xs text-red-400">
-                    {String(d.metadata?.reason ?? t("inbox.thread.actions.escalate"))}
-                  </p>
+                  <div className="rounded-lg border border-red-500/20 bg-red-500/[0.04] px-3 py-2">
+                    <p className="text-xs text-red-300 leading-relaxed">
+                      {String(d.metadata?.reason ?? t("inbox.thread.actions.escalate"))}
+                    </p>
+                  </div>
                 )}
 
                 <DraftActions
@@ -319,8 +321,8 @@ export function ThreadPanel({
                   onDone={() => { load(); router.refresh(); }}
                 />
 
-                <p className="text-[10px] text-muted-foreground border-t border-white/5 pt-2">
-                  {d.aiModel}
+                <p className="text-[10px] text-white/35 border-t border-white/5 pt-2 tabular-nums">
+                  <span className="opacity-60">{d.aiModel}</span>
                   {d.status === "sent" && d.sentAt && <> · {t("inbox.thread.statusLabels.sent", { time: new Date(d.sentAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE") })}</>}
                 </p>
               </div>
