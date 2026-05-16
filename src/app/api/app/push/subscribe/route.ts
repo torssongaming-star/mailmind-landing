@@ -14,6 +14,7 @@ import { z } from "zod";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { db, isDbConnected, pushSubscriptions } from "@/lib/db";
 import { and, eq } from "drizzle-orm";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -41,6 +42,11 @@ export async function POST(req: NextRequest) {
   const account = await getCurrentAccount(userId);
   if (!account.user || !account.organization) {
     return NextResponse.json({ error: "Account not provisioned" }, { status: 400 });
+  }
+
+  // Rate limit re-subscription attempts per user (burst 20/min)
+  if (!rateLimit(`push:${account.user.id}`, RATE_LIMITS.pushSubscribe)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
   const json = await req.json().catch(() => null);

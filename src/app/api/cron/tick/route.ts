@@ -257,8 +257,8 @@ async function taskRenewOutlookSubscriptions() {
   const errors: string[] = [];
 
   for (const inbox of outlookInboxes) {
+    const config = inbox.config as (OutlookInboxConfig & { renewalFailCount?: number }) | null;
     try {
-      const config = inbox.config as OutlookInboxConfig | null;
       if (!config?.encryptedTokens || !config.subscriptionId || !config.subscriptionExpiry) {
         skipped++;
         continue;
@@ -280,11 +280,44 @@ async function taskRenewOutlookSubscriptions() {
         ...config,
         subscriptionExpiry:  newExpiry,
         encryptedTokens:     outlookEncryptTokens(tokens),
+        renewalFailCount:    0, // Clear failure counter on success
       } as Record<string, unknown>);
 
       renewed++;
     } catch (err) {
       errors.push(`inbox=${inbox.id}: ${String(err)}`);
+
+      // Increment failure counter; alert owner on 2nd consecutive failure
+      const failCount = (config?.renewalFailCount ?? 0) + 1;
+      try {
+        await updateInboxConfig(inbox.id, {
+          ...(config ?? {}),
+          renewalFailCount: failCount,
+        } as Record<string, unknown>);
+
+        if (failCount === 2) {
+          // Find org owner and alert them — at 2 failures the inbox has been
+          // silent for at least 24h and needs reconnection
+          const owner = await db
+            .select()
+            .from(users)
+            .where(and(
+              eq(users.organizationId, inbox.organizationId),
+              eq(users.role, "owner"),
+            ))
+            .limit(1)
+            .then(r => r[0] ?? null);
+          if (owner?.email) {
+            const { notifyInboxRenewalFailed } = await import("@/lib/app/notify");
+            notifyInboxRenewalFailed({
+              toEmail:     owner.email,
+              inboxEmail:  inbox.email,
+            }).catch(() => {});
+          }
+        }
+      } catch {
+        // Never let alert failure swallow the original error
+      }
     }
   }
 

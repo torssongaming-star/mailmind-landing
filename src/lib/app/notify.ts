@@ -57,6 +57,26 @@ export async function notifyTrialExpired(input: {
   });
 }
 
+/**
+ * Sent to org owner when Outlook subscription renewal has failed twice in a
+ * row — the inbox has been silent for at least 24h and needs reconnection.
+ */
+export async function notifyInboxRenewalFailed(input: {
+  toEmail:    string;
+  inboxEmail: string;
+}) {
+  const reconnectUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://mailmind.se"}/app/inboxes`;
+  await resend.emails.send({
+    from:    FROM,
+    to:      input.toEmail,
+    subject: `Åtgärd krävs: anslutningen till ${input.inboxEmail} har avbrutits`,
+    html: `<p>Hej!</p>
+<p>Vi har inte kunnat förnya anslutningen till din Outlook-inkorg <strong>${input.inboxEmail}</strong> de senaste två dygnen. Inga nya mejl har därför kommit in i Mailmind under denna tid.</p>
+<p><a href="${reconnectUrl}" style="display:inline-block;background:#06b6d4;color:#030614;font-weight:700;padding:10px 24px;border-radius:8px;text-decoration:none;">Återanslut inkorgen →</a></p>
+<p style="color:#64748b;font-size:12px;">Klicka "Koppla bort" och sedan "Koppla Outlook" igen för att återställa anslutningen. Inkomna mejl medan anslutningen var avbruten visas inte automatiskt — kolla din ursprungliga inkorg och vidarebefordra vid behov.</p>`,
+  });
+}
+
 export async function notifyInvite(input: {
   toEmail:   string;
   invitedBy: string;

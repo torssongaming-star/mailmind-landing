@@ -36,6 +36,7 @@ import {
 import { autoTriageNewMessage } from "@/lib/app/autoTriage";
 import { writeAuditLog } from "@/lib/app/audit";
 import { isBlocked } from "@/lib/app/blocklist";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -203,6 +204,12 @@ export async function POST(req: NextRequest) {
   if (!inbox) {
     console.warn("[inbound] no inbox registered for masked address");
     return NextResponse.json({ status: "no_inbox" });
+  }
+
+  // Rate limit per inbox — defends against flood/loop attacks. Burst 600/min.
+  if (!rateLimit(`inbound:sendgrid:${inbox.id}`, RATE_LIMITS.inboundWebhook)) {
+    console.warn("[inbound] rate-limited inbox", inbox.id);
+    return NextResponse.json({ status: "rate_limited" }, { status: 429 });
   }
 
   const blocked = await isBlocked(inbox.organizationId, fromEmail);
