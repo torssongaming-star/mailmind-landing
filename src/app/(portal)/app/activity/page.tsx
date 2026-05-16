@@ -55,15 +55,18 @@ export default async function ActivityPage() {
   return (
     <main className="max-w-3xl mx-auto p-6 md:p-10 space-y-6">
 
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">{t("portal.activity.header")}</p>
-          <h1 className="text-2xl font-bold text-white">{t("portal.activity.title")}</h1>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-1">{t("portal.activity.header")}</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">{t("portal.activity.title")}</h1>
+          <p className="text-sm text-white/50 mt-1 tabular-nums">
             {t("portal.activity.lastEvents", { count: logs.length.toString() })}
           </p>
         </div>
-        <Link href="/app" className="text-xs text-muted-foreground hover:text-white px-3 py-1.5 transition-colors">
+        <Link
+          href="/app"
+          className="shrink-0 inline-flex items-center h-8 text-xs text-white/55 hover:text-white px-3 rounded-lg hover:bg-white/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        >
           ← {t("nav.app")}
         </Link>
       </header>

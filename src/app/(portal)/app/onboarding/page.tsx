@@ -43,22 +43,37 @@ export default async function OnboardingPage() {
   const suggestedOrgName = firstName ? `${firstName}'s Workspace` : `${email.split("@")[0]}'s Workspace`;
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6 bg-[#030614]">
-      <div className="w-full max-w-md">
+    <main className="min-h-screen flex items-center justify-center p-6 bg-[hsl(var(--surface-base))] relative overflow-hidden">
+      {/* Atmospheric glow */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-40"
+        style={{
+          background:
+            "radial-gradient(ellipse 600px 400px at 20% 20%, hsl(189 94% 43% / 0.10), transparent 60%), " +
+            "radial-gradient(ellipse 500px 400px at 80% 80%, hsl(262 83% 58% / 0.08), transparent 60%)",
+        }}
+        aria-hidden
+      />
 
+      <div className="w-full max-w-md relative">
         {/* Logo */}
         <div className="flex justify-center mb-8">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-white text-xl font-bold"
-            style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}>
-            M
+          <div className="relative">
+            <div className="absolute inset-0 blur-2xl bg-primary/20 rounded-2xl" aria-hidden />
+            <div
+              className="relative w-12 h-12 rounded-2xl flex items-center justify-center text-white text-xl font-bold border border-primary/30 shadow-[0_4px_24px_-2px_hsl(189_94%_43%/0.4)]"
+              style={{ background: "linear-gradient(135deg, #06b6d4, #8B5CF6)" }}
+            >
+              M
+            </div>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 backdrop-blur-sm p-8">
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-md p-8 shadow-2xl">
           <div className="mb-6">
-            <h1 className="text-xl font-bold text-white mb-2">Welcome to Mailmind</h1>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Let&apos;s set up your workspace. You can change these details anytime in settings.
+            <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">Välkommen till Mailmind</h1>
+            <p className="text-sm text-white/55 leading-relaxed">
+              Sätt upp arbetsytan på två minuter. Du kan ändra allt senare i inställningarna.
             </p>
           </div>
 
@@ -67,11 +82,11 @@ export default async function OnboardingPage() {
             suggestedOrgName={suggestedOrgName}
           />
 
-          <p className="text-[11px] text-muted-foreground mt-6 leading-relaxed">
-            By continuing you agree to the{" "}
-            <a href="/terms" className="text-primary hover:underline">Terms</a>
-            {" and "}
-            <a href="/privacy" className="text-primary hover:underline">Privacy Policy</a>.
+          <p className="text-[11px] text-white/35 mt-6 leading-relaxed">
+            Genom att fortsätta godkänner du{" "}
+            <a href="/terms" className="text-primary hover:underline">Villkoren</a>
+            {" och "}
+            <a href="/privacy" className="text-primary hover:underline">Integritetspolicyn</a>.
           </p>
         </div>
       </div>
