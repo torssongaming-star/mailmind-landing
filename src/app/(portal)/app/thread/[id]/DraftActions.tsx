@@ -209,7 +209,7 @@ export function DraftActions({
         <button
           onClick={() => setEditing(true)}
           disabled={pending}
-          className="px-3 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-white border border-white/10 hover:border-white/20 transition-colors"
+          className="inline-flex items-center h-8 px-3 rounded-lg text-xs font-medium text-white/70 hover:text-white border border-white/10 hover:border-white/20 hover:bg-white/[0.04] transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
         >
           Redigera
         </button>
@@ -217,7 +217,7 @@ export function DraftActions({
       <button
         onClick={() => call({ action: "reject" })}
         disabled={pending}
-        className="px-3 py-1.5 rounded-lg text-xs text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 transition-colors"
+        className="inline-flex items-center h-8 px-3 rounded-lg text-xs font-medium text-red-400 hover:text-red-300 border border-red-500/20 hover:border-red-500/40 hover:bg-red-500/[0.04] transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500/40"
       >
         Avvisa
       </button>
@@ -226,7 +226,7 @@ export function DraftActions({
       <button
         onClick={() => call({ action: "send" })}
         disabled={pending || (action !== "escalate" && !initialBody?.trim())}
-        className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-primary text-[#030614] hover:bg-cyan-300 transition-colors disabled:opacity-40"
+        className="inline-flex items-center h-8 px-4 rounded-lg text-xs font-semibold bg-primary text-[hsl(var(--surface-base))] hover:bg-cyan-300 transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--surface-elev-1))]"
       >
         {pending
           ? "Skickar…"

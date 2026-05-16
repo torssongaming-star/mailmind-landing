@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 
 export type Note = {
   id:          string;
@@ -22,6 +23,8 @@ export function InternalNotes({
   const [text, setText]   = useState("");
   const [posting, setPosting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const handlePost = async () => {
     if (!text.trim() || posting) return;
@@ -45,29 +48,44 @@ export function InternalNotes({
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Ta bort anteckningen?")) return;
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     setError(null);
+    setDeleting(true);
     try {
-      const res = await fetch(`/api/app/notes/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/app/notes/${deleteTarget}`, { method: "DELETE" });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error ?? "Kunde inte ta bort anteckning");
       }
-      setNotes(prev => prev.filter(n => n.id !== id));
+      setNotes(prev => prev.filter(n => n.id !== deleteTarget));
+      setDeleteTarget(null);
       router.refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Okänt fel");
+    } finally {
+      setDeleting(false);
     }
   };
 
   return (
     <section className="rounded-2xl border border-amber-500/15 bg-amber-500/[0.025] p-5 space-y-3">
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Ta bort anteckning?"
+        body="Anteckningen försvinner permanent."
+        confirmLabel="Ta bort"
+        tone="danger"
+        pending={deleting}
+      />
+
       <header className="flex items-center justify-between">
-        <h2 className="text-xs font-semibold text-amber-400/80 uppercase tracking-widest">
+        <h2 className="text-[10px] font-semibold text-amber-400/80 uppercase tracking-widest">
           Interna anteckningar
         </h2>
-        <span className="text-[10px] text-muted-foreground">Syns inte för kunden</span>
+        <span className="text-[10px] text-white/35">Syns inte för kunden</span>
       </header>
 
       {/* Existing notes */}
@@ -80,14 +98,14 @@ export function InternalNotes({
                   <p className="text-sm text-white/90 whitespace-pre-wrap leading-relaxed">{n.bodyText}</p>
                 </div>
                 <button
-                  onClick={() => handleDelete(n.id)}
-                  className="opacity-0 group-hover:opacity-100 text-[11px] text-red-400/70 hover:text-red-300 transition-opacity"
+                  onClick={() => setDeleteTarget(n.id)}
+                  className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 text-[11px] text-red-400/70 hover:text-red-300 transition-opacity focus-visible:outline-none focus-visible:underline"
                   aria-label="Ta bort anteckning"
                 >
                   Ta bort
                 </button>
               </div>
-              <p className="text-[10px] text-muted-foreground mt-2">
+              <p className="text-[10px] text-white/35 mt-2 tabular-nums">
                 {n.authorEmail ?? "Unknown author"}
                 {" · "}
                 {new Date(n.createdAt).toLocaleString("sv-SE")}
@@ -102,16 +120,24 @@ export function InternalNotes({
         <textarea
           value={text}
           onChange={e => setText(e.target.value)}
+          onKeyDown={e => {
+            if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+              e.preventDefault();
+              handlePost();
+            }
+          }}
           placeholder="Lägg till en intern anteckning (syns bara för ditt team)…"
           rows={2}
-          className="w-full bg-black/30 text-white text-sm rounded-lg px-3 py-2 border border-amber-500/15 focus:border-amber-500/40 focus:outline-none placeholder:text-muted-foreground/40 resize-none"
+          aria-label="Intern anteckning"
+          className="w-full bg-black/30 text-white text-sm rounded-lg px-3 py-2 border border-amber-500/15 focus:border-amber-500/40 focus:outline-none placeholder:text-white/25 resize-none"
         />
         {error && <p className="text-xs text-red-400">{error}</p>}
-        <div className="flex justify-end">
+        <div className="flex justify-between items-center">
+          <span className="text-[10px] text-white/25">⌘+Enter för att posta</span>
           <button
             onClick={handlePost}
             disabled={posting || !text.trim()}
-            className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 transition-colors disabled:opacity-40"
+            className="inline-flex items-center h-7 px-3 rounded-lg text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30 hover:bg-amber-500/30 transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/40"
           >
             {posting ? "Sparar…" : "Posta anteckning"}
           </button>

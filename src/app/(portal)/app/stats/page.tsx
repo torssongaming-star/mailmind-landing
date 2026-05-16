@@ -54,15 +54,18 @@ export default async function StatsPage() {
 
   return (
     <main className="max-w-4xl mx-auto p-6 md:p-10 space-y-8">
-      <header className="flex items-center justify-between">
+      <header className="flex items-center justify-between gap-4">
         <div>
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">{t("portal.stats.header")}</p>
-          <h1 className="text-2xl font-bold text-white">{account.organization.name}</h1>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-1">{t("portal.stats.header")}</p>
+          <h1 className="text-2xl font-bold text-white tracking-tight">{account.organization.name}</h1>
+          <p className="text-sm text-white/50 mt-1">
             {t("portal.stats.description")}
           </p>
         </div>
-        <Link href="/app" className="text-xs text-muted-foreground hover:text-white px-3 py-1.5 transition-colors">
+        <Link
+          href="/app"
+          className="shrink-0 inline-flex items-center h-8 text-xs text-white/55 hover:text-white px-3 rounded-lg hover:bg-white/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        >
           ← {t("nav.app")}
         </Link>
       </header>
@@ -77,20 +80,20 @@ export default async function StatsPage() {
 
       {/* Daily thread volume */}
       <section>
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+        <h2 className="text-[10px] font-semibold text-white/45 uppercase tracking-widest mb-3">
           {t("portal.stats.charts.dailyThreads")}
         </h2>
-        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5">
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-5">
           <DailyThreadsChart data={dailyThreads} />
         </div>
       </section>
 
       {/* Auto-sent vs manual */}
       <section>
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+        <h2 className="text-[10px] font-semibold text-white/45 uppercase tracking-widest mb-3">
           {t("portal.stats.charts.autoVsManual")}
         </h2>
-        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-4">
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-5 space-y-4">
           {totalSent === 0 && autoVsManual.rejected === 0 ? (
             <p className="text-xs text-muted-foreground italic">
               {t("portal.stats.charts.noData")}
@@ -98,19 +101,19 @@ export default async function StatsPage() {
           ) : (
             <>
               <div className="flex items-baseline gap-3">
-                <span className="text-3xl font-bold text-white">{autoPct}%</span>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-3xl font-bold text-white tracking-tight tabular-nums">{autoPct}%</span>
+                <span className="text-xs text-white/50">
                   {t("portal.stats.charts.autoPct", { pct: autoPct.toString(), total: totalSent.toString() })}
                 </span>
               </div>
               <div className="flex h-2 rounded-full overflow-hidden bg-white/5">
                 <div
-                  className="h-full bg-gradient-to-r from-primary to-cyan-300"
+                  className="h-full bg-gradient-to-r from-primary to-cyan-300 transition-all duration-500"
                   style={{ width: `${totalSent > 0 ? (autoVsManual.auto / totalSent) * 100 : 0}%` }}
                   title={`${t("portal.stats.charts.labels.auto")}: ${autoVsManual.auto}`}
                 />
                 <div
-                  className="h-full bg-amber-400/60"
+                  className="h-full bg-amber-400/60 transition-all duration-500"
                   style={{ width: `${totalSent > 0 ? (autoVsManual.manual / totalSent) * 100 : 0}%` }}
                   title={`${t("portal.stats.charts.labels.manual")}: ${autoVsManual.manual}`}
                 />
@@ -129,8 +132,8 @@ export default async function StatsPage() {
       <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card title={t("portal.stats.aiUsage.title")}>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-white">{draftsThisMonthUsed.toLocaleString()}</span>
-            <span className="text-sm text-muted-foreground">/ {draftLimit.toLocaleString()}</span>
+            <span className="text-3xl font-bold text-white tracking-tight tabular-nums">{draftsThisMonthUsed.toLocaleString()}</span>
+            <span className="text-sm text-white/40 tabular-nums">/ {draftLimit.toLocaleString()}</span>
           </div>
           <ProgressBar used={draftsThisMonthUsed} limit={draftLimit} />
           <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/5">
@@ -142,13 +145,13 @@ export default async function StatsPage() {
 
         <Card title={t("portal.stats.aiUsage.medianTime")}>
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-bold text-white">
+            <span className="text-3xl font-bold text-white tracking-tight tabular-nums">
               {responseStats.medianMinutes !== null
                 ? formatDuration(responseStats.medianMinutes)
                 : "—"}
             </span>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
+          <p className="text-xs text-white/45 mt-2">
             {responseStats.sampleSize > 0
               ? t("portal.stats.aiUsage.sampleSize", { count: responseStats.sampleSize.toString() })
               : t("portal.stats.aiUsage.noReplies")}
@@ -158,10 +161,10 @@ export default async function StatsPage() {
 
       {/* Status breakdown */}
       <section>
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+        <h2 className="text-[10px] font-semibold text-white/45 uppercase tracking-widest mb-3">
           {t("portal.stats.status.title")}
         </h2>
-        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-2">
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-5 space-y-2">
           <StatusBar label={t("portal.stats.status.labels.open")}      value={threadStats.byStatus.open}      total={threadStats.total} color="#22c55e" />
           <StatusBar label={t("portal.stats.status.labels.waiting")}   value={threadStats.byStatus.waiting}   total={threadStats.total} color="#f59e0b" />
           <StatusBar label={t("portal.stats.status.labels.escalated")} value={threadStats.byStatus.escalated} total={threadStats.total} color="#ef4444" />
@@ -171,10 +174,10 @@ export default async function StatsPage() {
 
       {/* Top case types */}
       <section>
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">
+        <h2 className="text-[10px] font-semibold text-white/45 uppercase tracking-widest mb-3">
           {t("portal.stats.caseTypes.title")}
         </h2>
-        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5">
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-5">
           {topCaseTypes.length === 0 ? (
             <p className="text-xs text-muted-foreground italic py-2">
               {t("portal.stats.caseTypes.noData")}
@@ -211,17 +214,17 @@ export default async function StatsPage() {
 
 function MetricCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-4">
-      <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1">{label}</p>
-      <p className="text-2xl font-bold text-white">{value.toLocaleString()}</p>
+    <div className="group rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm p-4 transition-colors duration-200 hover:border-white/12">
+      <p className="text-[10px] uppercase tracking-widest text-white/45 font-semibold mb-1">{label}</p>
+      <p className="text-2xl font-bold text-white tracking-tight tabular-nums">{value.toLocaleString()}</p>
     </div>
   );
 }
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5">
-      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3">{title}</p>
+    <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm p-5">
+      <p className="text-[10px] font-semibold text-white/45 uppercase tracking-widest mb-3">{title}</p>
       {children}
     </div>
   );
@@ -230,8 +233,8 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
 function Mini({ label, value }: { label: string; value: number }) {
   return (
     <div className="text-center">
-      <p className="text-lg font-bold text-white">{value}</p>
-      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
+      <p className="text-lg font-bold text-white tabular-nums">{value}</p>
+      <p className="text-[10px] text-white/45 uppercase tracking-widest font-medium">{label}</p>
     </div>
   );
 }

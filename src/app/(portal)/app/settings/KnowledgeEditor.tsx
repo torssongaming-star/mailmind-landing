@@ -70,9 +70,21 @@ export function KnowledgeEditor({ initial }: { initial: Entry[] }) {
 
   const deleteEntry = async (id: string) => {
     if (!confirm("Ta bort detta svar?")) return;
+    // Optimistic delete — reverse on server failure
+    const previous = entries;
     setEntries(prev => prev.filter(e => e.id !== id));
-    await fetch(`/api/app/knowledge/${id}`, { method: "DELETE" });
-    router.refresh();
+    try {
+      const res = await fetch(`/api/app/knowledge/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        setEntries(previous);
+        setError("Kunde inte ta bort svaret. Försök igen.");
+        return;
+      }
+      router.refresh();
+    } catch {
+      setEntries(previous);
+      setError("Nätverksfel. Försök igen.");
+    }
   };
 
   const scrape = async () => {
