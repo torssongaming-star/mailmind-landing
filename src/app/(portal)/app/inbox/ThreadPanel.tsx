@@ -291,9 +291,18 @@ export function ThreadPanel({
         {/* Drafts */}
         {drafts.length > 0 && (
           <div className="space-y-3">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-white/45">
-              {t("inbox.thread.statusLabels.drafts")} <span className="tabular-nums text-white/30">({drafts.length})</span>
-            </p>
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/45">
+                {t("inbox.thread.statusLabels.drafts")} <span className="tabular-nums text-white/30">({drafts.length})</span>
+              </p>
+              <p className="text-[10px] text-white/35 flex items-center gap-1.5">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 16v-4M12 8h.01"/>
+                </svg>
+                AI-genererat — granska före utskick
+              </p>
+            </div>
             {drafts.map(d => (
               <div key={d.id} className="rounded-2xl border border-primary/15 bg-primary/[0.03] backdrop-blur-sm p-5 space-y-3 shadow-[0_2px_24px_-12px_hsl(189_94%_43%/0.3)]">
                 <div className="flex items-center gap-2 flex-wrap">
