@@ -279,7 +279,7 @@ export function TeamPage({
           Aktiva medlemmar
         </p>
 
-        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 overflow-hidden divide-y divide-white/5">
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 overflow-hidden divide-y divide-white/5">
           {members.map(m => {
             const isSelf    = m.id === currentUserId;
             const isThisOwner = m.role === "owner";
@@ -346,7 +346,7 @@ export function TeamPage({
             Väntande inbjudningar
           </p>
 
-          <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 overflow-hidden divide-y divide-white/5">
+          <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 overflow-hidden divide-y divide-white/5">
             {invites.map(inv => {
               const daysLeft = Math.ceil(
                 (new Date(inv.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)

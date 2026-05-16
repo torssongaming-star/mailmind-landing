@@ -191,14 +191,19 @@ export function Sidebar({
                 <Link
                   key={item.href}
                   href={item.href}
+                  aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
+                    "relative flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-200",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                     isActive
-                      ? "bg-primary/10 text-primary border border-primary/20 shadow-[inset_0_0_10px_rgba(6,182,212,0.05)]"
-                      : "text-muted-foreground hover:text-white hover:bg-white/[0.04]"
+                      ? "bg-primary/10 text-primary"
+                      : "text-white/55 hover:text-white hover:bg-white/[0.04]"
                   )}
                 >
-                  <Icon size={17} className={isActive ? "text-primary" : "text-muted-foreground"} />
+                  {isActive && (
+                    <span className="absolute left-0 top-1.5 bottom-1.5 w-[2px] rounded-r-full bg-primary" aria-hidden />
+                  )}
+                  <Icon size={16} className={isActive ? "text-primary" : "text-white/40"} />
                   {t(item.labelKey)}
                 </Link>
               );
@@ -214,22 +219,24 @@ export function Sidebar({
                 {/* Group header */}
                 <button
                   onClick={() => toggle(item.id)}
+                  aria-expanded={isOpen}
                   className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200",
+                    "w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium transition-colors duration-200",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                     active
                       ? "text-white"
-                      : "text-muted-foreground hover:text-white hover:bg-white/[0.04]"
+                      : "text-white/55 hover:text-white hover:bg-white/[0.04]"
                   )}
                 >
                   <Icon
-                    size={17}
-                    className={active ? "text-primary" : "text-muted-foreground"}
+                    size={16}
+                    className={active ? "text-primary" : "text-white/40"}
                   />
                   <span className="flex-1 text-left">{t(item.labelKey)}</span>
                   <ChevronDown
-                    size={13}
+                    size={12}
                     className={cn(
-                      "transition-transform duration-200 text-white/20",
+                      "transition-transform duration-200 text-white/25",
                       isOpen && "rotate-180"
                     )}
                   />
@@ -246,10 +253,12 @@ export function Sidebar({
                         <Link
                           key={child.href}
                           href={child.href}
+                          aria-current={childActive ? "page" : undefined}
                           className={cn(
-                            "block px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150",
+                            "block px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
                             childActive
-                              ? "text-primary bg-primary/8"
+                              ? "text-primary bg-primary/[0.08]"
                               : "text-white/40 hover:text-white/80 hover:bg-white/[0.03]"
                           )}
                         >
@@ -301,7 +310,7 @@ export function Sidebar({
   return (
     <>
       {/* ── Desktop sidebar ──────────────────────────────────────────────── */}
-      <aside className="fixed inset-y-0 left-0 z-30 w-64 hidden lg:flex flex-col border-r border-white/5 bg-[#030614]/95 backdrop-blur-md">
+      <aside className="fixed inset-y-0 left-0 z-30 w-64 hidden lg:flex flex-col border-r border-white/8 bg-[hsl(var(--surface-deep))]/95 backdrop-blur-md">
         <div className="h-16 flex items-center px-6 border-b border-white/5 shrink-0">
           {logo}
         </div>
@@ -309,7 +318,7 @@ export function Sidebar({
       </aside>
 
       {/* ── Mobile top bar ───────────────────────────────────────────────── */}
-      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between h-14 px-4 border-b border-white/5 bg-[#030614]/95 backdrop-blur-md">
+      <header className="lg:hidden sticky top-0 z-30 flex items-center justify-between h-14 px-4 border-b border-white/8 bg-[hsl(var(--surface-base))]/95 backdrop-blur-md">
         <button
           onClick={() => setMobileOpen(true)}
           aria-label="Open menu"
@@ -331,12 +340,12 @@ export function Sidebar({
       )}
       <aside
         className={cn(
-          "lg:hidden fixed inset-y-0 left-0 z-50 w-72 flex flex-col border-r border-white/5 bg-[#030614] transition-transform duration-200 ease-out",
+          "lg:hidden fixed inset-y-0 left-0 z-50 w-72 flex flex-col border-r border-white/8 bg-[hsl(var(--surface-base))] transition-transform duration-200 ease-out",
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
         aria-hidden={!mobileOpen}
       >
-        <div className="h-14 flex items-center justify-between px-4 border-b border-white/5 shrink-0">
+        <div className="h-14 flex items-center justify-between px-4 border-b border-white/8 shrink-0">
           {logo}
           <button
             onClick={() => setMobileOpen(false)}

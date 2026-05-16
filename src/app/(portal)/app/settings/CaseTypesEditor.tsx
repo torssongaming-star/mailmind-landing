@@ -152,7 +152,7 @@ export function CaseTypesEditor({ initial }: { initial: CaseType[] }) {
         {rows.map((row, idx) => (
           <div
             key={row.id ?? `new-${idx}`}
-            className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-4 space-y-3"
+            className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-4 space-y-3"
           >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div>

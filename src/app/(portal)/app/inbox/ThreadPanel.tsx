@@ -120,20 +120,49 @@ export function ThreadPanel({
   // Reload when threadId changes or after a router.refresh()
   useEffect(() => { load(); }, [load]);
 
-  // ── Loading ───────────────────────────────────────────────────────────────
+  // ── Loading skeleton ──────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex-1 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-primary animate-spin" />
+      <div className="flex-1 flex flex-col overflow-hidden animate-in fade-in duration-200">
+        {/* Header skeleton */}
+        <div className="shrink-0 px-6 py-4 border-b border-white/8 space-y-3">
+          <div className="space-y-2">
+            <div className="h-4 w-2/3 rounded bg-white/[0.06] animate-pulse" />
+            <div className="h-3 w-1/2 rounded bg-white/[0.04] animate-pulse" />
+          </div>
+          <div className="flex gap-2">
+            <div className="h-6 w-20 rounded-lg bg-white/[0.04] animate-pulse" />
+            <div className="h-6 w-24 rounded-lg bg-white/[0.04] animate-pulse" />
+          </div>
+        </div>
+
+        {/* Body skeleton */}
+        <div className="flex-1 px-6 py-5 space-y-4">
+          <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-4 space-y-2">
+            <div className="h-2.5 w-16 rounded bg-white/[0.06] animate-pulse" />
+            <div className="h-3 w-full rounded bg-white/[0.04] animate-pulse" />
+            <div className="h-3 w-3/4 rounded bg-white/[0.04] animate-pulse" />
+          </div>
+          <div className="rounded-2xl border border-primary/10 bg-primary/[0.02] p-4 ml-8 space-y-2">
+            <div className="h-2.5 w-16 rounded bg-white/[0.06] animate-pulse" />
+            <div className="h-3 w-full rounded bg-white/[0.04] animate-pulse" />
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error || !thread) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
-        <p className="text-sm">{error ?? t("inbox.thread.statusLabels.notFound")}</p>
-        <button onClick={load} className="text-xs text-primary hover:text-white transition-colors">
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6">
+        <div className="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+          <span className="text-red-400 text-xl">!</span>
+        </div>
+        <p className="text-sm text-white/70 text-center max-w-[280px]">{error ?? t("inbox.thread.statusLabels.notFound")}</p>
+        <button
+          onClick={load}
+          className="text-xs px-3 py-1.5 rounded-lg border border-white/10 text-white hover:bg-white/[0.04] hover:border-white/20 transition-colors"
+        >
           {t("inbox.thread.statusLabels.tryAgain")}
         </button>
       </div>
@@ -152,28 +181,32 @@ export function ThreadPanel({
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* ── Header ──────────────────────────────────────────────────────── */}
-      <div className="shrink-0 px-6 py-4 border-b border-white/8 bg-[#030614]/80 backdrop-blur-sm space-y-2">
+      <div className="shrink-0 px-6 py-4 border-b border-white/8 bg-[hsl(var(--surface-base))]/80 backdrop-blur-md space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <h2 className="text-base font-bold text-white truncate">
+            <h2 className="text-base font-semibold text-white truncate tracking-tight">
               {thread.subject ?? t("inbox.noSubject")}
             </h2>
-            <p className="text-xs text-muted-foreground mt-0.5">
+            <p className="text-xs text-white/45 mt-1 flex items-center gap-1.5 flex-wrap">
               {thread.fromName
-                ? <><span className="text-white/80">{thread.fromName}</span> &lt;{thread.fromEmail}&gt;</>
-                : thread.fromEmail}
-              <span className="mx-1.5 text-white/20">·</span>
-              <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border ${STATUS_CLASSES[thread.status] ?? STATUS_CLASSES.resolved}`}>
+                ? <span><span className="text-white/80">{thread.fromName}</span> <span className="text-white/30">&lt;{thread.fromEmail}&gt;</span></span>
+                : <span>{thread.fromEmail}</span>}
+              <span className="text-white/15">·</span>
+              <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full border ${STATUS_CLASSES[thread.status] ?? STATUS_CLASSES.resolved}`}>
                 {thread.status}
               </span>
               {thread.caseTypeSlug && (
-                <><span className="mx-1.5 text-white/20">·</span>{thread.caseTypeSlug}</>
+                <>
+                  <span className="text-white/15">·</span>
+                  <span>{thread.caseTypeSlug}</span>
+                </>
               )}
             </p>
           </div>
           <Link
             href={`/app/thread/${thread.id}`}
-            className="shrink-0 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-white transition-colors border border-white/10 hover:border-white/20 rounded-lg px-2.5 py-1.5"
+            aria-label={t("inbox.thread.statusLabels.open")}
+            className="shrink-0 inline-flex items-center gap-1.5 h-7 text-[10px] text-white/45 hover:text-white transition-colors border border-white/10 hover:border-white/20 hover:bg-white/[0.04] rounded-lg px-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             {t("inbox.thread.statusLabels.open")}
             <ExternalLink className="w-3 h-3" />
@@ -197,19 +230,23 @@ export function ThreadPanel({
         {messages.map(m => (
           <div
             key={m.id}
-            className={`rounded-2xl border p-4 ${
+            className={`rounded-2xl border p-4 transition-colors ${
               m.role === "customer"
-                ? "border-white/8 bg-[#050B1C]/60"
+                ? "border-white/8 bg-[hsl(var(--surface-elev-1))]/70"
                 : m.role === "assistant"
                   ? "border-primary/20 bg-primary/[0.04] ml-8"
                   : "border-cyan-500/20 bg-cyan-500/[0.04] ml-8"
             }`}
           >
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <span className={`text-[10px] font-semibold uppercase tracking-widest ${
+                m.role === "customer"  ? "text-white/45"
+                : m.role === "assistant" ? "text-primary/80"
+                : "text-cyan-300/80"
+              }`}>
                 {m.role === "customer" ? t("inbox.thread.roles.customer") : m.role === "assistant" ? t("inbox.thread.roles.ai") : t("inbox.thread.roles.agent")}
               </span>
-              <span className="text-[10px] text-muted-foreground">
+              <span className="text-[10px] text-white/35 tabular-nums">
                 {new Date(m.sentAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE")}
               </span>
             </div>
@@ -221,11 +258,11 @@ export function ThreadPanel({
         <InternalNotes threadId={thread.id} initial={notes} />
 
         {/* Draft action area */}
-        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-3">
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm p-5">
           <div className="flex items-center justify-between gap-4">
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-semibold text-white">{t("inbox.thread.draft")}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <p className="text-xs text-white/45 mt-1 leading-relaxed">
                 {canGenerate ? t("inbox.thread.statusLabels.canGenerate") : t("inbox.thread.statusLabels.limitReached")}
               </p>
             </div>

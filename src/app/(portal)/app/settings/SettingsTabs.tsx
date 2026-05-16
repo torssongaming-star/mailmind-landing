@@ -75,7 +75,7 @@ export function SettingsTabs({
     <div className="flex gap-0 min-h-[600px] rounded-2xl border border-white/8 overflow-hidden">
 
       {/* ── Sidebar ───────────────────────────────────────────────────────── */}
-      <nav className="w-52 shrink-0 border-r border-white/8 bg-[#020510] py-3">
+      <nav className="w-52 shrink-0 border-r border-white/8 bg-[hsl(var(--surface-deep))] py-3">
         <p className="px-4 pb-2 text-[10px] font-semibold uppercase tracking-widest text-white/20">
           {t("settings.title")}
         </p>
@@ -105,7 +105,7 @@ export function SettingsTabs({
 
       {/* ── Content ───────────────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">
-        <div className="sticky top-0 z-10 px-8 py-5 border-b border-white/8 bg-[#030614]/95 backdrop-blur-sm flex items-center gap-3">
+        <div className="sticky top-0 z-10 px-8 py-5 border-b border-white/8 bg-[hsl(var(--surface-base))]/95 backdrop-blur-sm flex items-center gap-3">
           <current.icon className="w-5 h-5 text-primary shrink-0" />
           <div>
             <h2 className="text-sm font-semibold text-white leading-none">{current.label}</h2>

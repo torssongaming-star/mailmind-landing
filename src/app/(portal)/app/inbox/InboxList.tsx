@@ -113,7 +113,7 @@ export function InboxList({ threads = [], slaByCaseType = {} }: { threads: Threa
     <div className="space-y-3">
       {/* Bulk action bar — slides in when something is selected */}
       {selectedCount > 0 && (
-        <div className="sticky top-2 z-10 rounded-2xl border border-primary/30 bg-[#050B1C]/95 backdrop-blur-md px-4 py-2.5 flex items-center gap-3 shadow-lg">
+        <div className="sticky top-2 z-10 rounded-2xl border border-primary/30 bg-[hsl(var(--surface-elev-1))]/95 backdrop-blur-md px-4 py-2.5 flex items-center gap-3 shadow-lg">
           <span className="text-sm text-white">
             <span className="font-semibold">{selectedCount}</span> {t("inbox.bulk.selected")}
           </span>
@@ -149,7 +149,7 @@ export function InboxList({ threads = [], slaByCaseType = {} }: { threads: Threa
         </div>
       )}
 
-      <ul className="rounded-2xl border border-white/8 bg-[#050B1C]/60 backdrop-blur-sm divide-y divide-white/5 overflow-hidden">
+      <ul className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm divide-y divide-white/5 overflow-hidden">
         {/* Header row with select-all */}
         <li className="px-5 py-2 flex items-center gap-3 bg-white/[0.02] text-[10px] uppercase tracking-wider text-muted-foreground">
           <input

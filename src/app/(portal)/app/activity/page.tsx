@@ -69,11 +69,11 @@ export default async function ActivityPage() {
       </header>
 
       {logs.length === 0 ? (
-        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-10 text-center">
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-10 text-center">
           <p className="text-sm text-white/70">{t("portal.activity.noActivity")}</p>
         </div>
       ) : (
-        <ul className="rounded-2xl border border-white/8 bg-[#050B1C]/60 backdrop-blur-sm divide-y divide-white/5 overflow-hidden">
+        <ul className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm divide-y divide-white/5 overflow-hidden">
           {logs.map(log => {
             const meta = ACTION_MAP[log.action] ?? { label: log.action, tone: "neutral" };
             return (

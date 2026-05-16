@@ -15,10 +15,9 @@ type Template = { id: string; title: string; slug: string | null; bodyText: stri
  * if the user never opens it.
  */
 function TemplatePicker({ onInsert, templateVars }: { onInsert: (text: string) => void; templateVars: Record<string, string> }) {
-  const [open, setOpen]               = useState(false);
-  const [templates, setTemplates]     = useState<Template[] | null>(null);
-  const [loading, setLoading]         = useState(false);
-  const [insertingId, setInsertingId] = useState<string | null>(null);
+  const [open, setOpen]           = useState(false);
+  const [templates, setTemplates] = useState<Template[] | null>(null);
+  const [loading, setLoading]     = useState(false);
 
   useEffect(() => {
     if (!open || templates !== null || loading) return;
@@ -29,8 +28,17 @@ function TemplatePicker({ onInsert, templateVars }: { onInsert: (text: string) =
       .finally(() => setLoading(false));
   }, [open, templates, loading]);
 
-  const handleInsert = async (tpl: Template) => {
-    setInsertingId(tpl.id);
+  // Close on ESC
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  const handleInsert = (tpl: Template) => {
     onInsert(interpolateTemplate(tpl.bodyText, templateVars));
     setOpen(false);
     // Fire-and-forget: increment use_count on the server
@@ -39,34 +47,39 @@ function TemplatePicker({ onInsert, templateVars }: { onInsert: (text: string) =
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: "use" }),
     }).catch(() => {});
-    setInsertingId(null);
   };
 
   if (!open) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="text-xs text-muted-foreground hover:text-white inline-flex items-center gap-1.5"
+        className="text-xs text-white/45 hover:text-white inline-flex items-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:text-white"
       >
-        <span>＋</span> Infoga mall
+        <span className="text-[15px] leading-none">＋</span> Infoga mall
       </button>
     );
   }
 
   return (
-    <div className="rounded-lg border border-white/10 bg-black/40 p-2 max-h-48 overflow-y-auto">
+    <div className="rounded-xl border border-white/10 bg-[hsl(var(--surface-deep))]/95 backdrop-blur-md p-2 max-h-56 overflow-y-auto shadow-lg">
       <div className="flex items-center justify-between px-1 py-1 mb-1">
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Mallar</span>
+        <span className="text-[10px] uppercase tracking-widest text-white/35 font-semibold">Mallar</span>
         <button
           onClick={() => setOpen(false)}
-          className="text-[11px] text-muted-foreground hover:text-white"
+          aria-label="Stäng mallar"
+          className="text-[11px] text-white/40 hover:text-white transition-colors"
         >
           Stäng
         </button>
       </div>
-      {loading && <p className="text-xs text-muted-foreground italic px-2 py-1">Laddar…</p>}
+      {loading && (
+        <div className="px-2 py-3 space-y-2">
+          <div className="h-3 w-32 rounded bg-white/5 animate-pulse" />
+          <div className="h-2.5 w-full rounded bg-white/[0.03] animate-pulse" />
+        </div>
+      )}
       {!loading && templates && templates.length === 0 && (
-        <p className="text-xs text-muted-foreground italic px-2 py-1">
+        <p className="text-xs text-white/45 italic px-2 py-2">
           Inga mallar ännu.{" "}
           <a href="/app/settings" className="text-primary hover:underline">Skapa en i inställningar →</a>
         </p>
@@ -77,11 +90,10 @@ function TemplatePicker({ onInsert, templateVars }: { onInsert: (text: string) =
             <li key={t.id}>
               <button
                 onClick={() => handleInsert(t)}
-                disabled={!!insertingId}
-                className="w-full text-left px-2 py-1.5 rounded hover:bg-white/5 transition-colors disabled:opacity-40"
+                className="w-full text-left px-2 py-1.5 rounded-md hover:bg-white/[0.04] transition-colors focus-visible:outline-none focus-visible:bg-white/[0.06]"
               >
                 <p className="text-xs text-white">{t.title}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{t.bodyText}</p>
+                <p className="text-[10px] text-white/40 truncate">{t.bodyText}</p>
               </button>
             </li>
           ))}

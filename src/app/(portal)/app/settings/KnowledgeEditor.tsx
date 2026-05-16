@@ -137,7 +137,7 @@ export function KnowledgeEditor({ initial }: { initial: Entry[] }) {
       )}
 
       {/* Scrape from website */}
-      <div className="rounded-xl border border-white/8 bg-[#050B1C]/60 p-4 space-y-3">
+      <div className="rounded-xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-4 space-y-3">
         <p className="text-xs font-semibold text-white/80">Importera från hemsida</p>
         <div className="flex gap-2">
           <input
@@ -161,7 +161,7 @@ export function KnowledgeEditor({ initial }: { initial: Entry[] }) {
 
       {/* Entry list */}
       {entries.length > 0 && (
-        <div className="rounded-xl border border-white/8 bg-[#050B1C]/60 divide-y divide-white/5 overflow-hidden">
+        <div className="rounded-xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 divide-y divide-white/5 overflow-hidden">
           <div className="px-4 py-2.5 flex items-center gap-2 bg-white/[0.02]">
             <span className="text-[10px] uppercase tracking-wider text-muted-foreground flex-1">
               {entries.length} svar · {activeCount} aktiva
@@ -212,7 +212,7 @@ export function KnowledgeEditor({ initial }: { initial: Entry[] }) {
           + Lägg till svar manuellt
         </button>
       ) : (
-        <div className="rounded-xl border border-white/8 bg-[#050B1C]/60 p-4 space-y-3">
+        <div className="rounded-xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-4 space-y-3">
           <input
             type="text"
             value={newQ}

@@ -101,7 +101,7 @@ export function DataPrivacy({ isOwner, orgName, deletionRequestedAt }: Props) {
       </h2>
 
       {/* ── Export ──────────────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 flex items-start justify-between gap-4">
+      <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-5 flex items-start justify-between gap-4">
         <div className="flex items-start gap-3 min-w-0">
           <Download size={16} className="text-primary mt-0.5 shrink-0" />
           <div className="min-w-0">
@@ -146,7 +146,7 @@ export function DataPrivacy({ isOwner, orgName, deletionRequestedAt }: Props) {
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-3">
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-5 space-y-3">
           <div className="flex items-start gap-3">
             <ShieldCheck size={16} className="text-red-400/80 mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">

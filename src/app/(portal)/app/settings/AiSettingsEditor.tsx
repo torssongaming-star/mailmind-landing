@@ -45,7 +45,7 @@ export function AiSettingsEditor({
   };
 
   return (
-    <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-4">
+    <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-5 space-y-4">
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         <Field label="Ton" hint="Hur AI:n låter i sina svar.">

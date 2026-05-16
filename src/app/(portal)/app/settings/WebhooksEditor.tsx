@@ -111,7 +111,7 @@ export function WebhooksEditor({
       )}
 
       {/* Add new webhook */}
-      <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-4 space-y-3">
+      <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-4 space-y-3">
         <p className="text-xs font-semibold text-white/70">Lägg till webhook</p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="md:col-span-2">
@@ -167,7 +167,7 @@ export function WebhooksEditor({
           Inga webhooks ännu.
         </p>
       ) : (
-        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 overflow-hidden">
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 overflow-hidden">
           <ul className="divide-y divide-white/5">
             {webhooks.map(w => {
               const isExpanded = expandedId === w.id;

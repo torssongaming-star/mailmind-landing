@@ -59,19 +59,34 @@ export function NewThreadButton({ compact }: { compact?: boolean }) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="px-3 py-1.5 rounded-lg bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors whitespace-nowrap"
+        aria-label="Skapa ny testtråd"
+        title="Skapa en testtråd för att prova AI-flödet"
+        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-white text-xs font-semibold transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
       >
-        {compact ? "Ny" : "Ny testtråd"}
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+        {compact ? "Test" : "Ny testtråd"}
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4" onClick={() => setOpen(false)}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-150"
+          onMouseDown={e => {
+            // Only close on click that started AND ended on backdrop —
+            // prevents drag-from-input-to-outside from accidentally closing.
+            if (e.target === e.currentTarget && !submitting) {
+              setOpen(false);
+            }
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="new-thread-title"
+        >
           <div
-            className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#050B1C] p-6 space-y-4"
-            onClick={e => e.stopPropagation()}
+            className="w-full max-w-lg rounded-2xl border border-white/10 bg-[hsl(var(--surface-elev-1))] p-6 space-y-4 shadow-2xl"
+            onMouseDown={e => e.stopPropagation()}
           >
             <header>
-              <h2 className="text-lg font-bold text-white">Ny testtråd</h2>
+              <h2 id="new-thread-title" className="text-lg font-bold text-white">Ny testtråd</h2>
               <p className="text-xs text-muted-foreground mt-1">
                 Simulerar ett inkommande mejl så du kan prova AI-utkast-flödet.
               </p>
@@ -104,9 +119,9 @@ export function NewThreadButton({ compact }: { compact?: boolean }) {
               <button
                 onClick={handleCreate}
                 disabled={submitting || !fromEmail || !subject || !body}
-                className="px-4 py-1.5 rounded-lg bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="inline-flex items-center gap-1.5 h-8 px-4 rounded-lg bg-primary text-[hsl(var(--surface-base))] text-xs font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--surface-elev-1))]"
               >
-                {submitting ? "Skapar…" : "Skapa"}
+                {submitting ? "Skapar…" : "Skapa tråd"}
               </button>
             </div>
           </div>

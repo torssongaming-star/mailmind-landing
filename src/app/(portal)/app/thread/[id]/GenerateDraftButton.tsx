@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Sparkles, Loader2 } from "lucide-react";
 
 export function GenerateDraftButton({
   threadId,
@@ -38,15 +39,31 @@ export function GenerateDraftButton({
   };
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex flex-col items-end gap-1.5">
       <button
         onClick={handleGenerate}
         disabled={pending}
-        className="px-4 py-2 rounded-lg bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        className="group relative inline-flex items-center gap-2 h-9 px-4 rounded-xl bg-primary text-[hsl(var(--surface-base))] text-xs font-semibold transition-all duration-200 hover:bg-cyan-300 hover:shadow-[0_4px_22px_-2px_hsl(189_94%_43%/0.5)] disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--surface-base))]"
+        aria-busy={pending}
       >
-        {pending ? "Genererar…" : "Generera AI-utkast"}
+        {pending ? (
+          <>
+            <Loader2 size={13} className="animate-spin" />
+            Genererar utkast…
+          </>
+        ) : (
+          <>
+            <Sparkles size={13} className="transition-transform duration-300 group-hover:scale-110" />
+            Generera AI-utkast
+          </>
+        )}
       </button>
-      {error && <p className="text-[10px] text-red-400">{error}</p>}
+      {pending && (
+        <p className="text-[10px] text-white/40 animate-pulse">Tar oftast 2–5 sekunder</p>
+      )}
+      {error && (
+        <p className="text-[10px] text-red-400 max-w-[260px] text-right">{error}</p>
+      )}
     </div>
   );
 }

@@ -36,7 +36,7 @@ export function OrganizationEditor({ initialName }: { initialName: string }) {
   };
 
   return (
-    <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-4">
+    <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-5 space-y-4">
       <div>
         <label className="block text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5">
           Namn på arbetsyta

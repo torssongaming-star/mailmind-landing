@@ -69,7 +69,7 @@ export function BlocklistEditor({ initial }: { initial: BlockEntry[] }) {
       )}
 
       {/* Add new entry */}
-      <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-4 space-y-3">
+      <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-4 space-y-3">
         <p className="text-xs font-semibold text-white/70">Lägg till mönster</p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
@@ -116,7 +116,7 @@ export function BlocklistEditor({ initial }: { initial: BlockEntry[] }) {
           Ingen blocklista ännu.
         </p>
       ) : (
-        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 overflow-hidden">
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 overflow-hidden">
           <ul className="divide-y divide-white/5">
             {entries.map(e => (
               <li key={e.id} className="flex items-center gap-3 px-4 py-3">

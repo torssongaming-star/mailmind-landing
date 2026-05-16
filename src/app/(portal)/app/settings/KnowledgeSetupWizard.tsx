@@ -157,7 +157,7 @@ export function KnowledgeSetupWizard({ onComplete }: { onComplete: () => void })
 
         <div className="space-y-4">
           {questions.map((q, i) => (
-            <div key={i} className="rounded-xl border border-white/8 bg-[#050B1C]/60 p-4 space-y-2">
+            <div key={i} className="rounded-xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-4 space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <p className="text-xs font-semibold text-white flex-1">{q.question}</p>
                 <span className="text-[10px] text-muted-foreground bg-white/5 px-2 py-0.5 rounded-full shrink-0">

@@ -107,7 +107,7 @@ export function InboxesEditor({
         {initial.map(inbox => (
           <div
             key={inbox.id}
-            className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-4 space-y-3"
+            className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-4 space-y-3"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
@@ -171,7 +171,7 @@ export function InboxesEditor({
 
       {/* ── Connection type picker ───────────────────────────────────────── */}
       {view === "picker" && canAddMore && (
-        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-4">
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-5 space-y-4">
           <div>
             <h3 className="text-sm font-semibold text-white">
               {sv ? "Hur vill du koppla din inkorg?" : "How do you want to connect your inbox?"}
@@ -260,7 +260,7 @@ export function InboxesEditor({
 
       {/* ── Forwarding form ──────────────────────────────────────────────── */}
       {view === "form" && canAddMore && (
-        <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-5 space-y-4">
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-5 space-y-4">
           <div className="flex items-center gap-3">
             <button
               onClick={() => setView("picker")}

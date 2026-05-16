@@ -57,7 +57,7 @@ export function DashboardHeader({ title, description }: DashboardHeaderProps) {
 
   return (
     <>
-      <header className="h-16 flex items-center justify-between px-6 border-b border-white/5 bg-[#030614]/60 backdrop-blur-sm shrink-0 sticky top-0 z-20">
+      <header className="h-16 flex items-center justify-between px-6 border-b border-white/8 bg-[hsl(var(--surface-base))]/70 backdrop-blur-md shrink-0 sticky top-0 z-20">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
