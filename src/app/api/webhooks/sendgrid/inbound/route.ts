@@ -129,12 +129,26 @@ function verifySendGridSignature(
 }
 
 export async function POST(req: NextRequest) {
-  // 1. Signature Verification (Fas 12.1)
+  // 1. Signature Verification — HMAC is REQUIRED in prod (Fas 19 hardening).
+  //    The previous query-param fallback leaked secrets in URL logs and is
+  //    no longer accepted. Set SENDGRID_WEBHOOK_VERIFICATION_KEY in Vercel.
+  //
+  //    Exception: ALLOW_UNSIGNED_INBOUND=1 may be set in non-prod environments
+  //    only (e.g. local dev with curl). Refuses to engage if NODE_ENV=production.
   const publicKey = process.env.SENDGRID_WEBHOOK_VERIFICATION_KEY;
   const signature = req.headers.get("x-twilio-email-event-webhook-signature");
   const timestamp = req.headers.get("x-twilio-email-event-webhook-timestamp");
 
-  if (publicKey) {
+  const allowUnsigned =
+    process.env.ALLOW_UNSIGNED_INBOUND === "1" &&
+    process.env.NODE_ENV !== "production";
+
+  if (!publicKey) {
+    if (!allowUnsigned) {
+      console.error("[inbound] SENDGRID_WEBHOOK_VERIFICATION_KEY not configured");
+      return NextResponse.json({ error: "misconfigured" }, { status: 500 });
+    }
+  } else {
     if (!signature || !timestamp) {
       console.warn("[inbound] missing signature or timestamp headers");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -147,14 +161,13 @@ export async function POST(req: NextRequest) {
       console.warn("[inbound] invalid signature");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-  } else {
-    // Fallback to secret token in URL if HMAC is not configured (Alternative from task)
-    const secret = process.env.SENDGRID_INBOUND_SECRET;
-    if (secret) {
-      const url = new URL(req.url);
-      const providedSecret = url.searchParams.get("secret");
-      if (providedSecret !== secret) {
-        console.warn("[inbound] invalid secret token");
+
+    // Reject replays — timestamp must be within ±5 minutes of now
+    const ts = Number.parseInt(timestamp, 10);
+    if (Number.isFinite(ts)) {
+      const skew = Math.abs(Date.now() / 1000 - ts);
+      if (skew > 300) {
+        console.warn("[inbound] timestamp skew too large:", skew);
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
     }

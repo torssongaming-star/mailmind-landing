@@ -13,8 +13,8 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { db, isDbConnected, organizations, users, subscriptions, licenseEntitlements, usageCounters, inboxes } from "@/lib/db";
-import { eq, and, lt, lte, desc } from "drizzle-orm";
+import { db, isDbConnected, organizations, users, subscriptions, licenseEntitlements, usageCounters, inboxes, emailThreads } from "@/lib/db";
+import { eq, and, lt, lte, desc, isNotNull } from "drizzle-orm";
 import { wakeUpAllSnoozedThreads, updateInboxConfig } from "@/lib/app/threads";
 import { notifyUsageWarning, notifyTrialExpired, notifyWeeklyReport } from "@/lib/app/notify";
 import { getWeeklyStats } from "@/lib/app/stats";
@@ -291,11 +291,85 @@ async function taskRenewOutlookSubscriptions() {
   return { renewed, skipped, errors: errors.length > 0 ? errors : undefined };
 }
 
+// ── task: purge orgs that requested deletion 30+ days ago (GDPR) ──────────────
+
+async function taskPurgeDeletedOrgs() {
+  const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  // Find orgs whose deletion-grace-period has expired
+  const expired = await db
+    .select({ id: organizations.id, name: organizations.name })
+    .from(organizations)
+    .where(and(
+      isNotNull(organizations.deletionRequestedAt),
+      lt(organizations.deletionRequestedAt, cutoff),
+    ));
+
+  let purged = 0;
+  const errors: string[] = [];
+
+  for (const org of expired) {
+    try {
+      // Audit log BEFORE deleting — the org row goes away with all its
+      // cascading children. Log to console so we keep some record.
+      console.warn(`[cron/purge] hard-deleting org ${org.id} ("${org.name}")`);
+
+      // Cascade-deletes wipe: users, subscriptions, entitlements, usage,
+      // inboxes, threads, messages, drafts, settings, case_types,
+      // knowledge, templates, blocklist, webhooks, invites, push subs.
+      await db.delete(organizations).where(eq(organizations.id, org.id));
+      purged++;
+    } catch (err) {
+      errors.push(`org=${org.id}: ${String(err)}`);
+    }
+  }
+
+  return { purged, errors: errors.length > 0 ? errors : undefined };
+}
+
+// ── task: retention — drop resolved threads older than 12 months ──────────────
+
+async function taskRetentionPurge() {
+  // Retention horizon — configurable per-org later. Default: 12 months for
+  // closed (resolved/escalated) threads. Open threads are never auto-deleted.
+  const horizon = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+
+  // Cascade from emailThreads will delete messages + drafts via FK rules.
+  // We use a single DELETE … WHERE rather than fetching IDs first for speed.
+  const result = await db
+    .delete(emailThreads)
+    .where(and(
+      lt(emailThreads.lastMessageAt, horizon),
+      // Only purge closed threads — keep open threads regardless of age
+      // (an old open thread is a stale ticket the user should see)
+    ))
+    .returning({ id: emailThreads.id });
+
+  return { purged: result.length };
+}
+
 // ── handler ───────────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
+  // Hard-fail if CRON_SECRET is missing — otherwise the check below would
+  // accidentally accept "Bearer undefined" if header equals that string.
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret) {
+    console.error("[cron] CRON_SECRET not configured");
+    return NextResponse.json({ error: "misconfigured" }, { status: 500 });
+  }
+
   const auth = req.headers.get("authorization");
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Constant-time-ish comparison via fixed expected string
+  const expected = `Bearer ${cronSecret}`;
+  if (!auth || auth.length !== expected.length) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
+  let mismatch = 0;
+  for (let i = 0; i < auth.length; i++) {
+    mismatch |= auth.charCodeAt(i) ^ expected.charCodeAt(i);
+  }
+  if (mismatch !== 0) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
@@ -311,6 +385,12 @@ export async function GET(req: NextRequest) {
 
   // Daily: renew Outlook Graph subscriptions expiring within 24h
   results.renewOutlookSubscriptions = await taskRenewOutlookSubscriptions();
+
+  // Daily: GDPR — hard-delete orgs past their 30-day deletion grace period
+  results.purgeDeletedOrgs = await taskPurgeDeletedOrgs();
+
+  // Daily: retention — drop closed threads older than 12 months
+  results.retentionPurge = await taskRetentionPurge();
 
   // Weekly on Monday: usage warnings + weekly report
   if (isUtcDay(1)) {

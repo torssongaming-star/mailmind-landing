@@ -36,8 +36,11 @@ export async function POST(req: NextRequest) {
   }
 
   if (!process.env.STRIPE_WEBHOOK_SECRET || process.env.STRIPE_WEBHOOK_SECRET === "whsec_replace_me") {
-    console.warn("[webhook/stripe] STRIPE_WEBHOOK_SECRET not configured — skipping verification");
-    return NextResponse.json({ received: true });
+    // Hard-fail: a missing/placeholder secret means we can't verify, so we
+    // must reject. Previously we silently 200'd which left the endpoint
+    // open to forged checkout-completed events that grant subscriptions.
+    console.error("[webhook/stripe] STRIPE_WEBHOOK_SECRET not configured");
+    return NextResponse.json({ error: "Webhook secret not configured" }, { status: 500 });
   }
 
   let event: Stripe.Event;

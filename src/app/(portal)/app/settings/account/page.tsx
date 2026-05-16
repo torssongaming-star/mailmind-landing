@@ -1,15 +1,27 @@
 import { UserProfile } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { DashboardHeader } from "@/components/portal/DashboardHeader";
 import { LanguageSelector } from "./LanguageSelector";
 import { PushNotifications } from "@/components/app/PushNotifications";
+import { DataPrivacy } from "./DataPrivacy";
+import { getCurrentAccount } from "@/lib/app/entitlements";
 import { getTranslations } from "@/lib/i18n";
 import { getUserLocale } from "@/lib/i18n/get-locale";
+
+export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
   const locale = await getUserLocale();
   const { t } = getTranslations(locale);
 
+  const { userId } = await auth();
+  if (!userId) redirect("/login");
+  const account = await getCurrentAccount(userId);
+  if (!account.user) redirect("/app/onboarding");
+
   const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? null;
+  const isOwner = account.user.role === "owner";
 
   return (
     <>
@@ -23,6 +35,12 @@ export default async function AccountPage() {
           <LanguageSelector />
 
           <PushNotifications vapidPublicKey={vapidPublicKey} variant="card" />
+
+          <DataPrivacy
+            isOwner={isOwner}
+            orgName={account.organization.name}
+            deletionRequestedAt={account.organization.deletionRequestedAt}
+          />
 
           <div className="mailmind-account-profile">
             <UserProfile

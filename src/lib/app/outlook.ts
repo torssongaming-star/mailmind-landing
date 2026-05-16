@@ -39,6 +39,20 @@ const SCOPES = [
   "offline_access",
 ].join(" ");
 
+/**
+ * The clientState Microsoft sends back on every notification — we verify
+ * it on the webhook side. Prefer the dedicated MICROSOFT_CLIENT_STATE
+ * (random secret), fall back to OUTLOOK_CLIENT_ID for subscriptions
+ * created before the dedicated var was introduced.
+ */
+export function getExpectedClientState(): string {
+  return (
+    process.env.MICROSOFT_CLIENT_STATE ??
+    process.env.OUTLOOK_CLIENT_ID ??
+    "mailmind"
+  );
+}
+
 function redirectUri(): string {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://mailmind.se";
   return `${base}/api/app/inboxes/outlook/callback`;
@@ -233,7 +247,7 @@ export async function createMailSubscription(
       notificationUrl,
       resource:                "me/mailFolders('Inbox')/messages",
       expirationDateTime:      expiry,
-      clientState:             process.env.OUTLOOK_CLIENT_ID ?? "mailmind",
+      clientState:             getExpectedClientState(),
     }),
   });
 

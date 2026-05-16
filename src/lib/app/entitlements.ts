@@ -63,7 +63,8 @@ export type AccessState = {
     | "past_due"
     | "ai_draft_limit_reached"
     | "inbox_limit_reached"
-    | "user_limit_reached";
+    | "user_limit_reached"
+    | "deletion_pending";
 };
 
 /**
@@ -124,6 +125,7 @@ export async function getCurrentAccount(
   // Compute access state from the (possibly nulled) snapshot
   const access = computeAccess({
     user,
+    organization: portal.org,
     subscription,
     entitlements,
     usage,
@@ -147,15 +149,27 @@ export async function getCurrentAccount(
  */
 export function computeAccess(input: {
   user: User | null;
+  organization?: Organization | null;
   subscription: Subscription | null;
   entitlements: LicenseEntitlement | null;
   usage: UsageCounter | null;
 }): AccessState {
-  const { user, subscription, entitlements, usage } = input;
+  const { user, organization, subscription, entitlements, usage } = input;
 
   // 1. Not in DB at all → onboarding required
   if (!user) {
     return blocked("no_user");
+  }
+
+  // 1b. Org in deletion grace period → read-only, no writes
+  if (organization?.deletionRequestedAt) {
+    return {
+      canUseApp:           true,
+      canGenerateAiDraft:  false,
+      canAddInbox:         false,
+      canInviteUser:       false,
+      reason:              "deletion_pending",
+    };
   }
 
   // 2. No subscription → must purchase a plan

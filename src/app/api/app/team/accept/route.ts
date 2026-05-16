@@ -17,31 +17,54 @@ export const runtime = "nodejs";
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://mailmind.se";
 
+/**
+ * Safe-redirect helper — only allows redirects to URLs on our own origin.
+ * Prevents open-redirect attacks via crafted token-accept URLs.
+ */
+function safeRedirect(target: string): NextResponse {
+  try {
+    const url = new URL(target, APP_URL);
+    const appOrigin = new URL(APP_URL).origin;
+    if (url.origin !== appOrigin) {
+      // External target — refuse and bounce to /app instead
+      return NextResponse.redirect(`${APP_URL}/app?invite_error=invalid_redirect`);
+    }
+    return NextResponse.redirect(url.toString());
+  } catch {
+    return NextResponse.redirect(`${APP_URL}/app?invite_error=invalid_redirect`);
+  }
+}
+
 export async function GET(req: NextRequest) {
-  const token = new URL(req.url).searchParams.get("token");
+  // Hard limit on token length so we don't generate ridiculous URLs
+  const rawToken = new URL(req.url).searchParams.get("token");
+  const token = rawToken && rawToken.length <= 128 ? rawToken : null;
   if (!token) {
-    return NextResponse.redirect(`${APP_URL}/app?invite_error=missing_token`);
+    return safeRedirect(`${APP_URL}/app?invite_error=missing_token`);
   }
 
   const { userId } = await auth();
 
-  // Not signed in — redirect to Clerk login then back here
+  // Not signed in — redirect to Clerk login then back here.
+  // Important: the redirect_url MUST be on our own origin.
   if (!userId) {
     const returnUrl = encodeURIComponent(`${APP_URL}/api/app/team/accept?token=${token}`);
-    return NextResponse.redirect(`${APP_URL}/login?redirect_url=${returnUrl}`);
+    return safeRedirect(`${APP_URL}/login?redirect_url=${returnUrl}`);
   }
 
   const clerkUser = await currentUser();
   const email     = clerkUser?.emailAddresses?.[0]?.emailAddress ?? "";
 
   if (!email) {
-    return NextResponse.redirect(`${APP_URL}/app?invite_error=no_email`);
+    return safeRedirect(`${APP_URL}/app?invite_error=no_email`);
   }
 
   const result = await acceptInvite(token, userId, email);
 
   if (!result.ok) {
-    return NextResponse.redirect(`${APP_URL}/app?invite_error=${result.error}`);
+    // Whitelist the error code to keep the URL clean and predictable
+    const safeError = /^[a-z_]{1,40}$/.test(result.error) ? result.error : "unknown";
+    return safeRedirect(`${APP_URL}/app?invite_error=${safeError}`);
   }
 
   await writeAuditLog({
@@ -50,5 +73,5 @@ export async function GET(req: NextRequest) {
     metadata:       { email },
   });
 
-  return NextResponse.redirect(`${APP_URL}/app?invite_accepted=1`);
+  return safeRedirect(`${APP_URL}/app?invite_accepted=1`);
 }

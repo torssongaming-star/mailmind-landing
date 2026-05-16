@@ -16,7 +16,23 @@ import { Clock, AlertTriangle, TrendingUp, CreditCard } from "lucide-react";
 import type { AccountSnapshot } from "@/lib/app/entitlements";
 
 export function AppBanners({ account }: { account: AccountSnapshot }) {
-  const { subscription, entitlements, usage } = account;
+  const { subscription, entitlements, usage, organization } = account;
+
+  // ── Account deletion pending (highest priority — overrides everything) ─
+  if (organization?.deletionRequestedAt) {
+    const requested = new Date(organization.deletionRequestedAt);
+    const purgeAt   = new Date(requested.getTime() + 30 * 24 * 3600 * 1000);
+    const daysLeft  = Math.max(0, Math.ceil((purgeAt.getTime() - Date.now()) / (24 * 3600 * 1000)));
+    return (
+      <Banner
+        tone="red"
+        icon={AlertTriangle}
+        title={`Kontot raderas om ${daysLeft} dag${daysLeft !== 1 ? "ar" : ""}`}
+        body="All data raderas permanent när grace-perioden tar slut. Klicka för att ångra."
+        cta={{ href: "/app/settings/account", label: "Ångra radering →" }}
+      />
+    );
+  }
 
   // ── No subscription at all ────────────────────────────────────────────
   if (!subscription) {

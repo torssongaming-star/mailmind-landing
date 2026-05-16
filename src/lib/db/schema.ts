@@ -169,6 +169,9 @@ export const organizations = pgTable(
     clerkOrgId:       varchar("clerk_org_id", { length: 255 }).unique(),
     name:             varchar("name", { length: 255 }).notNull(),
     stripeCustomerId: varchar("stripe_customer_id", { length: 255 }).unique(),
+    /** Soft delete — when set, the org is in the 30-day grace period before
+     *  hard-deletion by the daily cron. Login still works but read-only. */
+    deletionRequestedAt: timestamp("deletion_requested_at", { withTimezone: true }),
     createdAt:        timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt:        timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },

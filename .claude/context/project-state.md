@@ -75,6 +75,10 @@ Fas 15  ✅  Team & roller — orgInvites-tabell, invite-flow, TeamEditor UI, ow
 Fas 16  ✅  Kundhistorik & AI-kontext — getCustomerHistory + injection i buildUserMessage
 Fas 17  ✅  Prissättning & konvertering — AppBanners (trial-countdown, past-due, usage-warning)
 Fas 18  ✅  PWA & mobilnotiser — manifest, service worker, Web Push (VAPID)
+Fas 19  ✅  Säkerhetshärdning — Microsoft clientState, SendGrid HMAC obligatorisk, Stripe-hardfail, cron const-time-auth, open-redirect-fix, AI prompt-injection-skydd
+Fas 20  ✅  Robusthet — rate limiting (AI/invite/webhook), security headers (CSP/HSTS/XFO), global-error-boundary, structured logger med PII-maskning
+Fas 21  ✅  GDPR & datahygien — data-export-API, account-deletion 30d grace, cron-purge, retention 12mån, deletion-pending entitlement-gate
+Fas 22  ⏳  Produkt-polering — sidebar trial-badge ✅, skeleton loaders & empty states kvar
 ```
 
 ---

@@ -30,8 +30,14 @@ import {
   encryptTokens,
   getValidAccessToken,
   getAndParseMessage,
+  getExpectedClientState,
   type OutlookInboxConfig,
 } from "@/lib/app/outlook";
+import { constantTimeEquals } from "@/lib/env";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { createLogger } from "@/lib/log";
+
+const log = createLogger("microsoft/notifications");
 import {
   getInboxBySubscriptionId,
   findThreadByExternalId,
@@ -103,7 +109,7 @@ export async function POST(req: NextRequest) {
     try {
       await processNotification(notification);
     } catch (err) {
-      console.error("[microsoft/notifications] unhandled error:", err);
+      log.error("unhandled error", { error: String(err) });
     }
   }
 
@@ -115,26 +121,43 @@ async function processNotification(notification: GraphNotificationValue) {
   if (notification.changeType !== "created") return;
   if (notification.resourceData?.["@odata.type"] !== "#Microsoft.Graph.Message") return;
 
+  // ── 0. Verify clientState — proves the notification is from Microsoft,
+  //       not a forged request. The clientState was set when we created
+  //       the subscription; Microsoft echoes it back on every notification.
+  const expectedState = getExpectedClientState();
+  if (!constantTimeEquals(notification.clientState, expectedState)) {
+    log.warn("clientState mismatch — dropping notification", {
+      subscriptionId: notification.subscriptionId,
+    });
+    return;
+  }
+
   const graphMessageId = notification.resourceData?.id;
   if (!graphMessageId) return;
 
   // ── 1. Look up inbox by subscription ──────────────────────────────────────
   const inbox = await getInboxBySubscriptionId(notification.subscriptionId);
   if (!inbox || inbox.provider !== "outlook") {
-    console.warn(`[microsoft/notifications] no inbox for subscriptionId=${notification.subscriptionId}`);
+    log.warn("no inbox for subscription", { subscriptionId: notification.subscriptionId });
+    return;
+  }
+
+  // Rate-limit per inbox — burst 600/min ≈ 10/sec
+  if (!rateLimit(`inbound:outlook:${inbox.id}`, RATE_LIMITS.inboundWebhook)) {
+    log.warn("rate-limited inbound notification", { inboxId: inbox.id });
     return;
   }
 
   const config = inbox.config as OutlookInboxConfig | null;
   if (!config?.encryptedTokens) {
-    console.error(`[microsoft/notifications] inbox ${inbox.id} has no encrypted tokens`);
+    log.error("inbox has no encrypted tokens", { inboxId: inbox.id });
     return;
   }
 
   // ── 2. Decrypt + refresh tokens ───────────────────────────────────────────
   let tokens = decryptTokens(config.encryptedTokens);
   const { token: accessToken, updated } = await getValidAccessToken(tokens).catch(err => {
-    console.error("[microsoft/notifications] token refresh failed:", err);
+    log.error("token refresh failed", { error: String(err) });
     return { token: null as unknown as string, updated: null };
   });
 
@@ -156,7 +179,7 @@ async function processNotification(notification: GraphNotificationValue) {
   const blocked = await isBlocked(inbox.organizationId, parsed.fromEmail);
   if (blocked) return;
 
-  console.log(`[microsoft/notifications] new message for ${maskEmail(inbox.email)}, subject="${parsed.subject}"`);
+  log.info("new message", { inbox: maskEmail(inbox.email), subject: parsed.subject });
 
   // ── 5. Thread + message persistence ──────────────────────────────────────
   const externalThreadId = parsed.conversationId;
@@ -207,7 +230,7 @@ async function processNotification(notification: GraphNotificationValue) {
     organizationId: inbox.organizationId,
     threadId:       thread.id,
     newEmailBody:   parsed.bodyText,
-  }).catch(err => console.error("[microsoft/notifications] autoTriage failed:", err));
+  }).catch(err => log.error("autoTriage failed", { error: String(err) }));
 
   // ── 7. Persist updated tokens ─────────────────────────────────────────────
   await updateInboxConfig(inbox.id, {

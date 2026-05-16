@@ -32,6 +32,7 @@ import {
 } from "@/lib/app/threads";
 import { listActiveKnowledge } from "@/lib/app/knowledge";
 import { generateDraft, AiTransientError } from "@/lib/app/ai";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -65,6 +66,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Account not provisioned" }, { status: 400 });
   }
   const orgId = account.organization.id;
+
+  // Rate limit AI generation per org (60/min burst, refills at 1/sec)
+  if (!rateLimit(`ai:${orgId}`, RATE_LIMITS.aiDraft)) {
+    return NextResponse.json(
+      { error: "Too many AI requests. Please wait a moment." },
+      { status: 429, headers: { "Retry-After": "60" } },
+    );
+  }
 
   // Load thread (org-scoped)
   const thread = await getThread(orgId, threadId);

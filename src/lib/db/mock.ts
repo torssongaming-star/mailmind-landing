@@ -35,12 +35,13 @@ const periodEnd = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate())
 // ── Mock records ──────────────────────────────────────────────────────────────
 
 export const MOCK_ORGANIZATION: Organization = {
-  id:               MOCK_ORG_ID,
-  clerkOrgId:       null,
-  name:             "Demo Organization",
-  stripeCustomerId: null,
-  createdAt:        new Date("2025-01-15T09:00:00Z"),
-  updatedAt:        new Date(),
+  id:                  MOCK_ORG_ID,
+  clerkOrgId:          null,
+  name:                "Demo Organization",
+  stripeCustomerId:    null,
+  deletionRequestedAt: null,
+  createdAt:           new Date("2025-01-15T09:00:00Z"),
+  updatedAt:           new Date(),
 };
 
 export const MOCK_USER: User = {

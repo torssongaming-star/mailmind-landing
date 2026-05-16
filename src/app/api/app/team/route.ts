@@ -15,6 +15,7 @@ import {
 } from "@/lib/app/team";
 import { notifyInvite } from "@/lib/app/notify";
 import { writeAuditLog } from "@/lib/app/audit";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -66,6 +67,14 @@ export async function POST(req: NextRequest) {
 
   const { email, role } = parsed.data;
   const orgId = account.organization.id;
+
+  // Rate limit invites per org — 10/hour to prevent spam-invites
+  if (!rateLimit(`invite:${orgId}`, RATE_LIMITS.invite)) {
+    return NextResponse.json(
+      { error: "Du har skickat för många inbjudningar nyligen. Försök igen om en stund." },
+      { status: 429, headers: { "Retry-After": "3600" } },
+    );
+  }
 
   // Seat limit check
   const maxUsers   = account.entitlements?.maxUsers ?? 2;

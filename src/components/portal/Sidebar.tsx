@@ -130,7 +130,13 @@ function groupIsActive(group: NavGroup, pathname: string): boolean {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function Sidebar() {
+export function Sidebar({
+  subscriptionBadge,
+}: {
+  /** Pre-rendered server component (e.g. SidebarSubscriptionBadge) inserted
+   *  above the support/back-to-site footer. Optional. */
+  subscriptionBadge?: React.ReactNode;
+} = {}) {
   const pathname                      = usePathname();
   const { t }                         = useI18n();
   const [supportOpen, setSupportOpen] = useState(false);
@@ -259,6 +265,9 @@ export function Sidebar() {
           })}
       </nav>
  
+      {/* Subscription badge (server-rendered, optional) */}
+      {subscriptionBadge}
+
       {/* Support + Back to site */}
       <div className="p-4 border-t border-white/5 space-y-0.5">
         <button
