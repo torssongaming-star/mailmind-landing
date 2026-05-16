@@ -117,7 +117,11 @@ export function DraftActions({
     return null;
   }
 
-  const call = async (payload: object) => {
+  /**
+   * Returns true on success, false on failure. Callers can chain operations
+   * conditionally — e.g. don't run "send" if "edit" failed.
+   */
+  const call = async (payload: object): Promise<boolean> => {
     setPending(true);
     setError(null);
     try {
@@ -130,8 +134,10 @@ export function DraftActions({
       if (!res.ok) throw new Error(data.error ?? "Åtgärden misslyckades");
       router.refresh();
       onDone?.();
+      return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : "Okänt fel");
+      return false;
     } finally {
       setPending(false);
     }
@@ -158,8 +164,8 @@ export function DraftActions({
           </button>
           <button
             onClick={async () => {
-              await call({ action: "edit", bodyText: body });
-              setEditing(false);
+              const ok = await call({ action: "edit", bodyText: body });
+              if (ok) setEditing(false);
             }}
             disabled={pending || !body.trim()}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white/10 text-white hover:bg-white/20 transition-colors disabled:opacity-40"
@@ -168,13 +174,17 @@ export function DraftActions({
           </button>
           <button
             onClick={async () => {
-              await call({ action: "edit", bodyText: body });
-              await call({ action: "send" });
+              // Only proceed with send if edit succeeded — prevents
+              // inconsistent state where draft is sent without the edits.
+              const editOk = await call({ action: "edit", bodyText: body });
+              if (editOk) {
+                await call({ action: "send" });
+              }
             }}
             disabled={pending || !body.trim()}
             className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-[#030614] hover:bg-cyan-300 transition-colors disabled:opacity-40"
           >
-            Spara och skicka
+            {pending ? "Skickar…" : "Spara och skicka"}
           </button>
         </div>
       </div>

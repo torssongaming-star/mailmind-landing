@@ -28,10 +28,17 @@ type Thread = {
 };
 
 const STATUS_DOT: Record<string, string> = {
-  open:      "bg-green-400",
-  waiting:   "bg-amber-400",
-  escalated: "bg-red-400",
+  open:      "bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.5)]",
+  waiting:   "bg-amber-400 shadow-[0_0_8px_rgba(251,191,36,0.4)]",
+  escalated: "bg-red-400 shadow-[0_0_8px_rgba(248,113,113,0.5)]",
   resolved:  "bg-white/20",
+};
+
+const STATUS_DOT_ANIMATED: Record<string, boolean> = {
+  open: true,
+  waiting: false,
+  escalated: false,
+  resolved: false,
 };
 
 const POLL_MS = 30_000;
@@ -133,7 +140,8 @@ export function InboxShell({
             onClick={refresh}
             disabled={refreshing}
             title={t("inbox.status.updatedAt", { time: lastRefresh.toLocaleTimeString(locale === "sv" ? "sv-SE" : "en-IE") })}
-            className="text-muted-foreground hover:text-white transition-colors disabled:opacity-40"
+            aria-label={locale === "sv" ? "Uppdatera" : "Refresh"}
+            className="p-1.5 rounded-md text-white/40 hover:text-white hover:bg-white/[0.04] transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
           </button>
@@ -161,8 +169,18 @@ export function InboxShell({
         {/* Thread rows */}
         <ul className="flex-1 overflow-y-auto divide-y divide-white/5">
           {threads.length === 0 && (
-            <li className="px-4 py-8 text-center text-xs text-muted-foreground">
-              {t("inbox.thread.statusLabels.noMatch")}
+            <li className="px-6 py-10 flex flex-col items-center text-center gap-2">
+              <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/8 flex items-center justify-center mb-1">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white/30">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+              </div>
+              <p className="text-xs text-white/45">{t("inbox.thread.statusLabels.noMatch")}</p>
+              <p className="text-[10px] text-white/25 max-w-[200px] leading-relaxed">
+                {locale === "sv"
+                  ? "När kunder skriver till en kopplad inkorg dyker trådar upp här."
+                  : "Threads appear here when customers email a connected inbox."}
+              </p>
             </li>
           )}
           {threads.map(thread => {
@@ -177,8 +195,19 @@ export function InboxShell({
               <li
                 key={thread.id}
                 onClick={() => setSelectedId(thread.id)}
+                onKeyDown={e => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    setSelectedId(thread.id);
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-pressed={isSelected}
+                aria-label={`${thread.fromName ?? thread.fromEmail} — ${thread.subject ?? t("inbox.noSubject")}`}
                 className={[
                   "flex items-start gap-2.5 px-3 py-3 cursor-pointer transition-colors",
+                  "focus-visible:outline-none focus-visible:bg-white/[0.04]",
                   isSelected
                     ? "bg-primary/10 border-l-2 border-primary"
                     : "hover:bg-white/[0.03] border-l-2 border-transparent",
@@ -190,15 +219,20 @@ export function InboxShell({
                   checked={isChecked}
                   onChange={() => setSelected(prev => {
                     const next = new Set(prev);
-                    next.has(thread.id) ? next.delete(thread.id) : next.add(thread.id);
+                    if (next.has(thread.id)) next.delete(thread.id);
+                    else next.add(thread.id);
                     return next;
                   })}
                   onClick={e => e.stopPropagation()}
+                  aria-label={`Markera ${thread.fromName ?? thread.fromEmail}`}
                   className="rounded cursor-pointer mt-0.5 shrink-0"
                 />
 
-                {/* Status dot */}
-                <div className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${STATUS_DOT[thread.status] ?? STATUS_DOT.resolved}`} />
+                {/* Status dot — animated pulse on "open" threads */}
+                <div
+                  className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${STATUS_DOT[thread.status] ?? STATUS_DOT.resolved} ${STATUS_DOT_ANIMATED[thread.status] ? "animate-pulse-soft" : ""}`}
+                  aria-hidden
+                />
 
                 {/* Content */}
                 <div className="flex-1 min-w-0 space-y-0.5">
@@ -245,12 +279,27 @@ export function InboxShell({
             canGenerate={canGenerate}
           />
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="opacity-20">
-              <rect x="2" y="4" width="20" height="16" rx="2"/>
-              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-            </svg>
-            <p className="text-sm">{t("inbox.thread.statusLabels.selectThread")}</p>
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 px-6">
+            <div className="relative">
+              {/* Soft glow behind icon */}
+              <div className="absolute inset-0 blur-2xl bg-primary/10 rounded-full" aria-hidden />
+              <div className="relative w-14 h-14 rounded-2xl bg-primary/8 border border-primary/15 flex items-center justify-center">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-primary/80">
+                  <rect x="2" y="4" width="20" height="16" rx="2"/>
+                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                </svg>
+              </div>
+            </div>
+            <div className="text-center max-w-[280px]">
+              <p className="text-sm font-medium text-white/70">{t("inbox.thread.statusLabels.selectThread")}</p>
+              {threads.length > 0 && (
+                <p className="text-xs text-white/35 mt-1.5 leading-relaxed">
+                  {locale === "sv"
+                    ? "Välj en tråd till vänster för att se konversation, AI-utkast och åtgärder."
+                    : "Pick a thread on the left to see the conversation, AI drafts and actions."}
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 export function NewThreadButton({ compact }: { compact?: boolean }) {
@@ -13,6 +13,22 @@ export function NewThreadButton({ compact }: { compact?: boolean }) {
   const [fromName, setFromName]   = useState("Anna Andersson");
   const [subject, setSubject]     = useState("Offertförfrågan altanbygge");
   const [body, setBody]           = useState("Hej!\n\nJag skulle vilja ha en offert på ett altanbygge i Stockholm.\n\nMvh Anna");
+
+  // ESC-key closes the modal — standard UX expectation
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !submitting) setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    // Lock body scroll while modal is open
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [open, submitting]);
 
   const handleCreate = async () => {
     if (submitting) return;

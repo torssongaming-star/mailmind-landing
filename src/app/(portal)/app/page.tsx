@@ -68,15 +68,16 @@ export default async function AppHomePage() {
       />
       <main className="flex-1 p-6 space-y-8">
 
+      {/* Banner stack — single source of truth (trial/past-due/usage/deletion) */}
       <AppBanners account={account} />
 
       {/* Welcome */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white">
+          <h2 className="text-2xl font-bold text-white tracking-tight">
             {t("portal.dashboard.welcome")}{clerkUser.firstName ? `, ${clerkUser.firstName}` : ""}
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-white/50 mt-1">
             {t("portal.dashboard.overview", { org: account.organization.name })}
           </p>
         </div>
@@ -88,45 +89,30 @@ export default async function AppHomePage() {
         )}
       </div>
 
-      {/* Mock-data warning */}
-      {account.isMock && (
-        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-4 py-3 text-xs text-amber-400">
-          <strong>{t("portal.dashboard.previewMode")}</strong> — {t("portal.dashboard.previewWarning")}
-        </div>
-      )}
-
-      {/* Trial countdown */}
-      <TrialBanner
-        status={account.subscription?.status ?? null}
-        currentPeriodEnd={account.subscription?.currentPeriodEnd ?? null}
-        locale={locale}
-      />
-
-      {/* Access banner */}
-      <AccessBanner reason={account.access.reason} locale={locale} />
-
       {/* Getting-started — guided checklist with one active step at a time */}
       {!setupComplete && account.access.canUseApp && (
         <GettingStarted setup={setup} locale={locale} />
       )}
 
       {/* Plan + subscription */}
-      <section className="rounded-2xl border border-white/8 bg-[#050B1C]/60 backdrop-blur-sm p-6">
-        <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-4">
+      <section className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm p-6">
+        <h2 className="text-[10px] font-semibold text-white/45 uppercase tracking-widest mb-4">
           {t("portal.dashboard.subscription")}
         </h2>
         {plan ? (
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-2xl font-bold text-white">{t(`plans.${plan.id}.name` as any)}</p>
-              <p className="text-sm text-muted-foreground mt-1">
-                {plan.price}/{t("portal.dashboard.stats.plan").toLowerCase()}
+            <div className="min-w-0">
+              <div className="flex items-center gap-3 flex-wrap">
+                <p className="text-2xl font-bold text-white tracking-tight">{t(`plans.${plan.id}.name` as any)}</p>
                 {account.subscription?.status && (
-                  <> · <StatusBadge status={account.subscription.status} locale={locale} /></>
+                  <StatusBadge status={account.subscription.status} locale={locale} />
                 )}
+              </div>
+              <p className="text-sm text-white/55 mt-1">
+                {plan.price}/{t("portal.dashboard.stats.plan").toLowerCase()}
               </p>
               {account.subscription?.currentPeriodEnd && (
-                <p className="text-xs text-muted-foreground mt-2">
+                <p className="text-xs text-white/35 mt-2">
                   {account.subscription.cancelAtPeriodEnd ? t("portal.dashboard.cancelsOn") : t("portal.dashboard.renewsOn")}
                   {" "}
                   {new Date(account.subscription.currentPeriodEnd).toLocaleDateString(locale === "sv" ? "sv-SE" : "en-IE", {
@@ -137,7 +123,7 @@ export default async function AppHomePage() {
             </div>
             <Link
               href="/dashboard/billing"
-              className="text-xs px-3 py-1.5 rounded-lg border border-white/10 hover:border-white/30 transition-colors"
+              className="shrink-0 inline-flex items-center h-8 px-3 rounded-lg border border-white/10 text-xs font-medium text-white/80 hover:text-white hover:border-white/20 hover:bg-white/[0.03] transition-colors"
             >
               {t("portal.dashboard.manageBilling")}
             </Link>
@@ -145,12 +131,12 @@ export default async function AppHomePage() {
         ) : (
           <div>
             <p className="text-sm text-white">{t("portal.dashboard.noActiveSub")}</p>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-white/45 mt-1">
               {t("portal.dashboard.choosePlan")}
             </p>
             <Link
               href="/dashboard/billing"
-              className="inline-block mt-4 px-4 py-2 rounded-xl bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors"
+              className="inline-block mt-4 px-4 py-2 rounded-xl bg-primary text-[hsl(var(--surface-base))] text-xs font-semibold hover:bg-cyan-300 transition-colors"
             >
               {t("portal.dashboard.viewPlans")}
             </Link>
@@ -191,48 +177,35 @@ export default async function AppHomePage() {
         />
       </div>
 
-      <section className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-6 text-xs text-muted-foreground space-y-1">
-        <p className="font-semibold text-white mb-2 text-sm">{t("portal.dashboard.status.title")}</p>
-        <Row k={t("portal.dashboard.status.canUseApp")}            v={account.access.canUseApp ? t("portal.dashboard.status.yes") : t("portal.dashboard.status.no")} />
-        <Row k={t("portal.dashboard.status.canGenerateAi")}    v={account.access.canGenerateAiDraft ? t("portal.dashboard.status.yes") : t("portal.dashboard.status.no")} />
-        <Row k={t("portal.dashboard.status.canAddInbox")}     v={account.access.canAddInbox ? t("portal.dashboard.status.yes") : t("portal.dashboard.status.no")} />
-        <Row k={t("portal.dashboard.status.canInvite")}       v={account.access.canInviteUser ? t("portal.dashboard.status.yes") : t("portal.dashboard.status.no")} />
-        <Row k={t("portal.dashboard.status.statusCode")}                       v={account.access.reason} />
-      </section>
-
-      {/* Quick actions */}
+      {/* Quick actions — single primary CTA + secondary row */}
       {account.access.canUseApp && (
-        <div className="flex flex-wrap justify-center gap-3 pt-2">
+        <div className="flex flex-col sm:flex-row gap-3 pt-2">
           <Link
             href="/app/inbox"
-            className="px-5 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors"
+            className="inline-flex items-center justify-center h-11 px-6 rounded-xl bg-primary text-[hsl(var(--surface-base))] text-sm font-semibold shadow-[0_4px_18px_-2px_hsl(189_94%_43%/0.35)] hover:shadow-[0_6px_22px_-2px_hsl(189_94%_43%/0.5)] hover:bg-cyan-300 transition-all"
           >
             {t("portal.dashboard.quickActions.openInbox")} →
           </Link>
-          <Link
-            href="/app/inboxes"
-            className="px-5 py-2.5 rounded-xl border border-white/10 text-white text-sm font-semibold hover:bg-white/5 transition-colors"
-          >
-            {t("portal.dashboard.quickActions.connectInbox")}
-          </Link>
-          <Link
-            href="/app/settings"
-            className="px-5 py-2.5 rounded-xl border border-white/10 text-white text-sm font-semibold hover:bg-white/5 transition-colors"
-          >
-            {t("portal.dashboard.quickActions.settings")}
-          </Link>
-          <Link
-            href="/app/stats"
-            className="px-5 py-2.5 rounded-xl border border-white/10 text-white text-sm font-semibold hover:bg-white/5 transition-colors"
-          >
-            {t("portal.dashboard.quickActions.stats")}
-          </Link>
-          <Link
-            href="/app/activity"
-            className="px-5 py-2.5 rounded-xl border border-white/10 text-white text-sm font-semibold hover:bg-white/5 transition-colors"
-          >
-            {t("portal.dashboard.quickActions.activity")}
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href="/app/inboxes"
+              className="inline-flex items-center h-11 px-4 rounded-xl border border-white/10 text-white/80 hover:text-white text-sm font-medium hover:bg-white/[0.04] hover:border-white/20 transition-colors"
+            >
+              {t("portal.dashboard.quickActions.connectInbox")}
+            </Link>
+            <Link
+              href="/app/stats"
+              className="inline-flex items-center h-11 px-4 rounded-xl border border-white/10 text-white/80 hover:text-white text-sm font-medium hover:bg-white/[0.04] hover:border-white/20 transition-colors"
+            >
+              {t("portal.dashboard.quickActions.stats")}
+            </Link>
+            <Link
+              href="/app/settings"
+              className="inline-flex items-center h-11 px-4 rounded-xl border border-white/10 text-white/80 hover:text-white text-sm font-medium hover:bg-white/[0.04] hover:border-white/20 transition-colors"
+            >
+              {t("portal.dashboard.quickActions.settings")}
+            </Link>
+          </div>
         </div>
       )}
     </main>
@@ -392,51 +365,6 @@ function GettingStarted({ setup, locale }: { setup: SetupState; locale: Locale }
   );
 }
 
-function TrialBanner({
-  status,
-  currentPeriodEnd,
-  locale,
-}: {
-  status: string | null;
-  currentPeriodEnd: Date | null;
-  locale: Locale;
-}) {
-  const { t } = getTranslations(locale);
-  if (status !== "trialing" || !currentPeriodEnd) return null;
-  const end = new Date(currentPeriodEnd);
-  const daysLeft = Math.max(0, Math.ceil((end.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
-  const ending = daysLeft <= 3;
-
-  return (
-    <div className={`rounded-xl border px-5 py-3.5 flex items-center justify-between gap-4 ${
-      ending
-        ? "border-amber-500/30 bg-amber-500/5"
-        : "border-blue-500/20 bg-blue-500/5"
-    }`}>
-      <div>
-        <p className={`text-sm font-semibold ${ending ? "text-amber-200" : "text-blue-200"}`}>
-          {daysLeft === 0
-            ? t("portal.trial.endsToday")
-            : t("portal.trial.daysLeft", { days: daysLeft.toString() })}
-        </p>
-        <p className={`text-xs mt-0.5 ${ending ? "text-amber-200/70" : "text-blue-200/70"}`}>
-          {t("portal.trial.endsDate", { date: end.toLocaleDateString(locale === "sv" ? "sv-SE" : "en-IE", { month: "long", day: "numeric", year: "numeric" }) })}
-        </p>
-      </div>
-      <Link
-        href="/dashboard/billing"
-        className={`shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-          ending
-            ? "bg-amber-400 text-[#030614] hover:bg-amber-300"
-            : "bg-white/10 text-white hover:bg-white/20"
-        }`}
-      >
-        {t("portal.trial.upgrade")}
-      </Link>
-    </div>
-  );
-}
-
 function StatusBadge({ status, locale }: { status: string; locale: Locale }) {
   const { t } = getTranslations(locale);
   const map: Record<string, { label: string; cls: string }> = {
@@ -452,38 +380,6 @@ function StatusBadge({ status, locale }: { status: string; locale: Locale }) {
     <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${v.cls}`}>
       {v.label}
     </span>
-  );
-}
-
-function AccessBanner({ reason, locale }: { reason: string; locale: Locale }) {
-  const { t } = getTranslations(locale);
-  if (reason === "ok") return null;
-
-  const title = t(`portal.access.reasons.${reason}.title` as any);
-  const body = t(`portal.access.reasons.${reason}.body` as any);
-  const ctaLabel = t(`portal.access.reasons.${reason}.cta` as any);
-
-  const tone = (reason === "past_due" || reason === "ai_draft_limit_reached") ? "warn" : "block";
-
-  const cls = tone === "block"
-    ? "border-red-500/30 bg-red-500/5 text-red-200"
-    : "border-amber-500/30 bg-amber-500/5 text-amber-200";
-
-  return (
-    <div className={`rounded-xl border px-5 py-4 flex items-start gap-4 ${cls}`}>
-      <div className="flex-1">
-        <p className="font-semibold text-sm text-white">{title}</p>
-        <p className="text-xs mt-1 leading-relaxed">{body}</p>
-      </div>
-      {ctaLabel !== `portal.access.reasons.${reason}.cta` && (
-        <Link
-          href="/dashboard/billing"
-          className="shrink-0 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold text-white transition-colors"
-        >
-          {ctaLabel}
-        </Link>
-      )}
-    </div>
   );
 }
 
@@ -509,24 +405,24 @@ function StatCard({
   const isWarning = pct !== null && pct >= 80;
 
   return (
-    <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 backdrop-blur-sm p-5">
+    <div className="group rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm p-5 transition-colors duration-200 hover:border-white/12">
       <div className="flex items-center justify-between mb-4">
-        <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">{label}</span>
-        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-          <Icon size={15} className="text-primary" />
+        <span className="text-[10px] font-semibold text-white/45 uppercase tracking-widest">{label}</span>
+        <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/15 flex items-center justify-center transition-colors duration-200 group-hover:bg-primary/15 group-hover:border-primary/25">
+          <Icon size={14} className="text-primary" />
         </div>
       </div>
-      <p className="text-2xl font-bold text-white mb-1">{value}</p>
-      {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
+      <p className="text-2xl font-bold text-white mb-0.5 tracking-tight tabular-nums">{value}</p>
+      {sub && <p className="text-xs text-white/40">{sub}</p>}
       {pct !== null && (
         <div className="mt-3">
-          <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+          <div className="h-1 bg-white/5 rounded-full overflow-hidden">
             <div
-              className={`h-full rounded-full transition-all ${isWarning ? "bg-amber-400" : "bg-gradient-to-r from-primary to-cyan-300"}`}
+              className={`h-full rounded-full transition-all duration-500 ${isWarning ? "bg-amber-400" : "bg-gradient-to-r from-primary to-cyan-300"}`}
               style={{ width: `${Math.min(pct, 100)}%` }}
             />
           </div>
-          <p className={`text-xs mt-1.5 ${isWarning ? "text-amber-400" : "text-muted-foreground"}`}>
+          <p className={`text-[10px] mt-1.5 tabular-nums ${isWarning ? "text-amber-400" : "text-white/40"}`}>
             {used?.toLocaleString()} / {limit?.toLocaleString()} {t("portal.dashboard.stats.used")}
           </p>
         </div>
@@ -535,13 +431,3 @@ function StatCard({
   );
 }
 
-function Row({ k, v }: { k: string; v: boolean | string }) {
-  return (
-    <div className="flex justify-between font-mono">
-      <span>{k}</span>
-      <span className={typeof v === "boolean" ? (v ? "text-green-400" : "text-red-400") : "text-white"}>
-        {String(v)}
-      </span>
-    </div>
-  );
-}

@@ -86,15 +86,30 @@ export function ThreadPanel({
         fetch(`/api/app/threads/${threadId}`),
         fetch(`/api/app/threads/${threadId}/notes`),
       ]);
+
+      // Thread fetch is critical — fail loudly
       if (!threadRes.ok) throw new Error(t("inbox.thread.statusLabels.loadError"));
-      const [td, nd] = await Promise.all([threadRes.json(), notesRes.json()]);
+      const td = await threadRes.json();
       setThread(td.thread);
       setMessages(td.messages ?? []);
       setDrafts(td.drafts ?? []);
-      setNotes((nd.notes ?? []).map((n: Note & { createdAt: string }) => ({
-        ...n,
-        createdAt: new Date(n.createdAt),
-      })));
+
+      // Notes are non-critical — degrade gracefully if they fail
+      if (notesRes.ok) {
+        try {
+          const nd = await notesRes.json();
+          setNotes((nd.notes ?? []).map((n: Note & { createdAt: string }) => ({
+            ...n,
+            createdAt: new Date(n.createdAt),
+          })));
+        } catch (notesErr) {
+          console.warn("[ThreadPanel] notes parse failed:", notesErr);
+          setNotes([]);
+        }
+      } else {
+        console.warn("[ThreadPanel] notes fetch failed, status:", notesRes.status);
+        setNotes([]);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : t("common.error"));
     } finally {

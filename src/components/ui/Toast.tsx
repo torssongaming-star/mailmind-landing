@@ -63,11 +63,11 @@ const ICONS: Record<ToastType, React.ElementType> = {
   info:    Info,
 };
 
-const STYLES: Record<ToastType, { border: string; icon: string; bg: string }> = {
-  success: { bg: "bg-[#050B1C]", border: "border-green-500/30",  icon: "text-green-400"  },
-  error:   { bg: "bg-[#050B1C]", border: "border-red-500/30",    icon: "text-red-400"    },
-  warning: { bg: "bg-[#050B1C]", border: "border-amber-500/30",  icon: "text-amber-400"  },
-  info:    { bg: "bg-[#050B1C]", border: "border-primary/30",    icon: "text-primary"    },
+const STYLES: Record<ToastType, { border: string; icon: string; bg: string; glow: string }> = {
+  success: { bg: "bg-[hsl(var(--surface-elev-1))]", border: "border-green-500/30",  icon: "text-green-400",  glow: "shadow-[0_8px_24px_-8px_rgba(34,197,94,0.35)]" },
+  error:   { bg: "bg-[hsl(var(--surface-elev-1))]", border: "border-red-500/30",    icon: "text-red-400",    glow: "shadow-[0_8px_24px_-8px_rgba(239,68,68,0.4)]" },
+  warning: { bg: "bg-[hsl(var(--surface-elev-1))]", border: "border-amber-500/30",  icon: "text-amber-400",  glow: "shadow-[0_8px_24px_-8px_rgba(251,191,36,0.35)]" },
+  info:    { bg: "bg-[hsl(var(--surface-elev-1))]", border: "border-primary/30",    icon: "text-primary",    glow: "shadow-[0_8px_24px_-8px_rgba(6,182,212,0.35)]" },
 };
 
 function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }) {
@@ -88,9 +88,11 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
 
   return (
     <div
+      role={toast.type === "error" || toast.type === "warning" ? "alert" : "status"}
+      aria-live={toast.type === "error" ? "assertive" : "polite"}
       className={[
-        "flex items-start gap-3 px-4 py-3 rounded-xl border shadow-lg backdrop-blur-sm min-w-[280px] max-w-sm w-full",
-        s.bg, s.border,
+        "flex items-start gap-3 px-4 py-3 rounded-xl border backdrop-blur-md min-w-[280px] max-w-sm w-full",
+        s.bg, s.border, s.glow,
         "transition-all duration-200 ease-out",
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2",
       ].join(" ")}
@@ -104,7 +106,8 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
       </div>
       <button
         onClick={handleDismiss}
-        className="text-white/25 hover:text-white/60 transition-colors shrink-0 mt-0.5"
+        aria-label="Stäng notis"
+        className="text-white/25 hover:text-white/60 transition-colors shrink-0 mt-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded"
       >
         <X size={13} />
       </button>

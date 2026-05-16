@@ -148,30 +148,36 @@ export function AppBanners({ account }: { account: AccountSnapshot }) {
 
 type BannerTone = "primary" | "amber" | "red";
 
-const TONE: Record<BannerTone, { border: string; bg: string; iconColor: string; titleColor: string; btnBg: string; btnText: string }> = {
+const TONE: Record<BannerTone, { border: string; bg: string; iconBg: string; iconColor: string; titleColor: string; btnBg: string; btnText: string; glow: string }> = {
   primary: {
     border:     "border-primary/25",
     bg:         "bg-primary/[0.04]",
+    iconBg:     "bg-primary/10 border border-primary/20",
     iconColor:  "text-primary",
     titleColor: "text-white",
     btnBg:      "bg-primary hover:bg-cyan-300",
-    btnText:    "text-[#030614]",
+    btnText:    "text-[hsl(var(--surface-base))]",
+    glow:       "shadow-[0_2px_24px_-12px_hsl(189_94%_43%/0.5)]",
   },
   amber: {
     border:     "border-amber-500/25",
     bg:         "bg-amber-500/[0.04]",
+    iconBg:     "bg-amber-500/10 border border-amber-500/20",
     iconColor:  "text-amber-400",
     titleColor: "text-white",
     btnBg:      "bg-amber-500 hover:bg-amber-400",
-    btnText:    "text-[#030614]",
+    btnText:    "text-[hsl(var(--surface-base))]",
+    glow:       "shadow-[0_2px_24px_-12px_rgba(251,191,36,0.4)]",
   },
   red: {
     border:     "border-red-500/30",
     bg:         "bg-red-500/[0.05]",
+    iconBg:     "bg-red-500/10 border border-red-500/20",
     iconColor:  "text-red-400",
     titleColor: "text-white",
     btnBg:      "bg-red-500 hover:bg-red-400",
     btnText:    "text-white",
+    glow:       "shadow-[0_2px_24px_-12px_rgba(239,68,68,0.5)]",
   },
 };
 
@@ -186,9 +192,9 @@ function Banner({
 }) {
   const s = TONE[tone];
   return (
-    <div className={`flex items-start gap-4 rounded-2xl border ${s.border} ${s.bg} px-5 py-4 backdrop-blur-sm`}>
-      <div className={`shrink-0 ${s.iconColor} mt-0.5`}>
-        <Icon size={18} />
+    <div className={`flex items-center gap-4 rounded-2xl border ${s.border} ${s.bg} ${s.glow} px-5 py-4 backdrop-blur-sm`}>
+      <div className={`shrink-0 w-9 h-9 rounded-xl ${s.iconBg} flex items-center justify-center`}>
+        <Icon size={16} className={s.iconColor} />
       </div>
       <div className="flex-1 min-w-0">
         <p className={`text-sm font-semibold ${s.titleColor}`}>{title}</p>
@@ -197,7 +203,7 @@ function Banner({
       {cta && (
         <Link
           href={cta.href}
-          className={`shrink-0 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-colors ${s.btnBg} ${s.btnText}`}
+          className={`shrink-0 px-3.5 py-2 rounded-lg text-xs font-semibold transition-colors ${s.btnBg} ${s.btnText} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--surface-base))]`}
         >
           {cta.label}
         </Link>

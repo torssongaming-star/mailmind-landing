@@ -315,7 +315,7 @@ function CaseTypesStep({ onNext }: { onNext: () => void }) {
     setSaving(true);
     setError(null);
     try {
-      await Promise.all(
+      const results = await Promise.allSettled(
         selected.map((ct, i) =>
           fetch("/api/app/case-types", {
             method:  "POST",
@@ -326,9 +326,23 @@ function CaseTypesStep({ onNext }: { onNext: () => void }) {
               isDefault: ct.slug === "ovrigt",
               sortOrder: i,
             }),
+          }).then(async r => {
+            if (!r.ok) throw new Error(`${ct.label}: ${r.status}`);
+            return r;
           })
         )
       );
+
+      const failed = results
+        .map((r, i) => (r.status === "rejected" ? selected[i].label : null))
+        .filter((x): x is string => x !== null);
+
+      if (failed.length > 0) {
+        setError(`Kunde inte spara: ${failed.join(", ")}. Försök igen.`);
+        setSaving(false);
+        return;
+      }
+
       onNext();
     } catch {
       setError("Kunde inte spara ärendetyper. Försök igen.");
