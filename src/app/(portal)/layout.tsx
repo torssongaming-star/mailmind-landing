@@ -19,7 +19,7 @@ export const metadata: Metadata = {
  */
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#030614]">
+    <div className="min-h-screen bg-[#030614]/60 backdrop-blur-[1px]">
       <Sidebar subscriptionBadge={<SidebarSubscriptionBadge />} />
       {/* Main content area — offset by sidebar width on desktop; on mobile the
           sticky mobile header inside <Sidebar> sits above this block. */}

@@ -40,7 +40,7 @@ export function AnimatedBackground() {
     <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
       {/* Deep gradient background — static on mobile, slow-drift on desktop */}
       <motion.div
-        className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#08153A] via-[#030614] to-[#030614]"
+        className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#0d2263] via-[#030614] to-[#030614]"
         animate={shouldReduceMotion || isMobile ? {} : {
           backgroundPosition: ["0% 0%", "50% 50%", "0% 0%"],
         }}
