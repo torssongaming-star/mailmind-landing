@@ -358,6 +358,10 @@ export const emailMessages = pgTable(
   {
     id:                 uuid("id").primaryKey().defaultRandom(),
     threadId:           uuid("thread_id").notNull().references(() => emailThreads.id, { onDelete: "cascade" }),
+    /** Defense-in-depth: redundant org-scope so a buggy join can't leak cross-tenant.
+     *  Strategi-revision P2.3. Backfill: UPDATE email_messages m SET organization_id =
+     *  t.organization_id FROM email_threads t WHERE m.thread_id = t.id; */
+    organizationId:     uuid("organization_id").references(() => organizations.id, { onDelete: "cascade" }),
     role:               messageRoleEnum("role").notNull(),
     externalMessageId:  varchar("external_message_id", { length: 255 }),
     bodyText:           text("body_text"),
@@ -367,6 +371,7 @@ export const emailMessages = pgTable(
   },
   (t) => [
     index("email_messages_thread_idx").on(t.threadId, t.sentAt),
+    index("email_messages_org_idx").on(t.organizationId),
     uniqueIndex("email_messages_external_id_uniq").on(t.externalMessageId),
   ]
 );

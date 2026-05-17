@@ -1,0 +1,12 @@
+Contact: mailto:security@mailmind.se
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: sv, en
+Canonical: https://mailmind.se/.well-known/security.txt
+Policy: https://mailmind.se/security
+
+# Mailmind tar säkerhet på största allvar. Vid misstänkt sårbarhet,
+# kontakta oss på security@mailmind.se. Vi svarar inom 48 timmar.
+#
+# Vi har för närvarande inget formellt bug bounty-program, men
+# uppmärksammar gärna ansvarsfull rapportering på hemsidan efter
+# fixning + samråd.

@@ -58,6 +58,47 @@ export async function notifyTrialExpired(input: {
 }
 
 /**
+ * P5.4 — Sent 3 days before a trial ends (triggered by Stripe
+ * customer.subscription.trial_will_end webhook). Reminds owner to add a
+ * payment method to avoid service interruption.
+ */
+export async function notifyTrialWillEnd(input: {
+  organizationId: string;
+  trialEndsAt:    Date;
+}) {
+  // Look up owner email + org name from DB
+  const { db, isDbConnected, users, organizations } = await import("@/lib/db");
+  const { eq, and } = await import("drizzle-orm");
+  if (!isDbConnected()) return;
+
+  const owner = await db
+    .select({ email: users.email, name: organizations.name })
+    .from(users)
+    .innerJoin(organizations, eq(users.organizationId, organizations.id))
+    .where(and(
+      eq(users.organizationId, input.organizationId),
+      eq(users.role, "owner"),
+    ))
+    .limit(1)
+    .then(r => r[0] ?? null);
+  if (!owner?.email) return;
+
+  const daysLeft = Math.ceil((input.trialEndsAt.getTime() - Date.now()) / (24 * 3600 * 1000));
+  const billingUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://mailmind.se"}/dashboard/billing`;
+
+  await resend.emails.send({
+    from:    FROM,
+    to:      owner.email,
+    subject: `Din provperiod tar slut om ${daysLeft} ${daysLeft === 1 ? "dag" : "dagar"} — ${owner.name}`,
+    html: `<p>Hej!</p>
+<p>Din 14-dagars provperiod för <strong>${owner.name}</strong> tar slut <strong>${input.trialEndsAt.toLocaleDateString("sv-SE")}</strong>.</p>
+<p>Lägg till en betalmetod för att fortsätta använda Mailmind utan avbrott. Ingen åtgärd från dig betyder att tjänsten pausas vid trial-slut.</p>
+<p><a href="${billingUrl}" style="display:inline-block;background:#06b6d4;color:#030614;font-weight:700;padding:10px 24px;border-radius:8px;text-decoration:none;">Lägg till kort →</a></p>
+<p style="color:#64748b;font-size:12px;">Frågor? Svara på detta mejl så hjälper vi dig.</p>`,
+  });
+}
+
+/**
  * Sent to org owner when Outlook subscription renewal has failed twice in a
  * row — the inbox has been silent for at least 24h and needs reconnection.
  */

@@ -14,6 +14,44 @@
  */
 
 import { writeAuditLog as dbWriteAuditLog } from "@/lib/db/queries";
+import { maskEmail } from "@/lib/utils";
+
+/**
+ * Strategi-revision P2.9: audit-log lagrade tidigare PII (from, email, to) i
+ * klartext i DB. Vi maskar nu i metadata-objektet innan write — DSAR-export
+ * blir kortare och retention-risken sjunker.
+ *
+ * Maskerar:
+ *   - Värden i kända PII-nycklar (email, from, to, fromEmail, etc) via maskEmail
+ *   - Strängar i body/text/preview/subject/reason (trunkeras till 200 tecken)
+ * Behåller:
+ *   - threadId, draftId, inboxId (UUIDs är inte direkt PII)
+ *   - tal, booleans, status
+ */
+const PII_EMAIL_KEYS = new Set([
+  "email", "from", "to", "fromEmail", "toEmail", "memberEmail",
+  "actorEmail", "userEmail", "invitedEmail",
+]);
+const PII_TEXT_KEYS = new Set([
+  "body", "bodyText", "text", "snippet", "preview", "subject", "reason",
+]);
+
+function maskMetadata(meta: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
+  if (!meta) return meta;
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(meta)) {
+    if (typeof v === "string" && PII_EMAIL_KEYS.has(k)) {
+      out[k] = maskEmail(v);
+    } else if (typeof v === "string" && PII_TEXT_KEYS.has(k)) {
+      out[k] = v.length > 200 ? v.slice(0, 200) + "…[truncated]" : v;
+    } else if (v && typeof v === "object" && !Array.isArray(v) && !(v instanceof Date)) {
+      out[k] = maskMetadata(v as Record<string, unknown>);
+    } else {
+      out[k] = v;
+    }
+  }
+  return out;
+}
 
 export type AuditAction =
   // App actions (Mailmind email triage)
@@ -64,7 +102,9 @@ export type AuditEntry = {
  */
 export async function writeAuditLog(entry: AuditEntry): Promise<void> {
   try {
-    await dbWriteAuditLog(entry);
+    // P2.9 — mask PII in metadata before persisting
+    const masked: AuditEntry = { ...entry, metadata: maskMetadata(entry.metadata) };
+    await dbWriteAuditLog(masked);
   } catch (err) {
     console.error("[audit] write failed:", err, { action: entry.action, organizationId: entry.organizationId });
   }

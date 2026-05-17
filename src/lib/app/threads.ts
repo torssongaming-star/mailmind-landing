@@ -227,12 +227,30 @@ export async function appendMessage(input: {
   bodyHtml?: string | null;
   externalMessageId?: string | null;
   sentAt?: Date;
+  /** Optional but recommended — back-fills the org-scope column on email_messages.
+   *  When omitted we look it up from the thread. P2.3 defense-in-depth. */
+  organizationId?: string;
 }) {
   if (!isDbConnected()) return null;
+
+  // Resolve orgId from thread if not provided — backward compat for callers
+  // that don't have it handy.
+  let organizationId = input.organizationId;
+  if (!organizationId) {
+    const t = await db
+      .select({ organizationId: emailThreads.organizationId })
+      .from(emailThreads)
+      .where(eq(emailThreads.id, input.threadId))
+      .limit(1)
+      .then(r => r[0]);
+    organizationId = t?.organizationId;
+  }
+
   const [row] = await db
     .insert(emailMessages)
     .values({
       threadId:           input.threadId,
+      organizationId:     organizationId ?? null,
       role:               input.role,
       bodyText:           input.bodyText ?? null,
       bodyHtml:           input.bodyHtml ?? null,

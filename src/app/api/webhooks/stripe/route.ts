@@ -25,6 +25,37 @@ function mapStripeStatus(s: Stripe.Subscription.Status): DbSubscription["status"
   }
 }
 
+/**
+ * Resolve current_period_end from a Stripe Subscription robustly.
+ *
+ * Strategi-revision P2.8: Stripe API 2026-04 moved current_period_end from
+ * top-level to subscription.items.data[N].current_period_end. We accept both
+ * shapes and fall back to a safe default (1 month from now) on missing data —
+ * never NaN-Date which would break trial expiry.
+ */
+function resolvePeriodEnd(sub: Stripe.Subscription): Date {
+  // New API shape (2026-04+)
+  type WithPeriodEnd = { current_period_end?: number | null };
+  const itemPeriodEnd = (sub.items?.data?.[0] as WithPeriodEnd | undefined)?.current_period_end;
+  // Legacy top-level
+  const topLevelEnd = (sub as unknown as WithPeriodEnd).current_period_end;
+
+  const epoch = itemPeriodEnd ?? topLevelEnd;
+  if (typeof epoch === "number" && epoch > 0) {
+    const d = new Date(epoch * 1000);
+    if (!isNaN(d.getTime())) return d;
+  }
+
+  console.warn(
+    `[webhook/stripe] missing current_period_end on subscription ${sub.id}, using +30 days fallback`,
+  );
+  return new Date(Date.now() + 30 * 24 * 3600 * 1000);
+}
+
+function resolveCancelAtPeriodEnd(sub: Stripe.Subscription): boolean {
+  return Boolean(sub.cancel_at_period_end);
+}
+
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
@@ -77,9 +108,11 @@ export async function POST(req: NextRequest) {
 
         if (!syncResult) break;
 
-        // 2. Resolve subscription details
+        // 2. Resolve subscription details (P2.8: expand items.data for new API shape)
         const subscriptionId = session.subscription as string;
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId) as Stripe.Subscription;
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
+          expand: ["items.data.price"],
+        }) as Stripe.Subscription;
 
         // 3. Sync subscription to DB
         await db.upsertSubscription({
@@ -88,10 +121,8 @@ export async function POST(req: NextRequest) {
           stripeCustomerId: session.customer as string,
           plan,
           status: mapStripeStatus(subscription.status),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
+          currentPeriodEnd: resolvePeriodEnd(subscription),
+          cancelAtPeriodEnd: resolveCancelAtPeriodEnd(subscription),
         });
 
         // 4. Audit Log
@@ -135,10 +166,8 @@ export async function POST(req: NextRequest) {
           stripeCustomerId,
           plan,
           status: mapStripeStatus(subscription.status),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
+          currentPeriodEnd: resolvePeriodEnd(subscription),
+          cancelAtPeriodEnd: resolveCancelAtPeriodEnd(subscription),
         });
 
         await db.writeAuditLog({
@@ -172,6 +201,27 @@ export async function POST(req: NextRequest) {
             organizationId: orgId,
             action: "subscription_canceled",
             metadata: { stripeSubscriptionId: subscription.id },
+          });
+        }
+        break;
+      }
+
+      case "customer.subscription.trial_will_end": {
+        // P5.4 — Stripe fires this 3 days before trial ends. Email the owner.
+        const subscription = event.data.object as Stripe.Subscription;
+        const orgId = await db.getOrgIdByStripeCustomer(subscription.customer as string);
+        if (orgId) {
+          const trialEnd = resolvePeriodEnd(subscription);
+          try {
+            const { notifyTrialWillEnd } = await import("@/lib/app/notify");
+            await notifyTrialWillEnd({ organizationId: orgId, trialEndsAt: trialEnd });
+          } catch (e) {
+            console.error("[webhook/stripe] notifyTrialWillEnd failed:", e);
+          }
+          await db.writeAuditLog({
+            organizationId: orgId,
+            action: "trial_expired",
+            metadata: { stage: "will_end", trialEndsAt: trialEnd.toISOString() },
           });
         }
         break;
