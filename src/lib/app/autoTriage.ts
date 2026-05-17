@@ -33,7 +33,7 @@ import {
   getCustomerHistory,
 } from "./threads";
 import { listActiveKnowledge } from "./knowledge";
-import { generateDraft, AiTransientError } from "./ai";
+import { generateDraft, AiTransientError, detectPromptInjection } from "./ai";
 import { writeAuditLog } from "./audit";
 import { computeAccess } from "./entitlements";
 import { fireWebhooksForThread } from "./webhooks";
@@ -114,6 +114,23 @@ export async function autoTriageNewMessage(input: {
   // Dry-run mode: generate + log but do NOT auto-send.
   // The `isDryRun` flag is written to the draft row so admin can review quality.
   const isDryRun = settings?.dryRunEnabled ?? false;
+
+  // Prompt-injection detection — when input looks like a jailbreak attempt,
+  // force isDryRun + flag for human review. AI may still try to handle it but
+  // we never autosend.
+  const injectionDetected = detectPromptInjection(newEmailBody);
+  if (injectionDetected) {
+    await writeAuditLog({
+      organizationId,
+      userId: null,
+      action: "ai_draft_skipped",
+      metadata: {
+        threadId,
+        reason: "prompt_injection_detected",
+        snippet: newEmailBody.slice(0, 200),
+      },
+    });
+  }
 
   // Generate
   let ai;
@@ -214,7 +231,7 @@ export async function autoTriageNewMessage(input: {
   // ── Auto-send ──────────────────────────────────────────────────────────────
   // Only when autoSendEnabled AND not dry-run AND draft was created.
   let autoSent = false;
-  if (!isDryRun && draft && settings?.autoSendEnabled) {
+  if (!isDryRun && draft && settings?.autoSendEnabled && !injectionDetected) {
     const meta = draft.metadata as Record<string, unknown> | null;
     const confidence      = typeof meta?.confidence === "number"  ? meta.confidence      : 0;
     const riskLevel       = (meta?.risk_level as "low" | "medium" | "high") ?? "medium";

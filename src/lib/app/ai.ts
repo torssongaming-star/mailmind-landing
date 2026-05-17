@@ -31,7 +31,11 @@ import type { CustomerHistorySummary } from "./threads";
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
-export const AI_MODEL = "claude-haiku-4-5-20251001";
+/**
+ * AI model id. Overrideable via env so we can upgrade without redeploy
+ * (strategi-revision P3.4). Per-org override planned: ai_settings.modelId.
+ */
+export const AI_MODEL = process.env.AI_MODEL ?? "claude-haiku-4-5-20251001";
 const TIMEOUT_MS = 15_000;
 
 /** Fields appended to every AI output for auto-send eligibility. */
@@ -164,13 +168,40 @@ Fälten confidence, risk_level och source_grounded är obligatoriska i alla svar
  * We do NOT strip normal punctuation — customers write naturally and the
  * AI must see the real wording. We only neutralise tag-injection.
  */
+/**
+ * Heuristic prompt-injection detector. Used as the LAST line of defense after
+ * tag-wrapping + sanitisation. Returns true when input contains obvious
+ * jailbreak / role-override patterns. Caller should escalate, not auto-send.
+ */
+export function detectPromptInjection(s: string | null | undefined): boolean {
+  if (!s) return false;
+  const patterns = [
+    /\bignore (?:all|any|the|your|previous|prior) instructions?\b/i,
+    /\bdisregard (?:the |all )?(?:system|above|previous)\b/i,
+    /\bnew instructions?:/i,
+    /\byou are now\b/i,
+    /\byou must (?:now |from now on )?act as\b/i,
+    /\byour (?:new |true )?role is\b/i,
+    /\bsystem prompt\b/i,
+    /\b(?:override|bypass) (?:safety|filter|rules?|guidelines?)\b/i,
+    /\bjailbreak\b/i,
+    // Swedish variants
+    /\b(?:ignorera|strunta i) (?:alla |dina |tidigare )?(?:instruktioner|regler)\b/i,
+    /\bdu ska nu agera (?:som|enligt)\b/i,
+    /\bdin nya roll är\b/i,
+  ];
+  return patterns.some(p => p.test(s));
+}
+
 function sanitiseForPrompt(s: string | null | undefined, maxLen = 8000): string {
   if (!s) return "";
   // Remove < and > to prevent breaking out of <customer_data> tags
   let out = s.replace(/[<>]/g, "");
-  // Soft-neutralise classic prompt-injection trigger phrases
+  // Strip null bytes and other control chars that could confuse the model
+  out = out.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+  // Soft-neutralise classic prompt-injection trigger phrases (English + Swedish)
   out = out.replace(
-    /\b(ignore (?:all|any|the|your|previous|prior) instructions?|disregard the (?:system|above)|new instructions?:|you are now)/gi,
+    /\b(ignore (?:all|any|the|your|previous|prior) instructions?|disregard the (?:system|above)|new instructions?:|you are now|jailbreak|system prompt|(?:ignorera|strunta i) (?:alla |dina |tidigare )?(?:instruktioner|regler))/gi,
     "[filtered]",
   );
   // Cap length to keep token budget under control + reject mega-payloads

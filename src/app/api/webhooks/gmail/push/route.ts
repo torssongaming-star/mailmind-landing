@@ -45,6 +45,8 @@ import { autoTriageNewMessage } from "@/lib/app/autoTriage";
 import { writeAuditLog } from "@/lib/app/audit";
 import { isBlocked } from "@/lib/app/blocklist";
 import { maskEmail } from "@/lib/utils";
+import { verifyGoogleOidcJwt } from "@/lib/app/google-oidc";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -63,6 +65,37 @@ type GmailPushData = {
 };
 
 export async function POST(req: NextRequest) {
+  // ── 0. Authenticate Google (strategi-revision P2.4) ───────────────────────
+  // In prod: require OIDC JWT signed by Google for the configured audience.
+  // In non-prod with ALLOW_UNAUTH_PUBSUB=1, skip auth for local testing.
+  const expectedAudience = process.env.GMAIL_PUSH_AUDIENCE;
+  const allowUnauth =
+    process.env.ALLOW_UNAUTH_PUBSUB === "1" &&
+    process.env.NODE_ENV !== "production";
+
+  if (!expectedAudience) {
+    if (!allowUnauth) {
+      console.error("[gmail/push] GMAIL_PUSH_AUDIENCE not configured");
+      return NextResponse.json({ error: "misconfigured" }, { status: 500 });
+    }
+  } else {
+    const authHeader = req.headers.get("authorization") ?? "";
+    const m = authHeader.match(/^Bearer\s+(.+)$/i);
+    if (!m) {
+      console.warn("[gmail/push] missing Bearer token");
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const result = await verifyGoogleOidcJwt(
+      m[1],
+      expectedAudience,
+      process.env.GMAIL_PUSH_SERVICE_ACCOUNT, // optional pinning
+    );
+    if (!result.ok) {
+      console.warn("[gmail/push] JWT verify failed:", result.reason);
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+  }
+
   // ── 1. Parse Pub/Sub envelope ──────────────────────────────────────────────
   let envelope: PubSubMessage;
   try {
@@ -86,6 +119,12 @@ export async function POST(req: NextRequest) {
   const inbox = await getInboxByEmail(emailAddress);
   if (!inbox || inbox.provider !== "gmail") {
     return NextResponse.json({ ok: true, skipped: "no_inbox" });
+  }
+
+  // Per-inbox rate limit (defense-in-depth)
+  if (!rateLimit(`inbound:gmail:${inbox.id}`, RATE_LIMITS.inboundWebhook)) {
+    console.warn("[gmail/push] rate-limited", inbox.id);
+    return NextResponse.json({ status: "rate_limited" }, { status: 429 });
   }
 
   const config = inbox.config as GmailInboxConfig | null;
