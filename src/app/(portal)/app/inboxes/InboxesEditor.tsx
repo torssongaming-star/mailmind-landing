@@ -206,8 +206,10 @@ export function InboxesEditor({
               href="/api/app/inboxes/outlook/auth"
               className="flex items-start gap-4 rounded-xl border border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-500/10 px-4 py-3.5 transition-colors group"
             >
-              <span className="text-2xl mt-0.5">🔵</span>
-              <div className="flex-1 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/10 group-hover:border-cyan-500/30 transition-colors">
+                <OutlookLogo className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0 pt-0.5">
                 <p className="text-sm font-semibold text-white group-hover:text-cyan-300 transition-colors">
                   {sv ? "Koppla Outlook / Microsoft 365" : "Connect Outlook / Microsoft 365"}
                 </p>
@@ -228,8 +230,10 @@ export function InboxesEditor({
               href="/api/app/inboxes/gmail/auth"
               className="flex items-start gap-4 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] px-4 py-3.5 transition-colors group"
             >
-              <span className="text-2xl mt-0.5">🔴</span>
-              <div className="flex-1 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/10 group-hover:border-white/20 transition-colors">
+                <GmailLogo className="w-5 h-5" />
+              </div>
+              <div className="flex-1 min-w-0 pt-0.5">
                 <p className="text-sm font-semibold text-white group-hover:text-white transition-colors">
                   {sv ? "Koppla Gmail / Google Workspace" : "Connect Gmail / Google Workspace"}
                 </p>
@@ -247,8 +251,10 @@ export function InboxesEditor({
               onClick={() => setView("form")}
               className="flex items-start gap-4 rounded-xl border border-white/8 bg-white/[0.01] hover:bg-white/[0.03] px-4 py-3.5 transition-colors group text-left"
             >
-              <span className="text-2xl mt-0.5">📧</span>
-              <div className="flex-1 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/10 group-hover:border-white/20 transition-colors">
+                <span className="text-xl">📧</span>
+              </div>
+              <div className="flex-1 min-w-0 pt-0.5">
                 <p className="text-sm font-semibold text-white/70 group-hover:text-white transition-colors">
                   {sv ? "Vidarebefordra e-post (avancerat)" : "Email forwarding (advanced)"}
                 </p>
@@ -400,11 +406,11 @@ export function InboxesEditor({
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function providerIcon(provider: string): string {
+function providerIcon(provider: string): React.ReactNode {
   switch (provider) {
-    case "gmail":   return "🔴";
-    case "outlook": return "🔵";
-    default:        return "📧";
+    case "gmail":   return <GmailLogo className="w-5 h-5" />;
+    case "outlook": return <OutlookLogo className="w-5 h-5" />;
+    default:        return <span className="text-lg leading-none">📧</span>;
   }
 }
 
@@ -414,4 +420,25 @@ function providerLabel(provider: string, sv: boolean): string {
     case "outlook": return "Outlook / M365";
     default:        return sv ? "Vidarebefordran" : "Forwarding";
   }
+}
+
+function GmailLogo({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 8.414l8.073-4.921c1.618-1.214 3.927-.059 3.927 1.964Z" fill="#EA4335"/>
+      <path d="M12 16.64 5.455 11.73V3.493L12 8.414l6.545-4.921v8.236L12 16.64Z" fill="#EA4335"/>
+      <path d="M12 8.414l6.545-4.921v8.236L12 16.64V8.414Z" fill="#FBBC04"/>
+      <path d="M12 16.64v-8.226l6.545-4.921c.974-.73 2.383-.035 2.383 1.179l-9.2 6.911v5.057Z" fill="#34A853"/>
+      <path d="M12 16.64v-5.057l-9.2-6.911C1.226 5.85 2.635 6.544 3.609 5.814L12 12.12v4.52Z" fill="#4285F4"/>
+    </svg>
+  );
+}
+
+function OutlookLogo({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0078D4" className={className}>
+      <path d="M13.593 3.42l-9.453 1.62C3.513 5.148 3 5.72 3 6.353v11.127c0 .636.513 1.205 1.14 1.312l9.453 1.623V3.42zm2.08 1.488L20.44 6.84a1.325 1.325 0 0 1 .693 1.157v7.915c0 .54-.316 1-.692 1.155l-4.768 1.932V4.908z"/>
+      <path fill="#fff" d="M11 12h-4V8h4v4z"/>
+    </svg>
+  );
 }
