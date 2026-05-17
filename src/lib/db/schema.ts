@@ -347,9 +347,12 @@ export const emailThreads = pgTable(
   },
   (t) => [
     index("email_threads_org_status_idx").on(t.organizationId, t.status),
-    index("email_threads_org_updated_idx").on(t.organizationId, t.lastMessageAt),
+    // P7.5 — DESC matches the most common query (listThreads order by newest)
+    index("email_threads_org_updated_idx").on(t.organizationId, t.lastMessageAt.desc()),
     index("email_threads_external_idx").on(t.externalThreadId),
     index("email_threads_snoozed_idx").on(t.snoozedUntil),
+    // P2.3 — defense-in-depth filter for "from this customer" queries
+    index("email_threads_org_from_idx").on(t.organizationId, t.fromEmail),
   ]
 );
 

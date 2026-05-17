@@ -79,7 +79,26 @@ Fas 19  ✅  Säkerhetshärdning — Microsoft clientState, SendGrid HMAC obliga
 Fas 20  ✅  Robusthet — rate limiting (AI/invite/webhook), security headers (CSP/HSTS/XFO), global-error-boundary, structured logger med PII-maskning
 Fas 21  ✅  GDPR & datahygien — data-export-API, account-deletion 30d grace, cron-purge, retention 12mån, deletion-pending entitlement-gate
 Fas 22  ✅  Produkt-polering — sidebar trial-badge, skeleton loaders (inbox/team), root 404, subscription-renewal alert
+Fas 23  ✅  Legal & compliance — DPA, sub-processors, AUP, SLA, MSA, cookies, DPIA/ROPA, AI-disclaimer
+Fas 24  ✅  Strategi-revisions kritiska fixar — P2.1 fejk-entitlements, P2.2 db hard-fail, P2.3 email_messages orgId, P2.4 Google Pub/Sub OIDC, P2.5 GMAIL key, P2.7 canAutoSend tests, P2.8 Stripe period_end, P2.9 audit PII, P2.11 cleanup, P3.3 prompt-inj, P3.4 AI_MODEL env, P5.4 trial_will_end, P5.1 UpgradePrompt, P6.3 Sentry, P6.5 security.txt, P7.5 DB index DESC
 ```
+
+## Återstår från strategi-revisionen
+
+Marketing/analytics som kräver konton:
+- P1.1 PostHog (kräver konto/API-key)
+- P1.4 A/B middleware (efter beslut: behåll / eller v2)
+- P5.2 Annual pricing (kräver Stripe-price-IDs)
+- P6.4 IP-restriktion admin (kräver IP-lista)
+
+Större arbete (1+ vecka):
+- P1.7 Interaktiv landing-demo
+- P3.1 LLM-as-judge confidence-validator
+- P3.5 pgvector KB-retrieval
+- P3.6 Källhänvisning i drafts
+- P7.3 Task-kö (QStash/Vercel Queues)
+- P2.6 Upstash Redis rate-limit
+- Fas 4 enterprise: SSO/SAML, SOC 2, etc
 
 ---
 
