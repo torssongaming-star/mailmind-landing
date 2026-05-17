@@ -16,6 +16,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { SupportDrawer } from "./SupportDrawer";
@@ -155,13 +156,18 @@ export function Sidebar({
   // mobile drawer (so it doesn't sit on top of the just-navigated page).
   useEffect(() => {
     setExpanded(prev => {
-      const next = { ...prev };
+      let activeGroupId: string | null = null;
       NAV.forEach(item => {
         if (item.kind === "group" && groupIsActive(item, pathname)) {
-          next[item.id] = true;
+          activeGroupId = item.id;
         }
       });
-      return next;
+      
+      // If we navigate to a route within a group, enforce accordion (close others)
+      if (activeGroupId) {
+        return { [activeGroupId]: true };
+      }
+      return prev;
     });
     setMobileOpen(false);
   }, [pathname]);
@@ -250,32 +256,40 @@ export function Sidebar({
                 </button>
  
                 {/* Children */}
-                {isOpen && (
-                  <div className="ml-8 mt-0.5 mb-1 space-y-0.5 border-l border-white/[0.06] pl-3">
-                    {(() => {
-                      const activeHref = bestActiveChildHref(item.children, pathname);
-                      return item.children.map(child => {
-                      const childActive = child.href === activeHref;
-                      return (
-                        <Link
-                          key={child.href}
-                          href={child.href}
-                          aria-current={childActive ? "page" : undefined}
-                          className={cn(
-                            "block px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors duration-150",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-                            childActive
-                              ? "text-primary bg-primary/[0.08]"
-                              : "text-white/40 hover:text-white/80 hover:bg-white/[0.03]"
-                          )}
-                        >
-                          {t(child.labelKey)}
-                        </Link>
-                      );
-                    });
-                    })()}
-                  </div>
-                )}
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2, ease: "easeInOut" }}
+                      className="ml-8 mt-1 mb-2 space-y-1 border-l-2 border-white/[0.04] pl-3 overflow-hidden"
+                    >
+                      {(() => {
+                        const activeHref = bestActiveChildHref(item.children, pathname);
+                        return item.children.map(child => {
+                        const childActive = child.href === activeHref;
+                        return (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            aria-current={childActive ? "page" : undefined}
+                            className={cn(
+                              "block px-3 py-2 rounded-lg text-[13px] font-medium transition-all duration-200",
+                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                              childActive
+                                ? "text-primary bg-primary/[0.08] shadow-[inset_0_0_10px_rgba(6,182,212,0.05)]"
+                                : "text-white/40 hover:text-white/90 hover:bg-white/[0.03]"
+                            )}
+                          >
+                            {t(child.labelKey)}
+                          </Link>
+                        );
+                      });
+                      })()}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             );
           })}
