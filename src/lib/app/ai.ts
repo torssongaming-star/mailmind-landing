@@ -38,6 +38,19 @@ import type { CustomerHistorySummary } from "./threads";
 export const AI_MODEL = process.env.AI_MODEL ?? "claude-haiku-4-5-20251001";
 const TIMEOUT_MS = 15_000;
 
+/**
+ * Source citation — strategi-revision P3.6. AI returnerar vilka KB-poster
+ * svaret bygger på + kort snippet för transparens i UI.
+ */
+const SourceCitation = z.object({
+  /** KB-entry UUID, eller "history" / "thread" om hämtad från konversation */
+  kb_entry_id: z.string(),
+  /** ≤ 200 tecken — visas inline i draft-UI:t */
+  snippet:     z.string().max(200),
+});
+
+export type AISource = z.infer<typeof SourceCitation>;
+
 /** Fields appended to every AI output for auto-send eligibility. */
 const AutoSendMeta = z.object({
   /** AI self-reported confidence 0.0–1.0. Auto-send requires ≥ 0.90. */
@@ -46,6 +59,8 @@ const AutoSendMeta = z.object({
   risk_level:      z.enum(["low", "medium", "high"]).default("medium"),
   /** True when the answer is traceable to knowledge base or thread history. */
   source_grounded: z.boolean().default(false),
+  /** Källor svaret bygger på. Tom array OK för 'ask'/'escalate'. */
+  sources:         z.array(SourceCitation).default([]),
 });
 
 export const AskOutput = z.object({
@@ -122,9 +137,10 @@ export function buildSystemPrompt(opts: {
   const langName = LANG_NAMES[settings.language] ?? settings.language;
 
   const hasKnowledge = knowledge.length > 0;
+  // Include the ID so AI can cite which entry it used (P3.6)
   const knowledgeSection = hasKnowledge
     ? `\nFÖRETAGSINFORMATION (det enda du får hänvisa till när du svarar kunden):\n` +
-      knowledge.map(k => `- ${k.question}: ${k.answer}`).join("\n")
+      knowledge.map(k => `[${k.id}] ${k.question}: ${k.answer}`).join("\n")
     : "\n(Ingen företagsinformation är inlagd ännu.)";
 
   return `Du är en AI-ärendehanterare för ${organizationName}.
@@ -152,12 +168,20 @@ BESLUTSFLÖDE:
 4. Om ärendetypen är helt oklar ELLER du nått max ${settings.maxInteractions} interaktioner → action: escalate.
 5. Vid minsta tveksamhet → eskalera hellre än att gissa eller uppfinna information.
 
-FORMAT — returnera ENDAST giltig JSON utan markdown. Välj EXAKT ett av:
-{"action":"ask","question":"<fråga till kunden>","collected_info":{},"confidence":0.8,"risk_level":"low","source_grounded":false}
-{"action":"summarize","case_type":"<slug>","summary":"<intern sammanfattning>","customer_reply":"<mejl till kunden>","collected_info":{},"confidence":0.95,"risk_level":"low","source_grounded":true}
-{"action":"escalate","reason":"<intern beskrivning av vad kunden behöver — skriv som en briefing till säljaren>","confidence":0.0,"risk_level":"high","source_grounded":false}
+KÄLLHÄNVISNING (sources):
+- När du svarar baserat på FÖRETAGSINFORMATION, lista varje KB-post du använde
+  med dess [id] som "kb_entry_id" och en max 200-tecken-snippet ur posten.
+- När du svarar baserat på trådhistorik, använd kb_entry_id="thread" och citera
+  den mening du baserade dig på.
+- För "ask"/"escalate" är sources oftast en tom array — det är OK.
+- Sources får ALDRIG hittas på. Bara verkliga ID:n från FÖRETAGSINFORMATION ovan.
 
-Fälten confidence, risk_level och source_grounded är obligatoriska i alla svar.`;
+FORMAT — returnera ENDAST giltig JSON utan markdown. Välj EXAKT ett av:
+{"action":"ask","question":"<fråga till kunden>","collected_info":{},"confidence":0.8,"risk_level":"low","source_grounded":false,"sources":[]}
+{"action":"summarize","case_type":"<slug>","summary":"<intern sammanfattning>","customer_reply":"<mejl till kunden>","collected_info":{},"confidence":0.95,"risk_level":"low","source_grounded":true,"sources":[{"kb_entry_id":"<UUID från FÖRETAGSINFORMATION>","snippet":"citerad mening"}]}
+{"action":"escalate","reason":"<intern beskrivning av vad kunden behöver — skriv som en briefing till säljaren>","confidence":0.0,"risk_level":"high","source_grounded":false,"sources":[]}
+
+Fälten confidence, risk_level, source_grounded och sources är obligatoriska i alla svar.`;
 }
 
 /**
@@ -429,11 +453,12 @@ export async function generateDraft(input: GenerateDraftInput): Promise<Generate
     console.error("[ai] error:", reason, "| raw:", rawText.slice(0, 200));
     return {
       output: {
-        action: "escalate",
-        reason: `AI fallback: ${reason}`,
-        confidence: 0,
-        risk_level: "high",
+        action:          "escalate",
+        reason:          `AI fallback: ${reason}`,
+        confidence:      0,
+        risk_level:      "high",
         source_grounded: false,
+        sources:         [],
       },
       rawText,
       model: AI_MODEL,

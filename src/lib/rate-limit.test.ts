@@ -38,8 +38,9 @@ describe("rateLimit", () => {
     const opts = { capacity: 1, refillPerSec: 100 }; // refills fast
     expect(rateLimit(k, opts)).toBe(true);
     expect(rateLimit(k, opts)).toBe(false);
-    // Wait ~50ms — should have refilled ~5 tokens
-    await new Promise(r => setTimeout(r, 80));
+    // Wait long enough that even on a slow/timer-jittery CI box we have
+    // refilled well over 1 token. 200ms × 100/sec = 20 tokens.
+    await new Promise(r => setTimeout(r, 200));
     expect(rateLimit(k, opts)).toBe(true);
   });
 });

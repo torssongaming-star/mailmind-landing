@@ -162,9 +162,29 @@ export async function autoTriageNewMessage(input: {
     throw err; // Re-throw other errors
   }
 
+  // P3.6 — validera sources mot verkliga KB-IDs. Om AI:n hittat på ID:n
+  // som inte finns, downgrade source_grounded → false (skyddar autosend).
+  const validKbIds = new Set(knowledge.map(k => k.id));
+  validKbIds.add("thread");
+  validKbIds.add("history");
+  const validatedSources = (ai.output.sources ?? []).filter(s => validKbIds.has(s.kb_entry_id));
+  const fabricatedSources = (ai.output.sources?.length ?? 0) - validatedSources.length;
+  if (fabricatedSources > 0) {
+    console.warn(`[autoTriage] AI returned ${fabricatedSources} fabricated source IDs — dropping + setting source_grounded=false`);
+  }
+  const effectiveSourceGrounded = fabricatedSources > 0 ? false : ai.output.source_grounded;
+
   // Persist as pending draft
   let bodyText: string | null = null;
-  let metadata: Record<string, unknown> = { rawText: ai.rawText, source: "auto_triage" };
+  let metadata: Record<string, unknown> = {
+    rawText:         ai.rawText,
+    source:          "auto_triage",
+    confidence:      ai.output.confidence,
+    risk_level:      ai.output.risk_level,
+    source_grounded: effectiveSourceGrounded,
+    sources:         validatedSources,
+    fabricated_sources_dropped: fabricatedSources,
+  };
   switch (ai.output.action) {
     case "ask":
       bodyText = ai.output.question;

@@ -326,6 +326,34 @@ export function ThreadPanel({
                   </div>
                 )}
 
+                {/* P3.6 — Källhänvisning: visa vilka KB-poster svaret bygger på */}
+                {(() => {
+                  const meta = d.metadata as { sources?: Array<{ kb_entry_id: string; snippet: string }> } | null;
+                  const sources = meta?.sources ?? [];
+                  if (sources.length === 0) return null;
+                  return (
+                    <div className="border-t border-white/5 pt-3 space-y-1.5">
+                      <p className="text-[10px] text-white/45 uppercase tracking-widest font-semibold flex items-center gap-1.5">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        Källor ({sources.length})
+                      </p>
+                      <ul className="space-y-1.5">
+                        {sources.map((s, i) => (
+                          <li key={i} className="rounded-md bg-black/20 border border-white/5 px-2.5 py-1.5">
+                            <p className="text-[11px] text-white/70 leading-relaxed">&ldquo;{s.snippet}&rdquo;</p>
+                            {s.kb_entry_id !== "thread" && s.kb_entry_id !== "history" && (
+                              <p className="text-[9px] text-white/30 mt-0.5 font-mono">KB · {s.kb_entry_id.slice(0, 8)}…</p>
+                            )}
+                            {(s.kb_entry_id === "thread" || s.kb_entry_id === "history") && (
+                              <p className="text-[9px] text-white/30 mt-0.5">Från tråden</p>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })()}
+
                 {d.action === "escalate" && (
                   <div className="rounded-lg border border-red-500/20 bg-red-500/[0.04] px-3 py-2">
                     <p className="text-xs text-red-300 leading-relaxed">

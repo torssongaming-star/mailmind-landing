@@ -365,6 +365,123 @@ export type WeeklyStats = {
 };
 
 /**
+ * AI quality metrics — strategi-revision P3.2.
+ *
+ * "Hur väl presterar AI:n?" — kvantifierat. Visas på /app/stats för agenten
+ * och på admin/organizations/[id] för Mailmind-teamet.
+ *
+ * Scoped to last N days (default 30).
+ *
+ * Returns:
+ *   - totalDrafts: alla genererade utkast (inkl dry-run)
+ *   - approvalRate: andel som skickas utan edit
+ *   - editRate: andel som skickas efter att agenten redigerat
+ *   - rejectionRate: andel som agenten avvisat
+ *   - escalationRate: andel som AI:n flaggat för eskalering
+ *   - autoSendRate: andel som auto-skickades (utan agent-touch)
+ *   - avgConfidence: medel-confidence på sent/approved drafts
+ *   - p50ResponseMinutes: median tid från draft-generation till sent
+ *   - sourceGroundedRate: andel sent drafts där AI:n citerade KB
+ */
+export type AiQualityMetrics = {
+  windowDays:          number;
+  totalDrafts:         number;
+  byAction:            { ask: number; summarize: number; escalate: number };
+  byStatus:            { pending: number; approved: number; edited: number; sent: number; rejected: number };
+  approvalRate:        number;       // sent (utan edit) / total beslutade (sent + rejected)
+  editRate:            number;       // (edited→sent) / total beslutade
+  rejectionRate:       number;       // rejected / total beslutade
+  escalationRate:      number;       // escalate-action / total beslutade
+  autoSendRate:        number;       // user_id IS NULL & sent / total sent
+  avgConfidence:       number | null;
+  p50ResponseMinutes:  number | null;
+  sourceGroundedRate:  number | null;
+};
+
+export async function getAiQualityMetrics(
+  organizationId: string,
+  windowDays = 30,
+): Promise<AiQualityMetrics> {
+  const empty: AiQualityMetrics = {
+    windowDays,
+    totalDrafts: 0,
+    byAction:  { ask: 0, summarize: 0, escalate: 0 },
+    byStatus:  { pending: 0, approved: 0, edited: 0, sent: 0, rejected: 0 },
+    approvalRate: 0, editRate: 0, rejectionRate: 0, escalationRate: 0,
+    autoSendRate: 0, avgConfidence: null, p50ResponseMinutes: null,
+    sourceGroundedRate: null,
+  };
+  if (!isDbConnected()) return empty;
+
+  const sinceMs = Date.now() - windowDays * 24 * 60 * 60 * 1000;
+  const since   = new Date(sinceMs);
+
+  // One big aggregation — cheap on indexed (org, generated_at) lookups.
+  const result = await db.execute(sql`
+    SELECT
+      COUNT(*)                                                              AS total,
+      COUNT(*) FILTER (WHERE action = 'ask')                                AS act_ask,
+      COUNT(*) FILTER (WHERE action = 'summarize')                          AS act_summarize,
+      COUNT(*) FILTER (WHERE action = 'escalate')                           AS act_escalate,
+      COUNT(*) FILTER (WHERE status = 'pending')                            AS st_pending,
+      COUNT(*) FILTER (WHERE status = 'approved')                           AS st_approved,
+      COUNT(*) FILTER (WHERE status = 'edited')                             AS st_edited,
+      COUNT(*) FILTER (WHERE status = 'sent')                               AS st_sent,
+      COUNT(*) FILTER (WHERE status = 'rejected')                           AS st_rejected,
+      COUNT(*) FILTER (WHERE status = 'sent' AND user_id IS NULL)           AS auto_sent,
+      AVG((metadata->>'confidence')::float)
+        FILTER (WHERE status IN ('sent','approved'))                        AS avg_conf,
+      COUNT(*) FILTER (WHERE status = 'sent'
+                          AND (metadata->>'source_grounded')::boolean = true) AS sg_count,
+      COUNT(*) FILTER (WHERE status = 'sent')                               AS sent_count,
+      PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY
+        EXTRACT(EPOCH FROM (sent_at - generated_at)) / 60.0
+      ) FILTER (WHERE sent_at IS NOT NULL)                                  AS p50_min
+    FROM ai_drafts
+    WHERE organization_id = ${organizationId}
+      AND generated_at >= ${since.toISOString()}
+      AND is_dry_run = false
+  `);
+
+  type Row = {
+    total:        string | number;
+    act_ask:      string | number; act_summarize: string | number; act_escalate: string | number;
+    st_pending:   string | number; st_approved: string | number; st_edited: string | number;
+    st_sent:      string | number; st_rejected: string | number;
+    auto_sent:    string | number;
+    avg_conf:     string | number | null;
+    sg_count:     string | number;
+    sent_count:   string | number;
+    p50_min:      string | number | null;
+  };
+  const row = (result.rows[0] ?? {}) as Row;
+  const n = (v: string | number | null | undefined) => Number(v ?? 0);
+
+  const sent     = n(row.st_sent);
+  const rejected = n(row.st_rejected);
+  const edited   = n(row.st_edited);
+  const decided  = sent + rejected;
+
+  return {
+    windowDays,
+    totalDrafts:    n(row.total),
+    byAction:       { ask: n(row.act_ask), summarize: n(row.act_summarize), escalate: n(row.act_escalate) },
+    byStatus:       {
+      pending:  n(row.st_pending),  approved: n(row.st_approved),
+      edited,   sent,                rejected,
+    },
+    approvalRate:   decided > 0 ? sent / decided : 0,
+    editRate:       decided > 0 ? edited / decided : 0,
+    rejectionRate:  decided > 0 ? rejected / decided : 0,
+    escalationRate: n(row.total) > 0 ? n(row.act_escalate) / n(row.total) : 0,
+    autoSendRate:   sent > 0 ? n(row.auto_sent) / sent : 0,
+    avgConfidence:  row.avg_conf !== null ? Number(row.avg_conf) : null,
+    p50ResponseMinutes: row.p50_min !== null ? Number(row.p50_min) : null,
+    sourceGroundedRate: n(row.sent_count) > 0 ? n(row.sg_count) / n(row.sent_count) : null,
+  };
+}
+
+/**
  * Returns the stats for the past 7 days for a given org.
  * Used by the weekly email report cron task.
  */

@@ -17,7 +17,8 @@ import {
   getTopCaseTypes,
   getResponseStats,
   getThreadsPerDay,
-  getAutoVsManualSent
+  getAutoVsManualSent,
+  getAiQualityMetrics,
 } from "@/lib/app/stats";
 import { DailyThreadsChart } from "./DailyThreadsChart";
 import { getTranslations } from "@/lib/i18n";
@@ -40,13 +41,14 @@ export default async function StatsPage() {
   const { t } = getTranslations(locale);
 
   const orgId = account.organization.id;
-  const [threadStats, draftStats, topCaseTypes, responseStats, dailyThreads, autoVsManual] = await Promise.all([
+  const [threadStats, draftStats, topCaseTypes, responseStats, dailyThreads, autoVsManual, aiQuality] = await Promise.all([
     getThreadStats(orgId),
     getDraftStats(orgId),
     getTopCaseTypes(orgId, 5),
     getResponseStats(orgId),
     getThreadsPerDay(orgId, 14),
     getAutoVsManualSent(orgId),
+    getAiQualityMetrics(orgId, 30),
   ]);
 
   const totalSent = autoVsManual.auto + autoVsManual.manual;
@@ -162,6 +164,76 @@ export default async function StatsPage() {
         </Card>
       </section>
 
+      {/* AI quality metrics — P3.2 */}
+      <section>
+        <h2 className="text-[10px] font-semibold text-white/45 uppercase tracking-widest mb-3">
+          AI-kvalitet · senaste {aiQuality.windowDays} dagar
+        </h2>
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-6 space-y-6">
+          {/* Top KPI-row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <QualityKpi
+              label="Godkänd direkt"
+              value={`${Math.round(aiQuality.approvalRate * 100)}%`}
+              hint={`${aiQuality.byStatus.sent} av ${aiQuality.byStatus.sent + aiQuality.byStatus.rejected}`}
+              tone={aiQuality.approvalRate >= 0.7 ? "green" : aiQuality.approvalRate >= 0.4 ? "amber" : "red"}
+            />
+            <QualityKpi
+              label="Redigerad innan skick"
+              value={`${Math.round(aiQuality.editRate * 100)}%`}
+              hint={`${aiQuality.byStatus.edited} utkast`}
+              tone="neutral"
+            />
+            <QualityKpi
+              label="Avvisad"
+              value={`${Math.round(aiQuality.rejectionRate * 100)}%`}
+              hint={`${aiQuality.byStatus.rejected} avvisade`}
+              tone={aiQuality.rejectionRate <= 0.1 ? "green" : aiQuality.rejectionRate <= 0.25 ? "amber" : "red"}
+            />
+            <QualityKpi
+              label="Eskalerade"
+              value={`${Math.round(aiQuality.escalationRate * 100)}%`}
+              hint={`${aiQuality.byAction.escalate} ärenden till människa`}
+              tone="neutral"
+            />
+          </div>
+
+          {/* Bottom row */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-5 border-t border-white/5">
+            <QualityKpi
+              label="Snittsäkerhet"
+              value={aiQuality.avgConfidence !== null ? `${Math.round(aiQuality.avgConfidence * 100)}%` : "—"}
+              hint="över godkända svar"
+              tone="neutral"
+            />
+            <QualityKpi
+              label="Median-svarstid"
+              value={aiQuality.p50ResponseMinutes !== null ? formatDuration(aiQuality.p50ResponseMinutes) : "—"}
+              hint="från utkast till skickat"
+              tone="neutral"
+            />
+            <QualityKpi
+              label="Källgrundade"
+              value={aiQuality.sourceGroundedRate !== null ? `${Math.round(aiQuality.sourceGroundedRate * 100)}%` : "—"}
+              hint="av skickade svar"
+              tone={aiQuality.sourceGroundedRate !== null && aiQuality.sourceGroundedRate >= 0.8 ? "green" : "neutral"}
+            />
+            <QualityKpi
+              label="Auto-skickade"
+              value={`${Math.round(aiQuality.autoSendRate * 100)}%`}
+              hint="utan agent-touch"
+              tone="neutral"
+            />
+          </div>
+
+          {aiQuality.totalDrafts === 0 && (
+            <p className="text-xs text-white/45 italic text-center pt-2">
+              Inga AI-utkast än under perioden. Statistiken fylls på när AI:n börjar arbeta.
+            </p>
+          )}
+        </div>
+      </section>
+
       {/* Status breakdown */}
       <section>
         <h2 className="text-[10px] font-semibold text-white/45 uppercase tracking-widest mb-3">
@@ -229,6 +301,30 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
     <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm p-5">
       <p className="text-[10px] font-semibold text-white/45 uppercase tracking-widest mb-3">{title}</p>
       {children}
+    </div>
+  );
+}
+
+/** Single AI-quality KPI tile — P3.2. Used in the AI quality dashboard. */
+function QualityKpi({
+  label, value, hint, tone,
+}: {
+  label: string;
+  value: string;
+  hint:  string;
+  tone:  "green" | "amber" | "red" | "neutral";
+}) {
+  const toneClass = {
+    green:   "text-green-400",
+    amber:   "text-amber-400",
+    red:     "text-red-400",
+    neutral: "text-white",
+  }[tone];
+  return (
+    <div className="space-y-1">
+      <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold">{label}</p>
+      <p className={`text-2xl font-bold tracking-tight tabular-nums ${toneClass}`}>{value}</p>
+      <p className="text-[11px] text-white/40">{hint}</p>
     </div>
   );
 }
