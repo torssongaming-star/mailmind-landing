@@ -174,7 +174,14 @@ export function Sidebar({
   }, [mobileOpen]);
  
   const toggle = (id: string) =>
-    setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
+    setExpanded(prev => {
+      // If we are opening this menu, close all others (accordion style)
+      if (!prev[id]) {
+        return { [id]: true };
+      }
+      // If closing, just close it
+      return { ...prev, [id]: false };
+    });
  
   // Shared nav body for both desktop sidebar and mobile drawer
   const navBody = (
