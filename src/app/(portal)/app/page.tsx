@@ -54,6 +54,11 @@ export default async function AppHomePage() {
     listInboxes(account.organization.id),
     listCaseTypes(account.organization.id),
   ]);
+
+  // Onboarding not complete (no case types saved yet) → send back to resume
+  if (caseTypeRows.length === 0) {
+    redirect("/app/onboarding");
+  }
   const setup = {
     accountReady:    !!account.user,
     inboxConnected:  inboxes.length > 0,

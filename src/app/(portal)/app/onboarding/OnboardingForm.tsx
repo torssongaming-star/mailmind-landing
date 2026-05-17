@@ -656,12 +656,14 @@ function WebhooksStep({ onFinish }: { onFinish: () => void }) {
 export function OnboardingForm({
   email,
   suggestedOrgName,
+  initialStep = "workspace",
 }: {
   email: string;
   suggestedOrgName: string;
+  initialStep?: Step;
 }) {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("workspace");
+  const [step, setStep] = useState<Step>(initialStep);
 
   const finish = () => {
     router.push("/app");

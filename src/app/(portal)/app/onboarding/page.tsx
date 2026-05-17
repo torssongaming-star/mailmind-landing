@@ -35,10 +35,12 @@ export default async function OnboardingPage() {
   const account = await getCurrentAccount(userId);
 
   // Already fully onboarded (user + at least one case type) → send to app.
+  let initialStep: "workspace" | "website" | "casetypes" | "aibehavior" | "webhooks" = "workspace";
   if (account.user) {
-    const caseTypes = await listCaseTypes(account.organization.id);
-    if (caseTypes.length > 0) redirect("/app");
-    // else: user exists but onboarding was interrupted — fall through to show form
+    const existingCaseTypes = await listCaseTypes(account.organization.id);
+    if (existingCaseTypes.length > 0) redirect("/app");
+    // User provisioned but no case types — resume at step 3
+    initialStep = "casetypes";
   }
 
   const email = clerkUser.primaryEmailAddress?.emailAddress ?? "";
@@ -83,6 +85,7 @@ export default async function OnboardingPage() {
           <OnboardingForm
             email={email}
             suggestedOrgName={suggestedOrgName}
+            initialStep={initialStep}
           />
 
           <p className="text-[11px] text-white/35 mt-6 leading-relaxed">
