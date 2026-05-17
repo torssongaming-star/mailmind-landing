@@ -4,6 +4,18 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { PLAN_LIST } from "@/lib/plans";
 
+/** P1.2 — show price incl. Swedish VAT (25%) for B2B transparency.
+ *  Accepts "€19" / "199 kr" / "19" and returns same shape × 1.25 rounded. */
+function priceWithVat(price: string): string {
+  const match = price.match(/^([^0-9]*)([0-9]+(?:[.,][0-9]+)?)\s*(.*)$/);
+  if (!match) return price;
+  const [, prefix, num, suffix] = match;
+  const n = parseFloat(num.replace(",", "."));
+  if (isNaN(n)) return price;
+  const withVat = Math.round(n * 1.25);
+  return `${prefix}${withVat}${suffix ? " " + suffix : ""}`;
+}
+
 export function Pricing() {
   return (
     <section id="pricing" className="py-20 md:py-28 px-6 border-t border-white/5">
@@ -52,10 +64,15 @@ export function Pricing() {
                   {plan.id === "enterprise" ? (
                     <p className="text-2xl font-semibold text-white tracking-tight">Kontakta oss</p>
                   ) : (
-                    <p className="text-3xl font-semibold text-white tracking-tight tabular-nums">
-                      {plan.price}
-                      <span className="text-xs text-white/40 font-normal">/mån</span>
-                    </p>
+                    <>
+                      <p className="text-3xl font-semibold text-white tracking-tight tabular-nums">
+                        {plan.price}
+                        <span className="text-xs text-white/40 font-normal">/mån</span>
+                      </p>
+                      <p className="text-[10px] text-white/35 mt-1 tabular-nums">
+                        exkl. moms · {priceWithVat(plan.price)}/mån inkl. moms
+                      </p>
+                    </>
                   )}
                 </div>
 

@@ -29,13 +29,13 @@ export function Hero() {
           Din agent godkänner med ett klick. AI:n är granskad, källgrundad och bygd för svenska SMB.
         </p>
 
-        {/* CTAs */}
+        {/* CTAs — primary = demo-led GTM (P1.3 fix). Self-serve sekundärt. */}
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             href="#contact"
             className="group inline-flex items-center gap-2 h-11 px-6 rounded-xl bg-primary text-[hsl(var(--surface-base))] text-sm font-semibold hover:bg-cyan-300 transition-all shadow-[0_4px_24px_-2px_hsl(189_94%_43%/0.45)] hover:shadow-[0_6px_32px_-2px_hsl(189_94%_43%/0.6)]"
           >
-            Boka demo
+            Boka 20-min demo
             <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
           <Link
@@ -43,6 +43,12 @@ export function Hero() {
             className="inline-flex items-center gap-2 h-11 px-6 rounded-xl border border-white/10 text-sm font-medium text-white/80 hover:text-white hover:bg-white/[0.04] hover:border-white/20 transition-colors"
           >
             Se hur det funkar
+          </Link>
+          <Link
+            href="/signup"
+            className="text-xs text-white/40 hover:text-white/70 transition-colors mt-2 sm:mt-0 sm:ml-2 underline-offset-4 hover:underline"
+          >
+            eller starta gratis prov →
           </Link>
         </div>
 

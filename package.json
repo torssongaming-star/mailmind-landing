@@ -22,6 +22,7 @@
     "@clerk/themes": "^2.4.57",
     "@neondatabase/serverless": "^1.1.0",
     "@radix-ui/react-slot": "^1.2.4",
+    "@sentry/nextjs": "^10.53.1",
     "@types/web-push": "^3.6.4",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
