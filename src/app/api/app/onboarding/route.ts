@@ -17,6 +17,7 @@ import { db, isDbConnected, subscriptions, licenseEntitlements, caseTypes } from
 import { eq } from "drizzle-orm";
 import { PLANS } from "@/lib/plans";
 import { writeAuditLog } from "@/lib/app/audit";
+import { trackEvent, identifyUser, groupOrg } from "@/lib/analytics";
 
 export const runtime = "nodejs";
 
@@ -169,6 +170,18 @@ export async function POST(req: NextRequest) {
     action:         "onboarding_completed",
     metadata:       { orgName: parsed.data.orgName, email, trialDays: TRIAL_DAYS },
   });
+
+  // Analytics — fire-and-forget, non-blocking (GDPR: no email/name, only IDs)
+  await Promise.all([
+    trackEvent({
+      distinctId:  userId,
+      event:       "signup.completed",
+      properties:  { method: "email", org_id: orgId },
+      groups:      { organization: orgId },
+    }),
+    identifyUser(userId, { orgId, plan: "starter" }),
+    groupOrg(orgId, { plan: "starter", status: "trialing", createdAt: new Date().toISOString() }),
+  ]);
 
   return NextResponse.json({
     ok: true,

@@ -28,6 +28,12 @@ const OUTLOOK_FRAME_CSP =
 const DENY_FRAME_CSP = "frame-ancestors 'self';";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      // Keep old /v2 links working after the swap
+      { source: "/v2", destination: "/", permanent: false },
+    ];
+  },
   async headers() {
     return [
       // Outlook add-in routes — allow embedding in Outlook frames

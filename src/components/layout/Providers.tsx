@@ -4,6 +4,33 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { dark } from "@clerk/themes";
 import { I18nProvider } from "@/lib/i18n/context";
 import { Locale } from "@/lib/i18n/types";
+import posthog from "posthog-js";
+import { PostHogProvider as PHProvider } from "posthog-js/react";
+
+// Initialise PostHog once on the client. Guarded by typeof window so SSR is safe.
+// EU endpoint keeps data within the EEA (Schrems II compliance).
+// respect_dnt: true honours the browser's Do Not Track header.
+// person_profiles: "identified_only" — no anonymous profiles (GDPR minimisation).
+if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_POSTHOG_KEY) {
+  posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
+    api_host:            process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://eu.i.posthog.com",
+    ui_host:             "https://eu.posthog.com",
+    capture_pageview:    false, // Next.js App Router handles routing; fire manually if needed
+    capture_pageleave:   false,
+    respect_dnt:         true,
+    persistence:         "localStorage+cookie",
+    person_profiles:     "identified_only",
+    sanitize_properties: (props) => {
+      // Extra guard: strip any field that looks like an email address
+      const clean: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(props)) {
+        if (typeof v === "string" && /[^\s@]+@[^\s@]+\.[^\s@]+/.test(v)) continue;
+        clean[k] = v;
+      }
+      return clean;
+    },
+  });
+}
 
 
 
@@ -20,6 +47,7 @@ export function Providers({
   locale?: string;
 }) {
   return (
+    <PHProvider client={posthog}>
     <ClerkProvider
 
 
@@ -122,6 +150,7 @@ export function Providers({
       </I18nProvider>
 
     </ClerkProvider>
+    </PHProvider>
   );
 }
 

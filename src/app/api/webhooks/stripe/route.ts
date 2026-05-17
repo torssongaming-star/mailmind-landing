@@ -5,6 +5,7 @@ import * as db from "@/lib/db/queries";
 import { PLANS } from "@/lib/plans";
 import Stripe from "stripe";
 import { Subscription as DbSubscription } from "@/lib/db/schema";
+import { trackEvent, groupOrg } from "@/lib/analytics";
 
 /**
  * Map Stripe subscription status → our DB enum.
@@ -143,6 +144,17 @@ export async function POST(req: NextRequest) {
           },
         });
 
+        // 6. Analytics: upgrade.completed (trial → paid plan)
+        void Promise.all([
+          trackEvent({
+            distinctId:  clerkUserId,
+            event:       "upgrade.completed",
+            properties:  { fromPlan: "trialing", toPlan: plan, org_id: syncResult.organizationId },
+            groups:      { organization: syncResult.organizationId },
+          }),
+          groupOrg(syncResult.organizationId, { plan, status: "active" }),
+        ]);
+
         break;
       }
 
@@ -202,6 +214,22 @@ export async function POST(req: NextRequest) {
             action: "subscription_canceled",
             metadata: { stripeSubscriptionId: subscription.id },
           });
+
+          // Analytics: churn.cancelled
+          const priceId   = subscription.items.data[0]?.price.id;
+          const churnPlan = getPlanFromPriceId(priceId ?? "") ?? "starter";
+          const daysActive = Math.round(
+            (Date.now() - subscription.created * 1000) / (1000 * 60 * 60 * 24),
+          );
+          void Promise.all([
+            trackEvent({
+              distinctId:  orgId,
+              event:       "churn.cancelled",
+              properties:  { plan: churnPlan, daysActive, org_id: orgId },
+              groups:      { organization: orgId },
+            }),
+            groupOrg(orgId, { plan: "starter", status: "cancelled" }),
+          ]);
         }
         break;
       }

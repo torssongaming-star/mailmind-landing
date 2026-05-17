@@ -75,7 +75,13 @@ const config: Config = {
         "glow-spin": {
           "0%": { transform: "rotate(0deg)" },
           "100%": { transform: "rotate(360deg)" },
-        }
+        },
+        "dot-spotlight": {
+          "0%":   { transform: "translate(-30%, 10%) scale(1)",   opacity: "0.55" },
+          "35%":  { transform: "translate(40%, -20%) scale(1.2)", opacity: "0.45" },
+          "65%":  { transform: "translate(10%, 50%) scale(0.9)",  opacity: "0.50" },
+          "100%": { transform: "translate(-30%, 10%) scale(1)",   opacity: "0.55" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -83,6 +89,7 @@ const config: Config = {
         "float": "float 6s ease-in-out infinite",
         "pulse-slow": "pulse-slow 4s ease-in-out infinite",
         "glow-spin": "glow-spin 10s linear infinite",
+        "dot-spotlight": "dot-spotlight 18s ease-in-out infinite",
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

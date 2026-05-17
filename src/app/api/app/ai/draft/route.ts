@@ -33,6 +33,7 @@ import {
 import { listActiveKnowledge } from "@/lib/app/knowledge";
 import { generateDraft, AiTransientError } from "@/lib/app/ai";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { trackEvent } from "@/lib/analytics";
 
 export const runtime = "nodejs";
 
@@ -175,6 +176,16 @@ export async function POST(req: NextRequest) {
       model:   ai.model,
     },
   });
+
+  // Analytics: track first draft generated per org (non-blocking)
+  if (usage.ok && usage.aiDraftsUsed === 1) {
+    void trackEvent({
+      distinctId: userId,
+      event:      "first_ai_draft_approved",
+      properties: { org_id: orgId, draft_action: ai.output.action },
+      groups:     { organization: orgId },
+    });
+  }
 
   return NextResponse.json({
     draft,

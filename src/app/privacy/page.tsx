@@ -215,11 +215,22 @@ export default function PrivacyPage() {
             <li>AI:n kan göra fel — vi rekommenderar mänsklig granskning av alla svar</li>
           </ul>
 
-          <h2>11. Cookies</h2>
+          <h2>11. Cookies och produktanalys</h2>
           <p>
             Vi använder strikt nödvändiga cookies, funktionella cookies (efter samtycke) och
             anonym analys (efter samtycke). Se vår <Link href="/cookies">Cookie-policy</Link> och hantera
             ditt samtycke via &quot;Cookie-inställningar&quot; i sidfoten.
+          </p>
+          <p>
+            <strong>PostHog (produktanalys).</strong> Vi använder PostHog för att mäta hur
+            funktioner används och var i onboarding-flödet användare stöter på problem. PostHog
+            behandlar data inom EU (PostHog Cloud EU, Frankfurt). Vi aktiverar{" "}
+            <em>respect_dnt</em> — har du aktiverat &quot;Do Not Track&quot; i din webbläsare
+            samlar vi inte in någon analysdata. Ingen PII (e-postadress, namn) skickas till
+            PostHog; vi spårar enbart pseudonyma ID:n (Clerk user-ID, organisations-ID) och
+            aggregerade händelser (t.ex. &quot;onboarding slutförd&quot;, &quot;utkast skickat&quot;).
+            Behandlingsgrund: berättigat intresse (Artikel 6.1 f) för produktförbättring.
+            Databiträdesavtal med PostHog är undertecknat.
           </p>
 
           <h2>12. Ändringar i denna policy</h2>

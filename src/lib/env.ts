@@ -86,6 +86,30 @@ export function resolveLegacyEnv(canonical: string, legacy: string): string | un
   return undefined;
 }
 
+/**
+ * PostHog analytics variables.
+ *
+ * POSTHOG_KEY              — server-side only (never exposed to client bundle).
+ * NEXT_PUBLIC_POSTHOG_KEY  — same value; exposed to client for posthog-js init.
+ * NEXT_PUBLIC_POSTHOG_HOST — EU endpoint: https://eu.i.posthog.com (required for GDPR).
+ *
+ * In production, NEXT_PUBLIC_POSTHOG_KEY and NEXT_PUBLIC_POSTHOG_HOST must be set.
+ * If they are missing, analytics calls are silently skipped (non-fatal).
+ */
+// (values validated at call-time in src/lib/analytics.ts — absent key = no-op)
+
+/**
+ * Return the value of `name` in production, throw MissingEnvError if absent.
+ * In non-production environments return undefined so local dev still works.
+ */
+export function requireInProduction(name: string): string | undefined {
+  const v = process.env[name];
+  if (process.env.NODE_ENV === "production" && (!v || v.length === 0)) {
+    throw new MissingEnvError([name]);
+  }
+  return v && v.length > 0 ? v : undefined;
+}
+
 /** Compare a header value against an expected secret using constant-time
  *  comparison. Returns false if either side is empty (no false-pass on undefined). */
 export function constantTimeEquals(a: string | null | undefined, b: string | null | undefined): boolean {

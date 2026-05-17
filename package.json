@@ -11,7 +11,8 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:autoSend": "vitest run src/lib/app/autoSend.test.ts"
   },
   "keywords": [],
   "author": "",
@@ -34,6 +35,8 @@
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.14.0",
     "next": "^16.2.4",
+    "posthog-js": "^1.373.5",
+    "posthog-node": "^5.34.2",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-markdown": "^10.1.0",

@@ -47,6 +47,10 @@ import { isBlocked } from "@/lib/app/blocklist";
 import { maskEmail } from "@/lib/utils";
 import { verifyGoogleOidcJwt } from "@/lib/app/google-oidc";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { createLogger } from "@/lib/log";
+import { requireInProduction } from "@/lib/env";
+
+const log = createLogger("gmail/push");
 
 export const runtime = "nodejs";
 
@@ -67,33 +71,36 @@ type GmailPushData = {
 export async function POST(req: NextRequest) {
   // ── 0. Authenticate Google (strategi-revision P2.4) ───────────────────────
   // In prod: require OIDC JWT signed by Google for the configured audience.
-  // In non-prod with ALLOW_UNAUTH_PUBSUB=1, skip auth for local testing.
-  const expectedAudience = process.env.GMAIL_PUSH_AUDIENCE;
-  const allowUnauth =
-    process.env.ALLOW_UNAUTH_PUBSUB === "1" &&
+  // In non-prod with ALLOW_UNSIGNED_PUBSUB=1, skip auth for local testing.
+  const expectedAudience = requireInProduction("GMAIL_PUSH_OIDC_AUDIENCE")
+    ?? process.env.GMAIL_PUSH_OIDC_AUDIENCE;
+  const allowUnsigned =
+    process.env.ALLOW_UNSIGNED_PUBSUB === "1" &&
     process.env.NODE_ENV !== "production";
 
   if (!expectedAudience) {
-    if (!allowUnauth) {
-      console.error("[gmail/push] GMAIL_PUSH_AUDIENCE not configured");
+    if (!allowUnsigned) {
+      log.error("GMAIL_PUSH_OIDC_AUDIENCE not configured");
       return NextResponse.json({ error: "misconfigured" }, { status: 500 });
     }
+    log.warn("ALLOW_UNSIGNED_PUBSUB active — skipping JWT auth (dev only)");
   } else {
     const authHeader = req.headers.get("authorization") ?? "";
     const m = authHeader.match(/^Bearer\s+(.+)$/i);
     if (!m) {
-      console.warn("[gmail/push] missing Bearer token");
+      log.warn("missing Bearer token — rejected");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const result = await verifyGoogleOidcJwt(
       m[1],
       expectedAudience,
-      process.env.GMAIL_PUSH_SERVICE_ACCOUNT, // optional pinning
+      process.env.GMAIL_PUSH_SERVICE_ACCOUNT, // optional service-account pinning
     );
     if (!result.ok) {
-      console.warn("[gmail/push] JWT verify failed:", result.reason);
+      log.warn("JWT verify failed", { reason: result.reason });
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    log.info("JWT accepted", { sub: result.payload.sub ?? "unknown" });
   }
 
   // ── 1. Parse Pub/Sub envelope ──────────────────────────────────────────────
@@ -113,7 +120,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { emailAddress, historyId: newHistoryId } = pushData;
-  console.log(`[gmail/push] notification for ${maskEmail(emailAddress)}, historyId=${newHistoryId}`);
+  log.info("notification received", { email: maskEmail(emailAddress), historyId: newHistoryId });
 
   // ── 2. Look up inbox ───────────────────────────────────────────────────────
   const inbox = await getInboxByEmail(emailAddress);
@@ -123,13 +130,13 @@ export async function POST(req: NextRequest) {
 
   // Per-inbox rate limit (defense-in-depth)
   if (!rateLimit(`inbound:gmail:${inbox.id}`, RATE_LIMITS.inboundWebhook)) {
-    console.warn("[gmail/push] rate-limited", inbox.id);
+    log.warn("rate-limited", { inboxId: inbox.id });
     return NextResponse.json({ status: "rate_limited" }, { status: 429 });
   }
 
   const config = inbox.config as GmailInboxConfig | null;
   if (!config?.encryptedTokens) {
-    console.error(`[gmail/push] inbox ${inbox.id} has no encrypted tokens`);
+    log.error("inbox has no encrypted tokens", { inboxId: inbox.id });
     return NextResponse.json({ ok: true, skipped: "no_tokens" });
   }
 
@@ -137,14 +144,14 @@ export async function POST(req: NextRequest) {
   // Pub/Sub guarantees at-least-once delivery — skip if we've already
   // processed this historyId or newer.
   if (config.historyId && Number(newHistoryId) <= Number(config.historyId)) {
-    console.log(`[gmail/push] stale historyId ${newHistoryId} <= stored ${config.historyId}, skipping`);
+    log.info("stale historyId — skipping", { newHistoryId, stored: config.historyId });
     return NextResponse.json({ ok: true, skipped: "stale_history_id" });
   }
 
   // ── 3. Decrypt + refresh tokens if needed ─────────────────────────────────
   let tokens = decryptTokens(config.encryptedTokens);
   const { token: accessToken, updated } = await getValidAccessToken(tokens).catch(err => {
-    console.error("[gmail/push] token refresh failed:", err);
+    log.error("token refresh failed", { error: String(err) });
     return { token: null as unknown as string, updated: null };
   });
 
@@ -160,7 +167,7 @@ export async function POST(req: NextRequest) {
     accessToken,
     startHistoryId,
   ).catch(err => {
-    console.error("[gmail/push] listHistory failed:", err);
+    log.error("listHistory failed", { error: String(err) });
     return { messages: [], latestHistoryId: String(newHistoryId) };
   });
 
@@ -233,7 +240,7 @@ export async function POST(req: NextRequest) {
         organizationId: inbox.organizationId,
         threadId:       thread.id,
         newEmailBody:   parsed.bodyText,
-      }).catch(err => console.error("[gmail/push] autoTriage failed:", err));
+      }).catch(err => log.error("autoTriage failed", { error: String(err) }));
 
     } catch (err) {
       console.error(`[gmail/push] failed to process message ${gmailMsgId}:`, err);

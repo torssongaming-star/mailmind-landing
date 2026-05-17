@@ -62,7 +62,7 @@ SELECT COUNT(*) AS unmapped FROM email_messages WHERE organization_id IS NULL;
 
 **a) Lägg till env i Vercel:**
 - Settings → Environment Variables → **Add New**
-- Name: `GMAIL_PUSH_AUDIENCE`
+- Name: `GMAIL_PUSH_OIDC_AUDIENCE`
 - Value: `https://mailmind.se/api/webhooks/gmail/push`
 - Environments: alla tre (Production + Preview + Development)
 
@@ -130,13 +130,32 @@ För +15-20% MRR via rabatterade årsabonnemang:
 
 ---
 
-### Steg 8 — PostHog/Plausible analytics (10 min, valfritt)
+### Steg 8 — PostHog EU aktivering (10 min)
 
-För funnel-mätning på landing och onboarding:
+PostHog är nu installerat och instrumenterat i koden. Aktivera med tre env-variabler i Vercel:
 
-1. Skapa konto på **posthog.com** (gratis upp till 1M events/mån) eller **plausible.io**
-2. Kopiera API-key
-3. Skicka till mig → jag instrumenterar Hero/Pricing/Signup/Onboarding-stegen
+1. Skapa konto på **eu.posthog.com** (PostHog Cloud EU — GDPR-kompatibelt)
+2. **Project Settings → Project API key** → kopiera nyckeln (börjar med `phc_`)
+3. Vercel → Settings → Environment Variables → lägg till:
+
+| Name | Value | Environments |
+|---|---|---|
+| `POSTHOG_KEY` | `phc_xxxx` | Production, Preview, Development |
+| `NEXT_PUBLIC_POSTHOG_KEY` | `phc_xxxx` (samma) | Production, Preview, Development |
+| `NEXT_PUBLIC_POSTHOG_HOST` | `https://eu.i.posthog.com` | Production, Preview, Development |
+
+4. Redeploy (automatisk vid env-ändring)
+
+**Vad som spåras utan mer kod:**
+- `signup.completed` + identify + group vid onboarding
+- `first_ai_draft_approved` vid första AI-utkast
+- `first_ai_draft_sent` vid första skickat svar
+- `upgrade.completed` vid betalning via Stripe
+- `churn.cancelled` vid avslut
+
+**Client-side events att koppla (kallar `captureEvent` från `@/lib/client/analytics`):**
+- `landing.cta_clicked` — lägg i Hero/Pricing/Footer-knapparna
+- `onboarding.step_started/completed` — lägg i OnboardingForm.tsx
 
 - [ ] Klart
 

@@ -104,6 +104,14 @@ Större arbete (1+ vecka):
 
 ## Vad som gjorts sedan senast (Emil läser detta)
 
+### Strategi-revision P2.1 — riktiga limit-räknare (klar)
+- `src/lib/app/entitlements.ts`: `AccountSnapshot` har nu fälten `inboxesUsed` och `usersUsed` som räknas via två parallella `COUNT(*)` mot `inboxes` resp. `users` med `organizationId` i WHERE. Tidigare hårdkodade `0`/`1` → inbox- och seat-limit höll aldrig.
+- Nya helpers: `assertCanAddInbox(clerkUserId)` och `assertCanInviteUser(clerkUserId)` (samma mönster som `assertCanGenerateAiDraft`).
+- `computeAccess()` tar `inboxesUsed`/`usersUsed` som input och blockerar exakt vid `limit + 1`. Reason-koder: `inbox_limit_reached`, `user_limit_reached`.
+- Konsumeras av `src/app/api/app/inboxes/route.ts` (POST) och `src/app/api/app/team/route.ts` (POST) via `account.access.canAddInbox` / `canInviteUser`.
+- Tester: `src/lib/app/entitlements.test.ts` — 24 vitest-tester verifierar att gränsen blockas vid limit+1, role-gating för invites, `deletion_pending` / `past_due` / `cancelled` policy, AI-draft-limit och `hasRole`.
+- Ingen DB-migration krävs — bara nya queries mot befintliga tabeller.
+
 ### Gmail OAuth (Fas 9) — klar
 - Användare kopplar sitt Gmail-konto via `/api/app/inboxes/gmail/auth` → Google OAuth → callback
 - Inkommande mail via Google Pub/Sub push till `/api/webhooks/gmail/push` (behöver `GMAIL_PUBSUB_TOPIC` i Vercel)

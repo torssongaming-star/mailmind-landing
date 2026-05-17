@@ -22,6 +22,7 @@ import { getCurrentAccount } from "@/lib/app/entitlements";
 import { getDraft, updateDraft } from "@/lib/app/threads";
 import { executeSendDraft } from "@/lib/app/autoSend";
 import { writeAuditLog } from "@/lib/app/audit";
+import { trackEvent } from "@/lib/analytics";
 
 export const runtime = "nodejs";
 
@@ -104,6 +105,14 @@ export async function PATCH(
     const status = sendResult.error.startsWith("resend_error") ? 502 : 500;
     return NextResponse.json({ error: sendResult.error }, { status });
   }
+
+  // Analytics: first_ai_draft_sent (non-blocking)
+  void trackEvent({
+    distinctId: userId,
+    event:      "first_ai_draft_sent",
+    properties: { org_id: orgId, draft_id: draftId },
+    groups:     { organization: orgId },
+  });
 
   // Re-fetch draft for the updated thread status to return to client
   const sent = await getDraft(orgId, draftId);

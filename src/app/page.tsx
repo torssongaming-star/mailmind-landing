@@ -1,35 +1,27 @@
-import { Navbar } from "@/components/sections/Navbar";
-import { Hero } from "@/components/sections/Hero";
-import { Problem } from "@/components/sections/Problem";
-import { Demo } from "@/components/sections/Demo";
-import { HowItWorks } from "@/components/sections/HowItWorks";
-import { Features } from "@/components/sections/Features";
-import { UseCases } from "@/components/sections/UseCases";
-import { Security } from "@/components/sections/Security";
-import { Pricing } from "@/components/sections/Pricing";
-import { FAQ } from "@/components/sections/FAQ";
-import { Contact } from "@/components/sections/Contact";
-import { CTA } from "@/components/sections/CTA";
-import { Footer } from "@/components/sections/Footer";
+import { Navbar } from "./v2/_components/Navbar";
+import { Hero } from "./v2/_components/Hero";
+import { Why } from "./v2/_components/Why";
+import { HowItWorks } from "./v2/_components/HowItWorks";
+import { Features } from "./v2/_components/Features";
+import { Security } from "./v2/_components/Security";
+import { Pricing } from "./v2/_components/Pricing";
+import { FAQContact } from "./v2/_components/FAQContact";
+import { LegalFooter } from "@/components/layout/LegalFooter";
 
 export default function Home() {
   return (
     <>
       <Navbar />
-      <main className="flex min-h-screen flex-col">
+      <main>
         <Hero />
-        <Problem />
-        <Demo />
+        <Why />
         <HowItWorks />
         <Features />
-        <UseCases />
         <Security />
         <Pricing />
-        <FAQ />
-        <Contact />
-        <CTA />
+        <FAQContact />
       </main>
-      <Footer />
+      <LegalFooter />
     </>
   );
 }

@@ -5,7 +5,40 @@ import { ArrowRight, ShieldCheck, Zap } from "lucide-react";
 
 export function Hero() {
   return (
-    <section className="relative pt-32 md:pt-40 pb-16 md:pb-24 px-6">
+    <section className="relative pt-32 md:pt-40 pb-16 md:pb-24 px-6 overflow-hidden">
+      {/* Dot-grid background */}
+      <div
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, rgba(255,255,255,0.10) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+        }}
+      />
+      {/* Moving radial spotlight — drifts slowly over the grid */}
+      <div
+        className="pointer-events-none absolute -z-10 animate-dot-spotlight"
+        style={{
+          top: "5%",
+          left: "20%",
+          width: "70vw",
+          height: "70vw",
+          maxWidth: 900,
+          maxHeight: 900,
+          background:
+            "radial-gradient(ellipse at center, hsl(189 94% 43% / 0.18) 0%, hsl(189 94% 43% / 0.06) 40%, transparent 70%)",
+          borderRadius: "50%",
+          filter: "blur(2px)",
+        }}
+      />
+      {/* Edge fade — keeps the grid from looking harsh at the section border */}
+      <div
+        className="pointer-events-none absolute inset-0 -z-10"
+        style={{
+          background:
+            "radial-gradient(ellipse 90% 60% at 50% 0%, transparent 50%, hsl(var(--surface-base)) 100%)",
+        }}
+      />
       <div className="max-w-5xl mx-auto text-center">
         {/* Eyebrow */}
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-white/10 bg-white/[0.03] backdrop-blur-sm mb-6">
