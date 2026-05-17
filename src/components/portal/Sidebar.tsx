@@ -47,16 +47,16 @@ type NavItem = NavLeaf | NavGroup;
  
 const NAV: NavItem[] = [
   {
-    kind:     "group",
-    id:       "home",
+    kind:     "leaf",
+    href:     "/app",
     labelKey: "nav.overview",
     icon:     LayoutDashboard,
-    rootHref: "/app",
-    children: [
-      { href: "/app",           labelKey: "nav.overview" },
-      { href: "/app/stats",     labelKey: "nav.stats"    },
-      { href: "/app/activity",  labelKey: "nav.activity" },
-    ],
+  },
+  {
+    kind:     "leaf",
+    href:     "/app/insights",
+    labelKey: "nav.analytics",
+    icon:     BarChart2,
   },
   {
     kind:     "group",
@@ -92,12 +92,7 @@ const NAV: NavItem[] = [
     labelKey: "nav.team",
     icon:     Users,
   },
-  {
-    kind:     "leaf",
-    href:     "/dashboard/usage",
-    labelKey: "nav.usage",
-    icon:     BarChart2,
-  },
+
 ];
 
 

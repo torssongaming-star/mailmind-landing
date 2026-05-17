@@ -45,10 +45,7 @@ export default async function UsagePage() {
     .toLocaleDateString("sv-SE", { month: "long", day: "numeric", year: "numeric" });
 
   return (
-    <>
-      <DashboardHeader title="Usage" description={`Innevarande period: ${period}`} />
-
-      <main className="flex-1 p-6 space-y-6 max-w-4xl">
+      <main className="flex-1 p-6 md:p-10 space-y-6 max-w-4xl mx-auto">
 
         {/* Current period */}
         <div className="rounded-2xl border border-white/8 bg-[#050B1C]/60 p-6 space-y-6">
@@ -108,7 +105,6 @@ export default async function UsagePage() {
         )}
 
       </main>
-    </>
   );
 }
 

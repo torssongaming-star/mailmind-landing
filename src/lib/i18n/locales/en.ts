@@ -12,6 +12,7 @@ export const en: typeof sv = {
   },
   nav: {
     overview: "Overview",
+    analytics: "Analytics",
     stats: "Stats",
     activity: "Activity",
     inbox: "Inbox",

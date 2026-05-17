@@ -10,6 +10,7 @@ export const sv = {
   },
   nav: {
     overview: "Översikt",
+    analytics: "Insikter",
     stats: "Stats",
     activity: "Aktivitet",
     inbox: "Inkorg",

@@ -201,7 +201,7 @@ export default async function AppHomePage() {
               {t("portal.dashboard.quickActions.connectInbox")}
             </Link>
             <Link
-              href="/app/stats"
+              href="/app/insights/stats"
               className="inline-flex items-center h-11 px-4 rounded-xl border border-white/10 text-white/80 hover:text-white text-sm font-medium hover:bg-white/[0.04] hover:border-white/20 transition-colors"
             >
               {t("portal.dashboard.quickActions.stats")}

@@ -9,7 +9,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import Link from "next/link";
+
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import {
   getThreadStats,
@@ -59,21 +59,6 @@ export default async function StatsPage() {
 
   return (
     <main className="max-w-4xl mx-auto p-6 md:p-10 space-y-8">
-      <header className="flex items-center justify-between gap-4">
-        <div>
-          <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-1">{t("portal.stats.header")}</p>
-          <h1 className="text-2xl font-bold text-white tracking-tight">{account.organization.name}</h1>
-          <p className="text-sm text-white/50 mt-1">
-            {t("portal.stats.description")}
-          </p>
-        </div>
-        <Link
-          href="/app"
-          className="shrink-0 inline-flex items-center h-8 text-xs text-white/55 hover:text-white px-3 rounded-lg hover:bg-white/[0.04] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-        >
-          ← {t("nav.app")}
-        </Link>
-      </header>
 
       {/* Top-line metric cards */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
