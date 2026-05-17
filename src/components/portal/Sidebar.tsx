@@ -116,7 +116,7 @@ function bestActiveChildHref(
   for (const child of sorted) {
     if (
       pathname === child.href ||
-      pathname.startsWith(child.href + "/")
+      (child.href !== "/app" && child.href !== "/dashboard" && pathname.startsWith(child.href + "/"))
     ) {
       return child.href;
     }
