@@ -38,9 +38,25 @@ function redirectUri() {
 // ---------------------------------------------------------------------------
 
 function encryptKey(): Buffer {
-  const hex = process.env.GMAIL_ENCRYPT_KEY;
-  if (!hex || hex.length !== 64) {
-    throw new Error("GMAIL_ENCRYPT_KEY must be 64 hex chars (32 bytes)");
+  // Canonical name is GMAIL_ENCRYPT_KEY. We accept the older
+  // GMAIL_TOKEN_ENCRYPTION_KEY name too for back-compat — but the env-validation
+  // module will warn loudly if only the legacy name is set.
+  const hex = process.env.GMAIL_ENCRYPT_KEY ?? process.env.GMAIL_TOKEN_ENCRYPTION_KEY;
+  if (!hex) {
+    throw new Error(
+      "GMAIL_ENCRYPT_KEY is not set. Generate one with: " +
+      "node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"",
+    );
+  }
+  if (hex.length !== 64) {
+    throw new Error(`GMAIL_ENCRYPT_KEY must be 64 hex chars (32 bytes). Got ${hex.length} chars.`);
+  }
+  if (!/^[0-9a-f]+$/i.test(hex)) {
+    throw new Error("GMAIL_ENCRYPT_KEY must be hex (0-9, a-f).");
+  }
+  // Reject known weak/placeholder values
+  if (/^0+$/.test(hex) || /^[a-f]+$/i.test(hex.slice(0, 8)) && hex === hex.slice(0, 8).repeat(8)) {
+    throw new Error("GMAIL_ENCRYPT_KEY looks like a placeholder. Generate a proper random key.");
   }
   return Buffer.from(hex, "hex");
 }

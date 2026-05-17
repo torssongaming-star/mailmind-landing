@@ -76,9 +76,19 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  // Seat limit check
-  const maxUsers   = account.entitlements?.maxUsers ?? 2;
+  // Seat limit check — uses centralised entitlements (strategi-revision P2.1).
+  // account.usersUsed is computed from real DB count now; canInviteUser
+  // combines that with role + plan limit.
+  if (!account.access.canInviteUser) {
+    const maxUsers = account.entitlements?.maxUsers ?? 2;
+    return NextResponse.json(
+      { error: `Seat limit reached (${account.usersUsed}/${maxUsers}). Upgrade to add more members.`, reason: account.access.reason },
+      { status: 403 },
+    );
+  }
+  // Also count pending invites so we don't oversend
   const memberCount = await countMembers(orgId);
+  const maxUsers = account.entitlements?.maxUsers ?? 2;
   if (memberCount >= maxUsers) {
     return NextResponse.json(
       { error: `Seat limit reached (${memberCount}/${maxUsers}). Upgrade to add more members.` },

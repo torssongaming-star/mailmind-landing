@@ -56,13 +56,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "App access blocked", reason: account.access.reason }, { status: 403 });
   }
 
-  // Inbox count vs entitlement
-  const existing = await listInboxes(account.organization.id);
-  const limit = account.entitlements?.maxInboxes ?? 0;
-  if (existing.length >= limit) {
+  // Plan gate — uses centralised entitlements (strategi-revision P2.1).
+  // account.access.canAddInbox is computed from real DB counts now.
+  if (!account.access.canAddInbox) {
+    const limit = account.entitlements?.maxInboxes ?? 0;
     return NextResponse.json(
-      { error: `Inbox limit reached (${existing.length}/${limit}). Upgrade to add more.` },
-      { status: 403 }
+      { error: `Inbox limit reached (${account.inboxesUsed}/${limit}). Upgrade to add more.`, reason: account.access.reason },
+      { status: 403 },
     );
   }
 

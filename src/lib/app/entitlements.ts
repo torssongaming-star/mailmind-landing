@@ -22,7 +22,8 @@
  */
 
 import { getPortalData } from "@/lib/db/queries";
-import { isDbConnected } from "@/lib/db";
+import { isDbConnected, db, inboxes, users as usersTable } from "@/lib/db";
+import { eq, count } from "drizzle-orm";
 import { PLANS, type PlanKey } from "@/lib/plans";
 import type {
   Organization,
@@ -83,6 +84,10 @@ export type AccountSnapshot = {
   isMock: boolean;
   /** Convenience computed access state. */
   access: AccessState;
+  /** Actual number of connected inboxes for this org (DB count). */
+  inboxesUsed: number;
+  /** Actual number of users in this org (DB count). */
+  usersUsed: number;
 };
 
 // ── Core resolvers ────────────────────────────────────────────────────────────
@@ -122,6 +127,19 @@ export async function getCurrentAccount(
   const planKey = subscription?.plan as PlanKey | undefined;
   const plan = planKey ? PLANS[planKey] : null;
 
+  // Real usage counts — fix for strategi-revision P2.1 (fake hardcoded 0/1).
+  // Run in parallel. Skip when DB unavailable or user not yet provisioned.
+  let inboxesUsed = 0;
+  let usersUsed   = 1;
+  if (dbConnected && portal.org && !userNotInDb) {
+    const [inboxRow, userRow] = await Promise.all([
+      db.select({ c: count() }).from(inboxes).where(eq(inboxes.organizationId, portal.org.id)),
+      db.select({ c: count() }).from(usersTable).where(eq(usersTable.organizationId, portal.org.id)),
+    ]);
+    inboxesUsed = Number(inboxRow[0]?.c ?? 0);
+    usersUsed   = Number(userRow[0]?.c ?? 1);
+  }
+
   // Compute access state from the (possibly nulled) snapshot
   const access = computeAccess({
     user,
@@ -129,6 +147,8 @@ export async function getCurrentAccount(
     subscription,
     entitlements,
     usage,
+    inboxesUsed,
+    usersUsed,
   });
 
   return {
@@ -140,6 +160,8 @@ export async function getCurrentAccount(
     plan,
     isMock,
     access,
+    inboxesUsed,
+    usersUsed,
   };
 }
 
@@ -153,6 +175,9 @@ export function computeAccess(input: {
   subscription: Subscription | null;
   entitlements: LicenseEntitlement | null;
   usage: UsageCounter | null;
+  /** REAL counts from DB. Falsy defaults are testing-only — never trust 0. */
+  inboxesUsed?: number;
+  usersUsed?: number;
 }): AccessState {
   const { user, organization, subscription, entitlements, usage } = input;
 
@@ -205,11 +230,10 @@ export function computeAccess(input: {
   const inboxLimit   = entitlements?.maxInboxes ?? 0;
   const userLimit    = entitlements?.maxUsers ?? 0;
 
-  // We don't track inboxes/users used yet (Phase 2 features) — the helpers
-  // accept `inboxesUsed`/`usersUsed` parameters when those tables exist.
-  // For now, default to 0 used → always allowed within limit.
-  const inboxesUsed = 0;
-  const usersUsed   = 1; // current user themselves
+  // Real counts injected from DB (strategi-revision P2.1 fix).
+  // Defaults match "first user, no inboxes" — only safe for first-load callers.
+  const inboxesUsed = input.inboxesUsed ?? 0;
+  const usersUsed   = input.usersUsed   ?? 1;
 
   const canManageTeam = user.role === "owner" || user.role === "admin";
 
@@ -254,6 +278,41 @@ export async function assertCanGenerateAiDraft(
     return { ok: false, reason: account.access.reason };
   }
   return { ok: true, account };
+}
+
+/** Same pattern: check before INSERT into inboxes. */
+export async function assertCanAddInbox(
+  clerkUserId: string
+): Promise<{ ok: true; account: AccountSnapshot } | { ok: false; reason: AccessState["reason"] }> {
+  const account = await getCurrentAccount(clerkUserId);
+  if (!account.access.canAddInbox) {
+    return { ok: false, reason: account.access.reason };
+  }
+  return { ok: true, account };
+}
+
+/** Same pattern: check before sending an invite. */
+export async function assertCanInviteUser(
+  clerkUserId: string
+): Promise<{ ok: true; account: AccountSnapshot } | { ok: false; reason: AccessState["reason"] }> {
+  const account = await getCurrentAccount(clerkUserId);
+  if (!account.access.canInviteUser) {
+    return { ok: false, reason: account.access.reason };
+  }
+  return { ok: true, account };
+}
+
+/** Centralised role check (P4.2). Use everywhere instead of raw user.role. */
+export function hasRole(
+  account: AccountSnapshot,
+  required: "owner" | "admin" | "member",
+): boolean {
+  const role = account.user?.role;
+  if (!role) return false;
+  if (required === "member") return true; // any role
+  if (required === "admin")  return role === "owner" || role === "admin";
+  if (required === "owner")  return role === "owner";
+  return false;
 }
 
 /**

@@ -1,0 +1,5 @@
+# Don't deploy the side-project to mailmind.se
+household-bills/
+
+# Don't deploy debug/scratch
+scratch/

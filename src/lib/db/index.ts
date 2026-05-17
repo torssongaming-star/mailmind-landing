@@ -38,8 +38,13 @@ export const db = new Proxy({} as DrizzleDb, {
   get(_target, prop) {
     const client = getDb();
     if (!client) {
-      // Return a no-op function so callers get null instead of crashing
-      return () => null;
+      // Hard-fail instead of silently returning null. Strategi-revision P2.2:
+      // silent fallback masked config errors in production. Callers must gate
+      // writes behind isDbConnected() and handle the no-DB case explicitly.
+      throw new Error(
+        `[db] access attempted (${String(prop)}) but DATABASE_URL is not set. ` +
+        `Call isDbConnected() first.`,
+      );
     }
     const value = (client as unknown as Record<string | symbol, unknown>)[prop];
     return typeof value === "function" ? value.bind(client) : value;

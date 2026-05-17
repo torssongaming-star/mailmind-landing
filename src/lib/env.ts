@@ -47,6 +47,45 @@ export function assertSet(...names: string[]): void {
   if (missing.length > 0) throw new MissingEnvError(missing);
 }
 
+/**
+ * Validate a hex-encoded encryption key. Throws clear errors on:
+ *   - Missing / wrong length (must be 64 hex chars = 32 bytes for AES-256)
+ *   - Non-hex / known placeholder values
+ */
+export function validateHexKey(name: string, hex: string | undefined): Buffer {
+  if (!hex) throw new MissingEnvError([name]);
+  if (hex.length !== 64) {
+    throw new Error(`${name} must be 64 hex chars (32 bytes). Got ${hex.length} chars.`);
+  }
+  if (!/^[0-9a-f]+$/i.test(hex)) {
+    throw new Error(`${name} must be hex (0-9, a-f).`);
+  }
+  if (/^0+$/.test(hex)) {
+    throw new Error(`${name} is all zeros — looks like a placeholder. Generate a proper random key.`);
+  }
+  return Buffer.from(hex, "hex");
+}
+
+/**
+ * Detect env-name divergence at startup so misconfigured deployments fail
+ * loudly. Accepts canonical name first, falls back to legacy. Warns when only
+ * the legacy is set, errors when both differ.
+ */
+export function resolveLegacyEnv(canonical: string, legacy: string): string | undefined {
+  const c = process.env[canonical];
+  const l = process.env[legacy];
+  if (c && l && c !== l) {
+    console.error(`[env] BOTH ${canonical} and ${legacy} set with DIFFERENT values. Using ${canonical}.`);
+    return c;
+  }
+  if (c) return c;
+  if (l) {
+    console.warn(`[env] Using legacy ${legacy}. Migrate to ${canonical}.`);
+    return l;
+  }
+  return undefined;
+}
+
 /** Compare a header value against an expected secret using constant-time
  *  comparison. Returns false if either side is empty (no false-pass on undefined). */
 export function constantTimeEquals(a: string | null | undefined, b: string | null | undefined): boolean {
