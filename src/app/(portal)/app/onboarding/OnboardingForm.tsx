@@ -366,6 +366,7 @@ function CaseTypesStep({ onNext }: { onNext: () => void }) {
         {options.map(opt => (
           <label
             key={opt.slug}
+            onClick={() => toggle(opt.slug)}
             className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
               opt.checked
                 ? "border-primary/40 bg-primary/5 text-white"

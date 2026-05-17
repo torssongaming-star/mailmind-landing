@@ -11,6 +11,7 @@ import { z } from "zod";
 import { db, isDbConnected, caseTypes } from "@/lib/db";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { listCaseTypes } from "@/lib/app/threads";
+import { sql } from "drizzle-orm";
 
 export const runtime = "nodejs";
 
@@ -71,13 +72,21 @@ export async function POST(req: NextRequest) {
         sortOrder:      parsed.data.sortOrder ?? 0,
         slaHours:       parsed.data.slaHours ?? null,
       })
+      .onConflictDoUpdate({
+        target: [caseTypes.organizationId, caseTypes.slug],
+        set: {
+          label:          sql`excluded.label`,
+          requiredFields: sql`excluded.required_fields`,
+          routeToEmail:   sql`excluded.route_to_email`,
+          isDefault:      sql`excluded.is_default`,
+          sortOrder:      sql`excluded.sort_order`,
+          slaHours:       sql`excluded.sla_hours`,
+        },
+      })
       .returning();
     return NextResponse.json({ caseType: row });
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
-    if (msg.includes("duplicate") || msg.includes("unique")) {
-      return NextResponse.json({ error: "A case type with this slug already exists" }, { status: 409 });
-    }
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
