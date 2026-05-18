@@ -61,3 +61,15 @@ export function trackUpgradeViewed(
 ): void {
   captureEvent("upgrade.viewed", { fromPlan, triggeredBy });
 }
+
+export function trackDemoExampleSelected(exampleId: string): void {
+  captureEvent("demo.example_selected", { exampleId });
+}
+
+export function trackDemoTriageCompleted(
+  exampleId: string,
+  action: "summarize" | "ask" | "escalate",
+  confidence: number,
+): void {
+  captureEvent("demo.triage_completed", { exampleId, action, confidence });
+}
