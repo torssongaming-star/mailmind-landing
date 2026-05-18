@@ -190,6 +190,7 @@ export const users = pgTable(
     email:          varchar("email", { length: 320 }).notNull(),
     role:           userRoleEnum("role").notNull().default("member"),
     locale:         varchar("locale", { length: 10 }).notNull().default("sv"),
+    signature:      text("signature"),
     createdAt:      timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt:      timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 

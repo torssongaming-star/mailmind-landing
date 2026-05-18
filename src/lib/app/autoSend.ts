@@ -18,7 +18,7 @@
  */
 
 import { eq } from "drizzle-orm";
-import { db, isDbConnected, inboxes as inboxesTable } from "@/lib/db";
+import { db, isDbConnected, inboxes as inboxesTable, users } from "@/lib/db";
 import {
   getDraft,
   updateDraft,
@@ -176,8 +176,18 @@ export async function executeSendDraft(params: {
     const references = priorIds.length > 0 ? priorIds.join(" ") : null;
 
     // Signature
-    const settings  = await getAiSettings(orgId);
-    const finalBody = appendSignature(draft.bodyText, settings?.signature ?? null);
+    const settings = await getAiSettings(orgId);
+    let signatureToUse = settings?.signature ?? null;
+
+    if (userId) {
+      const userRows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+      const user = userRows[0];
+      if (user?.signature?.trim()) {
+        signatureToUse = user.signature;
+      }
+    }
+
+    const finalBody = appendSignature(draft.bodyText, signatureToUse);
     const subject   = replySubject(thread.subject);
 
     let sentMessageId: string | null = null;

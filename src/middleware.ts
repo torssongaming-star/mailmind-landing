@@ -11,7 +11,7 @@ const isProtectedRoute = createRouteMatcher([
   "/api/admin(.*)",
 ]);
 
-export const proxy = clerkMiddleware(async (auth, req) => {
+export default clerkMiddleware(async (auth, req) => {
   // Always allow the health check even if it matches /api/admin(.*)
   // because it handles its own ADMIN_HEALTH_SECRET auth.
   if (req.nextUrl.pathname === "/api/admin/health") {

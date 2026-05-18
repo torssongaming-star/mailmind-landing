@@ -5,6 +5,7 @@ import { DashboardHeader } from "@/components/portal/DashboardHeader";
 import { LanguageSelector } from "./LanguageSelector";
 import { PushNotifications } from "@/components/app/PushNotifications";
 import { DataPrivacy } from "./DataPrivacy";
+import { PersonalSignatureEditor } from "./PersonalSignatureEditor";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { getTranslations } from "@/lib/i18n";
 import { getUserLocale } from "@/lib/i18n/get-locale";
@@ -44,6 +45,8 @@ export default async function AccountPage() {
             orgName={account.organization.name}
             deletionRequestedAt={account.organization.deletionRequestedAt}
           />
+
+          <PersonalSignatureEditor initialSignature={account.user.signature} />
 
           <div className="mailmind-account-profile">
             <UserProfile
