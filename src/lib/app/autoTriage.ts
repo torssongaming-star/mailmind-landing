@@ -82,7 +82,7 @@ export async function autoTriageNewMessage(input: {
 
   // Compute access — passing a stub user since this is a system-triggered call
   const access = computeAccess({
-    user:         { id: "system", clerkUserId: "", organizationId, email: "", role: "owner", locale: "sv", signature: null, createdAt: new Date(), updatedAt: new Date() },
+    user:         { id: "system", clerkUserId: "", organizationId, email: "", role: "owner", locale: "sv", signature: null, appendSignature: true, createdAt: new Date(), updatedAt: new Date() },
     subscription: subRow,
 
     entitlements: entitlementsRow,

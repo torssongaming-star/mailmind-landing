@@ -52,6 +52,7 @@ export const MOCK_USER: User = {
   role:           "owner",
   locale:         "sv",
   signature:      null,
+  appendSignature: true,
   createdAt:      new Date("2025-01-15T09:00:00Z"),
   updatedAt:      new Date(),
 };

@@ -191,6 +191,7 @@ export const users = pgTable(
     role:           userRoleEnum("role").notNull().default("member"),
     locale:         varchar("locale", { length: 10 }).notNull().default("sv"),
     signature:      text("signature"),
+    appendSignature: boolean("append_signature").notNull().default(true),
     createdAt:      timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt:      timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 

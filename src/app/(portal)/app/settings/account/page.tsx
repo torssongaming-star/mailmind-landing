@@ -46,7 +46,10 @@ export default async function AccountPage() {
             deletionRequestedAt={account.organization.deletionRequestedAt}
           />
 
-          <PersonalSignatureEditor initialSignature={account.user.signature} />
+          <PersonalSignatureEditor
+            initialSignature={account.user.signature}
+            initialAppendSignature={account.user.appendSignature ?? true}
+          />
 
           <div className="mailmind-account-profile">
             <UserProfile

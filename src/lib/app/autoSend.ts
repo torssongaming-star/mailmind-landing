@@ -176,16 +176,25 @@ export async function executeSendDraft(params: {
     const inReplyTo  = lastCustomerMsg?.externalMessageId ?? null;
     const references = priorIds.length > 0 ? priorIds.join(" ") : null;
 
-    // Signatures
+    // Signatures — only apply if the sending user has appendSignature enabled
     const settings = await getAiSettings(orgId);
-    let signatureToUse = settings?.signature ?? null;
+    let signatureToUse: string | null = null;
 
     if (userId) {
       const userRows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
       const user = userRows[0];
-      if (user?.signature?.trim()) {
-        signatureToUse = user.signature;
+      // User-level signature takes priority, but only if they've opted in
+      if (user?.appendSignature !== false) {
+        if (user?.signature?.trim()) {
+          signatureToUse = user.signature;
+        } else if (settings?.signature?.trim()) {
+          // Fall back to org-level signature if user has no personal one
+          signatureToUse = settings.signature;
+        }
       }
+    } else if (settings?.signature?.trim()) {
+      // System-triggered sends (no userId) always use org signature
+      signatureToUse = settings.signature;
     }
 
     // Prepare HTML and Plain Text bodies

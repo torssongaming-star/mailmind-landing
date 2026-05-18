@@ -26,3 +26,21 @@ export async function updatePersonalSignature(signature: string) {
     return { ok: false, error: "Ett oväntat fel uppstod när signaturen skulle sparas. Kanske är bilden för stor för databasen?" };
   }
 }
+
+export async function updateAppendSignature(appendSignature: boolean) {
+  try {
+    const { userId } = await auth();
+    if (!userId) return { ok: false, error: "Unauthorized" };
+
+    await db
+      .update(users)
+      .set({ appendSignature })
+      .where(eq(users.clerkUserId, userId));
+
+    revalidatePath("/app/settings/account");
+    return { ok: true };
+  } catch (err: any) {
+    console.error("Failed to update appendSignature:", err);
+    return { ok: false, error: "Kunde inte spara inställningen." };
+  }
+}
