@@ -3,23 +3,30 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Check } from "lucide-react";
-import { PLAN_LIST } from "@/lib/plans";
+import { PLAN_LIST, type Currency } from "@/lib/plans";
 
 /** P1.2 — show price incl. Swedish VAT (25%) for B2B transparency.
- *  Accepts "€19" / "€15.75" and returns same shape × 1.25 rounded. */
+ *  Accepts "€19", "€16", "199 kr", "1 999 kr" and returns same shape × 1.25 rounded. */
 function priceWithVat(price: string): string {
-  const match = price.match(/^([^0-9]*)([0-9]+(?:[.,][0-9]+)?)\s*(.*)$/);
+  // Capture leading currency symbol/prefix, the (possibly space-separated) digit
+  // group, and any trailing suffix (e.g. "kr").
+  const match = price.match(/^([^\d]*)([\d\s.,]+?)(\s*[A-Za-zåäöÅÄÖ]+)?$/);
   if (!match) return price;
-  const [, prefix, num, suffix] = match;
-  const n = parseFloat(num.replace(",", "."));
+  const [, prefix, rawNum, suffix = ""] = match;
+  const n = parseFloat(rawNum.replace(/\s/g, "").replace(",", "."));
   if (isNaN(n)) return price;
   const withVat = Math.round(n * 1.25);
-  return `${prefix}${withVat}${suffix ? " " + suffix : ""}`;
+  // Re-format SEK with thin space thousand separator for readability
+  const formatted = suffix.trim().toLowerCase() === "kr"
+    ? withVat.toLocaleString("sv-SE")
+    : String(withVat);
+  return `${prefix}${formatted}${suffix}`;
 }
 
-export function Pricing() {
+export function Pricing({ currency = "EUR" }: { currency?: Currency }) {
   const [period, setPeriod] = useState<"monthly" | "annual">("monthly");
   const isAnnual = period === "annual";
+  const isSEK    = currency === "SEK";
 
   return (
     <section id="pricing" className="py-20 md:py-28 px-6 border-t border-white/5">
@@ -75,10 +82,19 @@ export function Pricing() {
           {PLAN_LIST.map((plan) => {
             const popular = plan.popular;
 
-            // Price display values
-            const displayPrice     = isAnnual ? plan.priceMonthlyAnnual : plan.price;
-            const displayVat       = priceWithVat(displayPrice);
-            const annualTotal      = isAnnual ? plan.priceAnnual : null;
+            // Pick currency-specific fields
+            const monthlyPrice       = isSEK ? plan.priceSEK              : plan.price;
+            const annualPrice        = isSEK ? plan.priceAnnualSEK        : plan.priceAnnual;
+            const monthlyWhenAnnual  = isSEK ? plan.priceMonthlyAnnualSEK : plan.priceMonthlyAnnual;
+            const savingsLabel       = isSEK ? plan.savingsLabelSEK       : plan.savingsLabel;
+
+            // Annual view shows the YEAR total as primary; monthly view shows month price.
+            const headlinePrice = isAnnual ? annualPrice  : monthlyPrice;
+            const headlineUnit  = isAnnual ? "/år"        : "/mån";
+            const headlineVat   = priceWithVat(headlinePrice);
+            const subline       = isAnnual
+              ? `motsv. ${monthlyWhenAnnual}/mån · ${headlineVat}/år inkl. moms`
+              : `exkl. moms · ${headlineVat}/mån inkl. moms`;
 
             return (
               <div
@@ -103,9 +119,9 @@ export function Pricing() {
                 <div className="mb-4">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="text-sm font-semibold text-white">{plan.name}</p>
-                    {isAnnual && plan.savingsLabel && (
+                    {isAnnual && savingsLabel && (
                       <span className="text-[9px] font-semibold uppercase tracking-wide text-green-400 bg-green-500/10 border border-green-500/20 px-1.5 py-0.5 rounded-full leading-none whitespace-nowrap">
-                        {plan.savingsLabel}
+                        {savingsLabel}
                       </span>
                     )}
                   </div>
@@ -119,18 +135,12 @@ export function Pricing() {
                   ) : (
                     <>
                       <p className="text-3xl font-semibold text-white tracking-tight tabular-nums">
-                        {displayPrice}
-                        <span className="text-xs text-white/40 font-normal">/mån</span>
+                        {headlinePrice}
+                        <span className="text-xs text-white/40 font-normal">{headlineUnit}</span>
                       </p>
-                      {isAnnual && annualTotal ? (
-                        <p className="text-[10px] text-white/35 mt-1 tabular-nums">
-                          {annualTotal}/år · {displayVat}/mån inkl. moms
-                        </p>
-                      ) : (
-                        <p className="text-[10px] text-white/35 mt-1 tabular-nums">
-                          exkl. moms · {displayVat}/mån inkl. moms
-                        </p>
-                      )}
+                      <p className="text-[10px] text-white/35 mt-1 tabular-nums">
+                        {subline}
+                      </p>
                     </>
                   )}
                 </div>

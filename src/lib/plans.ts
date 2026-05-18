@@ -19,10 +19,15 @@ export const PLANS = {
     price: "€19",
     /** Annual total in EUR */
     priceAnnual: "€189",
-    /** Effective monthly cost when billed annually (189/12 ≈ 15.75) */
-    priceMonthlyAnnual: "€15.75",
+    /** Effective monthly cost when billed annually (189/12 ≈ 15.75, rounded) */
+    priceMonthlyAnnual: "€16",
     /** Human-readable annual savings label */
     savingsLabel: "Spara €39/år",
+    // ── Swedish kronor (SEK) ──────────────────────────────────────────────
+    priceSEK:               "199 kr",
+    priceAnnualSEK:         "1 999 kr",
+    priceMonthlyAnnualSEK:  "167 kr",
+    savingsLabelSEK:        "Spara 389 kr/år",
     description: "For small teams testing AI email support",
     features: [
       "1 inbox",
@@ -42,8 +47,12 @@ export const PLANS = {
     name: "Start as a Team",
     price: "€49",
     priceAnnual: "€488",
-    priceMonthlyAnnual: "€40.67",
+    priceMonthlyAnnual: "€41",
     savingsLabel: "Spara €100/år",
+    priceSEK:               "499 kr",
+    priceAnnualSEK:         "5 299 kr",
+    priceMonthlyAnnualSEK:  "442 kr",
+    savingsLabelSEK:        "Spara 689 kr/år",
     description: "For companies handling customer emails every day",
     features: [
       "3 inboxes",
@@ -65,8 +74,12 @@ export const PLANS = {
     name: "Start as a Business",
     price: "€99",
     priceAnnual: "€986",
-    priceMonthlyAnnual: "€82.17",
+    priceMonthlyAnnual: "€82",
     savingsLabel: "Spara €202/år",
+    priceSEK:               "999 kr",
+    priceAnnualSEK:         "11 499 kr",
+    priceMonthlyAnnualSEK:  "958 kr",
+    savingsLabelSEK:        "Spara 489 kr/år",
     description: "For growing teams with higher volume",
     features: [
       "5 inboxes",
@@ -90,6 +103,10 @@ export const PLANS = {
     priceAnnual: "Custom",
     priceMonthlyAnnual: "Custom",
     savingsLabel: "",
+    priceSEK:               "Custom",
+    priceAnnualSEK:         "Custom",
+    priceMonthlyAnnualSEK:  "Custom",
+    savingsLabelSEK:        "",
     description: "Tailored AI solutions for large organizations",
     features: [
       "Custom AI workflows",
@@ -111,6 +128,7 @@ export const PLANS = {
 
 export type PlanKey = keyof typeof PLANS;
 export type BillingPeriod = "monthly" | "annual";
+export type Currency = "EUR" | "SEK";
 
 /** List version for mapping in UI components */
 export const PLAN_LIST = Object.values(PLANS);
