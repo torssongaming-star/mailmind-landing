@@ -13,6 +13,8 @@ export function Hero() {
           backgroundImage:
             "radial-gradient(circle, rgba(255,255,255,0.10) 1px, transparent 1px)",
           backgroundSize: "28px 28px",
+          WebkitMaskImage: "radial-gradient(ellipse 90% 60% at 50% 0%, black 50%, transparent 100%)",
+          maskImage: "radial-gradient(ellipse 90% 60% at 50% 0%, black 50%, transparent 100%)",
         }}
       />
       {/* Moving radial spotlight — drifts slowly over the grid */}
@@ -29,14 +31,6 @@ export function Hero() {
             "radial-gradient(ellipse at center, hsl(189 94% 43% / 0.18) 0%, hsl(189 94% 43% / 0.06) 40%, transparent 70%)",
           borderRadius: "50%",
           filter: "blur(2px)",
-        }}
-      />
-      {/* Edge fade — keeps the grid from looking harsh at the section border */}
-      <div
-        className="pointer-events-none absolute inset-0 -z-10"
-        style={{
-          background:
-            "radial-gradient(ellipse 90% 60% at 50% 0%, transparent 50%, hsl(var(--surface-base)) 100%)",
         }}
       />
       <div className="max-w-5xl mx-auto text-center">
