@@ -665,7 +665,25 @@ export function OnboardingForm({
   const router = useRouter();
   const [step, setStep] = useState<Step>(initialStep);
 
-  const finish = () => {
+  // Persist progress to Clerk publicMetadata (fire-and-forget for intermediate steps)
+  const advanceToStep = (nextStep: Step) => {
+    fetch("/api/app/onboarding", {
+      method:  "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body:    JSON.stringify({ step: nextStep }),
+    }).catch(() => {});
+    setStep(nextStep);
+  };
+
+  // Final step — wait for "done" flag before navigating so /app gate passes
+  const finish = async () => {
+    try {
+      await fetch("/api/app/onboarding", {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ step: "done" }),
+      });
+    } catch {}
     router.push("/app");
     router.refresh();
   };
@@ -678,21 +696,21 @@ export function OnboardingForm({
         <WorkspaceStep
           email={email}
           suggestedOrgName={suggestedOrgName}
-          onNext={() => setStep("website")}
+          onNext={() => advanceToStep("website")}
         />
       )}
       {step === "website" && (
         <WebsiteStep
-          onNext={() => setStep("casetypes")}
+          onNext={() => advanceToStep("casetypes")}
         />
       )}
       {step === "casetypes" && (
         <CaseTypesStep
-          onNext={() => setStep("aibehavior")}
+          onNext={() => advanceToStep("aibehavior")}
         />
       )}
       {step === "aibehavior" && (
-        <AiBehaviorStep onNext={() => setStep("webhooks")} />
+        <AiBehaviorStep onNext={() => advanceToStep("webhooks")} />
       )}
       {step === "webhooks" && (
         <WebhooksStep onFinish={finish} />

@@ -16,7 +16,6 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getCurrentAccount } from "@/lib/app/entitlements";
-import { listCaseTypes } from "@/lib/app/threads";
 import { OnboardingForm } from "./OnboardingForm";
 
 import type { Metadata } from "next";
@@ -34,14 +33,19 @@ export default async function OnboardingPage() {
 
   const account = await getCurrentAccount(userId);
 
-  // Already fully onboarded (user + at least one case type) → send to app.
-  let initialStep: "workspace" | "website" | "casetypes" | "aibehavior" | "webhooks" = "workspace";
-  if (account.user) {
-    const existingCaseTypes = await listCaseTypes(account.organization.id);
-    if (existingCaseTypes.length > 0) redirect("/app");
-    // User provisioned but no case types — resume at step 3
-    initialStep = "casetypes";
-  }
+  // Fully done → send straight to app
+  if (clerkUser.publicMetadata?.onboardingDone === true) redirect("/app");
+
+  // Determine resume step from Clerk metadata
+  const STEP_ORDER = ["workspace", "website", "casetypes", "aibehavior", "webhooks"] as const;
+  type Step = typeof STEP_ORDER[number];
+  const savedStep = clerkUser.publicMetadata?.onboardingStep as string | undefined;
+  const initialStep: Step =
+    !account.user
+      ? "workspace"
+      : STEP_ORDER.includes(savedStep as Step)
+        ? (savedStep as Step)
+        : "website"; // user exists but metadata missing — skip step 1
 
   const email = clerkUser.primaryEmailAddress?.emailAddress ?? "";
   const firstName = clerkUser.firstName ?? "";

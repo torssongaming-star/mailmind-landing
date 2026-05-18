@@ -48,17 +48,17 @@ export default async function AppHomePage() {
   const planKey = account.subscription?.plan;
   const plan = planKey ? PLANS[planKey] : null;
 
+  // Onboarding not fully completed → send back to resume where they left off
+  if (clerkUser.publicMetadata?.onboardingDone !== true) {
+    redirect("/app/onboarding");
+  }
+
   // Setup state for the getting-started checklist
   const [threads, inboxes, caseTypeRows] = await Promise.all([
     listThreads(account.organization.id, { limit: 1 }),
     listInboxes(account.organization.id),
     listCaseTypes(account.organization.id),
   ]);
-
-  // Onboarding not complete (no case types saved yet) → send back to resume
-  if (caseTypeRows.length === 0) {
-    redirect("/app/onboarding");
-  }
   const setup = {
     accountReady:    !!account.user,
     inboxConnected:  inboxes.length > 0,

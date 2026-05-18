@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { syncUserAndOrganization } from "@/lib/db/queries";
 import { db, isDbConnected, subscriptions, licenseEntitlements, caseTypes } from "@/lib/db";
@@ -183,10 +183,42 @@ export async function POST(req: NextRequest) {
     groupOrg(orgId, { plan: "starter", status: "trialing", createdAt: new Date().toISOString() }),
   ]);
 
+  // Mark step 1 done in Clerk metadata so onboarding page can resume correctly
+  const clerk = await clerkClient();
+  await clerk.users.updateUserMetadata(userId, {
+    publicMetadata: { onboardingStep: "website" },
+  });
+
   return NextResponse.json({
     ok: true,
     user: { id: result.user.id, email: result.user.email },
     organizationId: orgId,
     trial: { plan: "starter", days: TRIAL_DAYS },
   });
+}
+
+// ── PATCH — update onboarding progress ────────────────────────────────────────
+
+const VALID_STEPS = ["workspace", "website", "casetypes", "aibehavior", "webhooks", "done"] as const;
+const PatchBody = z.object({
+  step: z.enum(VALID_STEPS),
+});
+
+export async function PATCH(req: NextRequest) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const json = await req.json().catch(() => null);
+  const parsed = PatchBody.safeParse(json);
+  if (!parsed.success) return NextResponse.json({ error: "Invalid step" }, { status: 400 });
+
+  const clerk = await clerkClient();
+  await clerk.users.updateUserMetadata(userId, {
+    publicMetadata: {
+      onboardingStep: parsed.data.step,
+      ...(parsed.data.step === "done" ? { onboardingDone: true } : {}),
+    },
+  });
+
+  return NextResponse.json({ ok: true });
 }
