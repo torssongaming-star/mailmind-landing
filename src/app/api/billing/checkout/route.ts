@@ -5,7 +5,8 @@ import * as db from "@/lib/db/queries";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
-  plan: z.enum(["starter", "team", "business"]),
+  plan:          z.enum(["starter", "team", "business"]),
+  billingPeriod: z.enum(["monthly", "annual"]).default("monthly"),
 });
 
 export async function POST(req: NextRequest) {
@@ -26,11 +27,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid checkout request" }, { status: 400 });
     }
 
-    const { plan } = parsed.data;
+    const { plan, billingPeriod } = parsed.data;
 
-    const priceId = PRICE_IDS[plan];
-    
-    console.log("[billing/checkout] Request:", { plan, priceId, availablePlans: Object.keys(PRICE_IDS) });
+    const priceId = PRICE_IDS[plan]?.[billingPeriod];
+
+    console.log("[billing/checkout] Request:", { plan, billingPeriod, priceId, availablePlans: Object.keys(PRICE_IDS) });
 
     if (!priceId || priceId === "price_replace_me") {
       return NextResponse.json(
@@ -97,11 +98,13 @@ export async function POST(req: NextRequest) {
       metadata: {
         clerkUserId: userId,
         plan,
+        billingPeriod,
       },
       subscription_data: {
         metadata: {
           clerkUserId: userId,
           plan,
+          billingPeriod,
         },
       },
     });

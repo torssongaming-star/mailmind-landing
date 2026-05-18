@@ -32,7 +32,7 @@ async function getDb() {
   return db;
 }
 
-import { PLANS } from "../plans";
+import { PLANS, BillingPeriod } from "../plans";
 
 function shouldUseMockData(): boolean {
   return process.env.NODE_ENV !== "production" && process.env.MAILMIND_DISABLE_MOCK_DATA !== "1";
@@ -336,9 +336,12 @@ export async function upsertSubscription(params: {
   status: Subscription["status"];
   currentPeriodEnd: Date;
   cancelAtPeriodEnd: boolean;
+  billingPeriod?: BillingPeriod;
 }) {
   if (!isDbConnected()) return;
   const db = await getDb();
+
+  const billingPeriod = params.billingPeriod ?? "monthly";
 
   // 1. Update subscription record
   await db
@@ -351,6 +354,7 @@ export async function upsertSubscription(params: {
       status: params.status,
       currentPeriodEnd: params.currentPeriodEnd,
       cancelAtPeriodEnd: params.cancelAtPeriodEnd,
+      billingPeriod,
     })
     .onConflictDoUpdate({
       target: subscriptions.stripeSubscriptionId,
@@ -359,6 +363,7 @@ export async function upsertSubscription(params: {
         plan: params.plan as Subscription["plan"],
         currentPeriodEnd: params.currentPeriodEnd,
         cancelAtPeriodEnd: params.cancelAtPeriodEnd,
+        billingPeriod,
         updatedAt: new Date(),
       },
     });

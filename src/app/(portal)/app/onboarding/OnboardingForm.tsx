@@ -683,7 +683,7 @@ export function OnboardingForm({
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ step: "done" }),
       });
-    } catch {}
+    } catch { /* fire-and-forget */ }
     router.push("/app");
     router.refresh();
   };

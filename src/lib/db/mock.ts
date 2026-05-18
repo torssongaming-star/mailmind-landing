@@ -65,6 +65,7 @@ export const MOCK_SUBSCRIPTION: Subscription = {
   status:               "active",
   currentPeriodEnd:     periodEnd,
   cancelAtPeriodEnd:    false,
+  billingPeriod:        "monthly",
   createdAt:            new Date("2025-01-15T09:00:00Z"),
   updatedAt:            new Date(),
 };

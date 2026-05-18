@@ -1,10 +1,15 @@
 /**
  * Public plan configuration used by both UI and server.
  * This file MUST NOT import 'stripe' (the node SDK) or any server-only secrets.
- * 
+ *
  * This ensures that components like Pricing.tsx or the Dashboard Billing page
- * can render plan details (names, prices, features) without triggering 
+ * can render plan details (names, prices, features) without triggering
  * environment variable errors on the client.
+ *
+ * Annual pricing: 17% discount vs. paying month-to-month.
+ *   Starter  €19/mån  → €189/år  (saves €39)
+ *   Team     €49/mån  → €488/år  (saves €100)
+ *   Business €99/mån  → €986/år  (saves €202)
  */
 
 export const PLANS = {
@@ -12,6 +17,12 @@ export const PLANS = {
     id: "starter",
     name: "Starter",
     price: "€19",
+    /** Annual total in EUR */
+    priceAnnual: "€189",
+    /** Effective monthly cost when billed annually (189/12 ≈ 15.75) */
+    priceMonthlyAnnual: "€15.75",
+    /** Human-readable annual savings label */
+    savingsLabel: "Spara €39/år",
     description: "For small teams testing AI email support",
     features: [
       "1 inbox",
@@ -30,6 +41,9 @@ export const PLANS = {
     id: "team",
     name: "Start as a Team",
     price: "€49",
+    priceAnnual: "€488",
+    priceMonthlyAnnual: "€40.67",
+    savingsLabel: "Spara €100/år",
     description: "For companies handling customer emails every day",
     features: [
       "3 inboxes",
@@ -50,6 +64,9 @@ export const PLANS = {
     id: "business",
     name: "Start as a Business",
     price: "€99",
+    priceAnnual: "€986",
+    priceMonthlyAnnual: "€82.17",
+    savingsLabel: "Spara €202/år",
     description: "For growing teams with higher volume",
     features: [
       "5 inboxes",
@@ -70,6 +87,9 @@ export const PLANS = {
     id: "enterprise",
     name: "Enterprise / Corporate",
     price: "Custom",
+    priceAnnual: "Custom",
+    priceMonthlyAnnual: "Custom",
+    savingsLabel: "",
     description: "Tailored AI solutions for large organizations",
     features: [
       "Custom AI workflows",
@@ -90,6 +110,7 @@ export const PLANS = {
 } as const;
 
 export type PlanKey = keyof typeof PLANS;
+export type BillingPeriod = "monthly" | "annual";
 
 /** List version for mapping in UI components */
 export const PLAN_LIST = Object.values(PLANS);

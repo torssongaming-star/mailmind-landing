@@ -115,18 +115,46 @@ För error-monitoring innan första pilot:
 
 ## 🟢 När du vill skala — gör vid behov
 
-### Steg 7 — Annual pricing i Stripe (15 min)
+### Steg 7 — Annual pricing aktivering (20 min)
 
-För +15-20% MRR via rabatterade årsabonnemang:
+Koden är klar. Du behöver göra tre saker manuellt:
 
-1. **Stripe Dashboard** → **Product catalog** → klicka Mailmind-produkten
-2. **+ Add another price** för Starter / Pro / Business
-3. **Pricing model:** Standard / Recurring
-4. **Billing period:** Yearly
-5. **Amount:** plan-pris × 12 × 0.83 (17% rabatt)
-6. Kopiera price-IDs (`price_xxx`) och paste till mig → jag lägger in dem i koden
+#### 7a — Skapa årsabonnemangs-priser i Stripe (10 min)
 
-- [ ] Klart
+1. **dashboard.stripe.com** → **Product catalog** → klicka Mailmind-produkten
+2. **+ Add another price** för varje plan (Starter, Team, Business):
+   - **Pricing model:** Standard
+   - **Billing period:** Yearly
+   - **Belopp:**
+     - Starter: €189 / år
+     - Team: €488 / år
+     - Business: €986 / år
+3. Kopiera de tre nya price-IDs (`price_xxx`)
+
+#### 7b — Lägg in env-variabler i Vercel (5 min)
+
+Vercel → Settings → Environment Variables → lägg till:
+
+| Name | Value | Environments |
+|---|---|---|
+| `STRIPE_PRICE_ID_STARTER_ANNUAL` | `price_xxx` | Production, Preview |
+| `STRIPE_PRICE_ID_TEAM_ANNUAL` | `price_xxx` | Production, Preview |
+| `STRIPE_PRICE_ID_BUSINESS_ANNUAL` | `price_xxx` | Production, Preview |
+
+#### 7c — Kör db:push för ny kolumn (30 sek)
+
+```powershell
+cd "C:\Users\sebbe\Downloads\Claude\Email AI\mailmind-landing"
+npm run db:push
+```
+
+Lägger till kolumnen `billing_period` på `subscriptions`-tabellen.
+
+**Förväntat:** `[✓] Changes applied`
+
+- [ ] 7a klart
+- [ ] 7b klart
+- [ ] 7c klart
 
 ---
 

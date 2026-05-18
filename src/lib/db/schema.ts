@@ -211,6 +211,8 @@ export const subscriptions = pgTable(
     status:               subscriptionStatusEnum("status").notNull(),
     currentPeriodEnd:     timestamp("current_period_end", { withTimezone: true }).notNull(),
     cancelAtPeriodEnd:    boolean("cancel_at_period_end").notNull().default(false),
+    /** "monthly" | "annual" — billing cadence chosen at checkout */
+    billingPeriod:        varchar("billing_period", { length: 20 }).notNull().default("monthly"),
     createdAt:            timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt:            timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },

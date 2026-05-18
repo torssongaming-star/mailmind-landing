@@ -91,6 +91,7 @@ export async function POST(req: NextRequest) {
         const session = event.data.object as Stripe.Checkout.Session;
         const clerkUserId = session.metadata?.clerkUserId;
         const plan = (session.metadata?.plan as keyof typeof PLANS) || "starter";
+        const billingPeriod = (session.metadata?.billingPeriod === "annual" ? "annual" : "monthly") as "monthly" | "annual";
 
         if (!clerkUserId) {
           console.error("[webhook/stripe] checkout.session.completed missing clerkUserId");
@@ -124,6 +125,7 @@ export async function POST(req: NextRequest) {
           status: mapStripeStatus(subscription.status),
           currentPeriodEnd: resolvePeriodEnd(subscription),
           cancelAtPeriodEnd: resolveCancelAtPeriodEnd(subscription),
+          billingPeriod,
         });
 
         // 4. Audit Log
@@ -170,7 +172,9 @@ export async function POST(req: NextRequest) {
         }
 
         const priceId = subscription.items.data[0]?.price.id;
-        const plan = getPlanFromPriceId(priceId ?? "") ?? "starter";
+        const planResult = getPlanFromPriceId(priceId ?? "");
+        const plan          = planResult?.plan          ?? "starter";
+        const billingPeriod = planResult?.billingPeriod ?? "monthly";
 
         await db.upsertSubscription({
           organizationId: orgId,
@@ -180,15 +184,17 @@ export async function POST(req: NextRequest) {
           status: mapStripeStatus(subscription.status),
           currentPeriodEnd: resolvePeriodEnd(subscription),
           cancelAtPeriodEnd: resolveCancelAtPeriodEnd(subscription),
+          billingPeriod,
         });
 
         await db.writeAuditLog({
           organizationId: orgId,
           action: "subscription_updated",
-          metadata: { 
-            status: subscription.status, 
+          metadata: {
+            status: subscription.status,
             plan,
-            cancelAtPeriodEnd: subscription.cancel_at_period_end
+            billingPeriod,
+            cancelAtPeriodEnd: subscription.cancel_at_period_end,
           },
         });
         break;
@@ -216,8 +222,9 @@ export async function POST(req: NextRequest) {
           });
 
           // Analytics: churn.cancelled
-          const priceId   = subscription.items.data[0]?.price.id;
-          const churnPlan = getPlanFromPriceId(priceId ?? "") ?? "starter";
+          const priceId      = subscription.items.data[0]?.price.id;
+          const churnResult  = getPlanFromPriceId(priceId ?? "");
+          const churnPlan    = churnResult?.plan ?? "starter";
           const daysActive = Math.round(
             (Date.now() - subscription.created * 1000) / (1000 * 60 * 60 * 24),
           );
