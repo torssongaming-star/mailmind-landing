@@ -7,16 +7,20 @@ export function AiSettingsEditor({
   initial,
 }: {
   initial: {
-    tone:            "formal" | "friendly" | "neutral";
-    language:        string;
-    maxInteractions: number;
-    signature:       string | null;
+    tone:                 "formal" | "friendly" | "neutral";
+    language:             string;
+    maxInteractions:      number;
+    signature:            string | null;
+    bulkFilterEnabled:    boolean;
+    bulkFilterWhitelist:  string[];
   };
 }) {
   const router = useRouter();
-  const [tone, setTone]                       = useState(initial.tone);
-  const [language, setLanguage]               = useState(initial.language);
-  const [maxInteractions, setMaxInteractions] = useState(initial.maxInteractions);
+  const [tone, setTone]                                 = useState(initial.tone);
+  const [language, setLanguage]                         = useState(initial.language);
+  const [maxInteractions, setMaxInteractions]           = useState(initial.maxInteractions);
+  const [bulkFilterEnabled, setBulkFilterEnabled]       = useState(initial.bulkFilterEnabled);
+  const [whitelistText, setWhitelistText]               = useState(initial.bulkFilterWhitelist.join("\n"));
   const [saving, setSaving]   = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [error, setError]     = useState<string | null>(null);
@@ -27,10 +31,19 @@ export function AiSettingsEditor({
     setError(null);
     try {
       const currentSignature = editorRef.current?.innerHTML ?? "";
+      const whitelist = whitelistText
+        .split(/[\n,]/)
+        .map(s => s.trim().toLowerCase())
+        .filter(Boolean);
       const res = await fetch("/api/app/ai-settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tone, language, maxInteractions, signature: currentSignature.trim() || null }),
+        body: JSON.stringify({
+          tone, language, maxInteractions,
+          signature: currentSignature.trim() || null,
+          bulkFilterEnabled,
+          bulkFilterWhitelist: whitelist,
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -94,6 +107,50 @@ export function AiSettingsEditor({
           Du kan kopiera och klistra in en befintlig e-postsignatur här för att behålla dess formatering.
         </p>
       </Field>
+
+      {/* ── Bulk / marketing filter ──────────────────────────────────────────── */}
+      <div className="border-t border-white/5 pt-4 space-y-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <label className="block text-xs font-semibold text-white">Filtrera marknadsföringsmejl automatiskt</label>
+            <p className="text-[10px] text-muted-foreground/70 mt-1 leading-relaxed">
+              Mejl som innehåller bulk-signaler (nyhetsbrev, kampanjer, system­notiser m.m.) flyttas automatiskt
+              till fliken &quot;Reklam&quot; och slipper AI-bearbetning. Du kan se vad som filtrerats och flytta tillbaka enskilda mejl manuellt.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setBulkFilterEnabled(v => !v)}
+            role="switch"
+            aria-checked={bulkFilterEnabled}
+            className={`shrink-0 relative w-10 h-6 rounded-full transition-colors ${
+              bulkFilterEnabled ? "bg-primary" : "bg-white/15"
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${
+                bulkFilterEnabled ? "translate-x-4" : ""
+              }`}
+            />
+          </button>
+        </div>
+
+        {bulkFilterEnabled && (
+          <Field
+            label="Whitelist — släpp alltid igenom dessa avsändare"
+            hint="En per rad. Domän börjar med @ (t.ex. @vendor.se) eller fullständig e-postadress (t.ex. info@viktigkund.se)."
+          >
+            <textarea
+              value={whitelistText}
+              onChange={e => setWhitelistText(e.target.value)}
+              placeholder="@viktigkund.se&#10;notiser@bank.se"
+              rows={3}
+              className="select-style w-full font-mono text-[12px]"
+              style={{ resize: "vertical" }}
+            />
+          </Field>
+        )}
+      </div>
 
       <div className="flex items-center justify-between border-t border-white/5 pt-3">
         <div className="text-xs">

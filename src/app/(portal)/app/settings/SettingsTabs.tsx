@@ -30,7 +30,7 @@ type BlockEntry = { id: string; pattern: string; reason: string | null; createdA
 
 type Props = {
   orgName:         string;
-  initialSettings: Pick<AiSettings, "tone" | "language" | "maxInteractions" | "signature">;
+  initialSettings: Pick<AiSettings, "tone" | "language" | "maxInteractions" | "signature" | "bulkFilterEnabled" | "bulkFilterWhitelist">;
   caseTypes:       CaseType[];
   knowledge:       Pick<KnowledgeEntry, "id" | "question" | "answer" | "category" | "isActive">[];
   templates:       ReplyTemplate[];

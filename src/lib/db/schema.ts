@@ -282,6 +282,10 @@ export const aiSettings = pgTable(
     signature:        text("signature"),
     dryRunEnabled:    boolean("dry_run_enabled").notNull().default(false),
     autoSendEnabled:  boolean("auto_send_enabled").notNull().default(false),
+    /** Whether to auto-filter bulk/marketing emails before AI runs. Default ON. */
+    bulkFilterEnabled: boolean("bulk_filter_enabled").notNull().default(true),
+    /** Domain/email whitelist that bypasses bulk filtering, e.g. ["@vendor.se"]. */
+    bulkFilterWhitelist: jsonb("bulk_filter_whitelist").$type<string[]>().notNull().default([]),
     createdAt:        timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt:        timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },

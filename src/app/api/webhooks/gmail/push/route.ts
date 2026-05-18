@@ -240,6 +240,7 @@ export async function POST(req: NextRequest) {
         organizationId: inbox.organizationId,
         threadId:       thread.id,
         newEmailBody:   parsed.bodyText,
+        bulkHeaders:    parsed.bulkHeaders,
       }).catch(err => log.error("autoTriage failed", { error: String(err) }));
 
     } catch (err) {

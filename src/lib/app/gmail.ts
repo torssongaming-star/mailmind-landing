@@ -317,6 +317,14 @@ export type ParsedGmailMessage = {
   messageId:      string | null; // RFC 2822 Message-ID header
   inReplyTo:      string | null;
   references:     string | null;
+  /** Bulk-detection headers, populated for the bulk-filter. */
+  bulkHeaders:    {
+    listUnsubscribe:        string | null;
+    precedence:             string | null;
+    autoSubmitted:          string | null;
+    xAutoResponseSuppress:  string | null;
+    hasESPHeader:           boolean;
+  };
 };
 
 function decodeBase64Url(b64: string): string {
@@ -363,6 +371,11 @@ export async function getAndParseMessage(
   const headers = raw.payload.headers;
   const from    = parseFromHeader(getHeader(headers, "from"));
 
+  // Detect any X-Campaign-* / X-Mailchimp-* / X-Klaviyo-* / X-Sg-* /
+  // X-HubSpot-* / X-Mailgun-* / X-Marketo-* / List-* header (ESP signature).
+  const espHeaderRegex = /^(x-(campaign|mailchimp|klaviyo|sg|sendgrid|hubspot|mailgun|marketo|brevo|sendinblue|drip|convertkit)-|list-id|list-help|feedback-id|x-mailer-)/i;
+  const hasESPHeader = headers.some(h => espHeaderRegex.test(h.name));
+
   return {
     gmailMessageId: raw.id,
     gmailThreadId:  raw.threadId,
@@ -373,6 +386,13 @@ export async function getAndParseMessage(
     messageId:      getHeader(headers, "message-id"),
     inReplyTo:      getHeader(headers, "in-reply-to"),
     references:     getHeader(headers, "references"),
+    bulkHeaders: {
+      listUnsubscribe:       getHeader(headers, "list-unsubscribe"),
+      precedence:            getHeader(headers, "precedence"),
+      autoSubmitted:         getHeader(headers, "auto-submitted"),
+      xAutoResponseSuppress: getHeader(headers, "x-auto-response-suppress"),
+      hasESPHeader,
+    },
   };
 }
 

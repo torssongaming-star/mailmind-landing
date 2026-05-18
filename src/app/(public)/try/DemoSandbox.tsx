@@ -97,6 +97,14 @@ const ACTION_CONFIG = {
     bg:      "bg-amber-500/[0.06]",
     iconBg:  "bg-amber-500/10",
   },
+  ignore: {
+    icon:    AlertTriangle,
+    label:   "Filtrerat som reklam/auto-mejl",
+    color:   "text-white/40",
+    border:  "border-white/10",
+    bg:      "bg-white/[0.03]",
+    iconBg:  "bg-white/5",
+  },
 } as const;
 
 function ConfidenceBar({ value }: { value: number }) {

@@ -612,15 +612,17 @@ export async function findThreadByExternalId(
 /** Sane defaults when an org hasn't customised settings yet. */
 export function defaultAiSettings(organizationId: string): AiSettings {
   return {
-    id:               "00000000-0000-0000-0000-000000000000",
+    id:                   "00000000-0000-0000-0000-000000000000",
     organizationId,
-    tone:             "friendly",
-    language:         "sv",
-    maxInteractions:  2,
-    signature:        null,
-    dryRunEnabled:    false,
-    autoSendEnabled:  false,
-    createdAt:        new Date(),
-    updatedAt:        new Date(),
+    tone:                 "friendly",
+    language:             "sv",
+    maxInteractions:      2,
+    signature:            null,
+    dryRunEnabled:        false,
+    autoSendEnabled:      false,
+    bulkFilterEnabled:    true,
+    bulkFilterWhitelist:  [],
+    createdAt:            new Date(),
+    updatedAt:            new Date(),
   };
 }

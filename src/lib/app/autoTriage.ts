@@ -40,7 +40,7 @@ import { fireWebhooksForThread } from "./webhooks";
 import { notifyNewThread } from "./notify";
 import { canAutoSend, executeSendDraft } from "./autoSend";
 import { isBlocked } from "./blocklist";
-import { detectBulkEmail } from "./bulk-filter";
+import { detectBulkEmail, type BulkHeaders } from "./bulk-filter";
 import { sendPushToOrg } from "./push";
 
 function currentMonthIso(): string {
@@ -59,8 +59,10 @@ export async function autoTriageNewMessage(input: {
   organizationId: string;
   threadId: string;
   newEmailBody: string;
+  /** Optional — when provided, enables header-based bulk filtering (Layer 0). */
+  bulkHeaders?: BulkHeaders;
 }): Promise<{ ok: true; draftId: string; autoSent?: boolean } | { ok: false; reason: string }> {
-  const { organizationId, threadId, newEmailBody } = input;
+  const { organizationId, threadId, newEmailBody, bulkHeaders } = input;
 
   if (!isDbConnected()) {
     return { ok: false, reason: "db_unavailable" };
@@ -97,16 +99,37 @@ export async function autoTriageNewMessage(input: {
   const thread = await getThread(organizationId, threadId);
   if (!thread) return { ok: false, reason: "thread_missing" };
 
+  // Skip if there's already a pending/edited draft — prevents duplicate drafts
+  // when Pub/Sub delivers the same notification twice or manual + auto trigger race.
+  const existingDraft = await findPendingDraft(threadId);
+  if (existingDraft) {
+    return { ok: false, reason: "draft_already_pending" };
+  }
+
+  const [messages, settings, caseTypesList, knowledge, customerHistory] = await Promise.all([
+    listMessages(threadId),
+    getAiSettings(organizationId),
+    listCaseTypes(organizationId),
+    listActiveKnowledge(organizationId),
+    getCustomerHistory(organizationId, thread.fromEmail, threadId),
+  ]);
+
   // ── Bulk / marketing filter ───────────────────────────────────────────────
-  // Check BEFORE loading messages or calling AI — saves cost and keeps inbox clean.
-  // Thread + message are already in DB so the customer can audit filtered emails.
+  // Check BEFORE calling AI — saves cost and keeps inbox clean. Thread +
+  // message are already in DB so the customer can audit filtered emails
+  // in the "Reklam" tab. Org may disable via aiSettings.bulkFilterEnabled
+  // or whitelist specific senders via aiSettings.bulkFilterWhitelist.
   const bulkSignal = detectBulkEmail({
     fromEmail: thread.fromEmail,
     subject:   thread.subject ?? "",
     bodyText:  newEmailBody,
+    headers:   bulkHeaders,
+    settings: {
+      enabled:   settings?.bulkFilterEnabled ?? true,
+      whitelist: settings?.bulkFilterWhitelist ?? [],
+    },
   });
   if (bulkSignal.detected) {
-    // Resolve the thread immediately so it doesn't appear in the active queue
     await updateThread(organizationId, threadId, {
       status:       "resolved",
       caseTypeSlug: "bulk",
@@ -124,21 +147,6 @@ export async function autoTriageNewMessage(input: {
     });
     return { ok: false, reason: "bulk_email_filtered" };
   }
-
-  // Skip if there's already a pending/edited draft — prevents duplicate drafts
-  // when Pub/Sub delivers the same notification twice or manual + auto trigger race.
-  const existingDraft = await findPendingDraft(threadId);
-  if (existingDraft) {
-    return { ok: false, reason: "draft_already_pending" };
-  }
-
-  const [messages, settings, caseTypesList, knowledge, customerHistory] = await Promise.all([
-    listMessages(threadId),
-    getAiSettings(organizationId),
-    listCaseTypes(organizationId),
-    listActiveKnowledge(organizationId),
-    getCustomerHistory(organizationId, thread.fromEmail, threadId),
-  ]);
 
   // Dry-run mode: generate + log but do NOT auto-send.
   // The `isDryRun` flag is written to the draft row so admin can review quality.
@@ -214,6 +222,29 @@ export async function autoTriageNewMessage(input: {
     sources:         validatedSources,
     fabricated_sources_dropped: fabricatedSources,
   };
+  // ── AI-flagged bulk (Layer 2 backup for the heuristic filter) ─────────────
+  // When AI returns "ignore", it has identified the mail as auto-generated /
+  // bulk that the header- and heuristic-filter missed. Treat it like a
+  // bulk-filter hit: resolve the thread, no draft, no customer reply.
+  if (ai.output.action === "ignore") {
+    await updateThread(organizationId, threadId, {
+      status:       "resolved",
+      caseTypeSlug: "bulk",
+    });
+    await writeAuditLog({
+      organizationId,
+      action:   "email_filtered_bulk",
+      metadata: {
+        threadId,
+        fromEmail: thread.fromEmail,
+        subject:   thread.subject,
+        layer:     "ai_ignore",
+        reason:    ai.output.reason,
+      },
+    });
+    return { ok: false, reason: "bulk_email_filtered_by_ai" };
+  }
+
   switch (ai.output.action) {
     case "ask":
       bodyText = ai.output.question;

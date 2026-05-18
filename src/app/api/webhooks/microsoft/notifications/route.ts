@@ -230,6 +230,7 @@ async function processNotification(notification: GraphNotificationValue) {
     organizationId: inbox.organizationId,
     threadId:       thread.id,
     newEmailBody:   parsed.bodyText,
+    bulkHeaders:    parsed.bulkHeaders,
   }).catch(err => log.error("autoTriage failed", { error: String(err) }));
 
   // ── 7. Persist updated tokens ─────────────────────────────────────────────

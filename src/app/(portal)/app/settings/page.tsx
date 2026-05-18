@@ -60,10 +60,12 @@ export default async function SettingsPage() {
       <SettingsTabs
         orgName={account.organization.name}
         initialSettings={{
-          tone:            initialSettings.tone,
-          language:        initialSettings.language,
-          maxInteractions: initialSettings.maxInteractions,
-          signature:       initialSettings.signature,
+          tone:                 initialSettings.tone,
+          language:             initialSettings.language,
+          maxInteractions:     initialSettings.maxInteractions,
+          signature:            initialSettings.signature,
+          bulkFilterEnabled:    initialSettings.bulkFilterEnabled,
+          bulkFilterWhitelist:  initialSettings.bulkFilterWhitelist,
         }}
         caseTypes={caseTypes}
         knowledge={knowledge.map(k => ({

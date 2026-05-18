@@ -108,6 +108,7 @@ const DEMO_SETTINGS: AiSettings = {
   id: "demo-settings", organizationId: "demo",
   tone: "friendly", language: "sv", maxInteractions: 3,
   signature: null, dryRunEnabled: false, autoSendEnabled: false,
+  bulkFilterEnabled: true, bulkFilterWhitelist: [],
   createdAt: new Date(), updatedAt: new Date(),
 };
 

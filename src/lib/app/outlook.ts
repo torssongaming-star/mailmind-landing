@@ -297,6 +297,7 @@ type GraphMessage = {
   from:             { emailAddress: { name: string; address: string } };
   body:             { content: string; contentType: "text" | "html" };
   toRecipients:     { emailAddress: { name: string; address: string } }[];
+  internetMessageHeaders?: { name: string; value: string }[];
 };
 
 export type ParsedOutlookMessage = {
@@ -308,6 +309,14 @@ export type ParsedOutlookMessage = {
   subject:         string;
   bodyText:        string;
   internetMessageId: string | null;
+  /** Bulk-detection headers, populated for the bulk-filter. */
+  bulkHeaders: {
+    listUnsubscribe:        string | null;
+    precedence:             string | null;
+    autoSubmitted:          string | null;
+    xAutoResponseSuppress:  string | null;
+    hasESPHeader:           boolean;
+  };
 };
 
 import { htmlToText } from "@/lib/utils/html";
@@ -318,7 +327,7 @@ export async function getAndParseMessage(
 ): Promise<ParsedOutlookMessage | null> {
   const select = [
     "id", "conversationId", "subject", "internetMessageId",
-    "from", "toRecipients", "body",
+    "from", "toRecipients", "body", "internetMessageHeaders",
   ].join(",");
 
   const res = await fetch(
@@ -332,6 +341,13 @@ export async function getAndParseMessage(
     ? htmlToText(msg.body.content)
     : msg.body.content.trim();
 
+  // Extract bulk-detection headers from internetMessageHeaders
+  const allHeaders = msg.internetMessageHeaders ?? [];
+  const findHeader = (name: string) =>
+    allHeaders.find(h => h.name.toLowerCase() === name.toLowerCase())?.value ?? null;
+  const espHeaderRegex = /^(x-(campaign|mailchimp|klaviyo|sg|sendgrid|hubspot|mailgun|marketo|brevo|sendinblue|drip|convertkit)-|list-id|list-help|feedback-id|x-mailer-)/i;
+  const hasESPHeader = allHeaders.some(h => espHeaderRegex.test(h.name));
+
   return {
     graphMessageId:    msg.id,
     conversationId:    msg.conversationId,
@@ -341,6 +357,13 @@ export async function getAndParseMessage(
     subject:           msg.subject ?? "(no subject)",
     bodyText,
     internetMessageId: msg.internetMessageId ?? null,
+    bulkHeaders: {
+      listUnsubscribe:       findHeader("List-Unsubscribe"),
+      precedence:            findHeader("Precedence"),
+      autoSubmitted:         findHeader("Auto-Submitted"),
+      xAutoResponseSuppress: findHeader("X-Auto-Response-Suppress"),
+      hasESPHeader,
+    },
   };
 }
 

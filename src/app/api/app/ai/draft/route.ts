@@ -129,8 +129,19 @@ export async function POST(req: NextRequest) {
   //   ask        -> the question
   //   summarize  -> the customer-facing confirmation
   //   escalate   -> null (metadata.reason explains)
+  //   ignore     -> handled separately below — never reaches this switch
   let bodyText: string | null = null;
   let metadata: Record<string, unknown> = { rawText: ai.rawText };
+
+  // "ignore" is a bulk-filter signal from AI — return early without a draft.
+  // Manual route returns it to the caller so they can choose what to do.
+  if (ai.output.action === "ignore") {
+    return NextResponse.json({
+      action: "ignore",
+      reason: ai.output.reason,
+      message: "AI bedömde mejlet som auto-genererat/bulk. Inget utkast skapades.",
+    });
+  }
 
   switch (ai.output.action) {
     case "ask":
@@ -151,12 +162,14 @@ export async function POST(req: NextRequest) {
       metadata = { ...metadata, reason: ai.output.reason };
       break;
   }
+  // "ignore" already returned early above — TS narrowing handles the type
+  const action = ai.output.action as "ask" | "summarize" | "escalate";
 
   const draft = await createDraft({
     organizationId: orgId,
     threadId:       threadId,
     userId:         account.user.id,
-    action:         ai.output.action,
+    action,
     bodyText,
     metadata,
     aiModel:        ai.model,

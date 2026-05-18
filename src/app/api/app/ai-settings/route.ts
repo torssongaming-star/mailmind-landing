@@ -30,10 +30,12 @@ export async function GET() {
 }
 
 const Body = z.object({
-  tone:            z.enum(["formal", "friendly", "neutral"]),
-  language:        z.string().min(2).max(10),
-  maxInteractions: z.number().int().min(1).max(5),
-  signature:       z.string().max(5000000).nullable().optional(),
+  tone:                 z.enum(["formal", "friendly", "neutral"]),
+  language:             z.string().min(2).max(10),
+  maxInteractions:      z.number().int().min(1).max(5),
+  signature:            z.string().max(5000000).nullable().optional(),
+  bulkFilterEnabled:    z.boolean().optional(),
+  bulkFilterWhitelist:  z.array(z.string().max(320)).max(100).optional(),
 });
 
 export async function PUT(req: NextRequest) {
@@ -57,23 +59,30 @@ export async function PUT(req: NextRequest) {
     return NextResponse.json({ error: "DB unavailable" }, { status: 503 });
   }
 
+  const bulkEnabled  = parsed.data.bulkFilterEnabled   ?? true;
+  const bulkWhitelist = parsed.data.bulkFilterWhitelist ?? [];
+
   await db
     .insert(aiSettings)
     .values({
-      organizationId:   orgId,
-      tone:             parsed.data.tone,
-      language:         parsed.data.language,
-      maxInteractions:  parsed.data.maxInteractions,
-      signature:        parsed.data.signature ?? null,
+      organizationId:       orgId,
+      tone:                 parsed.data.tone,
+      language:             parsed.data.language,
+      maxInteractions:      parsed.data.maxInteractions,
+      signature:            parsed.data.signature ?? null,
+      bulkFilterEnabled:    bulkEnabled,
+      bulkFilterWhitelist:  bulkWhitelist,
     })
     .onConflictDoUpdate({
       target: aiSettings.organizationId,
       set: {
-        tone:             parsed.data.tone,
-        language:         parsed.data.language,
-        maxInteractions:  parsed.data.maxInteractions,
-        signature:        parsed.data.signature ?? null,
-        updatedAt:        new Date(),
+        tone:                 parsed.data.tone,
+        language:             parsed.data.language,
+        maxInteractions:      parsed.data.maxInteractions,
+        signature:            parsed.data.signature ?? null,
+        bulkFilterEnabled:    bulkEnabled,
+        bulkFilterWhitelist:  bulkWhitelist,
+        updatedAt:            new Date(),
       },
     });
 
