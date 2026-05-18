@@ -71,12 +71,20 @@ export function SupportDrawer({
         />
       )}
 
-      {/* Drawer */}
+      {/* Drawer — wrapped so the off-screen state can't produce a horizontal scrollbar.
+          The outer fixed/overflow-hidden container clips the translated drawer so
+          you can't drag/scroll it back into view when closed. Wrapper has
+          pointer-events-none so it never blocks page clicks; only the inner drawer
+          (which is off-screen when closed) accepts events. */}
+      <div
+        className="fixed inset-0 z-50 overflow-hidden pointer-events-none"
+        aria-hidden={!open}
+      >
       <div
         ref={drawerRef}
         className={[
-          "fixed top-0 right-0 z-50 h-full w-full max-w-md flex flex-col",
-          "bg-[#050B1C] border-l border-white/8 shadow-2xl",
+          "absolute top-0 right-0 h-full w-full max-w-md flex flex-col",
+          "bg-[#050B1C] border-l border-white/8 shadow-2xl pointer-events-auto",
           "transition-transform duration-300 ease-in-out",
           open ? "translate-x-0" : "translate-x-full",
         ].join(" ")}
@@ -227,6 +235,7 @@ export function SupportDrawer({
           )}
 
         </div>
+      </div>
       </div>
     </>
   );
