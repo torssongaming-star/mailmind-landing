@@ -19,7 +19,9 @@ export const dynamic = "force-dynamic";
 
 const VALID_STATUSES = ["open", "waiting", "escalated", "resolved"] as const;
 type ThreadStatus = (typeof VALID_STATUSES)[number];
-const SNOOZED = "snoozed" as const;
+const SNOOZED  = "snoozed"  as const;
+/** Pseudo-status: shows threads auto-filtered as bulk/marketing by the bulk-filter. */
+const FILTERED = "filtered" as const;
 
 export default async function InboxPage({
   searchParams,
@@ -32,9 +34,10 @@ export default async function InboxPage({
   const account = await getCurrentAccount(userId);
   if (!account.user) redirect("/app/onboarding");
 
-  const params      = await searchParams;
-  const isOutlook   = params.source === "outlook";
-  const isSnoozedView = params.status === SNOOZED;
+  const params         = await searchParams;
+  const isOutlook      = params.source === "outlook";
+  const isSnoozedView  = params.status === SNOOZED;
+  const isFilteredView = params.status === FILTERED;
   const filterStatus = VALID_STATUSES.includes(params.status as ThreadStatus)
     ? (params.status as ThreadStatus)
     : null;
@@ -46,14 +49,18 @@ export default async function InboxPage({
   // Server-side search bypasses the 200-row limit. Falls back to in-memory
   // filtering for facets (status, tag) on top of the search result.
   const useServerSearch = query.length >= 2;
-  const [all, caseTypesList, snoozedCount] = await Promise.all([
+  const [all, caseTypesList, snoozedCount, filteredCount] = await Promise.all([
     useServerSearch
       ? searchThreads(account.organization.id, query, 200)
       : isSnoozedView
         ? listThreads(account.organization.id, { limit: 200, showSnoozed: true })
-        : listThreads(account.organization.id, { limit: 200 }),
+        : isFilteredView
+          ? listThreads(account.organization.id, { limit: 200, caseTypeSlug: "bulk" })
+          : listThreads(account.organization.id, { limit: 200 }),
     listCaseTypes(account.organization.id),
     countSnoozedThreads(account.organization.id),
+    // Count of auto-filtered bulk threads (used by the tab badge).
+    listThreads(account.organization.id, { limit: 200, caseTypeSlug: "bulk" }).then(rows => rows.length),
   ]);
 
   const slaByCaseType: Record<string, number> = {};
@@ -62,6 +69,8 @@ export default async function InboxPage({
   }
 
   const threads = all.filter(t => {
+    // Hide bulk-filtered threads from the default views (only show them on the Reklam tab)
+    if (!isFilteredView && t.caseTypeSlug === "bulk") return false;
     if (filterStatus && t.status !== filterStatus) return false;
     if (tagFilter && !(t.tags ?? []).includes(tagFilter)) return false;
     // Local search still applied when server-side returned a superset
@@ -74,12 +83,13 @@ export default async function InboxPage({
   });
 
   const counts = {
-    all:       all.length,
-    open:      all.filter(t => t.status === "open").length,
-    waiting:   all.filter(t => t.status === "waiting").length,
-    escalated: all.filter(t => t.status === "escalated").length,
-    resolved:  all.filter(t => t.status === "resolved").length,
+    all:       all.filter(t => t.caseTypeSlug !== "bulk").length,
+    open:      all.filter(t => t.status === "open"      && t.caseTypeSlug !== "bulk").length,
+    waiting:   all.filter(t => t.status === "waiting"   && t.caseTypeSlug !== "bulk").length,
+    escalated: all.filter(t => t.status === "escalated" && t.caseTypeSlug !== "bulk").length,
+    resolved:  all.filter(t => t.status === "resolved"  && t.caseTypeSlug !== "bulk").length,
     snoozed:   snoozedCount,
+    filtered:  filteredCount,
   };
 
   // Outlook add-in: keep old compact single-column layout

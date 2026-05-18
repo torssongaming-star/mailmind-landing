@@ -30,9 +30,15 @@ import { z } from "zod";
 
 export async function listThreads(
   organizationId: string,
-  opts: { limit?: number; showSnoozed?: boolean; inboxId?: string | null } = {}
+  opts: {
+    limit?: number;
+    showSnoozed?: boolean;
+    inboxId?: string | null;
+    /** Filter by exact caseTypeSlug — e.g. "bulk" to show only filtered marketing. */
+    caseTypeSlug?: string;
+  } = {}
 ) {
-  const { limit = 50, showSnoozed = false, inboxId = null } = opts;
+  const { limit = 50, showSnoozed = false, inboxId = null, caseTypeSlug } = opts;
   if (!isDbConnected()) return [] as EmailThread[];
 
   // We need: WHERE org_id = ? AND (snoozed_until IS NULL OR snoozed_until <= now())
@@ -48,6 +54,9 @@ export async function listThreads(
   }
   if (inboxId) {
     conditions.push(eq(emailThreads.inboxId, inboxId));
+  }
+  if (caseTypeSlug) {
+    conditions.push(eq(emailThreads.caseTypeSlug, caseTypeSlug));
   }
 
   return db

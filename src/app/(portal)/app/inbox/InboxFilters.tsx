@@ -13,6 +13,7 @@ type Counts = {
   escalated: number;
   resolved: number;
   snoozed: number;
+  filtered: number;
 };
 
 export function InboxFilters({
@@ -40,6 +41,7 @@ export function InboxFilters({
     { value: "escalated", label: t("inbox.filters.escalated") },
     { value: "resolved",  label: t("inbox.filters.resolved") },
     { value: "snoozed",   label: t("inbox.filters.snoozed") },
+    { value: "filtered",  label: "Reklam" },
   ];
 
   // Debounced URL update on query change

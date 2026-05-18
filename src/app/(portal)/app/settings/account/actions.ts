@@ -39,7 +39,7 @@ export async function updateAppendSignature(appendSignature: boolean) {
 
     revalidatePath("/app/settings/account");
     return { ok: true };
-  } catch (err: any) {
+  } catch (err) {
     console.error("Failed to update appendSignature:", err);
     return { ok: false, error: "Kunde inte spara inställningen." };
   }
