@@ -21,7 +21,7 @@ export async function updatePersonalSignature(signature: string) {
 
     revalidatePath("/app/settings/account");
     return { ok: true };
-  } catch (err: any) {
+  } catch (err) {
     console.error("Failed to update personal signature:", err);
     return { ok: false, error: "Ett oväntat fel uppstod när signaturen skulle sparas. Kanske är bilden för stor för databasen?" };
   }

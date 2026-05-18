@@ -17,7 +17,6 @@ export function AiSettingsEditor({
   const [tone, setTone]                       = useState(initial.tone);
   const [language, setLanguage]               = useState(initial.language);
   const [maxInteractions, setMaxInteractions] = useState(initial.maxInteractions);
-  const [signature, setSignature]             = useState(initial.signature ?? "");
   const [saving, setSaving]   = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [error, setError]     = useState<string | null>(null);
