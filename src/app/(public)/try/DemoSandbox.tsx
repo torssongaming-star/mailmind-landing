@@ -479,11 +479,11 @@ export function DemoSandbox({ examples }: { examples: DemoExample[] }) {
                   <Lock size={18} className="text-primary" />
                 </div>
                 <p className="text-sm font-semibold text-white">
-                  Bra försök! Men längre än såhär kan du inte gå 😉
+                  Demon stannar här — men AI:n är redo för mer.
                 </p>
                 <p className="text-xs text-white/55 max-w-sm mx-auto leading-relaxed">
-                  Skapa ett konto så får du AI:n att svara på dina <em>egna</em> kundmejl —
-                  med din verksamhets information och i din ton.
+                  Skapa ett konto så hanterar den era riktiga kundmejl —
+                  i er ton, med er kunskap.
                 </p>
                 <Link
                   href="/signup"
