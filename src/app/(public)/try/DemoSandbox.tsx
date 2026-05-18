@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Sparkles, CheckCircle, HelpCircle, AlertTriangle, Zap, RotateCcw } from "lucide-react";
+import { ArrowRight, Sparkles, CheckCircle, HelpCircle, AlertTriangle, Zap, RotateCcw, Lock, Send } from "lucide-react";
 import Link from "next/link";
 import { captureEvent } from "@/lib/client/analytics";
-import type { DemoExample, DemoTriageResult, ExampleId } from "@/app/api/public/demo-triage/route";
+import type { DemoExample, DemoTriageResult, ExampleId, DemoHistoryEntry } from "@/app/api/public/demo-triage/route";
 
 // ── Example selector card ─────────────────────────────────────────────────────
 
@@ -215,19 +215,24 @@ export function DemoSandbox({ examples }: { examples: DemoExample[] }) {
   const [loading, setLoading]         = useState(false);
   const [result, setResult]           = useState<DemoTriageResult | null>(null);
   const [error, setError]             = useState<string | null>(null);
+  const [history, setHistory]         = useState<DemoHistoryEntry[]>([]);
+  const [replyText, setReplyText]     = useState("");
 
   const selectedExample = examples.find(e => e.id === selectedId) ?? null;
+  const isBlocked       = result?.blocked ?? false;
 
   const selectExample = (id: ExampleId) => {
     if (id === selectedId) return;
     setSelectedId(id);
     setResult(null);
     setError(null);
+    setHistory([]);
+    setReplyText("");
     captureEvent("demo.example_selected", { exampleId: id });
   };
 
   const runTriage = async () => {
-    if (!selectedId || loading) return;
+    if (!selectedId || loading || !selectedExample) return;
     setLoading(true);
     setError(null);
     setResult(null);
@@ -252,7 +257,61 @@ export function DemoSandbox({ examples }: { examples: DemoExample[] }) {
       }
 
       setResult(data as DemoTriageResult);
+      // Seed history with the initial customer email + AI's first response
+      setHistory([
+        { role: "customer",  body: selectedExample.body },
+        { role: "assistant", body: data.draft ?? "" },
+      ]);
       captureEvent("demo.triage_completed", {
+        exampleId:  selectedId,
+        action:     data.action,
+        confidence: data.confidence,
+      });
+    } catch {
+      setError("Kunde inte nå servern. Kontrollera anslutningen och försök igen.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendReply = async () => {
+    if (!selectedId || !replyText.trim() || loading || isBlocked) return;
+    setLoading(true);
+    setError(null);
+
+    const userMsg = replyText.trim();
+
+    try {
+      const res = await fetch("/api/public/demo-triage", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          exampleId: selectedId,
+          history,
+          userReply: userMsg,
+        }),
+      });
+
+      if (res.status === 429) {
+        setError("För många förfrågningar — vänta en stund och försök igen.");
+        return;
+      }
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error ?? "Något gick fel. Försök igen.");
+        return;
+      }
+
+      setResult(data as DemoTriageResult);
+      setHistory(prev => [
+        ...prev,
+        { role: "customer",  body: userMsg },
+        { role: "assistant", body: data.draft ?? "" },
+      ]);
+      setReplyText("");
+      captureEvent("demo.triage_followup", {
         exampleId:  selectedId,
         action:     data.action,
         confidence: data.confidence,
@@ -268,6 +327,8 @@ export function DemoSandbox({ examples }: { examples: DemoExample[] }) {
     setSelectedId(null);
     setResult(null);
     setError(null);
+    setHistory([]);
+    setReplyText("");
   };
 
   return (
@@ -354,9 +415,89 @@ export function DemoSandbox({ examples }: { examples: DemoExample[] }) {
             className="space-y-4"
           >
             <p className="text-[11px] uppercase tracking-widest text-white/40 font-semibold">
-              3 — AI:ns beslut
+              3 — AI:ns svar {result.turn ? `(${result.turn} av ${result.maxTurns ?? 2})` : ""}
             </p>
             <TriageResult result={result} exampleId={selectedId} />
+
+            {/* Step 4 — Customer reply field (only on turn 1 and when AI asked a follow-up) */}
+            {!isBlocked && result.action === "ask" && (
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.25, delay: 0.2 }}
+                className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 space-y-3"
+              >
+                <div>
+                  <p className="text-[11px] uppercase tracking-widest text-white/40 font-semibold mb-1">
+                    4 — Svara som kund
+                  </p>
+                  <p className="text-xs text-white/55 leading-relaxed">
+                    Föreställ dig att du är kunden — svara på AI:ns följdfråga och se hur AI:n hanterar nästa runda.
+                  </p>
+                </div>
+                <textarea
+                  value={replyText}
+                  onChange={e => setReplyText(e.target.value)}
+                  placeholder="Skriv ditt svar här…"
+                  rows={3}
+                  maxLength={2000}
+                  disabled={loading}
+                  className="w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/25 focus:border-primary/40 focus:outline-none transition-colors resize-none disabled:opacity-50"
+                />
+                <button
+                  onClick={sendReply}
+                  disabled={loading || !replyText.trim()}
+                  className="w-full h-11 rounded-xl bg-primary text-[hsl(var(--surface-base))] text-sm font-semibold hover:bg-cyan-300 transition-all shadow-[0_4px_18px_-2px_hsl(189_94%_43%/0.4)] disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                      </svg>
+                      AI tänker…
+                    </>
+                  ) : (
+                    <>
+                      <Send size={14} />
+                      Skicka svar till AI:n
+                    </>
+                  )}
+                </button>
+              </motion.div>
+            )}
+
+            {/* Demo limit reached → friendly upgrade gate */}
+            {isBlocked && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 }}
+                className="rounded-2xl border border-primary/30 bg-gradient-to-br from-primary/[0.08] to-primary/[0.02] p-6 text-center space-y-3"
+              >
+                <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/25 flex items-center justify-center mx-auto">
+                  <Lock size={18} className="text-primary" />
+                </div>
+                <p className="text-sm font-semibold text-white">
+                  Bra försök! Men längre än såhär kan du inte gå 😉
+                </p>
+                <p className="text-xs text-white/55 max-w-sm mx-auto leading-relaxed">
+                  Skapa ett konto så får du AI:n att svara på dina <em>egna</em> kundmejl —
+                  med din verksamhets information och i din ton.
+                </p>
+                <Link
+                  href="/signup"
+                  className="inline-flex items-center gap-2 h-10 px-5 rounded-xl bg-primary text-[hsl(var(--surface-base))] text-sm font-semibold hover:bg-cyan-300 transition-all shadow-[0_4px_18px_-2px_hsl(189_94%_43%/0.4)]"
+                  onClick={() => captureEvent("demo.upgrade_cta_clicked", { source: "limit_reached" })}
+                >
+                  Skapa ditt konto gratis
+                  <ArrowRight size={14} />
+                </Link>
+                <p className="text-[11px] text-white/30">
+                  Inget kreditkort krävs · 14 dagars gratis prov
+                </p>
+              </motion.div>
+            )}
 
             <button
               onClick={reset}

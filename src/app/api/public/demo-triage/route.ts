@@ -190,25 +190,51 @@ export type DemoTriageResult = {
   caseType:   string | null;
   sources:    AISource[];
   fromCache?: boolean;
+  /** Current AI turn number (1 = initial, 2 = response to user follow-up). */
+  turn?:      number;
+  /** Hard cap on AI turns in the demo. After this, client gates with upgrade CTA. */
+  maxTurns?:  number;
+  /** True when no more user replies are allowed — UI should show upgrade CTA. */
+  blocked?:   boolean;
 };
+
+/** One past turn in the demo conversation. */
+export type DemoHistoryEntry = {
+  role: "customer" | "assistant";
+  body: string;
+};
+
+/** Hard limit on the number of AI calls per demo conversation. */
+const DEMO_MAX_TURNS = 2;
 
 // ── Core triage runner ────────────────────────────────────────────────────────
 
-async function runDemoTriage(example: DemoExample): Promise<DemoTriageResult> {
-  const cached = getCached(example.id);
-  if (cached) return cached;
+async function runDemoTriage(
+  example:    DemoExample,
+  history:    DemoHistoryEntry[] = [],
+  userReply?: string,
+): Promise<DemoTriageResult> {
+  const isFollowUp = history.length > 0 && !!userReply;
+
+  // Cache only the FIRST turn (initial example). Follow-ups are unique.
+  if (!isFollowUp) {
+    const cached = getCached(example.id);
+    if (cached) return { ...cached, turn: 1, maxTurns: DEMO_MAX_TURNS, blocked: false };
+  }
 
   const now = new Date();
+  const senderEmail = example.from.match(/<(.+)>/)?.[1] ?? example.from;
+  const senderName  = example.from.split("<")[0].trim();
 
   // Minimal mock objects — only the fields used by buildUserMessage/buildSystemPrompt
   const mockThread = {
     id:               `demo-thread-${example.id}`,
     organizationId:   "demo",
     subject:          example.subject,
-    fromEmail:        example.from.match(/<(.+)>/)?.[1] ?? example.from,
-    fromName:         example.from.split("<")[0].trim(),
+    fromEmail:        senderEmail,
+    fromName:         senderName,
     status:           "open",
-    interactionCount: 0,
+    interactionCount: Math.floor(history.length / 2),
     collectedInfo:    {},
     createdAt:        now,
     updatedAt:        now,
@@ -220,20 +246,40 @@ async function runDemoTriage(example: DemoExample): Promise<DemoTriageResult> {
     assignedTo:       null,
   } as unknown as EmailThread;
 
-  const mockMessages = [
-    {
-      id:             `demo-msg-${example.id}`,
+  // Replay full conversation history as mock messages, then append the latest
+  // customer message (either the example body, or the user's follow-up reply).
+  const mockMessages: EmailMessage[] = [];
+  // Initial customer email
+  mockMessages.push({
+    id:             `demo-msg-${example.id}-0`,
+    threadId:       `demo-thread-${example.id}`,
+    organizationId: "demo",
+    role:           "customer",
+    bodyText:       example.body,
+    subject:        example.subject,
+    fromEmail:      senderEmail,
+    fromName:       senderName,
+    createdAt:      now,
+    updatedAt:      now,
+  } as unknown as EmailMessage);
+  // Replay history (skipping the very first customer message which we already added)
+  history.slice(1).forEach((entry, i) => {
+    mockMessages.push({
+      id:             `demo-msg-${example.id}-${i + 1}`,
       threadId:       `demo-thread-${example.id}`,
       organizationId: "demo",
-      role:           "customer",
-      bodyText:       example.body,
+      role:           entry.role,
+      bodyText:       entry.body,
       subject:        example.subject,
-      fromEmail:      example.from.match(/<(.+)>/)?.[1] ?? example.from,
-      fromName:       example.from.split("<")[0].trim(),
+      fromEmail:      entry.role === "customer" ? senderEmail : null,
+      fromName:       entry.role === "customer" ? senderName  : null,
       createdAt:      now,
       updatedAt:      now,
-    } as unknown as EmailMessage,
-  ];
+    } as unknown as EmailMessage);
+  });
+
+  // The newest message we want AI to act on
+  const newEmailBody = userReply ?? example.body;
 
   const systemPrompt = buildSystemPrompt({
     organizationName: DEMO_ORG,
@@ -245,7 +291,7 @@ async function runDemoTriage(example: DemoExample): Promise<DemoTriageResult> {
   const userMessage = buildUserMessage({
     thread:       mockThread,
     messages:     mockMessages,
-    newEmailBody: example.body,
+    newEmailBody,
   });
 
   const client = getDemoClient();
@@ -272,17 +318,31 @@ async function runDemoTriage(example: DemoExample): Promise<DemoTriageResult> {
     };
   }
 
+  // Compute draft text
+  const draft =
+      output.action === "summarize" ? output.customer_reply
+    : output.action === "ask"       ? output.question
+    : output.action === "ignore"    ? `(AI bedömde att detta var ett auto-genererat mejl: ${output.reason})`
+    : null; // escalate
+
+  const turnNumber = isFollowUp ? 2 : 1;
+
   const result: DemoTriageResult = {
     action:     output.action,
-    draft:      output.action === "summarize" ? output.customer_reply
-               : output.action === "ask"      ? output.question
-               : null,
+    draft,
     confidence: output.confidence,
     caseType:   output.action === "summarize" ? output.case_type : null,
     sources:    output.sources,
+    turn:       turnNumber,
+    maxTurns:   DEMO_MAX_TURNS,
+    blocked:    turnNumber >= DEMO_MAX_TURNS,
   };
 
-  RESULT_CACHE.set(example.id, { result, cachedAt: Date.now() });
+  // Cache only the first-turn (deterministic) result. Follow-ups depend on
+  // user input and shouldn't be replayed for other visitors.
+  if (!isFollowUp) {
+    RESULT_CACHE.set(example.id, { result, cachedAt: Date.now() });
+  }
   return result;
 }
 
@@ -307,14 +367,43 @@ export async function POST(req: NextRequest) {
 
   const json = await req.json().catch(() => null);
   const exampleId = json?.exampleId as ExampleId | undefined;
-  const example = DEMO_EXAMPLES.find(e => e.id === exampleId);
+  const example   = DEMO_EXAMPLES.find(e => e.id === exampleId);
 
   if (!example) {
     return NextResponse.json({ error: "Ogiltigt exempelID" }, { status: 400 });
   }
 
+  // Validate optional follow-up payload
+  const rawHistory: unknown = json?.history;
+  const userReply: string | undefined = typeof json?.userReply === "string" && json.userReply.trim().length > 0
+    ? json.userReply.trim().slice(0, 2000)   // hard-cap to avoid prompt abuse
+    : undefined;
+
+  let history: DemoHistoryEntry[] = [];
+  if (Array.isArray(rawHistory)) {
+    history = rawHistory
+      .filter((h): h is DemoHistoryEntry =>
+        h && typeof h === "object"
+        && (h.role === "customer" || h.role === "assistant")
+        && typeof h.body === "string"
+      )
+      .slice(0, 6); // safety: cap replay length
+  }
+
+  // Server-side enforcement of max turns — don't let a manipulated client
+  // bypass the limit by faking a short history.
+  const customerRepliesInHistory = history.filter(h => h.role === "customer").length;
+  // history always starts with the example body (1 customer message), so a real
+  // follow-up means customerReplies >= 2.
+  if (userReply && customerRepliesInHistory >= DEMO_MAX_TURNS) {
+    return NextResponse.json({
+      error: "Demo-gränsen nådd. Skapa ett konto för att fortsätta testa AI:n med dina egna mejl.",
+      blocked: true,
+    }, { status: 402 });
+  }
+
   try {
-    const result = await runDemoTriage(example);
+    const result = await runDemoTriage(example, history, userReply);
     return NextResponse.json(result);
   } catch (err) {
     console.error("[demo-triage]", err instanceof Error ? err.message : err);
