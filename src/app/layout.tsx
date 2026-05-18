@@ -11,9 +11,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { siteConfig } from "@/config/site";
 import { getUserLocale } from "@/lib/i18n/get-locale";
 
-const inter = Inter({ subsets: ["latin"] });
-
-export const dynamic = "force-dynamic";
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 export const metadata: Metadata = {
   title: {

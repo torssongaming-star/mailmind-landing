@@ -349,11 +349,13 @@ export async function updateDraft(
 
 // ── AI settings + case types (per org) ───────────────────────────────────────
 
+import { cache } from "react";
+
 /**
  * Get the org's AI settings. Returns null if not yet initialised — callers
  * can fall back to defaults until the user customises them.
  */
-export async function getAiSettings(organizationId: string): Promise<AiSettings | null> {
+export const getAiSettings = cache(async function getAiSettings(organizationId: string): Promise<AiSettings | null> {
   if (!isDbConnected()) return null;
   const rows = await db
     .select()
@@ -361,16 +363,16 @@ export async function getAiSettings(organizationId: string): Promise<AiSettings 
     .where(eq(aiSettings.organizationId, organizationId))
     .limit(1);
   return rows[0] ?? null;
-}
+});
 
-export async function listCaseTypes(organizationId: string): Promise<CaseType[]> {
+export const listCaseTypes = cache(async function listCaseTypes(organizationId: string): Promise<CaseType[]> {
   if (!isDbConnected()) return [];
   return db
     .select()
     .from(caseTypes)
     .where(eq(caseTypes.organizationId, organizationId))
     .orderBy(asc(caseTypes.sortOrder), asc(caseTypes.label));
-}
+});
 
 // ── Inboxes ──────────────────────────────────────────────────────────────────
 

@@ -92,6 +92,8 @@ export type AccountSnapshot = {
 
 // ── Core resolvers ────────────────────────────────────────────────────────────
 
+import { cache } from "react";
+
 /**
  * Get the full account snapshot for a Clerk user. The app's main entry helper —
  * one DB roundtrip (via getPortalData), then derive everything else.
@@ -99,7 +101,7 @@ export type AccountSnapshot = {
  * Returns `user: null` if the user has not yet been synced to the DB. Callers
  * should redirect to /app/onboarding in that case.
  */
-export async function getCurrentAccount(
+export const getCurrentAccount = cache(async function getCurrentAccount(
   clerkUserId: string
 ): Promise<AccountSnapshot> {
   const portal = await getPortalData(clerkUserId);
@@ -163,7 +165,7 @@ export async function getCurrentAccount(
     inboxesUsed,
     usersUsed,
   };
-}
+});
 
 /**
  * Compute the AccessState from raw account data. Pure function — no I/O.

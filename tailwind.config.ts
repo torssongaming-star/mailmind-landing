@@ -82,6 +82,18 @@ const config: Config = {
           "65%":  { transform: "translate(10%, 50%) scale(0.9)",  opacity: "0.50" },
           "100%": { transform: "translate(-30%, 10%) scale(1)",   opacity: "0.55" },
         },
+        "bg-drift": {
+          "0%, 100%": { backgroundPosition: "0% 0%" },
+          "50%": { backgroundPosition: "50% 50%" },
+        },
+        "float-slow": {
+          "0%, 100%": { transform: "translate(0, 0)" },
+          "50%": { transform: "translate(30px, -30px)" },
+        },
+        "float-slower": {
+          "0%, 100%": { transform: "translate(0, 0)" },
+          "50%": { transform: "translate(-40px, 30px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -90,6 +102,9 @@ const config: Config = {
         "pulse-slow": "pulse-slow 4s ease-in-out infinite",
         "glow-spin": "glow-spin 10s linear infinite",
         "dot-spotlight": "dot-spotlight 18s ease-in-out infinite",
+        "bg-drift": "bg-drift 40s linear infinite",
+        "float-slow": "float-slow 25s ease-in-out infinite",
+        "float-slower": "float-slower 30s ease-in-out infinite",
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

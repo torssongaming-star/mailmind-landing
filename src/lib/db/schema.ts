@@ -356,6 +356,7 @@ export const emailThreads = pgTable(
     index("email_threads_snoozed_idx").on(t.snoozedUntil),
     // P2.3 — defense-in-depth filter for "from this customer" queries
     index("email_threads_org_from_idx").on(t.organizationId, t.fromEmail),
+    index("email_threads_tags_gin").using("gin", t.tags),
   ]
 );
 
