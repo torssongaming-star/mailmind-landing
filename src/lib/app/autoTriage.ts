@@ -40,6 +40,7 @@ import { fireWebhooksForThread } from "./webhooks";
 import { notifyNewThread } from "./notify";
 import { canAutoSend, executeSendDraft } from "./autoSend";
 import { isBlocked } from "./blocklist";
+import { detectBulkEmail } from "./bulk-filter";
 import { sendPushToOrg } from "./push";
 
 function currentMonthIso(): string {
@@ -95,6 +96,34 @@ export async function autoTriageNewMessage(input: {
   // Load thread + history + AI config
   const thread = await getThread(organizationId, threadId);
   if (!thread) return { ok: false, reason: "thread_missing" };
+
+  // ── Bulk / marketing filter ───────────────────────────────────────────────
+  // Check BEFORE loading messages or calling AI — saves cost and keeps inbox clean.
+  // Thread + message are already in DB so the customer can audit filtered emails.
+  const bulkSignal = detectBulkEmail({
+    fromEmail: thread.fromEmail,
+    subject:   thread.subject ?? "",
+    bodyText:  newEmailBody,
+  });
+  if (bulkSignal.detected) {
+    // Resolve the thread immediately so it doesn't appear in the active queue
+    await updateThread(organizationId, threadId, {
+      status:       "resolved",
+      caseTypeSlug: "bulk",
+    });
+    await writeAuditLog({
+      organizationId,
+      action:   "email_filtered_bulk",
+      metadata: {
+        threadId,
+        fromEmail: thread.fromEmail,
+        subject:   thread.subject,
+        layer:     bulkSignal.layer,
+        reason:    bulkSignal.reason,
+      },
+    });
+    return { ok: false, reason: "bulk_email_filtered" };
+  }
 
   // Skip if there's already a pending/edited draft — prevents duplicate drafts
   // when Pub/Sub delivers the same notification twice or manual + auto trigger race.
