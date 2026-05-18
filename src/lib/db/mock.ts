@@ -51,6 +51,7 @@ export const MOCK_USER: User = {
   email:          "demo@mailmind.se",
   role:           "owner",
   locale:         "sv",
+  signature:      null,
   createdAt:      new Date("2025-01-15T09:00:00Z"),
   updatedAt:      new Date(),
 };
