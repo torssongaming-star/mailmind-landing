@@ -7,6 +7,23 @@
 
 ## 🔴 Kritiskt — gör nu
 
+### Steg 0 — Vercel env-vars för e-postformulär (5 min)
+
+För att formulär faktiskt ska leverera till dig krävs tre env-vars i Vercel:
+
+| Variabel | Värde | Vad det styr |
+|---|---|---|
+| `RESEND_API_KEY` | `re_xxx` från resend.com | All utgående mejl |
+| `DEMO_REQUEST_TO` | din mottagaradress | Vart "Boka demo"-formulär går |
+| `DEMO_REQUEST_FROM` | `Mailmind <noreply@mailmind.se>` (verifierad i Resend) | Avsändare för demo-mejl |
+| `SUPPORT_EMAIL_TO` | din mottagaradress (kan vara samma som ovan) | Vart support-drawerns meddelanden går |
+
+Sätts inte `SUPPORT_EMAIL_TO` faller den tillbaka på `support@mailmind.se` — om den adressen inte landar i en mailbox du läser **försvinner meddelandena tyst**. Kolla Vercel-loggar om något inte når dig.
+
+- [ ] Klart
+
+---
+
 ### Steg 1 — `npm run db:push` (30 sek)
 
 ```powershell

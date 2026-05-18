@@ -91,7 +91,7 @@ export function Hero() {
             Data i EU
           </span>
           <span className="w-1 h-1 rounded-full bg-white/15" />
-          <span>Bygd i Sverige</span>
+          <span>Byggd i Sverige</span>
         </div>
       </div>
 

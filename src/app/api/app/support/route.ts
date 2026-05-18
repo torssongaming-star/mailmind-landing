@@ -58,8 +58,13 @@ export async function POST(req: NextRequest) {
   const fromEmail = account.user.email;
   const orgName   = account.organization.name;
 
+  // Destination: env-configurable so you can point it at your real mailbox
+  // until support@mailmind.se has an inbox you actually read.
+  // Fallback to support@mailmind.se for legacy behaviour.
+  const supportTo = process.env.SUPPORT_EMAIL_TO?.trim() || "support@mailmind.se";
+
   const result = await sendEmail({
-    to:      "support@mailmind.se",
+    to:      supportTo,
     subject: `[Support] ${subject}`,
     text: [
       `Från: ${fromEmail}`,
@@ -71,8 +76,18 @@ export async function POST(req: NextRequest) {
   });
 
   if (!result.ok) {
-    console.error("[support] sendEmail failed:", result.error);
-    return NextResponse.json({ error: "Kunde inte skicka meddelandet." }, { status: 502 });
+    // Log full message so it isn't lost even if email delivery fails —
+    // you can fish it out of Vercel logs and reply manually.
+    console.error("[support] sendEmail failed:", {
+      error:    result.error,
+      to:       supportTo,
+      from:     fromEmail,
+      orgId:    account.organization.id,
+      orgName,
+      subject,
+      message,
+    });
+    return NextResponse.json({ error: "Kunde inte skicka meddelandet just nu — vi har loggat det och återkommer." }, { status: 502 });
   }
 
   return NextResponse.json({ ok: true });
