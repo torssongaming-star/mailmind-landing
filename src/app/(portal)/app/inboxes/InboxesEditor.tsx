@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useI18n } from "@/lib/i18n/context";
 import { ForwardingGuide } from "./ForwardingGuide";
 import { ConnectionTester } from "./ConnectionTester";
@@ -133,7 +134,7 @@ export function InboxesEditor({
                   <p className="text-sm font-semibold text-white">{inbox.displayName ?? inbox.email}</p>
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {providerLabel(inbox.provider, sv)} · {t(`portal.inboxes.status.${inbox.status.toLowerCase()}` as any)}
+                  {providerLabel(inbox.provider, sv)} · {t(`portal.inboxes.status.${inbox.status.toLowerCase()}`)}
                   {inbox.forwardedFrom && (
                     <> · {t("portal.inboxes.labels.forwardedFrom").toLowerCase()}{" "}
                     <span className="text-white/70">{inbox.forwardedFrom}</span></>
@@ -202,7 +203,7 @@ export function InboxesEditor({
 
           <div className="grid gap-3">
             {/* Outlook / Microsoft 365 — recommended for Swedish B2B */}
-            <a
+            <Link
               href="/api/app/inboxes/outlook/auth"
               className="flex items-start gap-4 rounded-xl border border-cyan-500/30 bg-cyan-500/5 hover:bg-cyan-500/10 px-4 py-3.5 transition-colors group"
             >
@@ -223,10 +224,10 @@ export function InboxesEditor({
                 </span>
               </div>
               <span className="text-white/40 group-hover:text-white/70 text-sm self-center">→</span>
-            </a>
+            </Link>
 
             {/* Gmail */}
-            <a
+            <Link
               href="/api/app/inboxes/gmail/auth"
               className="flex items-start gap-4 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] px-4 py-3.5 transition-colors group"
             >
@@ -244,7 +245,7 @@ export function InboxesEditor({
                 </p>
               </div>
               <span className="text-white/40 group-hover:text-white/70 text-sm self-center">→</span>
-            </a>
+            </Link>
 
             {/* Forwarding — advanced option */}
             <button

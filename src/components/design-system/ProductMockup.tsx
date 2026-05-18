@@ -25,7 +25,19 @@ import { useI18n } from "@/lib/i18n/context";
 export function ProductMockup() {
   const { t } = useI18n();
 
-  const emails = [
+  type DemoTag = { label: string; color: string };
+  type DemoEmail = {
+    id: number;
+    sender: string;
+    email: string;
+    subject: string;
+    preview: string;
+    time: string;
+    tags: DemoTag[];
+    status: "read" | "unread";
+  };
+
+  const emails: DemoEmail[] = [
     {
       id: 1,
       sender: "Sarah Jenkins",
@@ -197,7 +209,7 @@ export function ProductMockup() {
                       {email.preview}
                     </div>
                     <div className="flex flex-wrap gap-1.5">
-                      {(email.tags as any[]).map((tag: any) => (
+                      {email.tags.map((tag) => (
                         <Badge key={tag.label} variant="outline" className={cn("text-[9px] h-4 px-1.5 py-0 border font-medium uppercase tracking-wider", tag.color)}>
                           {tag.label}
                         </Badge>

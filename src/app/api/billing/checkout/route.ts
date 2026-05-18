@@ -2,6 +2,11 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { stripe, PRICE_IDS } from "@/lib/stripe";
 import { NextRequest, NextResponse } from "next/server";
 import * as db from "@/lib/db/queries";
+import { z } from "zod";
+
+const checkoutSchema = z.object({
+  plan: z.enum(["starter", "team", "business"]),
+});
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,8 +20,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const body = await req.json();
-    const plan = body.plan as keyof typeof PRICE_IDS;
+    const body = await req.json().catch(() => null);
+    const parsed = checkoutSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: "Invalid checkout request" }, { status: 400 });
+    }
+
+    const { plan } = parsed.data;
 
     const priceId = PRICE_IDS[plan];
     
@@ -32,8 +42,7 @@ export async function POST(req: NextRequest) {
     // 1. Resolve organization and Stripe Customer ID
     const portalData = await db.getPortalData(userId);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let stripeCustomerId: any = portalData.org?.stripeCustomerId || undefined;
+    let stripeCustomerId: string | undefined = portalData.org?.stripeCustomerId || undefined;
 
     if (!stripeCustomerId) {
       // Check if Clerk has it as a fallback

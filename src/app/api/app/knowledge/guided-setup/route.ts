@@ -92,7 +92,7 @@ Returnera ENDAST giltig JSON, ingen annan text:
         messages:   [{ role: "user", content: prompt }],
       });
 
-      let raw = response.content
+      const raw = response.content
         .filter((b): b is Anthropic.TextBlock => b.type === "text")
         .map(b => b.text)
         .join("")

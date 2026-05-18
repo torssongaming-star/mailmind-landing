@@ -77,7 +77,9 @@ export async function identifyUser(
       },
     });
     await ph.flush();
-  } catch {}
+  } catch {
+    // Analytics must never break a request
+  }
 }
 
 /**
@@ -101,5 +103,7 @@ export async function groupOrg(
       },
     });
     await ph.flush();
-  } catch {}
+  } catch {
+    // Analytics must never break a request
+  }
 }

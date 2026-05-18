@@ -14,7 +14,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db, isDbConnected, organizations, users, subscriptions, licenseEntitlements, usageCounters, inboxes, emailThreads } from "@/lib/db";
-import { eq, and, lt, lte, desc, isNotNull } from "drizzle-orm";
+import { eq, and, lt, desc, isNotNull } from "drizzle-orm";
 import { wakeUpAllSnoozedThreads, updateInboxConfig } from "@/lib/app/threads";
 import { notifyUsageWarning, notifyTrialExpired, notifyWeeklyReport } from "@/lib/app/notify";
 import { getWeeklyStats } from "@/lib/app/stats";

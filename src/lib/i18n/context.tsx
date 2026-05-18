@@ -1,12 +1,12 @@
 "use client";
 
 import React, { createContext, useContext, ReactNode, useMemo } from "react";
-import { Locale, TranslationPath } from "./types";
+import { Locale } from "./types";
 import { getI18n } from "./engine";
 
 type I18nContextType = {
-  t: (path: TranslationPath, variables?: Record<string, string>) => string;
-  getRaw: (path: string) => any;
+  t: (path: string, variables?: Record<string, string>) => string;
+  getRaw: (path: string) => unknown;
   locale: Locale;
 };
 

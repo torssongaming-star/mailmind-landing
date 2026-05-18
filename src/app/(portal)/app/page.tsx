@@ -110,7 +110,7 @@ export default async function AppHomePage() {
           <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center gap-3 flex-wrap">
-                <p className="text-2xl font-bold text-white tracking-tight">{t(`plans.${plan.id}.name` as any)}</p>
+                <p className="text-2xl font-bold text-white tracking-tight">{t(`plans.${plan.id}.name`)}</p>
                 {account.subscription?.status && (
                   <StatusBadge status={account.subscription.status} locale={locale} />
                 )}
@@ -177,7 +177,7 @@ export default async function AppHomePage() {
         />
         <StatCard
           label={t("portal.dashboard.stats.plan")}
-          value={plan ? t(`plans.${plan.id}.name` as any) : "—"}
+          value={plan ? t(`plans.${plan.id}.name`) : "—"}
           sub={plan ? `${plan.price}/${t("portal.dashboard.stats.plan").toLowerCase()}` : t("portal.dashboard.stats.noPlan")}
           icon={CreditCard}
           locale={locale}
@@ -279,7 +279,7 @@ function GettingStarted({ setup, locale }: { setup: SetupState; locale: Locale }
     firstThread:        setup.firstThread,
     caseTypeAdjustment: setup.caseTypesReady, // optional, doesn't gate
   };
-  const activeIdx = GUIDED_STEPS.findIndex((s, i) => {
+  const activeIdx = GUIDED_STEPS.findIndex((s) => {
     // Skip the optional case-types step when determining "next required action".
     if (s.key === "caseTypeAdjustment") return false;
     return !completed[s.key];

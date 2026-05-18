@@ -7,6 +7,7 @@
  */
 
 import { useEffect } from "react";
+import Link from "next/link";
 
 export default function GlobalError({
   error,
@@ -49,12 +50,12 @@ export default function GlobalError({
               >
                 Försök igen
               </button>
-              <a href="/" style={{
+              <Link href="/" style={{
                 padding: "8px 20px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)",
                 color: "#fff", fontWeight: 600, fontSize: 14, textDecoration: "none",
               }}>
                 Hem
-              </a>
+              </Link>
             </div>
           </div>
         </main>

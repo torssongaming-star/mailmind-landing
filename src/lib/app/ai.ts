@@ -217,12 +217,15 @@ export function detectPromptInjection(s: string | null | undefined): boolean {
   return patterns.some(p => p.test(s));
 }
 
+// eslint-disable-next-line no-control-regex -- intentionally strips non-printing control characters before prompt use.
+const CONTROL_CHARS_PATTERN = /[\x00-\x08\x0B\x0C\x0E-\x1F]/g;
+
 function sanitiseForPrompt(s: string | null | undefined, maxLen = 8000): string {
   if (!s) return "";
   // Remove < and > to prevent breaking out of <customer_data> tags
   let out = s.replace(/[<>]/g, "");
   // Strip null bytes and other control chars that could confuse the model
-  out = out.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "");
+  out = out.replace(CONTROL_CHARS_PATTERN, "");
   // Soft-neutralise classic prompt-injection trigger phrases (English + Swedish)
   out = out.replace(
     /\b(ignore (?:all|any|the|your|previous|prior) instructions?|disregard the (?:system|above)|new instructions?:|you are now|jailbreak|system prompt|(?:ignorera|strunta i) (?:alla |dina |tidigare )?(?:instruktioner|regler))/gi,

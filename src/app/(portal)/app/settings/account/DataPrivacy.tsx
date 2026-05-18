@@ -11,7 +11,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, AlertTriangle, ShieldCheck, X } from "lucide-react";
+import { Download, AlertTriangle, ShieldCheck } from "lucide-react";
 import { useToast, ToastContainer } from "@/components/ui/Toast";
 
 type Props = {

@@ -228,7 +228,7 @@ export default async function ThreadPage({
   );
 }
 
-function ActionBadge({ action, t }: { action: "ask" | "summarize" | "escalate"; t: any }) {
+function ActionBadge({ action, t }: { action: "ask" | "summarize" | "escalate"; t: (path: string) => string }) {
   const map = {
     ask:       { label: t("inbox.thread.actions.ask"),       cls: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
     summarize: { label: t("inbox.thread.actions.summarize"), cls: "bg-green-500/15 text-green-400 border-green-500/30" },

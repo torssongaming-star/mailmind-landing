@@ -17,7 +17,7 @@ import {
 } from "@/lib/db/schema";
 import { getAdminIdentity, requireAdminApi } from "@/lib/admin/auth";
 import { revalidatePath } from "next/cache";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { PLANS, PlanKey } from "@/lib/plans";
 
 /**

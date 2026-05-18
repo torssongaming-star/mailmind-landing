@@ -69,11 +69,8 @@ export async function GET(_req: NextRequest) {
 
   // Email messages — fetched per thread to keep relation intact
   const threadIds = threads.map(t => t.id);
-  const messages = threadIds.length > 0
-    ? await db.select().from(emailMessages).where(eq(emailMessages.threadId, threadIds[0])) // placeholder, expanded below
-    : [];
   // For multiple threads we need an IN clause — Drizzle inArray
-  const allMessages: typeof messages = [];
+  const allMessages: Array<typeof emailMessages.$inferSelect> = [];
   for (const tid of threadIds) {
     const rows = await db.select().from(emailMessages).where(eq(emailMessages.threadId, tid));
     allMessages.push(...rows);

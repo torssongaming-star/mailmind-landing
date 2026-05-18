@@ -3,7 +3,7 @@ import { DryRunPanel } from "./DryRunPanel";
 import { AutoSendPanel } from "./AutoSendPanel";
 import { OrgNotesPanel } from "./OrgNotesPanel";
 import { OrgProfilePanel } from "./OrgProfilePanel";
-import { Building2, Users, CreditCard, Mail, Calendar, ShieldCheck, Activity, MessageSquare, Clock, Zap } from "lucide-react";
+import { Building2, Users, CreditCard, Mail, Calendar, ShieldCheck, Activity, MessageSquare, Zap } from "lucide-react";
 import { format } from "date-fns";
 import { notFound } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,7 @@ export default async function AdminOrganizationDetailPage({ params }: { params: 
   ]);
 
   if (!org) notFound();
-  const o = org as any;
+  const o: NonNullable<Awaited<ReturnType<typeof getAdminOrganization>>> = org;
 
   const sub          = o.subscriptions[0];
   const entitlements = o.licenseEntitlement;

@@ -1,6 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { DashboardHeader } from "@/components/portal/DashboardHeader";
 import { PLANS } from "@/lib/plans";
 import { getPortalData } from "@/lib/db/queries";
 import { getCurrentAccount } from "@/lib/app/entitlements";

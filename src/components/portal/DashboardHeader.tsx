@@ -1,8 +1,6 @@
 "use client";
 
 import { UserButton, useUser } from "@clerk/nextjs";
-import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 import { CommandPaletteTrigger } from "./CommandPalette";
 
 interface DashboardHeaderProps {
@@ -12,7 +10,6 @@ interface DashboardHeaderProps {
 
 export function DashboardHeader({ title, description }: DashboardHeaderProps) {
   const { user } = useUser();
-  const pathname = usePathname();
 
   return (
     <header className="h-16 flex items-center justify-between px-6 border-b border-white/8 bg-[hsl(var(--surface-base))]/70 backdrop-blur-md shrink-0 sticky top-0 z-20">

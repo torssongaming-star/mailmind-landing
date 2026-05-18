@@ -35,7 +35,12 @@ type ClerkEvent =
 export async function POST(req: NextRequest) {
   const secret = process.env.CLERK_WEBHOOK_SECRET;
   if (!secret || secret === "whsec_replace_me") {
-    console.warn("[clerk-webhook] CLERK_WEBHOOK_SECRET not configured — skipping verification");
+    if (process.env.NODE_ENV === "production") {
+      console.error("[clerk-webhook] CLERK_WEBHOOK_SECRET not configured");
+      return NextResponse.json({ error: "misconfigured" }, { status: 500 });
+    }
+
+    console.warn("[clerk-webhook] CLERK_WEBHOOK_SECRET not configured - skipping verification outside production");
     return NextResponse.json({ received: true, warning: "secret not configured" });
   }
 

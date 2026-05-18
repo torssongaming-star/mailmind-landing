@@ -2,11 +2,11 @@
  * Portal data queries
  *
  * Single entry point for all dashboard data needs. Each function:
- * 1. Returns mock data immediately if DATABASE_URL is not set
+ * 1. Returns mock data in local development if DATABASE_URL is not set
  * 2. Otherwise queries Postgres via Drizzle
  *
- * This means dashboard pages work correctly in local dev, CI, and on Vercel
- * preview deployments that don't have a database configured.
+ * This means dashboard pages work correctly in local dev without masking
+ * production database misconfiguration.
  */
 
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -34,16 +34,27 @@ async function getDb() {
 
 import { PLANS } from "../plans";
 
+function shouldUseMockData(): boolean {
+  return process.env.NODE_ENV !== "production" && process.env.MAILMIND_DISABLE_MOCK_DATA !== "1";
+}
+
+function assertMockDataAllowed(): void {
+  if (!shouldUseMockData()) {
+    throw new Error("[db] DATABASE_URL is not set and mock portal data is disabled.");
+  }
+}
+
 // ── Portal overview data ───────────────────────────────────────────────────────
 
 /**
  * Fetch all portal data for a given Clerk user.
- * Returns mock data if DATABASE_URL is not configured.
+ * Returns mock data in local development if DATABASE_URL is not configured.
  *
  * TODO (Phase 3): Replace mock fallback with real queries once Neon is wired up.
  */
 export async function getPortalData(clerkUserId: string): Promise<PortalData> {
   if (!isDbConnected()) {
+    assertMockDataAllowed();
     return MOCK_PORTAL_DATA;
   }
 
@@ -127,6 +138,7 @@ export async function getPortalData(clerkUserId: string): Promise<PortalData> {
  */
 export async function getAuditLogs(organizationId: string, limit = 20) {
   if (!isDbConnected()) {
+    assertMockDataAllowed();
     return MOCK_AUDIT_LOGS;
   }
 

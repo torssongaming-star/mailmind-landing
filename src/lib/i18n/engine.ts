@@ -1,18 +1,24 @@
 import { sv } from "./locales/sv";
 import { en } from "./locales/en";
-import { Locale, TranslationPath } from "./types";
+import { Locale } from "./types";
 
-const dictionaries: Record<Locale, any> = { sv, en };
+type TranslationDictionary = Record<string, unknown>;
+
+const dictionaries: Record<Locale, TranslationDictionary> = { sv, en };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
 
 export function getI18n(locale: Locale = "sv") {
   const dict = dictionaries[locale] || dictionaries.sv;
 
-  const t = (path: TranslationPath, variables?: Record<string, string>): string => {
-    const keys = (path as string).split(".");
-    let value = dict;
+  const t = (path: string, variables?: Record<string, string>): string => {
+    const keys = path.split(".");
+    let value: unknown = dict;
 
     for (const key of keys) {
-      if (value && typeof value === "object" && key in value) {
+      if (isRecord(value) && key in value) {
         value = value[key];
       } else {
         return path; // Fallback to key
@@ -33,11 +39,11 @@ export function getI18n(locale: Locale = "sv") {
     return value;
   };
 
-  const getRaw = (path: string): any => {
+  const getRaw = (path: string): unknown => {
     const keys = path.split(".");
-    let value = dict;
+    let value: unknown = dict;
     for (const key of keys) {
-      if (value && typeof value === "object" && key in value) {
+      if (isRecord(value) && key in value) {
         value = value[key];
       } else {
         return undefined;

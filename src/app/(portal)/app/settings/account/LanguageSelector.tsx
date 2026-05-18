@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useI18n } from "@/lib/i18n/context";
+import type { Locale } from "@/lib/i18n/types";
 
 export function LanguageSelector() {
   const { t, locale } = useI18n();
@@ -12,7 +13,7 @@ export function LanguageSelector() {
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSave = async (newLocale: string) => {
+  const handleSave = async (newLocale: Locale) => {
     setSaving(true);
     setError(null);
     try {
@@ -27,7 +28,7 @@ export function LanguageSelector() {
         throw new Error(data.error ?? "Failed to save language");
       }
 
-      setCurrentLocale(newLocale as any);
+      setCurrentLocale(newLocale);
       setSavedAt(new Date());
       
       // Refresh to apply changes and update RootLayout/middleware

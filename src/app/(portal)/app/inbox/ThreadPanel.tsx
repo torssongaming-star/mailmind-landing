@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Loader2, ExternalLink, ArrowLeft } from "lucide-react";
+import { ExternalLink, ArrowLeft } from "lucide-react";
 import { DraftActions } from "../thread/[id]/DraftActions";
 import { GenerateDraftButton } from "../thread/[id]/GenerateDraftButton";
 import { InternalNotes, type Note } from "../thread/[id]/InternalNotes";
@@ -385,7 +385,7 @@ export function ThreadPanel({
   );
 }
 
-function ActionBadge({ action, t }: { action: "ask" | "summarize" | "escalate"; t: any }) {
+function ActionBadge({ action, t }: { action: "ask" | "summarize" | "escalate"; t: (path: string) => string }) {
   const map = {
     ask:       { label: t("inbox.thread.actions.ask"),     cls: "bg-blue-500/15 text-blue-400 border-blue-500/30" },
     summarize: { label: t("inbox.thread.actions.summarize"),   cls: "bg-green-500/15 text-green-400 border-green-500/30" },

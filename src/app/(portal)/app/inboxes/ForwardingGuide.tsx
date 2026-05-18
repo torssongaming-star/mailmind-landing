@@ -26,10 +26,10 @@ export function ForwardingGuide({ mailmindAddress }: { mailmindAddress: string }
 
   const getGuide = (c: Client) => {
     switch (c) {
-      case "outlook-web": return { title: t("portal.inboxes.guide.clients.outlookWeb.title"), steps: t("portal.inboxes.guide.clients.outlookWeb.steps" as any) as unknown as string[] };
-      case "outlook-app": return { title: t("portal.inboxes.guide.clients.outlookApp.title"), steps: t("portal.inboxes.guide.clients.outlookApp.steps" as any) as unknown as string[] };
-      case "gmail":       return { title: t("portal.inboxes.guide.clients.gmail.title"),      steps: t("portal.inboxes.guide.clients.gmail.steps" as any) as unknown as string[] };
-      case "apple-mail":  return { title: t("portal.inboxes.guide.clients.appleMail.title"),  steps: t("portal.inboxes.guide.clients.appleMail.steps" as any) as unknown as string[] };
+      case "outlook-web": return { title: t("portal.inboxes.guide.clients.outlookWeb.title"), steps: t("portal.inboxes.guide.clients.outlookWeb.steps") as unknown as string[] };
+      case "outlook-app": return { title: t("portal.inboxes.guide.clients.outlookApp.title"), steps: t("portal.inboxes.guide.clients.outlookApp.steps") as unknown as string[] };
+      case "gmail":       return { title: t("portal.inboxes.guide.clients.gmail.title"),      steps: t("portal.inboxes.guide.clients.gmail.steps") as unknown as string[] };
+      case "apple-mail":  return { title: t("portal.inboxes.guide.clients.appleMail.title"),  steps: t("portal.inboxes.guide.clients.appleMail.steps") as unknown as string[] };
     }
   };
 

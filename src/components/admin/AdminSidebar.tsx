@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -12,7 +11,6 @@ import {
   History,
   Activity,
   ChevronLeft,
-  ShieldCheck,
   UserPlus,
   Monitor,
   Mail,

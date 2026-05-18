@@ -25,12 +25,12 @@ export function Pricing() {
         {plans.map((plan, index) => (
           <div key={index} className={plan.popular ? "mt-4 lg:mt-0 lg:-mt-4" : ""}>
             <PricingCard
-              name={t(`plans.${plan.id}.name` as any)}
-              price={plan.id === "enterprise" ? t("plans.enterprise.price" as any) : plan.price}
-              description={t(`plans.${plan.id}.description` as any)}
+              name={t(`plans.${plan.id}.name`)}
+              price={plan.id === "enterprise" ? t("plans.enterprise.price") : plan.price}
+              description={t(`plans.${plan.id}.description`)}
               features={plan.features}
               popular={plan.popular}
-              ctaText={t(`plans.${plan.id}.cta` as any)}
+              ctaText={t(`plans.${plan.id}.cta`)}
               delay={index * 0.15}
             />
           </div>
