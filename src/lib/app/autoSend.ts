@@ -183,12 +183,18 @@ export async function executeSendDraft(params: {
     if (userId) {
       const userRows = await db.select().from(users).where(eq(users.id, userId)).limit(1);
       const user = userRows[0];
-      // User-level signature takes priority, but only if they've opted in
+      console.log("[autoSend] signature lookup", {
+        userId,
+        foundUser: !!user,
+        appendSignature: user?.appendSignature,
+        hasPersonalSig: !!user?.signature?.trim(),
+        hasOrgSig: !!settings?.signature?.trim(),
+      });
+      // User-level signature takes priority, but only if they've opted in (default: true)
       if (user?.appendSignature !== false) {
         if (user?.signature?.trim()) {
           signatureToUse = user.signature;
         } else if (settings?.signature?.trim()) {
-          // Fall back to org-level signature if user has no personal one
           signatureToUse = settings.signature;
         }
       }
@@ -196,6 +202,8 @@ export async function executeSendDraft(params: {
       // System-triggered sends (no userId) always use org signature
       signatureToUse = settings.signature;
     }
+
+    console.log("[autoSend] signatureToUse:", signatureToUse ? `${signatureToUse.slice(0, 60)}…` : "null");
 
     // Prepare HTML and Plain Text bodies
     const htmlBodyBase = textToHtml(draft.bodyText);

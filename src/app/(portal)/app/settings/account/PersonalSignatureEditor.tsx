@@ -15,16 +15,14 @@ export function PersonalSignatureEditor({
   const [errorMsg, setErrorMsg]           = useState<string | null>(null);
   const [appendSig, setAppendSig]         = useState(initialAppendSignature);
   const [togglePending, setTogglePending] = useState(false);
-  const editorRef = useRef<HTMLDivElement>(null);
+  const [preview, setPreview]             = useState<"edit" | "preview">("edit");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Controlled so we can show a preview
+  const [rawHtml, setRawHtml] = useState(initialSignature ?? "");
 
   const handleSave = async () => {
-    const currentSignature = editorRef.current?.innerHTML ?? "";
-    const hasChanged = currentSignature.trim() !== (initialSignature ?? "").trim();
-    if (!hasChanged) {
-      setStatus("success");
-      setTimeout(() => setStatus("idle"), 2500);
-      return;
-    }
+    const currentSignature = rawHtml;
 
     setIsPending(true);
     setStatus("idle");
@@ -36,7 +34,7 @@ export function PersonalSignatureEditor({
         throw new Error(res.error || "Ett oväntat fel uppstod");
       }
       setStatus("success");
-      setTimeout(() => setStatus("idle"), 2500);
+      setTimeout(() => setStatus("idle"), 3000);
     } catch (e) {
       setStatus("error");
       setErrorMsg(e instanceof Error ? e.message : "Okänt fel uppstod");
@@ -52,7 +50,7 @@ export function PersonalSignatureEditor({
     try {
       await updateAppendSignature(newValue);
     } catch {
-      setAppendSig(!newValue); // Revert on failure
+      setAppendSig(!newValue);
     } finally {
       setTogglePending(false);
     }
@@ -63,25 +61,68 @@ export function PersonalSignatureEditor({
       <div className="max-w-2xl">
         <h2 className="text-base font-semibold text-white">Personlig e-postsignatur</h2>
         <p className="text-sm text-slate-400 mt-1">
-          Din HTML-signatur läggs till längst ner i mejl när du godkänner AI-utkast.
+          Din signatur läggs till längst ner i e-post när du godkänner AI-utkast.
         </p>
 
-        <div className="mt-6 space-y-5">
-          {/* Signature Editor */}
-          <div>
-            <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-              Din signatur (stödjer bilder och länkar)
-            </label>
-            <div
-              ref={editorRef}
-              contentEditable
-              dangerouslySetInnerHTML={{ __html: initialSignature ?? "" }}
-              className="w-full min-h-[120px] rounded-xl bg-[#0A1025] border border-white/10 px-4 py-3 text-sm text-white focus:border-cyan-400/50 focus:outline-none focus:ring-1 focus:ring-cyan-400/20 transition-all overflow-auto"
-            />
-            <p className="text-xs text-slate-500 mt-2">
-              Kopiera och klistra in din befintliga e-postsignatur för att behålla formateringen.
-            </p>
+        <div className="mt-6 space-y-4">
+          {/* Tab row */}
+          <div className="flex items-center gap-1 rounded-lg bg-white/[0.04] p-1 w-fit">
+            <button
+              onClick={() => setPreview("edit")}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                preview === "edit"
+                  ? "bg-white/10 text-white"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              Redigera HTML
+            </button>
+            <button
+              onClick={() => setPreview("preview")}
+              className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${
+                preview === "preview"
+                  ? "bg-white/10 text-white"
+                  : "text-slate-400 hover:text-white"
+              }`}
+            >
+              Förhandsgranska
+            </button>
           </div>
+
+          {/* Editor / Preview */}
+          {preview === "edit" ? (
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                HTML-kod för signaturen
+              </label>
+              <textarea
+                ref={textareaRef}
+                value={rawHtml}
+                onChange={e => setRawHtml(e.target.value)}
+                onPaste={e => {
+                  // Allow plain paste as-is (HTML from clipboard too)
+                  e.stopPropagation();
+                }}
+                rows={8}
+                placeholder='Klistra in HTML-koden för din signatur här, t.ex. <p>Emil Torsson<br/><a href="mailto:...">...</a></p>'
+                className="w-full rounded-xl bg-[#0A1025] border border-white/10 px-4 py-3 text-xs text-white/80 font-mono focus:border-cyan-400/50 focus:outline-none focus:ring-1 focus:ring-cyan-400/20 transition-all resize-y"
+              />
+              <p className="text-xs text-slate-500 mt-2">
+                Tips: Kopiera signaturen från din befintliga mejlapp och klistra in i textfältet ovan.
+                Den sparas som HTML.
+              </p>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+                Förhandsvisning
+              </label>
+              <div
+                className="w-full min-h-[80px] rounded-xl bg-white px-4 py-3 text-sm overflow-auto"
+                dangerouslySetInnerHTML={{ __html: rawHtml || "<em style='color:#888'>Din signatur visas här…</em>" }}
+              />
+            </div>
+          )}
 
           {/* Toggle: Bifoga signatur i AI-utkast */}
           <div className="flex items-center justify-between rounded-xl border border-white/8 bg-white/[0.02] px-4 py-3">
@@ -123,7 +164,12 @@ export function PersonalSignatureEditor({
             </button>
 
             {status === "success" && (
-              <span className="text-sm text-green-400 font-medium">Sparat!</span>
+              <span className="text-sm text-green-400 font-medium flex items-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+                Sparat!
+              </span>
             )}
             {status === "error" && (
               <span className="text-sm text-red-400 font-medium">{errorMsg}</span>
