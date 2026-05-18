@@ -30,7 +30,8 @@ import {
   setThreadExternalId,
   updateInboxConfig,
 } from "./threads";
-import { sendEmail, replySubject, appendSignature } from "./email";
+import { sendEmail, replySubject, appendSignature, appendHtmlSignature } from "./email";
+import { textToHtml, htmlToText } from "../utils/html";
 import { writeAuditLog } from "./audit";
 import {
   decryptTokens as gmailDecryptTokens,
@@ -175,7 +176,7 @@ export async function executeSendDraft(params: {
     const inReplyTo  = lastCustomerMsg?.externalMessageId ?? null;
     const references = priorIds.length > 0 ? priorIds.join(" ") : null;
 
-    // Signature
+    // Signatures
     const settings = await getAiSettings(orgId);
     let signatureToUse = settings?.signature ?? null;
 
@@ -187,8 +188,13 @@ export async function executeSendDraft(params: {
       }
     }
 
-    const finalBody = appendSignature(draft.bodyText, signatureToUse);
-    const subject   = replySubject(thread.subject);
+    // Prepare HTML and Plain Text bodies
+    const htmlBodyBase = textToHtml(draft.bodyText);
+    const finalHtmlBody = appendHtmlSignature(htmlBodyBase, signatureToUse);
+    const signatureText = signatureToUse ? htmlToText(signatureToUse) : null;
+    const finalBodyText = appendSignature(draft.bodyText, signatureText);
+    
+    const subject = replySubject(thread.subject);
 
     let sentMessageId: string | null = null;
 
@@ -213,7 +219,8 @@ export async function executeSendDraft(params: {
         from:          inboxEmail!,
         to:            thread.fromEmail,
         subject,
-        text:          finalBody,
+        text:          finalBodyText,
+        html:          finalHtmlBody,
         inReplyTo,
         references,
         gmailThreadId: thread.externalThreadId,
@@ -249,7 +256,8 @@ export async function executeSendDraft(params: {
         from:       inboxEmail!,
         to:         thread.fromEmail,
         subject,
-        text:       finalBody,
+        text:       finalBodyText,
+        html:       finalHtmlBody,
         inReplyTo,
         references,
       });
@@ -268,7 +276,8 @@ export async function executeSendDraft(params: {
       const result = await sendEmail({
         to:      thread.fromEmail,
         subject,
-        text:    finalBody,
+        text:    finalBodyText,
+        html:    finalHtmlBody,
         replyTo: inboxEmail,
         headers: Object.keys(headers).length > 0 ? headers : undefined,
       });
@@ -282,7 +291,7 @@ export async function executeSendDraft(params: {
     await appendMessage({
       threadId:          draft.threadId,
       role:              "assistant",
-      bodyText:          finalBody,
+      bodyText:          finalBodyText,
       externalMessageId: sentMessageId,
       sentAt:            now,
     });

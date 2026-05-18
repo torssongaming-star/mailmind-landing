@@ -82,14 +82,16 @@ export function AiSettingsEditor({
         </Field>
       </div>
 
-      <Field label="E-postsignatur (läggs till i AI:ns svar — valfritt)">
-        <textarea
-          value={signature}
-          onChange={e => setSignature(e.target.value)}
-          rows={3}
-          placeholder="Vänliga hälsningar,&#10;Mailmind-teamet"
-          className="select-style resize-none"
+      <Field label="E-postsignatur (läggs till i AI:ns svar — valfritt, stödjer bilder och länkar)">
+        <div
+          contentEditable
+          onBlur={e => setSignature(e.currentTarget.innerHTML)}
+          dangerouslySetInnerHTML={{ __html: initial.signature ?? "" }}
+          className="select-style w-full min-h-[80px] overflow-auto"
         />
+        <p className="text-[10px] text-muted-foreground/60 mt-1 leading-relaxed">
+          Du kan kopiera och klistra in en befintlig e-postsignatur här för att behålla dess formatering.
+        </p>
       </Field>
 
       <div className="flex items-center justify-between border-t border-white/5 pt-3">

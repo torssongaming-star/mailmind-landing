@@ -10,8 +10,8 @@ export async function updatePersonalSignature(signature: string) {
   if (!userId) throw new Error("Unauthorized");
 
   // Validate string length (max 2000 chars should be plenty for a signature)
-  if (signature.length > 2000) {
-    throw new Error("Signature is too long");
+  if (signature.length > 500000) {
+    throw new Error("Signaturen är för lång (max 500 000 tecken, försök minska storleken på inbäddade bilder)");
   }
 
   await db

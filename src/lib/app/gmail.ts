@@ -385,6 +385,7 @@ export type GmailSendParams = {
   to:         string;
   subject:    string;
   text:       string;
+  html?:      string;
   inReplyTo?: string | null;
   references?: string | null;
   gmailThreadId?: string | null; // if set, Gmail groups into same thread
@@ -396,26 +397,53 @@ export type GmailSendResult =
 
 /**
  * Send an email via the Gmail API using the authenticated user's account.
- * Builds a minimal RFC 2822 MIME message, base64url-encodes it, and posts it.
+ * Builds a MIME message (multipart/alternative if html is present), 
+ * base64url-encodes it, and posts it.
  */
 export async function sendViaGmail(
   accessToken: string,
   params: GmailSendParams,
 ): Promise<GmailSendResult> {
-  const { from, to, subject, text, inReplyTo, references, gmailThreadId } = params;
+  const { from, to, subject, text, html, inReplyTo, references, gmailThreadId } = params;
 
-  // Build RFC 2822 message
   const lines: string[] = [
     `From: ${from}`,
     `To: ${to}`,
     `Subject: ${subject}`,
     "MIME-Version: 1.0",
-    "Content-Type: text/plain; charset=UTF-8",
-    "Content-Transfer-Encoding: quoted-printable",
   ];
+
   if (inReplyTo)  lines.push(`In-Reply-To: ${inReplyTo}`);
   if (references) lines.push(`References: ${references}`);
-  lines.push("", text);
+
+  if (html) {
+    // Multipart message containing both text and html
+    const boundary = `----=_NextPart_${Date.now().toString(16)}`;
+    lines.push(`Content-Type: multipart/alternative; boundary="${boundary}"`);
+    lines.push("");
+    
+    // Text part
+    lines.push(`--${boundary}`);
+    lines.push("Content-Type: text/plain; charset=UTF-8");
+    lines.push("Content-Transfer-Encoding: quoted-printable");
+    lines.push("");
+    lines.push(text);
+    
+    // HTML part
+    lines.push(`--${boundary}`);
+    lines.push("Content-Type: text/html; charset=UTF-8");
+    lines.push("Content-Transfer-Encoding: quoted-printable");
+    lines.push("");
+    lines.push(html);
+    
+    lines.push(`--${boundary}--`);
+  } else {
+    // Simple text message
+    lines.push("Content-Type: text/plain; charset=UTF-8");
+    lines.push("Content-Transfer-Encoding: quoted-printable");
+    lines.push("");
+    lines.push(text);
+  }
 
   const raw = Buffer.from(lines.join("\r\n")).toString("base64url");
 

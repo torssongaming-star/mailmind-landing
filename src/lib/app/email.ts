@@ -32,6 +32,7 @@ export type SendEmailInput = {
   to: string;
   subject: string;
   text: string;
+  html?: string;
   /** Optional reply-to (e.g. the customer's address routed back through us) */
   replyTo?: string;
   /** Override the from address — defaults to MAILMIND_FROM_EMAIL or noreply */
@@ -45,6 +46,14 @@ export function appendSignature(body: string, signature?: string | null): string
   if (!signature?.trim()) return body;
   // Two newlines before, then signature with no leading whitespace
   return body.replace(/\s+$/, "") + "\n\n" + signature.trim();
+}
+
+/**
+ * Append an HTML signature to an HTML body.
+ */
+export function appendHtmlSignature(htmlBody: string, signature?: string | null): string {
+  if (!signature?.trim()) return htmlBody;
+  return htmlBody + "<br><br>" + signature.trim();
 }
 
 export type SendEmailResult =
@@ -66,6 +75,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
       to:      input.to,
       subject: input.subject,
       text:    input.text,
+      html:    input.html,
       replyTo: input.replyTo,
       headers: input.headers,
     });

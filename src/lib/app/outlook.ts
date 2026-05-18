@@ -310,23 +310,7 @@ export type ParsedOutlookMessage = {
   internetMessageId: string | null;
 };
 
-function htmlToText(html: string): string {
-  // Strip HTML tags — simple but sufficient for plain-text AI triage
-  return html
-    .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, "")
-    .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "")
-    .replace(/<br\s*\/?>/gi, "\n")
-    .replace(/<\/p>/gi, "\n\n")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
+import { htmlToText } from "@/lib/utils/html";
 
 export async function getAndParseMessage(
   accessToken: string,
@@ -369,6 +353,7 @@ export type OutlookSendParams = {
   to:         string;
   subject:    string;
   text:       string;
+  html?:      string;
   inReplyTo?: string | null;
   references?: string | null;
 };
@@ -386,7 +371,7 @@ export async function sendViaOutlook(
   accessToken: string,
   params: OutlookSendParams,
 ): Promise<OutlookSendResult> {
-  const { from, to, subject, text, inReplyTo, references } = params;
+  const { from, to, subject, text, html, inReplyTo, references } = params;
 
   const internetMessageHeaders: { name: string; value: string }[] = [];
   if (inReplyTo)  internetMessageHeaders.push({ name: "In-Reply-To", value: inReplyTo });
@@ -397,7 +382,9 @@ export async function sendViaOutlook(
       subject,
       from:         { emailAddress: { address: from } },
       toRecipients: [{ emailAddress: { address: to } }],
-      body:         { contentType: "Text", content: text },
+      body: html
+        ? { contentType: "HTML", content: html }
+        : { contentType: "Text", content: text },
       ...(internetMessageHeaders.length > 0 ? { internetMessageHeaders } : {}),
     },
     saveToSentItems: true,

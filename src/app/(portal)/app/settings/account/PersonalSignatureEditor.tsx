@@ -40,15 +40,17 @@ export function PersonalSignatureEditor({ initialSignature }: { initialSignature
         <div className="mt-6 space-y-4">
           <div>
             <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-              Din signatur
+              Din signatur (stödjer bilder och länkar)
             </label>
-            <textarea
-              value={signature}
-              onChange={(e) => setSignature(e.target.value)}
-              rows={4}
-              placeholder="Med vänliga hälsningar,&#10;Förnamn Efternamn&#10;Företag AB"
-              className="w-full rounded-xl bg-[#0A1025] border border-white/10 px-4 py-3 text-sm text-white placeholder:text-white/20 focus:border-cyan-400/50 focus:outline-none focus:ring-1 focus:ring-cyan-400/20 transition-all resize-none"
+            <div
+              contentEditable
+              onBlur={(e) => setSignature(e.currentTarget.innerHTML)}
+              dangerouslySetInnerHTML={{ __html: initialSignature ?? "" }}
+              className="w-full min-h-[120px] rounded-xl bg-[#0A1025] border border-white/10 px-4 py-3 text-sm text-white focus:border-cyan-400/50 focus:outline-none focus:ring-1 focus:ring-cyan-400/20 transition-all overflow-auto"
             />
+            <p className="text-xs text-slate-500 mt-2">
+              Du kan kopiera och klistra in din befintliga e-postsignatur här för att behålla dess formatering.
+            </p>
           </div>
 
           <div className="flex items-center gap-3">
