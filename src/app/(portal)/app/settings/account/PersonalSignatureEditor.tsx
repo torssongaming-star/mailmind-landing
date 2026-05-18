@@ -1,24 +1,29 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { updatePersonalSignature } from "./actions";
 
 export function PersonalSignatureEditor({ initialSignature }: { initialSignature: string | null }) {
-  const [signature, setSignature] = useState(initialSignature ?? "");
   const [isPending, setIsPending] = useState(false);
   const [status, setStatus]       = useState<"idle" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg]   = useState<string | null>(null);
-
-  const hasChanged = signature.trim() !== (initialSignature ?? "").trim();
+  const editorRef = useRef<HTMLDivElement>(null);
 
   const handleSave = async () => {
-    if (!hasChanged) return;
+    const currentSignature = editorRef.current?.innerHTML ?? "";
+    const hasChanged = currentSignature.trim() !== (initialSignature ?? "").trim();
+    if (!hasChanged) {
+      setStatus("success");
+      setTimeout(() => setStatus("idle"), 2500);
+      return;
+    }
+
     setIsPending(true);
     setStatus("idle");
     setErrorMsg(null);
 
     try {
-      const res = await updatePersonalSignature(signature);
+      const res = await updatePersonalSignature(currentSignature);
       if (res && !res.ok) {
         throw new Error(res.error || "Ett oväntat fel uppstod");
       }
@@ -46,8 +51,8 @@ export function PersonalSignatureEditor({ initialSignature }: { initialSignature
               Din signatur (stödjer bilder och länkar)
             </label>
             <div
+              ref={editorRef}
               contentEditable
-              onBlur={(e) => setSignature(e.currentTarget.innerHTML)}
               dangerouslySetInnerHTML={{ __html: initialSignature ?? "" }}
               className="w-full min-h-[120px] rounded-xl bg-[#0A1025] border border-white/10 px-4 py-3 text-sm text-white focus:border-cyan-400/50 focus:outline-none focus:ring-1 focus:ring-cyan-400/20 transition-all overflow-auto"
             />
@@ -59,7 +64,7 @@ export function PersonalSignatureEditor({ initialSignature }: { initialSignature
           <div className="flex items-center gap-3">
             <button
               onClick={handleSave}
-              disabled={!hasChanged || isPending}
+              disabled={isPending}
               className="h-10 px-6 rounded-xl bg-cyan-400 text-black font-bold text-sm hover:bg-cyan-300 transition-colors disabled:opacity-40"
             >
               {isPending ? "Sparar..." : "Spara signatur"}

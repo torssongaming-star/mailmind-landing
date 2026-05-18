@@ -21,15 +21,17 @@ export function AiSettingsEditor({
   const [saving, setSaving]   = useState(false);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [error, setError]     = useState<string | null>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
 
   const handleSave = async () => {
     setSaving(true);
     setError(null);
     try {
+      const currentSignature = editorRef.current?.innerHTML ?? "";
       const res = await fetch("/api/app/ai-settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tone, language, maxInteractions, signature: signature.trim() || null }),
+        body: JSON.stringify({ tone, language, maxInteractions, signature: currentSignature.trim() || null }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
@@ -84,8 +86,8 @@ export function AiSettingsEditor({
 
       <Field label="E-postsignatur (läggs till i AI:ns svar — valfritt, stödjer bilder och länkar)">
         <div
+          ref={editorRef}
           contentEditable
-          onBlur={e => setSignature(e.currentTarget.innerHTML)}
           dangerouslySetInnerHTML={{ __html: initial.signature ?? "" }}
           className="select-style w-full min-h-[80px] overflow-auto"
         />
