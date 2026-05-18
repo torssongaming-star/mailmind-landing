@@ -304,6 +304,56 @@ export async function assertCanInviteUser(
   return { ok: true, account };
 }
 
+// ── Plan-feature gates ────────────────────────────────────────────────────────
+// Capacity (drafts/inboxes/seats) is the primary differentiator across plans.
+// These helpers gate the few features that *also* require a higher plan.
+
+/**
+ * Plans that get access to webhooks & API integration.
+ * Currently: Business+ only. Starter and Team are blocked.
+ */
+const WEBHOOK_PLANS: PlanKey[] = ["business"];
+
+/**
+ * Audit log retention window per plan, in days.
+ * Older entries are hidden from the UI (but kept in DB for compliance).
+ */
+const AUDIT_LOG_RETENTION_DAYS: Record<PlanKey, number> = {
+  starter:    30,
+  team:       30,
+  business:   90,
+  enterprise: 365,
+};
+
+/** Whether the org's current plan can create/use webhook endpoints. */
+export function canUseWebhooks(account: AccountSnapshot): boolean {
+  const planKey = account.subscription?.plan as PlanKey | undefined;
+  if (!planKey) return false;                       // no active sub
+  if (!account.access.canUseApp)   return false;    // sub blocked
+  return WEBHOOK_PLANS.includes(planKey);
+}
+
+/** Days of audit history visible to this org based on plan. */
+export function getAuditLogRetentionDays(account: AccountSnapshot): number {
+  const planKey = account.subscription?.plan as PlanKey | undefined;
+  if (!planKey) return AUDIT_LOG_RETENTION_DAYS.starter;
+  return AUDIT_LOG_RETENTION_DAYS[planKey] ?? AUDIT_LOG_RETENTION_DAYS.starter;
+}
+
+/** Assert-style helper for webhook routes — returns reason on failure. */
+export async function assertCanUseWebhooks(
+  clerkUserId: string
+): Promise<{ ok: true; account: AccountSnapshot } | { ok: false; reason: "plan_required" | AccessState["reason"] }> {
+  const account = await getCurrentAccount(clerkUserId);
+  if (!account.access.canUseApp) {
+    return { ok: false, reason: account.access.reason };
+  }
+  if (!canUseWebhooks(account)) {
+    return { ok: false, reason: "plan_required" };
+  }
+  return { ok: true, account };
+}
+
 /** Centralised role check (P4.2). Use everywhere instead of raw user.role. */
 export function hasRole(
   account: AccountSnapshot,

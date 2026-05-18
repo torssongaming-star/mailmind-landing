@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
-import { getCurrentAccount } from "@/lib/app/entitlements";
+import { getCurrentAccount, assertCanUseWebhooks } from "@/lib/app/entitlements";
 import { listWebhooks, createWebhook } from "@/lib/app/webhooks";
 
 export const runtime = "nodejs";
@@ -35,10 +35,22 @@ export async function POST(req: NextRequest) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const account = await getCurrentAccount(userId);
-  if (!account.user || !account.organization) {
-    return NextResponse.json({ error: "Account not provisioned" }, { status: 400 });
+  // Plan gate: webhooks require Business+ tier
+  const gate = await assertCanUseWebhooks(userId);
+  if (!gate.ok) {
+    if (gate.reason === "plan_required") {
+      return NextResponse.json(
+        {
+          error:    "Webhooks ingår i Business-planen och uppåt. Uppgradera för att aktivera API-integrationer.",
+          upgrade:  true,
+          requires: "business",
+        },
+        { status: 402 },
+      );
+    }
+    return NextResponse.json({ error: "Forbidden", reason: gate.reason }, { status: 403 });
   }
+  const { account } = gate;
 
   const json = await req.json().catch(() => null);
   const parsed = PostBody.safeParse(json);

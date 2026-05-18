@@ -9,7 +9,7 @@
  * production database misconfiguration.
  */
 
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, gte, sql } from "drizzle-orm";
 import { isDbConnected } from "./index";
 import {
   organizations,
@@ -134,19 +134,38 @@ export async function getPortalData(clerkUserId: string): Promise<PortalData> {
 /**
  * Fetch the most recent audit log entries for an organisation.
  *
+ * `retentionDays`: caller passes the plan-derived retention window
+ * (see getAuditLogRetentionDays in entitlements). Entries older than
+ * this are excluded from the result — but kept in DB for compliance.
+ *
  * TODO (Phase 3): Add pagination and filtering by action type.
  */
-export async function getAuditLogs(organizationId: string, limit = 20) {
+export async function getAuditLogs(
+  organizationId: string,
+  limit = 20,
+  retentionDays?: number,
+) {
   if (!isDbConnected()) {
     assertMockDataAllowed();
     return MOCK_AUDIT_LOGS;
   }
 
   const db = await getDb();
+  const cutoff = retentionDays
+    ? new Date(Date.now() - retentionDays * 24 * 60 * 60 * 1000)
+    : null;
+
+  const whereClause = cutoff
+    ? and(
+        eq(auditLogs.organizationId, organizationId),
+        gte(auditLogs.createdAt, cutoff),
+      )
+    : eq(auditLogs.organizationId, organizationId);
+
   return db
     .select()
     .from(auditLogs)
-    .where(eq(auditLogs.organizationId, organizationId))
+    .where(whereClause)
     .orderBy(desc(auditLogs.createdAt))
     .limit(limit);
 }

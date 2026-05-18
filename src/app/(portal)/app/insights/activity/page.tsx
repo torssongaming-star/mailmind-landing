@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
-import { getCurrentAccount } from "@/lib/app/entitlements";
+import { getCurrentAccount, getAuditLogRetentionDays } from "@/lib/app/entitlements";
 import { getAuditLogs } from "@/lib/db/queries";
 import { getTranslations } from "@/lib/i18n";
 import { getUserLocale } from "@/lib/i18n/get-locale";
@@ -32,7 +32,8 @@ export default async function ActivityPage() {
   const locale = await getUserLocale();
   const { t } = getTranslations(locale);
 
-  const logs = await getAuditLogs(account.organization.id, 100);
+  const retentionDays = getAuditLogRetentionDays(account);
+  const logs = await getAuditLogs(account.organization.id, 100, retentionDays);
 
   const ACTION_MAP: Record<string, { label: string; tone: string }> = {
     ai_draft_generated:     { label: t("portal.activity.actions.ai_draft_generated"),     tone: "blue" },
@@ -57,8 +58,13 @@ export default async function ActivityPage() {
 
   return (
     <main className="max-w-3xl mx-auto p-6 md:p-10 space-y-6">
-
-
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <p className="text-[11px] text-muted-foreground">
+          {locale === "sv"
+            ? `Visar de senaste ${retentionDays} dagarna · uppgradera till Business för 90 dagars historik`
+            : `Showing the last ${retentionDays} days · upgrade to Business for 90-day history`}
+        </p>
+      </div>
 
       {logs.length === 0 ? (
         <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-10 text-center">
