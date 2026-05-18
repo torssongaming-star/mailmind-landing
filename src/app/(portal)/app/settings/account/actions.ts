@@ -10,8 +10,8 @@ export async function updatePersonalSignature(signature: string) {
     const { userId } = await auth();
     if (!userId) return { ok: false, error: "Unauthorized" };
 
-    if (signature.length > 500000) {
-      return { ok: false, error: "Signaturen är för lång (max 500 000 tecken, försök minska storleken på inbäddade bilder)" };
+    if (signature.length > 5000000) {
+      return { ok: false, error: "Signaturen är för lång (max 5 miljoner tecken, bilden är troligtvis för högupplöst/stor)" };
     }
 
     await db

@@ -33,7 +33,7 @@ const Body = z.object({
   tone:            z.enum(["formal", "friendly", "neutral"]),
   language:        z.string().min(2).max(10),
   maxInteractions: z.number().int().min(1).max(5),
-  signature:       z.string().max(500000).nullable().optional(),
+  signature:       z.string().max(5000000).nullable().optional(),
 });
 
 export async function PUT(req: NextRequest) {
