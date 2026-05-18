@@ -28,6 +28,11 @@ const OUTLOOK_FRAME_CSP =
 const DENY_FRAME_CSP = "frame-ancestors 'self';";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "5mb",
+    },
+  },
   async redirects() {
     return [
       // Keep old /v2 links working after the swap

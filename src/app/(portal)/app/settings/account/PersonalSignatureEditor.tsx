@@ -18,7 +18,10 @@ export function PersonalSignatureEditor({ initialSignature }: { initialSignature
     setErrorMsg(null);
 
     try {
-      await updatePersonalSignature(signature);
+      const res = await updatePersonalSignature(signature);
+      if (res && !res.ok) {
+        throw new Error(res.error || "Ett oväntat fel uppstod");
+      }
       setStatus("success");
       setTimeout(() => setStatus("idle"), 2500);
     } catch (e) {
