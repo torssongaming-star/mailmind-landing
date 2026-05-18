@@ -30,27 +30,37 @@ function ProgressBar({ current }: { current: Step }) {
   const idx = STEPS.findIndex(s => s.id === current);
   return (
     <div className="flex items-center">
-      {STEPS.map((s, i) => (
-        <div key={s.id} className="flex items-center flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 shrink-0">
-            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors ${
-              i < idx
-                ? "bg-primary text-[#030614]"
-                : i === idx
-                  ? "bg-primary/20 text-primary border border-primary/50"
-                  : "bg-white/8 text-muted-foreground"
-            }`}>
-              {i < idx ? "✓" : i + 1}
+      {STEPS.map((s, i) => {
+        const isCurrent = i === idx;
+        const isDone    = i < idx;
+        return (
+          <div key={s.id} className="flex items-center flex-1 min-w-0">
+            <div className="flex items-center gap-1.5 shrink-0 min-w-0">
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 transition-colors ${
+                isDone
+                  ? "bg-primary text-[#030614]"
+                  : isCurrent
+                    ? "bg-primary/20 text-primary border border-primary/50"
+                    : "bg-white/8 text-muted-foreground"
+              }`}>
+                {isDone ? "✓" : i + 1}
+              </div>
+              {/* Mobile: show ONLY the current step's label.
+                  Desktop (md+): show every label. Prevents overlap on narrow viewports. */}
+              <span
+                className={`text-[11px] transition-colors whitespace-nowrap ${
+                  isCurrent ? "text-white" : "text-muted-foreground"
+                } ${isCurrent ? "inline" : "hidden md:inline"}`}
+              >
+                {s.label}
+              </span>
             </div>
-            <span className={`text-[11px] transition-colors whitespace-nowrap ${i === idx ? "text-white" : "text-muted-foreground"}`}>
-              {s.label}
-            </span>
+            {i < STEPS.length - 1 && (
+              <div className={`flex-1 h-px mx-2 min-w-[8px] ${isDone ? "bg-primary/40" : "bg-white/10"}`} />
+            )}
           </div>
-          {i < STEPS.length - 1 && (
-            <div className={`flex-1 h-px mx-2 min-w-[8px] ${i < idx ? "bg-primary/40" : "bg-white/10"}`} />
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
