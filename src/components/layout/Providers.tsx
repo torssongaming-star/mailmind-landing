@@ -112,6 +112,9 @@ export function Providers({
           formButtonPrimary: 
             "bg-cyan-500 hover:bg-cyan-400 active:bg-cyan-600 text-[#09090b] font-bold py-3 " +
             "shadow-[0_0_20px_rgba(6,182,212,0.2)] hover:shadow-[0_0_25px_rgba(6,182,212,0.3)] transition-all",
+
+          // OTP fix for dark mode
+          otpCodeFieldInput: "!text-white !opacity-100 !filter-none",
  
           // Footer links
           footer: "text-slate-300",
