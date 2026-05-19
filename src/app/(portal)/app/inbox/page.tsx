@@ -1,4 +1,4 @@
-﻿/**
+/**
  * /app/inbox — split-pane email triage view.
  * Left: compact thread list. Right: thread content panel (client-side load).
  * Full viewport height, no dead space.
@@ -118,17 +118,31 @@ export default async function InboxPage({
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Top bar */}
-      <header className="shrink-0 flex items-center gap-4 px-6 py-3 border-b border-white/8 bg-[#030614]">
-        <div>
-          <p className="text-[10px] uppercase tracking-widest text-muted-foreground leading-none mb-0.5">Inbox</p>
-          <h1 className="text-base font-bold text-white leading-none">
-            Threads
-            <span className="ml-2 text-xs font-normal text-muted-foreground">
-              {threads.length}{threads.length !== all.length ? ` / ${all.length}` : ""}
-            </span>
-          </h1>
+      <header className="shrink-0 border-b border-white/8 bg-[#030614]">
+        {/* Main row: title + desktop filters + button */}
+        <div className="flex items-center gap-4 px-6 py-3">
+          <div className="hidden md:block">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground leading-none mb-0.5">Inbox</p>
+            <h1 className="text-base font-bold text-white leading-none">
+              Threads
+              <span className="ml-2 text-xs font-normal text-muted-foreground">
+                {threads.length}{threads.length !== all.length ? ` / ${all.length}` : ""}
+              </span>
+            </h1>
+          </div>
+          {/* Desktop filters inline */}
+          <div className="hidden md:flex flex-1">
+            <InboxFilters
+              currentStatus={filterStatus}
+              currentQuery={query}
+              currentTag={tagFilter || undefined}
+              counts={counts}
+            />
+          </div>
+          <NewThreadButton />
         </div>
-        <div className="flex-1">
+        {/* Mobile-only filter row — full width below the top bar */}
+        <div className="md:hidden px-4 pb-3">
           <InboxFilters
             currentStatus={filterStatus}
             currentQuery={query}
@@ -136,7 +150,6 @@ export default async function InboxPage({
             counts={counts}
           />
         </div>
-        <NewThreadButton />
       </header>
 
       {/* Split pane — fills remaining height */}
