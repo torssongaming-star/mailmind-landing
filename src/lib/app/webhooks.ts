@@ -50,6 +50,38 @@ export async function updateWebhookStatus(id: string, status: "ok" | "error") {
     .where(eq(webhookEndpoints.id, id));
 }
 
+// Delays before each attempt: immediate, 5 s, 30 s.
+const RETRY_DELAYS_MS = [0, 5_000, 30_000];
+
+type DeliveryResult =
+  | { ok: true;  statusCode: number; error: null }
+  | { ok: false; statusCode: number | null; error: string };
+
+async function deliverWithRetry(
+  url: string,
+  headers: Record<string, string>,
+  body: string,
+): Promise<DeliveryResult> {
+  let lastStatusCode: number | null = null;
+  let lastError = "Unknown error";
+
+  for (let attempt = 0; attempt < RETRY_DELAYS_MS.length; attempt++) {
+    if (RETRY_DELAYS_MS[attempt] > 0) {
+      await new Promise<void>(r => setTimeout(r, RETRY_DELAYS_MS[attempt]));
+    }
+    try {
+      const res = await fetch(url, { method: "POST", headers, body });
+      lastStatusCode = res.status;
+      if (res.ok) return { ok: true, statusCode: res.status, error: null };
+      lastError = `HTTP ${res.status}`;
+    } catch (e) {
+      lastError = e instanceof Error ? e.message : "Unknown error";
+    }
+  }
+
+  return { ok: false, statusCode: lastStatusCode, error: lastError };
+}
+
 export async function fireWebhooksForThread(
   organizationId: string,
   thread: {
@@ -86,32 +118,35 @@ export async function fireWebhooksForThread(
   await Promise.allSettled(
     matching.map(async ep => {
       const start = Date.now();
-      let statusCode: number | null = null;
-      let errorMsg:   string | null = null;
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (ep.secret) headers["X-Mailmind-Secret"] = ep.secret;
+
+      const result = await deliverWithRetry(ep.url, headers, payload);
+
+      await updateWebhookStatus(ep.id, result.ok ? "ok" : "error");
+
+      if (!result.ok) {
+        console.warn("[webhooks] delivery failed after all retries", {
+          organizationId,
+          webhookEndpointId: ep.id,
+          statusCode:        result.statusCode,
+          error:             result.error,
+        });
+      }
+
+      // Best-effort delivery log — failure here must not break the fire loop.
       try {
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-        if (ep.secret) headers["X-Mailmind-Secret"] = ep.secret;
-        const res = await fetch(ep.url, { method: "POST", headers, body: payload });
-        statusCode = res.status;
-        if (!res.ok) errorMsg = `HTTP ${res.status}`;
-        await updateWebhookStatus(ep.id, res.ok ? "ok" : "error");
-      } catch (e) {
-        errorMsg = e instanceof Error ? e.message : "Unknown error";
-        await updateWebhookStatus(ep.id, "error");
-      } finally {
-        // Best-effort delivery log — failure here must not break the fire loop.
-        try {
-          await db.insert(webhookDeliveries).values({
-            endpointId:     ep.id,
-            organizationId,
-            threadId:       thread.id,
-            statusCode,
-            durationMs:     Date.now() - start,
-            error:          errorMsg,
-          });
-        } catch (logErr) {
-          console.warn("[webhooks] failed to log delivery:", logErr);
-        }
+        await db.insert(webhookDeliveries).values({
+          endpointId:  ep.id,
+          organizationId,
+          threadId:    thread.id,
+          statusCode:  result.statusCode,
+          durationMs:  Date.now() - start,
+          error:       result.error,
+          status:      result.ok ? "delivered" : "failed",
+        });
+      } catch (logErr) {
+        console.warn("[webhooks] failed to log delivery:", logErr);
       }
     })
   );

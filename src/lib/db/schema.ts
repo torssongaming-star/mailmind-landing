@@ -506,6 +506,7 @@ export const webhookDeliveries = pgTable(
     statusCode:     integer("status_code"),
     durationMs:     integer("duration_ms"),
     error:          text("error"),
+    status:         text("status"),   // "delivered" | "failed" | null for legacy rows
     sentAt:         timestamp("sent_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
