@@ -76,7 +76,7 @@ export function InboxFilters({
   return (
     <div className={compact ? "flex flex-col gap-2" : "flex flex-col sm:flex-row gap-3"}>
       {/* Status tabs — horizontal scrollable pill strip on mobile */}
-      <div className="flex flex-row gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex flex-row gap-1.5 overflow-x-auto pb-0.5 pr-4 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map(tab => {
           const isActive = activeStatus === tab.value;
           const count = counts[tab.value];
