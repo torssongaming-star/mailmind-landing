@@ -25,9 +25,12 @@ import {
 // ── Hoisted mock state ────────────────────────────────────────────────────────
 // vi.hoisted() runs before vi.mock() factories — the only safe way to share
 // mutable state between a factory closure and test code.
-const { mockDbLimit, mockIsDbConnected } = vi.hoisted(() => ({
+const { mockDbLimit, mockIsDbConnected, mockClaimReturning } = vi.hoisted(() => ({
   mockDbLimit:         vi.fn().mockResolvedValue([]),
   mockIsDbConnected:   vi.fn(() => true),
+  // Controls the atomic claim UPDATE...RETURNING — returning [] means
+  // "already claimed by someone else", returning [draftRow] means "we got it".
+  mockClaimReturning:  vi.fn().mockResolvedValue([]),
 }));
 
 // ── Module mocks ──────────────────────────────────────────────────────────────
@@ -39,8 +42,21 @@ vi.mock("@/lib/db", () => ({
         where: () => ({ limit: mockDbLimit }),
       }),
     }),
+    update: () => ({
+      set: () => ({
+        where: () => ({ returning: mockClaimReturning }),
+      }),
+    }),
   },
   inboxes: {},
+  aiDrafts: {
+    id:             { name: "id" },
+    organizationId: { name: "organization_id" },
+    status:         { name: "status" },
+  },
+  users: {
+    id: { name: "id" },
+  },
 }));
 
 vi.mock("@/lib/app/threads", () => ({
@@ -56,9 +72,15 @@ vi.mock("@/lib/app/threads", () => ({
 }));
 
 vi.mock("@/lib/app/email", () => ({
-  sendEmail:       vi.fn().mockResolvedValue({ ok: true, id: "resend-123" }),
-  replySubject:    vi.fn((s: string) => `Re: ${s}`),
-  appendSignature: vi.fn((body: string) => body),
+  sendEmail:           vi.fn().mockResolvedValue({ ok: true, id: "resend-123" }),
+  replySubject:        vi.fn((s: string) => `Re: ${s}`),
+  appendSignature:     vi.fn((body: string) => body),
+  appendHtmlSignature: vi.fn((html: string) => html),
+}));
+
+vi.mock("@/lib/utils/html", () => ({
+  textToHtml: vi.fn((s: string) => `<p>${s}</p>`),
+  htmlToText: vi.fn((s: string) => s),
 }));
 
 vi.mock("@/lib/app/audit", () => ({
@@ -277,6 +299,8 @@ describe("executeSendDraft — error paths", () => {
     vi.clearAllMocks();
     mockIsDbConnected.mockReturnValue(true);
     mockDbLimit.mockResolvedValue([]);
+    // Default: claim succeeds with baseDraft (each test overrides as needed)
+    mockClaimReturning.mockResolvedValue([baseDraft]);
   });
 
   it("returns db_unavailable when DB not connected", async () => {
@@ -286,25 +310,31 @@ describe("executeSendDraft — error paths", () => {
   });
 
   it("returns draft_not_found when getDraft resolves null", async () => {
+    // Claim fails (0 rows), getDraft also returns null → draft_not_found
+    mockClaimReturning.mockResolvedValue([]);
     vi.mocked(getDraft).mockResolvedValue(null);
     const r = await executeSendDraft({ orgId: "org-1", draftId: "d-1", userId: null });
     expect(r).toEqual({ ok: false, error: "draft_not_found" });
   });
 
   it("returns draft_already_sent when draft.status is sent", async () => {
+    // Claim fails (only pending/edited can be claimed), getDraft reveals status=sent
+    mockClaimReturning.mockResolvedValue([]);
     vi.mocked(getDraft).mockResolvedValue({ ...baseDraft, status: "sent" } as never);
     const r = await executeSendDraft({ orgId: "org-1", draftId: "d-1", userId: null });
     expect(r).toEqual({ ok: false, error: "draft_already_sent" });
   });
 
   it("returns draft_already_rejected when draft.status is rejected", async () => {
+    mockClaimReturning.mockResolvedValue([]);
     vi.mocked(getDraft).mockResolvedValue({ ...baseDraft, status: "rejected" } as never);
     const r = await executeSendDraft({ orgId: "org-1", draftId: "d-1", userId: null });
     expect(r).toEqual({ ok: false, error: "draft_already_rejected" });
   });
 
   it("returns no_body_text when bodyText is empty", async () => {
-    vi.mocked(getDraft).mockResolvedValue({ ...baseDraft, bodyText: "" } as never);
+    // Claim succeeds, but body is empty → bail with no_body_text
+    mockClaimReturning.mockResolvedValue([{ ...baseDraft, bodyText: "" }]);
     vi.mocked(getThread).mockResolvedValue({ ...baseThread } as never);
     const r = await executeSendDraft({ orgId: "org-1", draftId: "d-1", userId: null });
     expect(r).toEqual({ ok: false, error: "no_body_text" });
@@ -316,6 +346,8 @@ describe("executeSendDraft — provider routing", () => {
     vi.clearAllMocks();
     mockIsDbConnected.mockReturnValue(true);
     mockDbLimit.mockResolvedValue([]);
+    // Claim succeeds with baseDraft for these happy-path tests
+    mockClaimReturning.mockResolvedValue([baseDraft]);
     vi.mocked(getDraft).mockResolvedValue(baseDraft as never);
   });
 
@@ -367,7 +399,7 @@ describe("executeSendDraft — provider routing", () => {
   });
 
   it("escalation draft: skips send entirely, transitions thread to escalated", async () => {
-    vi.mocked(getDraft).mockResolvedValue({ ...baseDraft, action: "escalate" } as never);
+    mockClaimReturning.mockResolvedValue([{ ...baseDraft, action: "escalate" }]);
     vi.mocked(getThread).mockResolvedValue({ ...baseThread } as never);
     const { updateDraft, updateThread } = await import("@/lib/app/threads");
 
