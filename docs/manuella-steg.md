@@ -298,9 +298,11 @@ Events att lyssna på (minimum):
 | 🚀 | 12. Live webhook | — | [ ] |
 | 🔴 | 13. `db:push` (sending-status) | 30 sek | [ ] |
 
-### Steg 13 — db:push för "sending"-status på drafts (30 sek)
+### Steg 13 — db:push för nya schema-ändringar (30 sek)
 
-Ny enum-värde `sending` på `draft_status` — krävs för atomic double-send guard:
+Lägger till:
+- Enum-värde `sending` på `draft_status` (atomic double-send guard)
+- Kolumn `triage_failed` på `email_threads` (Dead Letter Queue för AI-fel)
 
 ```powershell
 cd "C:\Users\sebbe\Downloads\Claude\Email AI\mailmind-landing"

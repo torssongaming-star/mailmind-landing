@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ExternalLink, ArrowLeft } from "lucide-react";
+import { ExternalLink, ArrowLeft, AlertTriangle, RefreshCw } from "lucide-react";
 import { DraftActions } from "../thread/[id]/DraftActions";
 import { GenerateDraftButton } from "../thread/[id]/GenerateDraftButton";
 import { InternalNotes, type Note } from "../thread/[id]/InternalNotes";
@@ -29,6 +29,7 @@ type Thread = {
   collectedInfo: Record<string, unknown>;
   snoozedUntil: Date | null;
   tags: string[];
+  triageFailed: boolean;
 };
 
 type Message = {
@@ -78,8 +79,10 @@ export function ThreadPanel({
   const [messages, setMessages] = useState<Message[]>([]);
   const [drafts,   setDrafts]   = useState<Draft[]>([]);
   const [notes,    setNotes]    = useState<Note[]>([]);
-  const [loading,  setLoading]  = useState(true);
-  const [error,    setError]    = useState<string | null>(null);
+  const [loading,    setLoading]    = useState(true);
+  const [error,      setError]      = useState<string | null>(null);
+  const [retrying,   setRetrying]   = useState(false);
+  const [retryError, setRetryError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -269,6 +272,49 @@ export function ThreadPanel({
 
         {/* Internal notes */}
         <InternalNotes threadId={thread.id} initial={notes} />
+
+        {/* Triage failed banner */}
+        {thread.triageFailed && (
+          <div className="rounded-2xl border border-red-500/25 bg-red-500/[0.05] px-5 py-4 flex items-start gap-3">
+            <AlertTriangle size={16} className="text-red-400 mt-0.5 shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white">AI-triagering misslyckades</p>
+              <p className="text-xs text-white/50 mt-0.5 leading-relaxed">
+                AI:n kunde inte generera ett utkast — troligen ett tillfälligt avbrott hos Anthropic. Inget mejl har skickats.
+              </p>
+              {retryError && (
+                <p className="text-xs text-red-400 mt-1">{retryError}</p>
+              )}
+            </div>
+            <button
+              onClick={async () => {
+                setRetrying(true);
+                setRetryError(null);
+                try {
+                  const res = await fetch(`/api/app/threads/${thread.id}/retry-triage`, { method: "POST" });
+                  if (!res.ok) {
+                    const data = await res.json().catch(() => ({})) as { reason?: string };
+                    setRetryError(data.reason === "ai_transient_error"
+                      ? "AI:n är fortfarande otillgänglig, försök igen om en stund."
+                      : "Misslyckades, försök igen.");
+                  } else {
+                    await load();
+                    router.refresh();
+                  }
+                } catch {
+                  setRetryError("Nätverksfel, försök igen.");
+                } finally {
+                  setRetrying(false);
+                }
+              }}
+              disabled={retrying || !canGenerate}
+              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs font-medium text-white/70 hover:text-white hover:bg-white/8 transition-colors disabled:opacity-40"
+            >
+              <RefreshCw size={12} className={retrying ? "animate-spin" : ""} />
+              {retrying ? "Försöker…" : "Triage igen"}
+            </button>
+          </div>
+        )}
 
         {/* Draft action area */}
         <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm p-5">

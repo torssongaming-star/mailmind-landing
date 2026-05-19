@@ -25,6 +25,7 @@ type Thread = {
   lastMessageAt: Date | null;
   snoozedUntil:  Date | null;
   tags:          string[];
+  triageFailed:  boolean;
 };
 
 const STATUS_DOT: Record<string, string> = {
@@ -321,6 +322,9 @@ export function InboxShell({
                     )}
                     {thread.snoozedUntil && new Date(thread.snoozedUntil) > new Date() && (
                       <span className="text-[9px] text-amber-400">{t("inbox.status.snoozed").toLowerCase()}</span>
+                    )}
+                    {thread.triageFailed && (
+                      <span className="text-[9px] font-semibold text-red-400" title="AI-triagering misslyckades">⚠ AI</span>
                     )}
                   </div>
                 </div>

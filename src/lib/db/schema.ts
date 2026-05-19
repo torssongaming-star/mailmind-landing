@@ -351,6 +351,8 @@ export const emailThreads = pgTable(
     lastMessageAt:     timestamp("last_message_at", { withTimezone: true }),
     snoozedUntil:      timestamp("snoozed_until", { withTimezone: true }),
     tags:              jsonb("tags").$type<string[]>().notNull().default([]),
+    /** True when autoTriage exhausted all retries without a successful AI response. */
+    triageFailed:      boolean("triage_failed").notNull().default(false),
     createdAt:         timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt:         timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },

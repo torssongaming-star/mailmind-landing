@@ -185,6 +185,8 @@ export async function autoTriageNewMessage(input: {
     });
   } catch (err) {
     if (err instanceof AiTransientError) {
+      // Mark thread so users know triage failed and can retry manually.
+      await updateThread(organizationId, threadId, { triageFailed: true }).catch(() => {});
       await writeAuditLog({
         organizationId,
         userId: null,
@@ -421,7 +423,14 @@ export async function autoTriageNewMessage(input: {
     },
   });
 
-  return draft ? { ok: true, draftId: draft.id, autoSent } : { ok: false, reason: "draft_create_failed" };
+  if (!draft) {
+    await updateThread(organizationId, threadId, { triageFailed: true }).catch(() => {});
+    return { ok: false, reason: "draft_create_failed" };
+  }
+
+  // Clear any previous failure flag now that triage succeeded.
+  await updateThread(organizationId, threadId, { triageFailed: false }).catch(() => {});
+  return { ok: true, draftId: draft.id, autoSent };
 }
 
 // Re-export the subscription type for callers that need it

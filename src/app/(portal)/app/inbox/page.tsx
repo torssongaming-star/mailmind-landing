@@ -109,7 +109,7 @@ export default async function InboxPage({
         <InboxFilters currentStatus={filterStatus} currentQuery={query} currentTag={tagFilter || undefined} counts={counts} compact />
         <InboxList
           slaByCaseType={slaByCaseType}
-          threads={threads.map(t => ({ id: t.id, subject: t.subject, fromEmail: t.fromEmail, fromName: t.fromName, status: t.status, caseTypeSlug: t.caseTypeSlug, lastMessageAt: t.lastMessageAt, snoozedUntil: t.snoozedUntil ?? null, tags: t.tags ?? [] }))}
+          threads={threads.map(t => ({ id: t.id, subject: t.subject, fromEmail: t.fromEmail, fromName: t.fromName, status: t.status, caseTypeSlug: t.caseTypeSlug, lastMessageAt: t.lastMessageAt, snoozedUntil: t.snoozedUntil ?? null, tags: t.tags ?? [], triageFailed: t.triageFailed ?? false }))}
         />
       </main>
     );
@@ -163,6 +163,7 @@ export default async function InboxPage({
             lastMessageAt: t.lastMessageAt,
             snoozedUntil:  t.snoozedUntil ?? null,
             tags:          t.tags ?? [],
+            triageFailed:  t.triageFailed ?? false,
           }))}
         />
       )}
