@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast, ToastContainer } from "@/components/ui/Toast";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -549,7 +550,7 @@ function AiBehaviorStep({ onNext }: { onNext: () => void }) {
 
 // ── Step 5: Webhooks ───────────────────────────────────────────────────────────
 
-function WebhooksStep({ onFinish }: { onFinish: () => void }) {
+function WebhooksStep({ onFinish, finishing }: { onFinish: () => void; finishing?: boolean }) {
   const [url, setUrl]         = useState("");
   const [saving, setSaving]   = useState(false);
   const [saved, setSaved]     = useState(false);
@@ -649,13 +650,14 @@ function WebhooksStep({ onFinish }: { onFinish: () => void }) {
 
       <button
         onClick={onFinish}
-        className={`w-full px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
+        disabled={finishing}
+        className={`w-full px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${
           saved
             ? "bg-primary text-[#030614] hover:bg-cyan-300"
             : "border border-white/10 text-white/50 hover:text-white hover:border-white/30"
         }`}
       >
-        {saved ? "Gå till Mailmind →" : "Hoppa över, gå till Mailmind →"}
+        {finishing ? "Slutför…" : saved ? "Gå till Mailmind →" : "Hoppa över, gå till Mailmind →"}
       </button>
     </div>
   );
@@ -673,7 +675,9 @@ export function OnboardingForm({
   initialStep?: Step;
 }) {
   const router = useRouter();
-  const [step, setStep] = useState<Step>(initialStep);
+  const { toasts, toast, dismiss } = useToast();
+  const [step, setStep]       = useState<Step>(initialStep);
+  const [finishing, setFinishing] = useState(false);
 
   // Persist progress to Clerk publicMetadata (fire-and-forget for intermediate steps)
   const advanceToStep = (nextStep: Step) => {
@@ -685,21 +689,32 @@ export function OnboardingForm({
     setStep(nextStep);
   };
 
-  // Final step — wait for "done" flag before navigating so /app gate passes
+  // Final step — the "done" flag MUST land in Clerk before we navigate.
+  // If it fails, we show an error and stay put — navigating without the flag
+  // would cause /app to redirect back here, creating an infinite loop.
   const finish = async () => {
+    if (finishing) return;
+    setFinishing(true);
     try {
-      await fetch("/api/app/onboarding", {
+      const res = await fetch("/api/app/onboarding", {
         method:  "PATCH",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ step: "done" }),
       });
-    } catch { /* fire-and-forget */ }
-    router.push("/app");
-    router.refresh();
+      if (!res.ok) throw new Error(`status ${res.status}`);
+      router.push("/app");
+      router.refresh();
+    } catch {
+      toast.error("Kunde inte slutföra", {
+        detail: "Kontrollera din anslutning och försök igen.",
+      });
+      setFinishing(false);
+    }
   };
 
   return (
     <div className="space-y-6">
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
       <ProgressBar current={step} />
 
       {step === "workspace" && (
@@ -723,7 +738,7 @@ export function OnboardingForm({
         <AiBehaviorStep onNext={() => advanceToStep("webhooks")} />
       )}
       {step === "webhooks" && (
-        <WebhooksStep onFinish={finish} />
+        <WebhooksStep onFinish={finish} finishing={finishing} />
       )}
     </div>
   );
