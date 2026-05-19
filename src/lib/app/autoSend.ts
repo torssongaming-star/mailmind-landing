@@ -17,8 +17,8 @@
  *   4. Not a new customer (interactionCount ≥ 3) AND not manually blocked
  */
 
-import { eq } from "drizzle-orm";
-import { db, isDbConnected, inboxes as inboxesTable, users } from "@/lib/db";
+import { eq, or, and } from "drizzle-orm";
+import { db, isDbConnected, inboxes as inboxesTable, users, aiDrafts } from "@/lib/db";
 import {
   getDraft,
   updateDraft,
@@ -135,21 +135,50 @@ export async function executeSendDraft(params: {
 
   if (!isDbConnected()) return { ok: false, error: "db_unavailable" };
 
-  const draft = await getDraft(orgId, draftId);
-  if (!draft) return { ok: false, error: "draft_not_found" };
-  if (draft.status !== "pending" && draft.status !== "edited") {
+  // Atomic claim: flip status to "sending" only if still pending/edited.
+  // If two concurrent callers race (double-click or cron+manual collision),
+  // only one UPDATE returns a row — the other bails here. No duplicate sends.
+  const [claimed] = await db
+    .update(aiDrafts)
+    .set({ status: "sending", updatedAt: new Date() })
+    .where(and(
+      eq(aiDrafts.id, draftId),
+      eq(aiDrafts.organizationId, orgId),
+      or(
+        eq(aiDrafts.status, "pending"),
+        eq(aiDrafts.status, "edited"),
+      ),
+    ))
+    .returning();
+
+  if (!claimed) {
+    // Either draft doesn't exist, wrong org, or already claimed/sent/rejected.
+    const draft = await getDraft(orgId, draftId);
+    if (!draft) return { ok: false, error: "draft_not_found" };
     return { ok: false, error: `draft_already_${draft.status}` };
   }
 
+  const draft = claimed;
+
+  // Revert helper: if anything goes wrong before/during send, put the draft
+  // back to "pending" so humans can retry. Best-effort — log but don't throw.
+  const revert = async () => {
+    try {
+      await updateDraft(orgId, draftId, { status: "pending" });
+    } catch (e) {
+      console.error("[autoSend] failed to revert draft status:", e);
+    }
+  };
+
   const thread = await getThread(orgId, draft.threadId);
-  if (!thread) return { ok: false, error: "thread_not_found" };
+  if (!thread) { await revert(); return { ok: false, error: "thread_not_found" }; }
 
   const now = new Date();
 
   // Escalations don't send to customer — just update statuses
   if (draft.action !== "escalate") {
     if (!draft.bodyText?.trim()) {
-      return { ok: false, error: "no_body_text" };
+      await revert(); return { ok: false, error: "no_body_text" };
     }
 
     // Resolve inbox
@@ -219,7 +248,7 @@ export async function executeSendDraft(params: {
       // ── Send via Gmail API ───────────────────────────────────────────────
       const config = inboxRow.config as GmailInboxConfig | null;
       if (!config?.encryptedTokens) {
-        return { ok: false, error: "gmail_no_tokens" };
+        await revert(); return { ok: false, error: "gmail_no_tokens" };
       }
 
       let tokens = gmailDecryptTokens(config.encryptedTokens);
@@ -244,7 +273,7 @@ export async function executeSendDraft(params: {
       });
 
       if (!gmailResult.ok) {
-        return { ok: false, error: `gmail_send_error: ${gmailResult.error}` };
+        await revert(); return { ok: false, error: `gmail_send_error: ${gmailResult.error}` };
       }
       sentMessageId = gmailResult.messageId;
       // Ensure thread is linked to the Gmail thread so replies are grouped correctly
@@ -256,7 +285,7 @@ export async function executeSendDraft(params: {
       // ── Send via Microsoft Graph API ─────────────────────────────────────
       const config = inboxRow.config as OutlookInboxConfig | null;
       if (!config?.encryptedTokens) {
-        return { ok: false, error: "outlook_no_tokens" };
+        await revert(); return { ok: false, error: "outlook_no_tokens" };
       }
 
       let tokens = outlookDecryptTokens(config.encryptedTokens);
@@ -280,7 +309,7 @@ export async function executeSendDraft(params: {
       });
 
       if (!outlookResult.ok) {
-        return { ok: false, error: `outlook_send_error: ${outlookResult.error}` };
+        await revert(); return { ok: false, error: `outlook_send_error: ${outlookResult.error}` };
       }
       sentMessageId = outlookResult.messageId;
 
@@ -300,7 +329,7 @@ export async function executeSendDraft(params: {
       });
 
       if (!result.ok) {
-        return { ok: false, error: `resend_error: ${result.error}` };
+        await revert(); return { ok: false, error: `resend_error: ${result.error}` };
       }
       sentMessageId = result.id ?? null;
     }

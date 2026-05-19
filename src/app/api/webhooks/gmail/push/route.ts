@@ -23,7 +23,7 @@
  *   6. Persist updated historyId + tokens
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import {
   decryptTokens,
   encryptTokens,
@@ -235,14 +235,17 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Auto-triage (non-blocking — we don't await the result here to keep response fast,
-      // but we do await to get draftId for logging)
-      autoTriageNewMessage({
-        organizationId: inbox.organizationId,
-        threadId:       thread.id,
-        newEmailBody:   parsed.bodyText,
-        bulkHeaders:    parsed.bulkHeaders,
-      }).catch(err => log.error("autoTriage failed", { error: String(err) }));
+      // Auto-triage: use after() so the serverless function stays alive until
+      // the Anthropic call completes, even after the 200 response is sent.
+      // Without after(), Vercel may freeze the execution context mid-generation.
+      after(() =>
+        autoTriageNewMessage({
+          organizationId: inbox.organizationId,
+          threadId:       thread.id,
+          newEmailBody:   parsed.bodyText,
+          bulkHeaders:    parsed.bulkHeaders,
+        }).catch(err => log.error("autoTriage failed", { error: String(err) }))
+      );
 
     } catch (err) {
       console.error(`[gmail/push] failed to process message ${gmailMsgId}:`, err);

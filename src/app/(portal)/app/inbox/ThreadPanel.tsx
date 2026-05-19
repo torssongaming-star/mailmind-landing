@@ -38,7 +38,7 @@ type Message = {
   sentAt: string | Date;
 };
 
-type DraftStatus = "pending" | "approved" | "edited" | "sent" | "rejected";
+type DraftStatus = "pending" | "approved" | "edited" | "sending" | "sent" | "rejected";
 
 type Draft = {
   id: string;

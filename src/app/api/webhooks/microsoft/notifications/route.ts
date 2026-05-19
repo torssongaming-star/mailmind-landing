@@ -24,7 +24,7 @@
  *   6. Persist updated tokens
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import {
   decryptTokens,
   encryptTokens,
@@ -226,13 +226,17 @@ async function processNotification(notification: GraphNotificationValue) {
     },
   });
 
-  // ── 6. Auto-triage (fire-and-forget) ──────────────────────────────────────
-  autoTriageNewMessage({
-    organizationId: inbox.organizationId,
-    threadId:       thread.id,
-    newEmailBody:   parsed.bodyText,
-    bulkHeaders:    parsed.bulkHeaders,
-  }).catch(err => log.error("autoTriage failed", { error: String(err) }));
+  // ── 6. Auto-triage ────────────────────────────────────────────────────────
+  // Use after() so the function stays alive past the response for the
+  // Anthropic call. Without it, Vercel freezes the context on 202 return.
+  after(() =>
+    autoTriageNewMessage({
+      organizationId: inbox.organizationId,
+      threadId:       thread.id,
+      newEmailBody:   parsed.bodyText,
+      bulkHeaders:    parsed.bulkHeaders,
+    }).catch(err => log.error("autoTriage failed", { error: String(err) }))
+  );
 
   // ── 7. Persist updated tokens ─────────────────────────────────────────────
   await updateInboxConfig(inbox.id, {

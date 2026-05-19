@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { interpolateTemplate } from "@/lib/utils/templateVars";
 
 type DraftAction = "ask" | "summarize" | "escalate";
-type DraftStatus = "pending" | "approved" | "edited" | "sent" | "rejected";
+type DraftStatus = "pending" | "approved" | "edited" | "sending" | "sent" | "rejected";
 
 type Template = { id: string; title: string; slug: string | null; bodyText: string };
 

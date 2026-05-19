@@ -40,6 +40,7 @@ export const draftStatusEnum = pgEnum("draft_status", [
   "pending",
   "approved",
   "edited",
+  "sending",   // transient: claimed by one sender, prevents double-send race
   "sent",
   "rejected",
 ]);

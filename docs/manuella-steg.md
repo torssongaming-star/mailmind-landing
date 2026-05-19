@@ -296,7 +296,21 @@ Events att lyssna på (minimum):
 | 🚀 | 10. Ersätt placeholders | — | [ ] |
 | 🚀 | 11. Stripe live keys | — | [ ] |
 | 🚀 | 12. Live webhook | — | [ ] |
+| 🔴 | 13. `db:push` (sending-status) | 30 sek | [ ] |
 
-**Minimum för att senaste pushen ska funka i prod:** 0b + 1 + 2 + 3
+### Steg 13 — db:push för "sending"-status på drafts (30 sek)
+
+Ny enum-värde `sending` på `draft_status` — krävs för atomic double-send guard:
+
+```powershell
+cd "C:\Users\sebbe\Downloads\Claude\Email AI\mailmind-landing"
+npm run db:push
+```
+
+- [ ] Klart
+
+---
+
+**Minimum för att senaste pushen ska funka i prod:** 0b + 1 + 2 + 3 + 13
 **Minimum för pilot:** + 4 (om Gmail) + 5 + 6
 **Innan första betalande kund:** allt
