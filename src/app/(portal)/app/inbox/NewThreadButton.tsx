@@ -57,14 +57,25 @@ export function NewThreadButton({ compact }: { compact?: boolean }) {
 
   return (
     <>
+      {/* Inline button — visible on sm+ screens only */}
       <button
         onClick={() => setOpen(true)}
         aria-label="Skapa ny testtråd"
         title="Skapa en testtråd för att prova AI-flödet"
-        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-white text-xs font-semibold transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+        className="hidden sm:inline-flex items-center gap-1.5 h-8 px-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-white text-xs font-semibold transition-colors whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
       >
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
         {compact ? "Test" : "Ny testtråd"}
+      </button>
+
+      {/* FAB — visible on mobile only */}
+      <button
+        onClick={() => setOpen(true)}
+        aria-label="Skapa ny testtråd"
+        title="Skapa en testtråd för att prova AI-flödet"
+        className="sm:hidden fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-primary text-[hsl(var(--surface-base))] shadow-[0_4px_24px_-6px_hsl(189_94%_43%/0.7)] flex items-center justify-center hover:bg-cyan-300 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(var(--surface-base))]"
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
       </button>
 
       {open && (

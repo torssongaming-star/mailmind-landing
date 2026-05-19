@@ -75,8 +75,8 @@ export function InboxFilters({
 
   return (
     <div className={compact ? "flex flex-col gap-2" : "flex flex-col sm:flex-row gap-3"}>
-      {/* Status tabs */}
-      <div className="flex flex-wrap gap-1">
+      {/* Status tabs — horizontal scrollable pill strip on mobile */}
+      <div className="flex flex-row gap-1.5 overflow-x-auto pb-0.5 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map(tab => {
           const isActive = activeStatus === tab.value;
           const count = counts[tab.value];
@@ -85,10 +85,10 @@ export function InboxFilters({
               key={tab.value}
               href={buildHref(tab.value)}
               aria-current={isActive ? "page" : undefined}
-              className={`${compact ? "px-2 py-1" : "px-3 py-1.5"} rounded-lg text-[11px] font-semibold transition-colors flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+              className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
                 isActive
                   ? "bg-primary/[0.12] text-primary border border-primary/25"
-                  : "text-white/55 hover:text-white hover:bg-white/[0.04] border border-transparent"
+                  : "text-white/55 hover:text-white hover:bg-white/[0.06] border border-white/10"
               }`}
             >
               <span>{tab.label}</span>
@@ -118,7 +118,7 @@ export function InboxFilters({
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder={t("inbox.search")}
-          className="w-full bg-white/5 text-white text-xs rounded-lg pl-8 pr-3 py-1.5 border border-white/10 focus:border-primary/50 focus:outline-none placeholder:text-muted-foreground/40"
+          className="w-full bg-white/[0.07] text-white text-xs rounded-lg pl-8 pr-3 py-1.5 border border-[#334155] focus:border-primary/50 focus:outline-none placeholder:text-muted-foreground/40"
         />
         <svg
           className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"

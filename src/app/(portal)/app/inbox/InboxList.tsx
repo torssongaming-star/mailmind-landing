@@ -193,18 +193,21 @@ export function InboxList({ threads = [], slaByCaseType = {} }: { threads: Threa
           return (
             <li
               key={thread.id}
-              className={`flex items-center gap-3 px-5 py-3 transition-colors ${
+              className={`flex items-center gap-3 px-5 py-4 transition-colors ${
                 isSelected ? "bg-primary/[0.06]" : "hover:bg-white/[0.03]"
               }`}
             >
-              <input
-                type="checkbox"
-                checked={isSelected}
-                onChange={() => toggle(thread.id)}
-                onClick={e => e.stopPropagation()}
-                className="rounded cursor-pointer shrink-0"
-                aria-label={`Select ${thread.subject ?? thread.fromEmail}`}
-              />
+              {/* Checkbox wrapped in a min 44x44px touch target */}
+              <label className="shrink-0 flex items-center justify-center w-[44px] h-[44px] -mx-2 -my-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => toggle(thread.id)}
+                  onClick={e => e.stopPropagation()}
+                  className="rounded cursor-pointer w-4 h-4"
+                  aria-label={`Select ${thread.subject ?? thread.fromEmail}`}
+                />
+              </label>
               <Link
                 href={`/app/thread/${thread.id}`}
                 className="flex-1 min-w-0 flex items-center justify-between gap-3"
