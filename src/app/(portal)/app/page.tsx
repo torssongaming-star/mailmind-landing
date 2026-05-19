@@ -54,7 +54,7 @@ export default async function AppHomePage() {
   }
 
   // Setup state for the getting-started checklist
-  const [threads, inboxes, caseTypeRows] = await Promise.all([
+  const [{ threads }, inboxes, caseTypeRows] = await Promise.all([
     listThreads(account.organization.id, { limit: 1 }),
     listInboxes(account.organization.id),
     listCaseTypes(account.organization.id),
