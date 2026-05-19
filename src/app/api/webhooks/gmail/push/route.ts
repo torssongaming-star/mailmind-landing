@@ -1,4 +1,4 @@
-/**
+﻿/**
  * POST /api/webhooks/gmail/push
  *
  * Receives Google Cloud Pub/Sub push notifications for Gmail inboxes.
@@ -129,7 +129,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Per-inbox rate limit (defense-in-depth)
-  if (!rateLimit(`inbound:gmail:${inbox.id}`, RATE_LIMITS.inboundWebhook)) {
+  if (!(await rateLimit(`inbound:gmail:${inbox.id}`, RATE_LIMITS.inboundWebhook))) {
     log.warn("rate-limited", { inboxId: inbox.id });
     return NextResponse.json({ status: "rate_limited" }, { status: 429 });
   }
@@ -212,6 +212,7 @@ export async function POST(req: NextRequest) {
       const now = new Date();
       await appendMessage({
         threadId:          thread.id,
+        organizationId:    inbox.organizationId,
         role:              "customer",
         bodyText:          parsed.bodyText,
         bodyHtml:          null,

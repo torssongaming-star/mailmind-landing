@@ -91,6 +91,12 @@ export async function PATCH(
       action:         "ai_draft_rejected",
       metadata:       { draftId },
     });
+    void trackEvent({
+      distinctId: userId,
+      event:      "draft_rejected",
+      properties: { org_id: orgId, draft_action: draft.action, source: "manual" },
+      groups:     { organization: orgId },
+    });
     return NextResponse.json({ ok: true, status: "rejected" });
   }
 
@@ -106,13 +112,21 @@ export async function PATCH(
     return NextResponse.json({ error: sendResult.error }, { status });
   }
 
-  // Analytics: first_ai_draft_sent (non-blocking)
-  void trackEvent({
-    distinctId: userId,
-    event:      "first_ai_draft_sent",
-    properties: { org_id: orgId, draft_id: draftId },
-    groups:     { organization: orgId },
-  });
+  // Analytics: milestone + per-send events (non-blocking)
+  void Promise.all([
+    trackEvent({
+      distinctId: userId,
+      event:      "first_ai_draft_sent",
+      properties: { org_id: orgId, draft_id: draftId },
+      groups:     { organization: orgId },
+    }),
+    trackEvent({
+      distinctId: userId,
+      event:      "draft_sent",
+      properties: { org_id: orgId, draft_action: draft.action, source: "manual" },
+      groups:     { organization: orgId },
+    }),
+  ]);
 
   // Re-fetch draft for the updated thread status to return to client
   const sent = await getDraft(orgId, draftId);

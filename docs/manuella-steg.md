@@ -1,4 +1,4 @@
-# Manuella steg att köra
+﻿# Manuella steg att köra
 
 > Kortlista över allt som måste göras manuellt (utanför kod-repot) för att
 > aktivera det senaste arbetet. Bockar du av varje steg när det är klart.
@@ -20,7 +20,34 @@ För att formulär faktiskt ska leverera till dig krävs tre env-vars i Vercel:
 
 Sätts inte `SUPPORT_EMAIL_TO` faller den tillbaka på `support@mailmind.se` — om den adressen inte landar i en mailbox du läser **försvinner meddelandena tyst**. Kolla Vercel-loggar om något inte når dig.
 
-- [ ] Klart
+- [x] Klart
+
+---
+
+### Steg 0b — Upstash Redis (distribuerad rate-limiting) (5 min)
+
+`@upstash/ratelimit` och `@upstash/redis` är nu installerade. Utan env-vars faller
+limitern tyst tillbaka på in-memory (fungerar, men varje serverless-instans räknar
+separat — en angripare kan nå olika instanser och överstiga gränsen).
+
+**a) Skapa Redis-databas**
+1. Gå till **console.upstash.com** → **Create Database**
+2. Välj **Region: eu-west-1** (närmast Sverige)
+3. Kopiera **REST URL** och **REST Token** från databas-sidan
+
+**b) Lägg till i Vercel**
+Vercel → Settings → Environment Variables → lägg till:
+
+| Name | Value | Environments |
+|---|---|---|
+| `UPSTASH_REDIS_REST_URL` | `https://xxx.upstash.io` | Production, Preview |
+| `UPSTASH_REDIS_REST_TOKEN` | `AXxx...` | Production, Preview |
+
+Inget i Development behövs — lokal dev kör in-memory automatiskt.
+
+**c) Verifiera** efter nästa deploy: Vercel-loggar ska inte visa `[rate-limit] Redis error`.
+
+- [x] Klart
 
 ---
 
@@ -38,7 +65,7 @@ Säg **`yes`** på alla frågor. Skapar nya kolumner:
 
 **Förväntat:** `[✓] Changes applied`
 
-- [ ] Klart
+- [x] Klart
 
 ---
 
@@ -57,7 +84,7 @@ UPDATE email_messages m
 SELECT COUNT(*) AS unmapped FROM email_messages WHERE organization_id IS NULL;
 ```
 
-- [ ] Klart
+- [x] Klart
 
 ---
 
@@ -67,7 +94,7 @@ SELECT COUNT(*) AS unmapped FROM email_messages WHERE organization_id IS NULL;
 2. Senaste deploy ska visa **Ready** (grön)
 3. Klicka på den → **Functions** → kolla att inga 500-fel
 
-- [ ] Klart
+- [x] Klart
 
 ---
 
@@ -111,7 +138,7 @@ SELECT COUNT(*) AS unmapped FROM email_messages WHERE organization_id IS NULL;
 
 Trippar 3 dagar innan trial-slut → påminnelsemejl skickas.
 
-- [ ] Klart
+- [x] Klart
 
 ---
 
@@ -202,7 +229,7 @@ PostHog är nu installerat och instrumenterat i koden. Aktivera med tre env-vari
 - `landing.cta_clicked` — lägg i Hero/Pricing/Footer-knapparna
 - `onboarding.step_started/completed` — lägg i OnboardingForm.tsx
 
-- [ ] Klart
+- [x] Klart
 
 ---
 
@@ -256,19 +283,20 @@ Events att lyssna på (minimum):
 
 | Prio | Steg | Tid | Status |
 |---|---|---|---|
-| 🔴 | 1. `npm run db:push` | 30 sek | [ ] |
-| 🔴 | 2. Backfill SQL i Neon | 10 sek | [ ] |
-| 🔴 | 3. Verifiera Vercel-deploy | 2 min | [ ] |
+| 🔴 | 0b. Upstash Redis env-vars | 5 min | [x] |
+| 🔴 | 1. `npm run db:push` | 30 sek | [x] |
+| 🔴 | 2. Backfill SQL i Neon | 10 sek | [x] |
+| 🔴 | 3. Verifiera Vercel-deploy | 2 min | [x] |
 | 🟡 | 4. Google Pub/Sub OIDC | 10 min | [ ] |
-| 🟡 | 5. Stripe trial_will_end event | 2 min | [ ] |
+| 🟡 | 5. Stripe trial_will_end event | 2 min | [x] |
 | 🟢 | 6. Sentry-aktivering | 5 min | [ ] |
 | 🟢 | 7. Annual pricing Stripe | 15 min | [ ] |
-| 🟢 | 8. PostHog/Plausible | 10 min | [ ] |
+| 🟢 | 8. PostHog/Plausible | 10 min | [x] |
 | 🚀 | 9. Starta AB | — | [ ] |
 | 🚀 | 10. Ersätt placeholders | — | [ ] |
 | 🚀 | 11. Stripe live keys | — | [ ] |
 | 🚀 | 12. Live webhook | — | [ ] |
 
-**Minimum för att senaste pushen ska funka i prod:** 1 + 2 + 3
+**Minimum för att senaste pushen ska funka i prod:** 0b + 1 + 2 + 3
 **Minimum för pilot:** + 4 (om Gmail) + 5 + 6
 **Innan första betalande kund:** allt

@@ -13,7 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { syncUserAndOrganization } from "@/lib/db/queries";
-import { db, isDbConnected, subscriptions, licenseEntitlements, caseTypes } from "@/lib/db";
+import { db, isDbConnected, licenseEntitlements, caseTypes } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { PLANS } from "@/lib/plans";
 import { writeAuditLog } from "@/lib/app/audit";
@@ -91,37 +91,11 @@ export async function POST(req: NextRequest) {
   const orgId = result.organizationId;
 
   // ── Bootstrap the new org with sensible defaults ────────────────────────────
-  // Without these, a freshly-onboarded user lands on /app blocked by the
-  // "no_subscription" gate. We seed:
-  //   - 14-day trial on Starter (status=trialing → canUseApp=true)
-  //   - License entitlements matching Starter limits
-  //   - Three default case types so the AI has something to classify against
-  //
+  // Seeds licence entitlements and default case types. The trial subscription
+  // is created by Stripe when the user completes checkout (trial_period_days: 14).
   // All idempotent: re-running onboarding doesn't duplicate or break.
   if (isDbConnected()) {
-    const trialEnd = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
-
-    // 1. Trial subscription. Skip if a subscription row already exists for this org.
-    const existingSub = await db
-      .select({ id: subscriptions.id })
-      .from(subscriptions)
-      .where(eq(subscriptions.organizationId, orgId))
-      .limit(1);
-
-    if (existingSub.length === 0) {
-      await db.insert(subscriptions).values({
-        organizationId:       orgId,
-        // Synthetic Stripe IDs — replaced when the user actually goes through checkout
-        stripeSubscriptionId: `sub_trial_${orgId.slice(0, 8)}`,
-        stripeCustomerId:     `cus_trial_${orgId.slice(0, 8)}`,
-        plan:                 "starter",
-        status:               "trialing",
-        currentPeriodEnd:     trialEnd,
-        cancelAtPeriodEnd:    false,
-      });
-    }
-
-    // 2. License entitlements. Upsert so re-onboarding refreshes limits.
+    // 1. License entitlements. Upsert so re-onboarding refreshes limits.
     const starter = PLANS.starter;
     await db
       .insert(licenseEntitlements)
@@ -177,6 +151,12 @@ export async function POST(req: NextRequest) {
       distinctId:  userId,
       event:       "signup.completed",
       properties:  { method: "email", org_id: orgId },
+      groups:      { organization: orgId },
+    }),
+    trackEvent({
+      distinctId:  userId,
+      event:       "trial_started",
+      properties:  { org_id: orgId, plan: "starter" },
       groups:      { organization: orgId },
     }),
     identifyUser(userId, { orgId, plan: "starter" }),

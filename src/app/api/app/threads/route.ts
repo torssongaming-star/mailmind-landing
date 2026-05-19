@@ -1,4 +1,4 @@
-/**
+﻿/**
  * /api/app/threads
  *
  * GET   — list threads for the user's org (sorted by latest activity)
@@ -25,12 +25,20 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Account not provisioned" }, { status: 400 });
   }
 
-  const url     = new URL(req.url);
-  const limit   = Math.min(Math.max(parseInt(url.searchParams.get("limit") ?? "100", 10) || 100, 1), 200);
-  const inboxId = url.searchParams.get("inboxId");
+  const url          = new URL(req.url);
+  const limit        = Math.min(Math.max(parseInt(url.searchParams.get("limit") ?? "50", 10) || 50, 1), 200);
+  const cursor       = url.searchParams.get("cursor")       ?? undefined;
+  const inboxId      = url.searchParams.get("inboxId")      ?? null;
+  const showSnoozed  = url.searchParams.get("showSnoozed")  === "1";
+  const caseTypeSlug = url.searchParams.get("caseTypeSlug") ?? undefined;
+  const rawStatus    = url.searchParams.get("status")       ?? "";
+  const VALID        = ["open", "waiting", "escalated", "resolved"] as const;
+  const status       = VALID.find(s => s === rawStatus);
 
-  const threads = await listThreads(account.organization.id, { limit, inboxId });
-  return NextResponse.json({ threads });
+  const page = await listThreads(account.organization.id, {
+    limit, cursor, inboxId, showSnoozed, caseTypeSlug, status,
+  });
+  return NextResponse.json(page);
 }
 
 const PostBody = z.object({

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * /api/public/demo-triage
  *
  * Public endpoint — no auth required.
@@ -358,7 +358,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
-  if (!rateLimit(`demo:${ip}`, { capacity: 10, refillPerSec: 10 / 60 })) {
+  if (!(await rateLimit(`demo:${ip}`, { capacity: 10, refillPerSec: 10 / 60 }))) {
     return NextResponse.json(
       { error: "För många förfrågningar. Vänta en stund och försök igen." },
       { status: 429, headers: { "Retry-After": "60" } },

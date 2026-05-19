@@ -77,10 +77,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Check if user already has an active subscription
-    if (portalData.subscription?.status === "active" || portalData.subscription?.status === "trialing") {
-      // If they already have a plan, redirect them to the Billing Portal instead
-      // of showing an error. This enables "Switch plan" buttons to work.
+    // Synthetic trials (stripeSubscriptionId starting with "sub_trial_") are
+    // DB-only placeholders — not real Stripe subscriptions. Users with a
+    // synthetic trial must go through checkout to activate the native Stripe trial.
+    const sub = portalData.subscription;
+    const hasRealSub = sub != null && !sub.stripeSubscriptionId.startsWith("sub_trial_");
+
+    // Real active/trialing subscription → send to Billing Portal to manage it.
+    if (hasRealSub && (sub.status === "active" || sub.status === "trialing")) {
       const session = await stripe.billingPortal.sessions.create({
         customer: stripeCustomerId,
         return_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing`,
@@ -88,11 +92,13 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ url: session.url });
     }
 
-    // 2. Create Stripe Checkout session
+    // 2. Create Stripe Checkout session.
+    // Add a 14-day native trial when the org has no real Stripe subscription yet.
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer: stripeCustomerId,
       line_items: [{ price: priceId, quantity: 1 }],
+      payment_method_collection: "if_required",
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing?checkout=success`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/billing?checkout=cancelled`,
       metadata: {
@@ -106,6 +112,7 @@ export async function POST(req: NextRequest) {
           plan,
           billingPeriod,
         },
+        ...(!hasRealSub && { trial_period_days: 14 }),
       },
     });
 

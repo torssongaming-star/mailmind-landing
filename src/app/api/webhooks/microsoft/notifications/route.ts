@@ -1,4 +1,4 @@
-/**
+﻿/**
  * POST /api/webhooks/microsoft/notifications
  *
  * Receives Microsoft Graph change notifications for Outlook inboxes.
@@ -143,7 +143,7 @@ async function processNotification(notification: GraphNotificationValue) {
   }
 
   // Rate-limit per inbox — burst 600/min ≈ 10/sec
-  if (!rateLimit(`inbound:outlook:${inbox.id}`, RATE_LIMITS.inboundWebhook)) {
+  if (!(await rateLimit(`inbound:outlook:${inbox.id}`, RATE_LIMITS.inboundWebhook))) {
     log.warn("rate-limited inbound notification", { inboxId: inbox.id });
     return;
   }
@@ -203,6 +203,7 @@ async function processNotification(notification: GraphNotificationValue) {
   const now = new Date();
   await appendMessage({
     threadId:          thread.id,
+    organizationId:    inbox.organizationId,
     role:              "customer",
     bodyText:          parsed.bodyText,
     bodyHtml:          null,

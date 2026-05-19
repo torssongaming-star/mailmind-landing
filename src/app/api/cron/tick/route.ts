@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Unified cron endpoint — Vercel Hobby allows exactly one cron per project.
  *
  * Schedule (vercel.json): daily at midnight UTC  →  "0 0 * * *"
@@ -14,7 +14,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { db, isDbConnected, organizations, users, subscriptions, licenseEntitlements, usageCounters, inboxes, emailThreads } from "@/lib/db";
-import { eq, and, lt, desc, isNotNull } from "drizzle-orm";
+import { eq, and, lt, desc, isNotNull, inArray } from "drizzle-orm";
 import { wakeUpAllSnoozedThreads, updateInboxConfig } from "@/lib/app/threads";
 import { notifyUsageWarning, notifyTrialExpired, notifyWeeklyReport } from "@/lib/app/notify";
 import { getWeeklyStats } from "@/lib/app/stats";
@@ -373,8 +373,7 @@ async function taskRetentionPurge() {
     .delete(emailThreads)
     .where(and(
       lt(emailThreads.lastMessageAt, horizon),
-      // Only purge closed threads — keep open threads regardless of age
-      // (an old open thread is a stale ticket the user should see)
+      inArray(emailThreads.status, ['resolved', 'escalated']),
     ))
     .returning({ id: emailThreads.id });
 

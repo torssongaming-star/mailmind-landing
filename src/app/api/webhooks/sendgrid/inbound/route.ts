@@ -1,4 +1,4 @@
-/**
+﻿/**
  * POST /api/webhooks/sendgrid/inbound
  *
  * Receives parsed inbound emails from SendGrid Inbound Parse.
@@ -207,7 +207,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Rate limit per inbox — defends against flood/loop attacks. Burst 600/min.
-  if (!rateLimit(`inbound:sendgrid:${inbox.id}`, RATE_LIMITS.inboundWebhook)) {
+  if (!(await rateLimit(`inbound:sendgrid:${inbox.id}`, RATE_LIMITS.inboundWebhook))) {
     console.warn("[inbound] rate-limited inbox", inbox.id);
     return NextResponse.json({ status: "rate_limited" }, { status: 429 });
   }
@@ -262,6 +262,7 @@ export async function POST(req: NextRequest) {
   const now = new Date();
   await appendMessage({
     threadId:           thread.id,
+    organizationId:     inbox.organizationId,
     role:               "customer",
     bodyText,
     bodyHtml:           payload.html ?? null,

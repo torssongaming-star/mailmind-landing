@@ -35,6 +35,7 @@ import {
 import { listActiveKnowledge } from "./knowledge";
 import { generateDraft, AiTransientError, detectPromptInjection } from "./ai";
 import { writeAuditLog } from "./audit";
+import { trackEvent } from "@/lib/analytics";
 import { computeAccess } from "./entitlements";
 import { fireWebhooksForThread } from "./webhooks";
 import { notifyNewThread } from "./notify";
@@ -296,6 +297,15 @@ export async function autoTriageNewMessage(input: {
     }
   }
 
+  // Detect first-ever AI draft for this org before incrementing the counter.
+  // Only run the cross-month sum query when the current month shows zero drafts.
+  const isFirstDraft = draft && (usageRow?.aiDraftsUsed ?? 0) === 0
+    && !(await db
+      .select({ s: sql<number>`coalesce(sum(${usageCounters.aiDraftsUsed}), 0)` })
+      .from(usageCounters)
+      .where(eq(usageCounters.organizationId, organizationId))
+      .then(r => Number(r[0]?.s) > 0));
+
   // Increment usage atomically (inline, since we don't have a Clerk userId)
   await db
     .insert(usageCounters)
@@ -307,6 +317,15 @@ export async function autoTriageNewMessage(input: {
         updatedAt:    new Date(),
       },
     });
+
+  if (isFirstDraft) {
+    void trackEvent({
+      distinctId: organizationId,
+      event:      "first_ai_draft_generated",
+      properties: { org_id: organizationId, source: "auto" },
+      groups:     { organization: organizationId },
+    });
+  }
 
   // ── Auto-send ──────────────────────────────────────────────────────────────
   // Only when autoSendEnabled AND not dry-run AND draft was created.

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * GET  /api/app/team  — list members + pending invites (owner/admin only)
  * POST /api/app/team  — send an invite (owner/admin, seat-gated)
  */
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
   const orgId = account.organization.id;
 
   // Rate limit invites per org — 10/hour to prevent spam-invites
-  if (!rateLimit(`invite:${orgId}`, RATE_LIMITS.invite)) {
+  if (!(await rateLimit(`invite:${orgId}`, RATE_LIMITS.invite))) {
     return NextResponse.json(
       { error: "Du har skickat för många inbjudningar nyligen. Försök igen om en stund." },
       { status: 429, headers: { "Retry-After": "3600" } },

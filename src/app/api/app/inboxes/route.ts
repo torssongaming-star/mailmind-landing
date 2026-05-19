@@ -18,6 +18,7 @@ import { randomBytes } from "crypto";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { listInboxes, getInboxByEmail, createMailmindInbox } from "@/lib/app/threads";
 import { writeAuditLog } from "@/lib/app/audit";
+import { trackEvent } from "@/lib/analytics";
 
 export const runtime = "nodejs";
 
@@ -118,6 +119,13 @@ export async function POST(req: NextRequest) {
     userId:         account.user.id,
     action:         "inbox_connected",
     metadata:       { inboxId: inbox.id, email: inbox.email, provider: "mailmind" },
+  });
+
+  void trackEvent({
+    distinctId: userId,
+    event:      "inbox_connected",
+    properties: { org_id: account.organization.id, inbox_id: inbox.id, provider: "mailmind" },
+    groups:     { organization: account.organization.id },
   });
 
   return NextResponse.json({ inbox });

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * POST   /api/app/push/subscribe   — register or refresh a push subscription
  * DELETE /api/app/push/subscribe   — unsubscribe (by endpoint)
  *
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Rate limit re-subscription attempts per user (burst 20/min)
-  if (!rateLimit(`push:${account.user.id}`, RATE_LIMITS.pushSubscribe)) {
+  if (!(await rateLimit(`push:${account.user.id}`, RATE_LIMITS.pushSubscribe))) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 

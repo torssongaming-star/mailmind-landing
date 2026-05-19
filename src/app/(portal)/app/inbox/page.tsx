@@ -1,4 +1,4 @@
-/**
+﻿/**
  * /app/inbox — split-pane email triage view.
  * Left: compact thread list. Right: thread content panel (client-side load).
  * Full viewport height, no dead space.
@@ -49,9 +49,9 @@ export default async function InboxPage({
   // Server-side search bypasses the 200-row limit. Falls back to in-memory
   // filtering for facets (status, tag) on top of the search result.
   const useServerSearch = query.length >= 2;
-  const [all, caseTypesList, snoozedCount, filteredCount] = await Promise.all([
+  const [mainPage, caseTypesList, snoozedCount, filteredCount] = await Promise.all([
     useServerSearch
-      ? searchThreads(account.organization.id, query, 200)
+      ? searchThreads(account.organization.id, query, 200).then(threads => ({ threads, nextCursor: null }))
       : isSnoozedView
         ? listThreads(account.organization.id, { limit: 200, showSnoozed: true })
         : isFilteredView
@@ -60,8 +60,10 @@ export default async function InboxPage({
     listCaseTypes(account.organization.id),
     countSnoozedThreads(account.organization.id),
     // Count of auto-filtered bulk threads (used by the tab badge).
-    listThreads(account.organization.id, { limit: 200, caseTypeSlug: "bulk" }).then(rows => rows.length),
+    listThreads(account.organization.id, { limit: 200, caseTypeSlug: "bulk" }).then(({ threads }) => threads.length),
   ]);
+  const all             = mainPage.threads;
+  const initialNextCursor = mainPage.nextCursor;
 
   const slaByCaseType: Record<string, number> = {};
   for (const ct of caseTypesList) {
@@ -151,6 +153,7 @@ export default async function InboxPage({
         <InboxShell
           canGenerate={account.access.canGenerateAiDraft}
           slaByCaseType={slaByCaseType}
+          initialNextCursor={initialNextCursor}
           threads={threads.map(t => ({
             id:            t.id,
             subject:       t.subject,

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 /**
  * Split-pane inbox shell.
@@ -9,9 +9,10 @@
  * the panel loads the content client-side for instant feel.
  */
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, Mail } from "lucide-react";
 import { ThreadPanel } from "./ThreadPanel";
 
 type Thread = {
@@ -48,10 +49,12 @@ export function InboxShell({
   threads,
   canGenerate,
   slaByCaseType = {},
+  initialNextCursor = null,
 }: {
-  threads:       Thread[];
-  canGenerate:   boolean;
-  slaByCaseType?: Record<string, number>;
+  threads:            Thread[];
+  canGenerate:        boolean;
+  slaByCaseType?:     Record<string, number>;
+  initialNextCursor?: string | null;
 }) {
   const { t, locale } = useI18n();
   const router  = useRouter();
@@ -63,14 +66,61 @@ export function InboxShell({
   const [bulkError, setBulkError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [localThreads, setLocalThreads] = useState<Thread[]>(threads);
+  const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLLIElement>(null);
+
+  // Sync local list when server refreshes (router.refresh())
+  useEffect(() => {
+    setLocalThreads(threads);
+    setNextCursor(initialNextCursor ?? null);
+  }, [threads, initialNextCursor]);
 
   // Desktop: auto-select first thread for fast preview.
   // Mobile: start with no selection so list is full-screen.
   useEffect(() => {
-    if (selectedId && threads.some(t => t.id === selectedId)) return;
+    if (selectedId && localThreads.some(t => t.id === selectedId)) return;
     const isDesktop = typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches;
-    setSelectedId(isDesktop ? (threads[0]?.id ?? null) : null);
-  }, [threads, selectedId]);
+    setSelectedId(isDesktop ? (localThreads[0]?.id ?? null) : null);
+  }, [localThreads, selectedId]);
+
+  const loadMore = useCallback(async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const params = new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+      const apiParams = new URLSearchParams({ cursor: nextCursor, limit: "50" });
+      const urlStatus = params.get("status");
+      if (urlStatus === "snoozed") apiParams.set("showSnoozed", "1");
+      else if (urlStatus === "filtered") apiParams.set("caseTypeSlug", "bulk");
+      else if (urlStatus) apiParams.set("status", urlStatus);
+      const inboxId = params.get("inboxId");
+      if (inboxId) apiParams.set("inboxId", inboxId);
+      const res = await fetch(`/api/app/threads?${apiParams}`);
+      if (!res.ok) return;
+      const page = await res.json() as { threads: Thread[]; nextCursor: string | null };
+      setLocalThreads(prev => {
+        const ids = new Set(prev.map(t => t.id));
+        return [...prev, ...page.threads.filter(t => !ids.has(t.id))];
+      });
+      setNextCursor(page.nextCursor);
+    } catch {
+      // fail silently — user can scroll up and back down to retry
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [nextCursor, loadingMore]);
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || !nextCursor) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) loadMore();
+    }, { threshold: 0.1 });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [nextCursor, loadMore]);
 
   const refresh = useCallback(() => {
     setRefreshing(true);
@@ -85,16 +135,16 @@ export function InboxShell({
   }, [refresh]);
 
   const formattedDates = useMemo(
-    () => Object.fromEntries(threads.map(t => [
+    () => Object.fromEntries(localThreads.map(t => [
       t.id,
       t.lastMessageAt
         ? new Date(t.lastMessageAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE", { dateStyle: "short", timeStyle: "short" })
         : "—",
     ])),
-    [threads, locale]
+    [localThreads, locale]
   );
 
-  const allSelected = threads.length > 0 && selected.size === threads.length;
+  const allSelected = localThreads.length > 0 && selected.size === localThreads.length;
   const someSelected = selected.size > 0 && !allSelected;
 
   const handleBulk = async (action: "resolve" | "escalate" | "delete") => {
@@ -138,11 +188,11 @@ export function InboxShell({
             type="checkbox"
             checked={allSelected}
             ref={el => { if (el) el.indeterminate = someSelected; }}
-            onChange={() => setSelected(allSelected ? new Set() : new Set(threads.map(t => t.id)))}
+            onChange={() => setSelected(allSelected ? new Set() : new Set(localThreads.map(t => t.id)))}
             className="rounded cursor-pointer"
           />
           <span className="text-[10px] text-muted-foreground flex-1">
-            {threads.length} {t("inbox.title").toLowerCase()}
+            {localThreads.length} {t("inbox.title").toLowerCase()}
           </span>
           <button
             onClick={refresh}
@@ -174,24 +224,31 @@ export function InboxShell({
           </div>
         )}
 
-        {/* Thread rows */}
-        <ul className="flex-1 overflow-y-auto divide-y divide-white/5">
-          {threads.length === 0 && (
-            <li className="px-6 py-10 flex flex-col items-center text-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-white/[0.03] border border-white/8 flex items-center justify-center mb-1">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-white/30">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
+        {/* Empty state — shown instead of the list when there are no threads */}
+        {localThreads.length === 0 ? (
+          <div className="flex-1 flex flex-col items-center justify-center gap-5 px-6 py-12">
+            <div className="relative">
+              <div className="absolute inset-0 blur-2xl bg-white/[0.03] rounded-full" aria-hidden />
+              <div className="relative w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                <Mail className="w-6 h-6 text-white/30" />
               </div>
-              <p className="text-xs text-white/45">{t("inbox.thread.statusLabels.noMatch")}</p>
-              <p className="text-[10px] text-white/25 max-w-[200px] leading-relaxed">
-                {locale === "sv"
-                  ? "När kunder skriver till en kopplad inkorg dyker trådar upp här."
-                  : "Threads appear here when customers email a connected inbox."}
+            </div>
+            <div className="text-center max-w-[220px]">
+              <p className="text-sm font-medium text-white/70">Inga ärenden än</p>
+              <p className="text-[11px] text-white/40 mt-2 leading-relaxed">
+                Redo att ta emot mejl. Skicka ett testmejl till din inkorg för att komma igång.
               </p>
-            </li>
-          )}
-          {threads.map(thread => {
+            </div>
+            <Link
+              href="/app/inboxes"
+              className="text-[11px] px-3 py-1.5 rounded-md bg-white/5 border border-white/10 text-white/60 hover:text-white hover:bg-white/[0.08] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            >
+              Gå till inkorgar
+            </Link>
+          </div>
+        ) : (
+          <ul className="flex-1 overflow-y-auto divide-y divide-white/5">
+          {localThreads.map(thread => {
             const isSelected  = selectedId === thread.id;
             const isChecked   = selected.has(thread.id);
             const slaHours    = thread.caseTypeSlug ? slaByCaseType[thread.caseTypeSlug] : undefined;
@@ -275,7 +332,13 @@ export function InboxShell({
               </li>
             );
           })}
-        </ul>
+          {nextCursor && (
+            <li ref={sentinelRef} className="flex items-center justify-center py-4" aria-hidden>
+              {loadingMore && <span className="text-[10px] text-white/30">…</span>}
+            </li>
+          )}
+          </ul>
+        )}
       </div>
 
       {/* ── Right panel — thread content ───────────────────────────────── */}
@@ -304,7 +367,7 @@ export function InboxShell({
             </div>
             <div className="text-center max-w-[280px]">
               <p className="text-sm font-medium text-white/70">{t("inbox.thread.statusLabels.selectThread")}</p>
-              {threads.length > 0 && (
+              {localThreads.length > 0 && (
                 <p className="text-xs text-white/35 mt-1.5 leading-relaxed">
                   {locale === "sv"
                     ? "Välj en tråd till vänster för att se konversation, AI-utkast och åtgärder."

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * GET /api/admin/health
  *
  * Diagnostic endpoint that verifies all the external dependencies the app needs.
@@ -14,6 +14,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { runHealthChecks } from "@/lib/admin/health";
 
 export const runtime = "nodejs";
@@ -23,7 +24,12 @@ export async function GET(req: NextRequest) {
   if (adminSecret) {
     const url = new URL(req.url);
     const provided = url.searchParams.get("secret") ?? req.headers.get("x-admin-secret") ?? "";
-    if (provided !== adminSecret) {
+    const maxLen = Math.max(provided.length, adminSecret.length);
+    const providedBuf = Buffer.alloc(maxLen, 0);
+    const secretBuf   = Buffer.alloc(maxLen, 0);
+    Buffer.from(provided).copy(providedBuf);
+    Buffer.from(adminSecret).copy(secretBuf);
+    if (!crypto.timingSafeEqual(providedBuf, secretBuf)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
   }

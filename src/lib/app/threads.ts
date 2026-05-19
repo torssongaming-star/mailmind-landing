@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Thread + message + AI draft repository.
  *
  * All reads/writes scoped to organizationId — the route handlers must never
@@ -7,7 +7,7 @@
  * the resolved orgId here.
  */
 
-import { eq, and, desc, asc, lte, isNotNull, sql } from "drizzle-orm";
+import { eq, and, or, desc, asc, lt, lte, isNotNull, sql } from "drizzle-orm";
 import {
   db,
   isDbConnected,
@@ -26,6 +26,31 @@ import {
 } from "@/lib/db";
 import { z } from "zod";
 
+// ── Cursor pagination ─────────────────────────────────────────────────────────
+
+export type ThreadsPage = {
+  threads:    EmailThread[];
+  nextCursor: string | null;
+};
+
+type Cursor = { lastMessageAt: string; id: string };
+
+function encodeCursor(c: Cursor): string {
+  return Buffer.from(JSON.stringify(c)).toString("base64url");
+}
+
+function decodeCursor(raw: string): Cursor | null {
+  try {
+    const obj = JSON.parse(Buffer.from(raw, "base64url").toString("utf8")) as unknown;
+    if (
+      obj !== null && typeof obj === "object" &&
+      "lastMessageAt" in obj && typeof (obj as Record<string,unknown>).lastMessageAt === "string" &&
+      "id"            in obj && typeof (obj as Record<string,unknown>).id            === "string"
+    ) return obj as Cursor;
+    return null;
+  } catch { return null; }
+}
+
 // ── Threads ──────────────────────────────────────────────────────────────────
 
 export async function listThreads(
@@ -36,13 +61,15 @@ export async function listThreads(
     inboxId?: string | null;
     /** Filter by exact caseTypeSlug — e.g. "bulk" to show only filtered marketing. */
     caseTypeSlug?: string;
+    /** Filter by thread status at DB level (used by cursor-paginated API fetches). */
+    status?: "open" | "waiting" | "escalated" | "resolved";
+    /** Opaque cursor from a previous page's nextCursor. */
+    cursor?: string;
   } = {}
-) {
-  const { limit = 50, showSnoozed = false, inboxId = null, caseTypeSlug } = opts;
-  if (!isDbConnected()) return [] as EmailThread[];
+): Promise<ThreadsPage> {
+  const { limit = 50, showSnoozed = false, inboxId = null, caseTypeSlug, status, cursor: cursorStr } = opts;
+  if (!isDbConnected()) return { threads: [], nextCursor: null };
 
-  // We need: WHERE org_id = ? AND (snoozed_until IS NULL OR snoozed_until <= now())
-  // Drizzle approach: use sql template for the OR condition
   const { sql: sqlTag } = await import("drizzle-orm");
   const activeFilter = sqlTag`(${emailThreads.snoozedUntil} IS NULL OR ${emailThreads.snoozedUntil} <= NOW())`;
 
@@ -52,19 +79,43 @@ export async function listThreads(
   } else {
     conditions.push(activeFilter);
   }
-  if (inboxId) {
-    conditions.push(eq(emailThreads.inboxId, inboxId));
-  }
-  if (caseTypeSlug) {
-    conditions.push(eq(emailThreads.caseTypeSlug, caseTypeSlug));
+  if (inboxId)      conditions.push(eq(emailThreads.inboxId, inboxId));
+  if (caseTypeSlug) conditions.push(eq(emailThreads.caseTypeSlug, caseTypeSlug));
+  if (status)       conditions.push(eq(emailThreads.status, status));
+
+  // Cursor: (lastMessageAt DESC, id DESC) — keyset pagination.
+  // Two threads can share the same lastMessageAt so id breaks ties.
+  const cursor = cursorStr ? decodeCursor(cursorStr) : null;
+  if (cursor) {
+    const ts = new Date(cursor.lastMessageAt);
+    conditions.push(
+      or(
+        lt(emailThreads.lastMessageAt, ts),
+        and(
+          eq(emailThreads.lastMessageAt, ts),
+          lt(emailThreads.id, cursor.id),
+        )!,
+      )!
+    );
   }
 
-  return db
+  // Fetch one extra row so we know whether a next page exists.
+  const rows = await db
     .select()
     .from(emailThreads)
     .where(and(...conditions))
-    .orderBy(desc(emailThreads.lastMessageAt))
-    .limit(limit);
+    .orderBy(desc(emailThreads.lastMessageAt), desc(emailThreads.id))
+    .limit(limit + 1);
+
+  const hasMore = rows.length > limit;
+  const threads = hasMore ? rows.slice(0, limit) : rows;
+  const last    = threads[threads.length - 1];
+  const nextCursor =
+    hasMore && last?.lastMessageAt
+      ? encodeCursor({ lastMessageAt: last.lastMessageAt.toISOString(), id: last.id })
+      : null;
+
+  return { threads, nextCursor };
 }
 
 export async function getThread(organizationId: string, threadId: string) {

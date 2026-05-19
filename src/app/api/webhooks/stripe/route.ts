@@ -146,12 +146,18 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        // 6. Analytics: upgrade.completed (trial → paid plan)
+        // 6. Analytics: upgrade.completed + subscription_converted (trial → paid plan)
         void Promise.all([
           trackEvent({
             distinctId:  clerkUserId,
             event:       "upgrade.completed",
             properties:  { fromPlan: "trialing", toPlan: plan, org_id: syncResult.organizationId },
+            groups:      { organization: syncResult.organizationId },
+          }),
+          trackEvent({
+            distinctId:  clerkUserId,
+            event:       "subscription_converted",
+            properties:  { org_id: syncResult.organizationId, plan },
             groups:      { organization: syncResult.organizationId },
           }),
           groupOrg(syncResult.organizationId, { plan, status: "active" }),

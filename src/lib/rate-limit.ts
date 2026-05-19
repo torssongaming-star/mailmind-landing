@@ -1,65 +1,116 @@
-/**
- * In-memory rate limiter — token bucket style.
+﻿/**
+ * Distributed rate limiter backed by Upstash Redis (sliding window).
  *
- * Caveats:
- *   - State is per Node.js process. Vercel serverless lambdas may spin up
- *     new instances; an attacker hitting different lambda instances can
- *     temporarily exceed the limit. This is acceptable for our threat model:
- *     we want to dampen abuse, not implement strict DDoS protection.
- *   - For strict global limits, migrate to Vercel KV / Upstash Redis.
+ * When UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN are not set the
+ * module falls back to the original in-memory token-bucket so local dev and
+ * test suites work without a Redis instance.
  *
- * Usage:
- *   const ok = rateLimit("ai:" + orgId, { capacity: 60, refillPerSec: 1 });
+ * Usage (unchanged from the in-memory version):
+ *   const ok = await rateLimit("ai:" + orgId, RATE_LIMITS.aiDraft);
  *   if (!ok) return 429;
  */
 
-type Bucket = {
-  tokens: number;
-  lastRefill: number; // ms epoch
-};
-
-const BUCKETS = new Map<string, Bucket>();
-
-/** Cap on map size to avoid unbounded growth in long-lived processes. */
-const MAX_BUCKETS = 10_000;
+import type { Duration } from "@upstash/ratelimit";
 
 export type RateLimitOptions = {
-  /** Max bucket size (burst capacity) */
+  /** Max burst capacity */
   capacity: number;
-  /** Tokens refilled per second */
+  /** Tokens refilled per second (steady-state rate) */
   refillPerSec: number;
 };
 
-/**
- * Returns true if the request is allowed, false if rate-limited.
- * Atomically deducts one token on success.
- */
-export function rateLimit(key: string, opts: RateLimitOptions): boolean {
-  const now = Date.now();
+// ── Upstash Redis client (lazy, singleton) ────────────────────────────────────
 
-  // Lazy GC — when full, drop oldest entries
-  if (BUCKETS.size >= MAX_BUCKETS) {
-    const toDrop = Math.floor(MAX_BUCKETS / 10);
-    const keys = Array.from(BUCKETS.keys()).slice(0, toDrop);
-    for (const k of keys) BUCKETS.delete(k);
+let _redis: import("@upstash/redis").Redis | null = null;
+let _redisChecked = false;
+
+function getRedis(): import("@upstash/redis").Redis | null {
+  if (_redisChecked) return _redis;
+  _redisChecked = true;
+  const url   = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return null;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { Redis } = require("@upstash/redis") as typeof import("@upstash/redis");
+  _redis = new Redis({ url, token });
+  return _redis;
+}
+
+// ── Ratelimit instance cache (one per unique capacity+window combo) ────────────
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const _limiterCache = new Map<string, any>();
+
+function getLimiter(opts: RateLimitOptions) {
+  const redis = getRedis()!;
+  // Derive sliding window duration from token-bucket params:
+  //   window = capacity / refillPerSec  (seconds)
+  const windowSecs = opts.refillPerSec > 0
+    ? Math.max(1, Math.round(opts.capacity / opts.refillPerSec))
+    : 1;
+  const fingerprint = `${opts.capacity}:${windowSecs}`;
+
+  let limiter = _limiterCache.get(fingerprint);
+  if (!limiter) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Ratelimit } = require("@upstash/ratelimit") as typeof import("@upstash/ratelimit");
+    limiter = new Ratelimit({
+      redis,
+      limiter: Ratelimit.slidingWindow(opts.capacity, `${windowSecs} s` as Duration),
+      prefix:  "mm:rl",
+      analytics: false,
+    });
+    _limiterCache.set(fingerprint, limiter);
   }
+  return limiter as import("@upstash/ratelimit").Ratelimit;
+}
 
-  const existing = BUCKETS.get(key);
+// ── In-memory token-bucket fallback ───────────────────────────────────────────
+
+type Bucket = { tokens: number; lastRefill: number };
+const _buckets = new Map<string, Bucket>();
+const MAX_BUCKETS = 10_000;
+
+function _inMemoryLimit(key: string, opts: RateLimitOptions): boolean {
+  const now = Date.now();
+  if (_buckets.size >= MAX_BUCKETS) {
+    const toDrop = Math.floor(MAX_BUCKETS / 10);
+    const keys = Array.from(_buckets.keys()).slice(0, toDrop);
+    for (const k of keys) _buckets.delete(k);
+  }
+  const existing = _buckets.get(key);
   if (!existing) {
-    BUCKETS.set(key, { tokens: opts.capacity - 1, lastRefill: now });
+    _buckets.set(key, { tokens: opts.capacity - 1, lastRefill: now });
     return true;
   }
-
-  // Refill tokens based on elapsed time
   const elapsed = (now - existing.lastRefill) / 1000;
   existing.tokens = Math.min(opts.capacity, existing.tokens + elapsed * opts.refillPerSec);
   existing.lastRefill = now;
-
   if (existing.tokens >= 1) {
     existing.tokens -= 1;
     return true;
   }
   return false;
+}
+
+// ── Public API ────────────────────────────────────────────────────────────────
+
+/**
+ * Returns true if the request is allowed, false if rate-limited.
+ * Uses Upstash Redis when configured; falls back to in-memory token bucket.
+ */
+export async function rateLimit(key: string, opts: RateLimitOptions): Promise<boolean> {
+  if (!getRedis()) {
+    return _inMemoryLimit(key, opts);
+  }
+  try {
+    const { success } = await getLimiter(opts).limit(key);
+    return success;
+  } catch (err) {
+    // Redis unavailable — fail open so a Redis outage doesn't take down the app
+    console.error("[rate-limit] Redis error, failing open:", err);
+    return true;
+  }
 }
 
 /** Common rate-limit presets — single source of truth per route family. */

@@ -1,4 +1,4 @@
-/**
+﻿/**
  * POST /api/app/ai/draft
  *
  * Generate an AI draft reply for an existing thread. Steps:
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
   const orgId = account.organization.id;
 
   // Rate limit AI generation per org (60/min burst, refills at 1/sec)
-  if (!rateLimit(`ai:${orgId}`, RATE_LIMITS.aiDraft)) {
+  if (!(await rateLimit(`ai:${orgId}`, RATE_LIMITS.aiDraft))) {
     return NextResponse.json(
       { error: "Too many AI requests. Please wait a moment." },
       { status: 429, headers: { "Retry-After": "60" } },
