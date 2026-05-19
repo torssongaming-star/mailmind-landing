@@ -228,10 +228,20 @@ export function computeAccess(input: {
         canInviteUser:       false,
         reason:              "past_due",
       };
-    case "active":
+      case "active":
     case "trialing":
       // fall through to limit checks
       break;
+  }
+
+  // 3b. Defensive date guard — catches the webhook-delay window where status
+  // is still "trialing"/"active" in the DB but the period has genuinely ended.
+  // Works regardless of Stripe webhook latency.
+  if (
+    subscription.currentPeriodEnd &&
+    new Date(subscription.currentPeriodEnd) < new Date()
+  ) {
+    return blocked("subscription_cancelled");
   }
 
   // 4. Limit checks (only relevant when status is active/trialing)
