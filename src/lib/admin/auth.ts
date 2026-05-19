@@ -3,30 +3,16 @@ import { redirect } from "next/navigation";
 
 /**
  * Checks if a user is a Mailmind internal admin.
- * 
- * Criteria:
- * 1. Email is in ADMIN_EMAILS environment variable.
- * 2. Clerk privateMetadata has mailmindRole set to "admin" or "superadmin".
+ *
+ * Access is granted only when Clerk privateMetadata.mailmindRole is "admin"
+ * or "superadmin". Set this via the Clerk Dashboard or the Clerk API.
  */
 export async function isMailmindAdmin(): Promise<boolean> {
   const user = await currentUser();
   if (!user) return false;
 
-  // 1. Check ADMIN_EMAILS for bootstrap/env-based access
-  const adminEmails = process.env.ADMIN_EMAILS?.split(",").map(e => e.trim().toLowerCase()) ?? [];
-  const userEmail = user.emailAddresses[0]?.emailAddress?.toLowerCase();
-  
-  if (userEmail && adminEmails.includes(userEmail)) {
-    return true;
-  }
-
-  // 2. Check Clerk privateMetadata for permanent roles
   const role = user.privateMetadata?.mailmindRole;
-  if (role === "admin" || role === "superadmin") {
-    return true;
-  }
-
-  return false;
+  return role === "admin" || role === "superadmin";
 }
 
 /**

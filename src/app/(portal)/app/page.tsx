@@ -23,6 +23,7 @@ import { getUserLocale } from "@/lib/i18n/get-locale";
 import { getTranslations } from "@/lib/i18n";
 import { Locale } from "@/lib/i18n/types";
 import { AppBanners } from "./AppBanners";
+import { DraftsBanner } from "./DraftsBanner";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -77,6 +78,12 @@ export default async function AppHomePage() {
 
       {/* Banner stack — single source of truth (trial/past-due/usage/deletion) */}
       <AppBanners account={account} />
+      {account.draftsWarning && account.usage && account.entitlements && (
+        <DraftsBanner
+          used={account.usage.aiDraftsUsed ?? 0}
+          limit={account.entitlements.maxAiDraftsPerMonth ?? 0}
+        />
+      )}
 
       {/* Welcome */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">

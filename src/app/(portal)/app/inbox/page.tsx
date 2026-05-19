@@ -7,10 +7,11 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getCurrentAccount } from "@/lib/app/entitlements";
-import { listThreads, wakeUpSnoozedThreads, listCaseTypes, countSnoozedThreads, searchThreads } from "@/lib/app/threads";
+import { listThreads, wakeUpSnoozedThreads, listCaseTypes, countSnoozedThreads, searchThreads, listInboxes } from "@/lib/app/threads";
 import { NewThreadButton } from "./NewThreadButton";
 import { InboxFilters } from "./InboxFilters";
 import { InboxShell } from "./InboxShell";
+import { InboxEmptyState } from "./InboxEmptyState";
 
 import type { Metadata } from "next";
 export const metadata: Metadata = { title: "Inkorg" };
@@ -49,7 +50,7 @@ export default async function InboxPage({
   // Server-side search bypasses the 200-row limit. Falls back to in-memory
   // filtering for facets (status, tag) on top of the search result.
   const useServerSearch = query.length >= 2;
-  const [mainPage, caseTypesList, snoozedCount, filteredCount] = await Promise.all([
+  const [mainPage, caseTypesList, snoozedCount, filteredCount, orgInboxes] = await Promise.all([
     useServerSearch
       ? searchThreads(account.organization.id, query, 200).then(threads => ({ threads, nextCursor: null }))
       : isSnoozedView
@@ -61,9 +62,11 @@ export default async function InboxPage({
     countSnoozedThreads(account.organization.id),
     // Count of auto-filtered bulk threads (used by the tab badge).
     listThreads(account.organization.id, { limit: 200, caseTypeSlug: "bulk" }).then(({ threads }) => threads.length),
+    listInboxes(account.organization.id),
   ]);
   const all             = mainPage.threads;
   const initialNextCursor = mainPage.nextCursor;
+  const firstInboxEmail = orgInboxes[0]?.email ?? null;
 
   const slaByCaseType: Record<string, number> = {};
   for (const ct of caseTypesList) {
@@ -138,17 +141,13 @@ export default async function InboxPage({
 
       {/* Split pane — fills remaining height */}
       {threads.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center gap-3 text-muted-foreground">
-          {all.length === 0 ? (
-            <>
-              <p className="text-sm text-white/70">Inga trådar än</p>
-              <p className="text-xs">Skapa en testtråd för att prova AI-utkast-flödet.</p>
-              <NewThreadButton />
-            </>
-          ) : (
-            <p className="text-sm">Inga trådar matchar filtret</p>
-          )}
-        </div>
+        all.length === 0 ? (
+          <InboxEmptyState inboxEmail={firstInboxEmail} />
+        ) : (
+          <div className="flex-1 flex items-center justify-center">
+            <p className="text-sm text-white/50">Inga trådar matchar filtret</p>
+          </div>
+        )
       ) : (
         <InboxShell
           canGenerate={account.access.canGenerateAiDraft}

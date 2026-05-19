@@ -439,7 +439,7 @@ export async function generateDraft(input: GenerateDraftInput): Promise<Generate
         withTimeout(
           client.messages.create({
             model: AI_MODEL,
-            max_tokens: 1000,
+            max_tokens: 2048,
             system: [
               {
                 type: "text",

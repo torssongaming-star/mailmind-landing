@@ -88,6 +88,8 @@ export type AccountSnapshot = {
   inboxesUsed: number;
   /** Actual number of users in this org (DB count). */
   usersUsed: number;
+  /** True when >= 80% of monthly AI draft quota is consumed on an active/trialing sub. */
+  draftsWarning: boolean;
 };
 
 // ── Core resolvers ────────────────────────────────────────────────────────────
@@ -153,6 +155,11 @@ export const getCurrentAccount = cache(async function getCurrentAccount(
     usersUsed,
   });
 
+  const draftsWarning =
+    (subscription?.status === "active" || subscription?.status === "trialing") &&
+    (entitlements?.maxAiDraftsPerMonth ?? 0) > 0 &&
+    (usage?.aiDraftsUsed ?? 0) >= 0.8 * (entitlements?.maxAiDraftsPerMonth ?? 0);
+
   return {
     user,
     organization: portal.org,
@@ -164,6 +171,7 @@ export const getCurrentAccount = cache(async function getCurrentAccount(
     access,
     inboxesUsed,
     usersUsed,
+    draftsWarning,
   };
 });
 

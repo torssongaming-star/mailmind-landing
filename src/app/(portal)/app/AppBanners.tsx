@@ -12,7 +12,7 @@
  */
 
 import Link from "next/link";
-import { Clock, AlertTriangle, TrendingUp, CreditCard } from "lucide-react";
+import { Clock, AlertTriangle, CreditCard } from "lucide-react";
 import type { AccountSnapshot } from "@/lib/app/entitlements";
 
 export function AppBanners({ account }: { account: AccountSnapshot }) {
@@ -122,18 +122,6 @@ export function AppBanners({ account }: { account: AccountSnapshot }) {
             title="AI-kvot för månaden är slut"
             body={`Du har använt alla ${limit} AI-utkast den här månaden. Uppgradera för att fortsätta generera automatiska svar.`}
             cta={{ href: "/dashboard/billing", label: "Uppgradera →" }}
-          />
-        );
-      } else if (pct >= 0.8) {
-        const pctRounded = Math.round(pct * 100);
-        banners.push(
-          <Banner
-            key="usage"
-            tone="amber"
-            icon={TrendingUp}
-            title={`${pctRounded}% av din AI-kvot använd`}
-            body={`Du har använt ${used} av ${limit} AI-utkast den här månaden. Uppgradera för fler.`}
-            cta={{ href: "/dashboard/billing", label: "Se planer →" }}
           />
         );
       }
