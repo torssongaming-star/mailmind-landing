@@ -53,14 +53,14 @@ export function AnimatedBackground() {
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
         ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
-        
+
         if (p.size > 1.5) {
           ctx.shadowBlur = p.size * 3;
           ctx.shadowColor = "rgba(255, 255, 255, 0.6)";
         } else {
           ctx.shadowBlur = 0;
         }
-        
+
         ctx.fill();
       });
 
@@ -78,7 +78,7 @@ export function AnimatedBackground() {
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-[#030614]">
       {/* Deep gradient background */}
-      <div 
+      <div
         className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#0d2263] via-[#030614] to-[#030614] animate-bg-drift"
         style={{ backgroundSize: "200% 200%" }}
       />

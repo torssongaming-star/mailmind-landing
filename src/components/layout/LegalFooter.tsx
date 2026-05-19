@@ -22,11 +22,8 @@ export function LegalFooter() {
           <div className="col-span-2 md:col-span-1">
             <p className="text-sm font-semibold text-white">{siteConfig.siteName}</p>
             <address className="not-italic text-xs text-white/50 mt-2 leading-relaxed">
-              {/* TODO: ersätt med riktigt företagsnamn + org-nr när bolaget är registrerat */}
-              [BOLAGSNAMN AB]<br />
-              Org-nr: [XXXXXX-XXXX]<br />
-              [GATUADRESS]<br />
-              [POSTNR] [STAD]<br />
+              Mailmind.se<br />
+              <a href="tel:+4684691039" className="text-primary hover:underline">+46 846 91 039</a><br />
               <a href={`mailto:${siteConfig.supportEmail ?? "hej@mailmind.se"}`} className="text-primary hover:underline">
                 {siteConfig.supportEmail ?? "hej@mailmind.se"}
               </a>
@@ -77,7 +74,7 @@ export function LegalFooter() {
         </div>
 
         <div className="mt-10 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-white/35">
-          <p>© {year} [BOLAGSNAMN AB]. Alla rättigheter förbehållna.</p>
+          <p>© {year} Mailmind.se. Alla rättigheter förbehållna.</p>
           <p className="flex items-center gap-3">
             <span>Byggd i Sverige</span>
             <span className="text-white/20">·</span>
