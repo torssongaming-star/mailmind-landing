@@ -215,7 +215,7 @@ export async function POST(req: NextRequest) {
         organizationId:    inbox.organizationId,
         role:              "customer",
         bodyText:          parsed.bodyText,
-        bodyHtml:          null,
+        bodyHtml:          parsed.bodyHtml,
         externalMessageId: gmailMsgId,
         sentAt:            now,
       });

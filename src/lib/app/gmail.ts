@@ -314,6 +314,7 @@ export type ParsedGmailMessage = {
   fromName:       string | null;
   subject:        string;
   bodyText:       string;
+  bodyHtml:       string | null;
   messageId:      string | null; // RFC 2822 Message-ID header
   inReplyTo:      string | null;
   references:     string | null;
@@ -340,6 +341,19 @@ function extractTextBody(part: GmailMessagePart): string {
     for (const child of part.parts) {
       const text = extractTextBody(child);
       if (text) return text;
+    }
+  }
+  return "";
+}
+
+function extractHtmlBody(part: GmailMessagePart): string {
+  if (part.mimeType === "text/html" && part.body.data) {
+    return decodeBase64Url(part.body.data);
+  }
+  if (part.parts) {
+    for (const child of part.parts) {
+      const html = extractHtmlBody(child);
+      if (html) return html;
     }
   }
   return "";
@@ -383,6 +397,7 @@ export async function getAndParseMessage(
     fromName:       from.name,
     subject:        getHeader(headers, "subject") ?? "(no subject)",
     bodyText:       extractTextBody(raw.payload).trim(),
+    bodyHtml:       extractHtmlBody(raw.payload).trim() || null,
     messageId:      getHeader(headers, "message-id"),
     inReplyTo:      getHeader(headers, "in-reply-to"),
     references:     getHeader(headers, "references"),

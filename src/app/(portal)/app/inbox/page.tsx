@@ -155,7 +155,20 @@ export default async function InboxPage({
       {/* Split pane — fills remaining height */}
       {threads.length === 0 ? (
         all.length === 0 ? (
-          <InboxEmptyState inboxEmail={firstInboxEmail} />
+          // Per-tab empty messaging — only the default inbox view should
+          // show the welcome/"send a test mail" state. On filter tabs we
+          // tell the user the tab is empty, not the whole inbox.
+          isFilteredView ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-sm text-white/50">Inga mejl klassade som reklam just nu</p>
+            </div>
+          ) : isSnoozedView ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-sm text-white/50">Inga snoozade trådar just nu</p>
+            </div>
+          ) : (
+            <InboxEmptyState inboxEmail={firstInboxEmail} />
+          )
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <p className="text-sm text-white/50">Inga trådar matchar filtret</p>

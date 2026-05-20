@@ -5,10 +5,11 @@
  * Fetches thread + messages + drafts + notes client-side when threadId changes.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ExternalLink, ArrowLeft, AlertTriangle, RefreshCw } from "lucide-react";
+import { sanitizeEmailHtml } from "@/lib/utils/sanitize-email-html";
 import { DraftActions } from "../thread/[id]/DraftActions";
 import { GenerateDraftButton } from "../thread/[id]/GenerateDraftButton";
 import { InternalNotes, type Note } from "../thread/[id]/InternalNotes";
@@ -36,6 +37,7 @@ type Message = {
   id: string;
   role: "customer" | "assistant" | "agent";
   bodyText: string | null;
+  bodyHtml: string | null;
   sentAt: string | Date;
 };
 
@@ -266,7 +268,7 @@ export function ThreadPanel({
                 {new Date(m.sentAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE")}
               </span>
             </div>
-            <p className="text-sm text-white/90 whitespace-pre-wrap leading-relaxed">{m.bodyText}</p>
+            <MessageBody bodyHtml={m.bodyHtml} bodyText={m.bodyText} />
           </div>
         ))}
 
@@ -293,6 +295,10 @@ export function ThreadPanel({
                 setRetryError(data.reason ?? "Misslyckades, försök igen.");
               } else {
                 await load();
+                // Thread just moved out of the Reklam tab — navigate the user
+                // to a view where they'll actually see it (default inbox),
+                // and keep the same thread open in the panel.
+                router.push(`/app/inbox?thread=${thread.id}`);
                 router.refresh();
               }
             } catch {
@@ -510,5 +516,36 @@ function ActionBadge({ action, t }: { action: "ask" | "summarize" | "escalate"; 
     <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${v.cls}`}>
       {v.label}
     </span>
+  );
+}
+
+/**
+ * Renders an incoming customer email body — prefers the HTML version so
+ * signatures, line-wrapping and inline links display the way they do in
+ * the customer's mail client. Falls back to plain text for messages
+ * without an HTML part (rare — Gmail/Outlook always include both).
+ *
+ * HTML is sanitised in-browser via DOMPurify before insertion.
+ */
+function MessageBody({ bodyHtml, bodyText }: { bodyHtml: string | null; bodyText: string | null }) {
+  const safeHtml = useMemo(
+    () => (bodyHtml ? sanitizeEmailHtml(bodyHtml) : ""),
+    [bodyHtml],
+  );
+
+  if (bodyHtml && safeHtml) {
+    return (
+      <div
+        // Constrain email styling so a hostile sender can't blow up the layout:
+        //   - max-w-none lets long quotes/images flow naturally inside the panel
+        //   - all-revert resets inherited classes so <p>/<table>/<a> render
+        //     with sensible defaults instead of the panel's text-white styles
+        className="email-body text-sm text-white/90 leading-relaxed [&_a]:text-cyan-400 [&_a]:underline [&_img]:max-w-full [&_img]:h-auto [&_table]:max-w-full [&_blockquote]:border-l-2 [&_blockquote]:border-white/15 [&_blockquote]:pl-3 [&_blockquote]:text-white/55"
+        dangerouslySetInnerHTML={{ __html: safeHtml }}
+      />
+    );
+  }
+  return (
+    <p className="text-sm text-white/90 whitespace-pre-wrap leading-relaxed">{bodyText}</p>
   );
 }

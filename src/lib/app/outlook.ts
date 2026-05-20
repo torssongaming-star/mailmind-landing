@@ -321,6 +321,7 @@ export type ParsedOutlookMessage = {
   toEmail:         string;
   subject:         string;
   bodyText:        string;
+  bodyHtml:        string | null;
   internetMessageId: string | null;
   /** Bulk-detection headers, populated for the bulk-filter. */
   bulkHeaders: {
@@ -353,6 +354,9 @@ export async function getAndParseMessage(
   const bodyText = msg.body.contentType === "html"
     ? htmlToText(msg.body.content)
     : msg.body.content.trim();
+  // Preserve the HTML version when present — UI prefers it over plaintext
+  // so signatures and links render properly.
+  const bodyHtml = msg.body.contentType === "html" ? msg.body.content : null;
 
   // Extract bulk-detection headers from internetMessageHeaders
   const allHeaders = msg.internetMessageHeaders ?? [];
@@ -369,6 +373,7 @@ export async function getAndParseMessage(
     toEmail:           msg.toRecipients[0]?.emailAddress.address.toLowerCase() ?? "",
     subject:           msg.subject ?? "(no subject)",
     bodyText,
+    bodyHtml,
     internetMessageId: msg.internetMessageId ?? null,
     bulkHeaders: {
       listUnsubscribe:       findHeader("List-Unsubscribe"),

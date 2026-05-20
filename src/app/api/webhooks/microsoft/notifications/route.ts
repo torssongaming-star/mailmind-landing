@@ -210,7 +210,7 @@ async function processNotification(notification: GraphNotificationValue) {
     organizationId:    inbox.organizationId,
     role:              "customer",
     bodyText:          parsed.bodyText,
-    bodyHtml:          null,
+    bodyHtml:          parsed.bodyHtml,
     externalMessageId: graphMessageId,
     sentAt:            now,
   });
