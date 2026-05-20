@@ -296,7 +296,9 @@ Events att lyssna på (minimum):
 | 🚀 | 10. Ersätt placeholders | — | [ ] |
 | 🚀 | 11. Stripe live keys | — | [ ] |
 | 🚀 | 12. Live webhook | — | [ ] |
-| 🔴 | 13. `db:push` (sending-status) | 30 sek | [ ] |
+| 🔴 | 13. `db:push` (sending + triage_failed) | 30 sek | [ ] |
+| 🔴 | 14. DNS — SPF/DKIM/DMARC för mailmind.se | 20 min | [ ] |
+| 🟡 | 15. Google OAuth verification | 1–2 v | [ ] |
 
 ### Steg 13 — db:push för nya schema-ändringar (30 sek)
 
@@ -313,6 +315,90 @@ npm run db:push
 
 ---
 
+---
+
+### Steg 14 — DNS-records för mailmind.se (20 min)
+
+**Varför:** Utan korrekta SPF/DKIM/DMARC-records hamnar mejl från Mailmind
+(veckorapporter, demoförfrågningar, transaktionella notiser) i Gmail/Outlook
+skräpkorgen. Det här är **inte** valfritt — det är hygienkrav 2025.
+
+**a) Verifiera domänen i Resend**
+1. **resend.com** → **Domains** → **Add Domain** → `mailmind.se`
+2. Resend ger dig 3–4 DNS-records som ska skapas:
+   - 1 × MX-record (för bounce-hantering)
+   - 1 × TXT (SPF) — ungefär `v=spf1 include:amazonses.com ~all`
+   - 2 × CNAME (DKIM) — `resend._domainkey...`
+
+**b) Lägg in records hos din domänregistrar** (Loopia, Binero, GoDaddy, etc.)
+- Logga in på registrar-kontot → DNS-zon för `mailmind.se`
+- Lägg till varje record exakt som Resend visar (kopiera-klistra)
+- TTL: lämna default (typ 3600s)
+
+**c) DMARC-record (extra steg, GÖR DET)**
+Lägg till denna TXT-record på hostname `_dmarc.mailmind.se`:
+```
+v=DMARC1; p=quarantine; rua=mailto:dmarc@mailmind.se; pct=100; adkim=s; aspf=s
+```
+- `p=quarantine` = misslyckade mejl hamnar i skräp (`p=reject` är striktare men kan blockera legitim trafik tidigt)
+- `rua=` = vart aggregat-rapporter skickas (sätt en mailbox du läser)
+
+**d) Verifiera i Resend**
+- Vänta 5–30 min på DNS-propagering
+- Resend → Domains → klicka på `mailmind.se` → **Verify**
+- Alla 4 records ska visa grönt ✅
+
+**e) Bonustest:** Skicka ett testmejl till `check-auth@verifier.port25.com` —
+du får ett svar med betyg på SPF/DKIM/DMARC.
+
+- [ ] DNS-records skapade hos registrar
+- [ ] Resend visar grönt på alla records
+- [ ] DMARC `_dmarc.mailmind.se` lagts till
+- [ ] Port25-test ger "pass" på SPF + DKIM + DMARC
+
+---
+
+### Steg 15 — Google OAuth verification (1–2 veckor)
+
+**Varför:** Utan verifiering visar Gmail "This app isn't verified" och
+begränsar antalet användare som kan koppla sitt Gmail till 100 totalt.
+Verifiering tar 1–2 veckor från Google's sida och kräver bevis.
+
+**a) Förbered scope-justifications**
+Använd texterna i `docs/google-oauth-justifications.md` (skapad i denna commit).
+Klistra in en text per scope-fält i Google Cloud Console.
+
+**b) Spela in demo-video (3–5 min)**
+Innehåll i ordning:
+1. Logga in på Mailmind
+2. Klicka "Koppla Gmail" → OAuth-samtycke visas → godkänn
+3. Visa att ett inkommande mejl dyker upp i Mailmind-inkorgen
+4. AI genererar ett utkast → användaren ser draftet
+5. Användaren godkänner → svaret skickas
+6. Öppna Gmail-mappen "Skickat" → visa att svaret är där
+
+Spela in med t.ex. Loom eller OBS. Ladda upp på YouTube som **Unlisted**
+(inte Public, inte Private). Klistra in länken i Google Cloud Console.
+
+**c) Lämna in för granskning**
+- **console.cloud.google.com** → välj projekt
+- **APIs & Services** → **OAuth consent screen** → **Publish app** → fyll i justifications + video
+- Submit. Du får mejl från Google inom 3–10 arbetsdagar med antingen
+  godkännande eller frågor som behöver besvaras.
+
+**d) Under väntan**
+Du kan fortfarande utveckla och testa — du har en quota på 100 användare
+under "Testing"-status. Det räcker för pilot.
+
+- [ ] Justifications klistrade in
+- [ ] Demo-video uppladdad på YouTube (Unlisted)
+- [ ] Submit för verifiering
+- [ ] Verifiering godkänd
+
+---
+
 **Minimum för att senaste pushen ska funka i prod:** 0b + 1 + 2 + 3 + 13
+**Minimum för att veckorapport ska nå inkorgen, ej skräp:** 14
+**Minimum för publik Gmail-integration utan 100-användarcap:** 15
 **Minimum för pilot:** + 4 (om Gmail) + 5 + 6
 **Innan första betalande kund:** allt
