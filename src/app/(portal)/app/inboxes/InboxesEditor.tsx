@@ -226,26 +226,32 @@ export function InboxesEditor({
               <span className="text-white/40 group-hover:text-white/70 text-sm self-center">→</span>
             </Link>
 
-            {/* Gmail */}
-            <Link
-              href="/api/app/inboxes/gmail/auth"
-              className="flex items-start gap-4 rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/[0.05] px-4 py-3.5 transition-colors group"
+            {/* Gmail — temporarily disabled pending Google verification.
+                Keep visible so users see it's on the roadmap. */}
+            <div
+              aria-disabled="true"
+              className="flex items-start gap-4 rounded-xl border border-white/8 bg-white/[0.01] px-4 py-3.5 opacity-50 cursor-not-allowed"
+              title={sv ? "Gmail-integration kommer i nästa version" : "Gmail integration coming soon"}
             >
-              <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/10 group-hover:border-white/20 transition-colors">
+              <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center shrink-0 border border-white/10">
                 <GmailLogo className="w-5 h-5" />
               </div>
               <div className="flex-1 min-w-0 pt-0.5">
-                <p className="text-sm font-semibold text-white group-hover:text-white transition-colors">
-                  {sv ? "Koppla Gmail / Google Workspace" : "Connect Gmail / Google Workspace"}
-                </p>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-semibold text-white/70">
+                    {sv ? "Koppla Gmail / Google Workspace" : "Connect Gmail / Google Workspace"}
+                  </p>
+                  <span className="text-[10px] font-semibold text-amber-300 bg-amber-500/10 border border-amber-500/25 px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                    {sv ? "Kommer snart" : "Coming soon"}
+                  </span>
+                </div>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {sv
-                    ? "Direktintegration via Gmail API. Vi läser och skickar mejl i ditt namn."
-                    : "Direct integration via Gmail API. We read and send mail on your behalf."}
+                    ? "Vi finjusterar Gmail-integrationen och lanserar den så snart Googles verifiering är klar. Under tiden — använd Outlook eller vidarebefordring nedan."
+                    : "We're polishing the Gmail integration and rolling it out once Google verification clears. In the meantime, use Outlook or forwarding below."}
                 </p>
               </div>
-              <span className="text-white/40 group-hover:text-white/70 text-sm self-center">→</span>
-            </Link>
+            </div>
 
             {/* Forwarding — advanced option */}
             <button
