@@ -108,7 +108,7 @@ export async function autoTriageNewMessage(input: {
   }
 
   const [messages, settings, caseTypesList, knowledge, customerHistory] = await Promise.all([
-    listMessages(threadId),
+    listMessages(organizationId, threadId),
     getAiSettings(organizationId),
     listCaseTypes(organizationId),
     listActiveKnowledge(organizationId),

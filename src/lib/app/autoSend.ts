@@ -197,7 +197,7 @@ export async function executeSendDraft(params: {
     }
 
     // Threading headers
-    const messages = await listMessages(draft.threadId);
+    const messages = await listMessages(orgId, draft.threadId);
     const priorIds = messages
       .map(m => m.externalMessageId)
       .filter((x): x is string => !!x);

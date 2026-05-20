@@ -31,7 +31,7 @@ export async function GET(
   if (!thread) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const [messages, drafts] = await Promise.all([
-    listMessages(threadId),
+    listMessages(account.organization.id, threadId),
     listDraftsForThread(threadId),
   ]);
 

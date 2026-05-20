@@ -271,12 +271,16 @@ export async function searchThreads(
 
 // ── Messages ─────────────────────────────────────────────────────────────────
 
-export async function listMessages(threadId: string) {
+export async function listMessages(organizationId: string, threadId: string) {
   if (!isDbConnected()) return [] as EmailMessage[];
   return db
     .select()
     .from(emailMessages)
-    .where(eq(emailMessages.threadId, threadId))
+    .where(and(
+      eq(emailMessages.threadId, threadId),
+      // Defense-in-depth — a buggy threadId from another org can never leak rows.
+      eq(emailMessages.organizationId, organizationId),
+    ))
     .orderBy(asc(emailMessages.sentAt));
 }
 

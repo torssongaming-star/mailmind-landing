@@ -39,7 +39,7 @@ export async function POST(
   if (!thread) return NextResponse.json({ error: "Thread not found" }, { status: 404 });
 
   // Fetch the latest customer message to re-feed into the triage pipeline.
-  const messages = await listMessages(threadId);
+  const messages = await listMessages(orgId, threadId);
   const lastCustomer = [...messages].reverse().find(m => m.role === "customer");
   if (!lastCustomer) {
     return NextResponse.json({ error: "No customer message to triage" }, { status: 400 });

@@ -42,7 +42,7 @@ export default async function ThreadPage({
   const { t } = getTranslations(locale);
 
   const [messages, drafts, notes, priorThreads] = await Promise.all([
-    listMessages(id),
+    listMessages(account.organization.id, id),
     listDraftsForThread(id),
     listNotes(account.organization.id, id),
     listThreadsByEmail(account.organization.id, thread.fromEmail, id),

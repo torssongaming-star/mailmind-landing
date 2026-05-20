@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
   }
 
   // Load conversation
-  const messages = await listMessages(threadId);
+  const messages = await listMessages(orgId, threadId);
 
   // Determine the customer message to act on. Prefer explicit override; else
   // use the latest customer-role message in the thread.
