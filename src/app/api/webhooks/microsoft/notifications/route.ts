@@ -50,6 +50,7 @@ import {
 import { autoTriageNewMessage } from "@/lib/app/autoTriage";
 import { writeAuditLog } from "@/lib/app/audit";
 import { isBlocked } from "@/lib/app/blocklist";
+import { isSystemSender } from "@/lib/app/system-senders";
 import { maskEmail } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -178,6 +179,10 @@ async function processNotification(notification: GraphNotificationValue) {
 
   // Skip messages sent by ourselves (avoid reply loops)
   if (parsed.fromEmail === inbox.email.toLowerCase()) return;
+
+  // Skip Mailmind's own notification mail looping back via the user's
+  // connected inbox.
+  if (isSystemSender(parsed.fromEmail)) return;
 
   // Blocklist check
   const blocked = await isBlocked(inbox.organizationId, parsed.fromEmail);

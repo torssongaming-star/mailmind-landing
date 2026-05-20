@@ -44,6 +44,7 @@ import {
 import { autoTriageNewMessage } from "@/lib/app/autoTriage";
 import { writeAuditLog } from "@/lib/app/audit";
 import { isBlocked } from "@/lib/app/blocklist";
+import { isSystemSender } from "@/lib/app/system-senders";
 import { maskEmail } from "@/lib/utils";
 import { verifyGoogleOidcJwt } from "@/lib/app/google-oidc";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
@@ -184,6 +185,10 @@ export async function POST(req: NextRequest) {
 
       // Skip messages sent by ourselves (avoid reply loops)
       if (parsed.fromEmail.toLowerCase() === emailAddress.toLowerCase()) continue;
+
+      // Skip Mailmind's own notification mail looping back via the user's
+      // connected inbox — these are pure noise and can't be acted on.
+      if (isSystemSender(parsed.fromEmail)) continue;
 
       // Blocklist check
       const blocked = await isBlocked(inbox.organizationId, parsed.fromEmail);

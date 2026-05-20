@@ -36,6 +36,7 @@ import {
 import { autoTriageNewMessage } from "@/lib/app/autoTriage";
 import { writeAuditLog } from "@/lib/app/audit";
 import { isBlocked } from "@/lib/app/blocklist";
+import { isSystemSender } from "@/lib/app/system-senders";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -210,6 +211,11 @@ export async function POST(req: NextRequest) {
   if (!(await rateLimit(`inbound:sendgrid:${inbox.id}`, RATE_LIMITS.inboundWebhook))) {
     console.warn("[inbound] rate-limited inbox", inbox.id);
     return NextResponse.json({ status: "rate_limited" }, { status: 429 });
+  }
+
+  // Skip Mailmind's own notification mail looping back via inbound parse.
+  if (isSystemSender(fromEmail)) {
+    return NextResponse.json({ ok: true, skipped: "system_sender" });
   }
 
   const blocked = await isBlocked(inbox.organizationId, fromEmail);

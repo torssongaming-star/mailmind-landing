@@ -470,12 +470,16 @@ export async function generateDraft(input: GenerateDraftInput): Promise<Generate
     if (err instanceof AiTransientError) {
       throw err;
     }
+    // Technical error stays in logs/Sentry; users see a friendly Swedish reason.
+    // Without this, a JSON-parse failure would surface as
+    // "Unexpected non-whitespace character at position 361" inside the
+    // draft body, which is gibberish to the agent.
     const reason = err instanceof Error ? err.message : "Unknown AI error";
     console.error("[ai] error:", reason, "| raw:", rawText.slice(0, 200));
     return {
       output: {
         action:          "escalate",
-        reason:          `AI fallback: ${reason}`,
+        reason:          "AI:n kunde inte tolka mejlet automatiskt. Vänligen läs igenom och svara manuellt.",
         confidence:      0,
         risk_level:      "high",
         source_grounded: false,
