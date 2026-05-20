@@ -10,11 +10,45 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { eq } from "drizzle-orm";
+import { db, isDbConnected, aiSettings } from "@/lib/db";
 import { getCurrentAccount } from "@/lib/app/entitlements";
-import { getThread, listMessages, updateThread } from "@/lib/app/threads";
+import { getThread, listMessages, updateThread, getAiSettings, defaultAiSettings } from "@/lib/app/threads";
 import { autoTriageNewMessage } from "@/lib/app/autoTriage";
 
 export const runtime = "nodejs";
+
+/** Add a sender's domain (e.g. "@acme.se") to the org's bulk-filter whitelist
+ *  if it's not already there. Idempotent. */
+async function trustSenderDomain(orgId: string, fromEmail: string) {
+  const at = fromEmail.lastIndexOf("@");
+  if (at < 0) return;
+  const domainEntry = fromEmail.slice(at).toLowerCase().trim();
+  if (!domainEntry || domainEntry === "@") return;
+
+  const current = (await getAiSettings(orgId)) ?? defaultAiSettings(orgId);
+  const existing = current.bulkFilterWhitelist ?? [];
+  if (existing.some(e => e.toLowerCase().trim() === domainEntry)) return; // already trusted
+
+  const nextList = [...existing, domainEntry];
+
+  if (!isDbConnected()) return;
+  await db
+    .insert(aiSettings)
+    .values({
+      organizationId:       orgId,
+      tone:                 current.tone,
+      language:             current.language,
+      maxInteractions:      current.maxInteractions,
+      signature:            current.signature,
+      bulkFilterEnabled:    current.bulkFilterEnabled,
+      bulkFilterWhitelist:  nextList,
+    })
+    .onConflictDoUpdate({
+      target: aiSettings.organizationId,
+      set: { bulkFilterWhitelist: nextList, updatedAt: new Date() },
+    });
+}
 
 export async function POST(
   req: NextRequest,
@@ -38,10 +72,11 @@ export async function POST(
   const thread = await getThread(orgId, threadId);
   if (!thread) return NextResponse.json({ error: "Thread not found" }, { status: 404 });
 
-  // Optional body — { bypassBulk: true } when the user clicks
-  // "Detta är inte reklam" on a bulk-classified thread.
+  // Optional body — { bypassBulk: true, trustSender?: true } when the user
+  // clicks one of the override buttons on a bulk-classified thread.
   const body = await req.json().catch(() => ({}));
-  const bypassBulk = Boolean((body as { bypassBulk?: boolean })?.bypassBulk);
+  const bypassBulk  = Boolean((body as { bypassBulk?:  boolean })?.bypassBulk);
+  const trustSender = Boolean((body as { trustSender?: boolean })?.trustSender);
 
   // When unflagging a bulk thread, restore status + clear caseTypeSlug so
   // the thread leaves the "Reklam" tab and appears in the normal inbox.
@@ -50,6 +85,12 @@ export async function POST(
       status:       "open",
       caseTypeSlug: null,
     });
+  }
+
+  // "Lita på avsändaren framöver" — adds sender's domain to the whitelist
+  // so all future mail from this domain skips the heuristic filter.
+  if (trustSender) {
+    await trustSenderDomain(orgId, thread.fromEmail);
   }
 
   // Fetch the latest customer message to re-feed into the triage pipeline.

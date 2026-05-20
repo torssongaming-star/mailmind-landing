@@ -274,49 +274,72 @@ export function ThreadPanel({
         <InternalNotes threadId={thread.id} initial={notes} />
 
         {/* Bulk-classified override banner */}
-        {thread.caseTypeSlug === "bulk" && (
-          <div className="rounded-2xl border border-amber-500/25 bg-amber-500/[0.05] px-5 py-4 flex items-start gap-3">
-            <AlertTriangle size={16} className="text-amber-400 mt-0.5 shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-white">Klassad som reklam</p>
-              <p className="text-xs text-white/55 mt-0.5 leading-relaxed">
-                Mailmind bedömde att detta är ett massutskick eller nyhetsbrev. Om det är fel — klicka nedan så genererar AI:n ett utkast och tråden flyttas tillbaka till inkorgen.
-              </p>
-              {retryError && (
-                <p className="text-xs text-red-400 mt-1">{retryError}</p>
-              )}
+        {thread.caseTypeSlug === "bulk" && (() => {
+          const senderDomain = thread.fromEmail.includes("@")
+            ? thread.fromEmail.slice(thread.fromEmail.lastIndexOf("@"))
+            : null;
+
+          const runRetry = async (trustSender: boolean) => {
+            setRetrying(true);
+            setRetryError(null);
+            try {
+              const res = await fetch(`/api/app/threads/${thread.id}/retry-triage`, {
+                method:  "POST",
+                headers: { "Content-Type": "application/json" },
+                body:    JSON.stringify({ bypassBulk: true, trustSender }),
+              });
+              if (!res.ok) {
+                const data = await res.json().catch(() => ({})) as { reason?: string };
+                setRetryError(data.reason ?? "Misslyckades, försök igen.");
+              } else {
+                await load();
+                router.refresh();
+              }
+            } catch {
+              setRetryError("Nätverksfel, försök igen.");
+            } finally {
+              setRetrying(false);
+            }
+          };
+
+          return (
+            <div className="rounded-2xl border border-amber-500/25 bg-amber-500/[0.05] px-5 py-4 flex flex-col gap-3">
+              <div className="flex items-start gap-3">
+                <AlertTriangle size={16} className="text-amber-400 mt-0.5 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white">Klassad som reklam</p>
+                  <p className="text-xs text-white/55 mt-0.5 leading-relaxed">
+                    Mailmind bedömde att detta är ett massutskick eller nyhetsbrev.
+                    Om det är fel kan du återställa tråden nedan.
+                  </p>
+                  {retryError && (
+                    <p className="text-xs text-red-400 mt-1">{retryError}</p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 pl-7">
+                <button
+                  onClick={() => runRetry(false)}
+                  disabled={retrying || !canGenerate}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30 text-xs font-medium text-amber-200 hover:bg-amber-500/25 hover:text-white transition-colors disabled:opacity-40"
+                >
+                  <RefreshCw size={12} className={retrying ? "animate-spin" : ""} />
+                  Detta är inte reklam
+                </button>
+                {senderDomain && (
+                  <button
+                    onClick={() => runRetry(true)}
+                    disabled={retrying || !canGenerate}
+                    title={`Alla framtida mejl från ${senderDomain} passerar reklam-filtret`}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-xs font-medium text-white/70 hover:bg-white/10 hover:text-white transition-colors disabled:opacity-40"
+                  >
+                    Lita på {senderDomain} framöver
+                  </button>
+                )}
+              </div>
             </div>
-            <button
-              onClick={async () => {
-                setRetrying(true);
-                setRetryError(null);
-                try {
-                  const res = await fetch(`/api/app/threads/${thread.id}/retry-triage`, {
-                    method:  "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body:    JSON.stringify({ bypassBulk: true }),
-                  });
-                  if (!res.ok) {
-                    const data = await res.json().catch(() => ({})) as { reason?: string };
-                    setRetryError(data.reason ?? "Misslyckades, försök igen.");
-                  } else {
-                    await load();
-                    router.refresh();
-                  }
-                } catch {
-                  setRetryError("Nätverksfel, försök igen.");
-                } finally {
-                  setRetrying(false);
-                }
-              }}
-              disabled={retrying || !canGenerate}
-              className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/30 text-xs font-medium text-amber-200 hover:bg-amber-500/25 hover:text-white transition-colors disabled:opacity-40"
-            >
-              <RefreshCw size={12} className={retrying ? "animate-spin" : ""} />
-              {retrying ? "Bearbetar…" : "Detta är inte reklam"}
-            </button>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Triage failed banner */}
         {thread.triageFailed && (
