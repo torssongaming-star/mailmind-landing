@@ -154,6 +154,14 @@ async function processNotification(notification: GraphNotificationValue) {
     return;
   }
 
+  // ── 1b. Stale-notification guard ──────────────────────────────────────────
+  // Microsoft Graph guarantees at-least-once delivery — replays are normal,
+  // especially after subscription renewal. Bail out BEFORE decrypting tokens
+  // and refreshing access, so we don't burn crypto/network on a duplicate.
+  // (Mirrors Gmail's historyId guard at the same point in the flow.)
+  const dup = await findMessageByExternalId(graphMessageId);
+  if (dup) return;
+
   // ── 2. Decrypt + refresh tokens ───────────────────────────────────────────
   let tokens = decryptTokens(config.encryptedTokens);
   const { token: accessToken, updated } = await getValidAccessToken(tokens).catch(err => {
@@ -163,10 +171,6 @@ async function processNotification(notification: GraphNotificationValue) {
 
   if (!accessToken) return;
   if (updated) tokens = updated;
-
-  // ── 3. Idempotency — skip if already stored ───────────────────────────────
-  const dup = await findMessageByExternalId(graphMessageId);
-  if (dup) return;
 
   // ── 4. Fetch + parse message ──────────────────────────────────────────────
   const parsed = await getAndParseMessage(accessToken, graphMessageId);

@@ -62,10 +62,23 @@ function redirectUri(): string {
 // Token encryption / decryption (AES-256-GCM, same scheme as gmail.ts)
 // ---------------------------------------------------------------------------
 
+let _legacyEnvWarned = false;
+
 function encryptKey(): Buffer {
-  const hex = process.env.OUTLOOK_ENCRYPT_KEY;
+  // Accept the legacy variable name to avoid a silent crash if it's the only
+  // one set in Vercel. Canonical name is OUTLOOK_ENCRYPT_KEY.
+  const hex = process.env.OUTLOOK_ENCRYPT_KEY
+    ?? process.env.OUTLOOK_TOKEN_ENCRYPTION_KEY;
   if (!hex || hex.length !== 64) {
     throw new Error("OUTLOOK_ENCRYPT_KEY must be 64 hex chars (32 bytes)");
+  }
+  if (
+    !_legacyEnvWarned
+    && process.env.OUTLOOK_TOKEN_ENCRYPTION_KEY
+    && !process.env.OUTLOOK_ENCRYPT_KEY
+  ) {
+    console.warn("[outlook] Using legacy OUTLOOK_TOKEN_ENCRYPTION_KEY. Migrate to OUTLOOK_ENCRYPT_KEY.");
+    _legacyEnvWarned = true;
   }
   return Buffer.from(hex, "hex");
 }
@@ -437,7 +450,10 @@ export async function sendViaOutlook(
 // ---------------------------------------------------------------------------
 
 export type OutlookInboxConfig = {
-  encryptedTokens:      string;   // output of encryptTokens()
-  subscriptionId?:      string;   // Graph subscription ID for push notifications
-  subscriptionExpiry?:  string;   // ISO datetime — must be renewed before this
+  encryptedTokens:           string;   // output of encryptTokens()
+  subscriptionId?:           string;   // Graph subscription ID for push notifications
+  subscriptionExpiry?:       string;   // ISO datetime — must be renewed before this
+  /** Optional changeToken/marker for delta-style replay protection.
+   *  Currently unused — primary stale-guard is findMessageByExternalId. */
+  lastProcessedChangeToken?: string;
 };
