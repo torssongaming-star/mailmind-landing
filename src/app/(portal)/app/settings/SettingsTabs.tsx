@@ -72,11 +72,19 @@ export function SettingsTabs({
   const current = NAV.find(n => n.id === active)!;
 
   return (
-    <div className="flex gap-0 min-h-[600px] rounded-2xl border border-white/8 overflow-hidden">
+    <div className="flex flex-col md:flex-row gap-0 md:min-h-[600px] rounded-2xl border border-white/8 overflow-hidden">
 
-      {/* ── Sidebar ───────────────────────────────────────────────────────── */}
-      <nav className="w-52 shrink-0 border-r border-white/8 bg-[hsl(var(--surface-deep))] py-3">
-        <p className="px-4 pb-2 text-[10px] font-semibold uppercase tracking-widest text-white/20">
+      {/* ── Sidebar (desktop) / horizontal tab strip (mobile) ──────────────── */}
+      <nav
+        className="
+          flex md:flex-col overflow-x-auto md:overflow-x-visible
+          w-full md:w-52 shrink-0
+          border-b md:border-b-0 md:border-r border-white/8
+          bg-[hsl(var(--surface-deep))]
+          py-2 md:py-3
+        "
+      >
+        <p className="hidden md:block px-4 pb-2 text-[10px] font-semibold uppercase tracking-widest text-white/20">
           {t("settings.title")}
         </p>
         {NAV.map(item => {
@@ -87,14 +95,17 @@ export function SettingsTabs({
               key={item.id}
               onClick={() => setActive(item.id)}
               className={[
-                "w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors group relative",
+                "shrink-0 md:w-full flex items-center gap-2 md:gap-3 px-4 py-2.5 text-left transition-colors group relative whitespace-nowrap",
                 isActive
                   ? "text-white bg-white/[0.05]"
                   : "text-white/40 hover:text-white/70 hover:bg-white/[0.02]",
               ].join(" ")}
             >
               {isActive && (
-                <span className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
+                <span className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-5 bg-primary rounded-r-full" />
+              )}
+              {isActive && (
+                <span className="md:hidden absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-primary rounded-t-full" />
               )}
               <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-primary" : "text-white/30 group-hover:text-white/50"}`} />
               <span className="text-xs font-medium truncate">{item.label}</span>
@@ -104,16 +115,16 @@ export function SettingsTabs({
       </nav>
 
       {/* ── Content ───────────────────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="sticky top-0 z-10 px-8 py-5 border-b border-white/8 bg-[hsl(var(--surface-base))]/95 backdrop-blur-sm flex items-center gap-3">
+      <div className="flex-1 overflow-y-auto min-w-0">
+        <div className="sticky top-0 z-10 px-4 md:px-8 py-4 md:py-5 border-b border-white/8 bg-[hsl(var(--surface-base))]/95 backdrop-blur-sm flex items-center gap-3">
           <current.icon className="w-5 h-5 text-primary shrink-0" />
-          <div>
+          <div className="min-w-0">
             <h2 className="text-sm font-semibold text-white leading-none">{current.label}</h2>
             <p className="text-[11px] text-white/35 mt-0.5">{current.desc}</p>
           </div>
         </div>
 
-        <div className="px-8 py-7 space-y-8">
+        <div className="px-4 md:px-8 py-6 md:py-7 space-y-8">
 
           <div className={active === "general" ? "space-y-8" : "hidden"}>
             <SettingsRow title={t("settings.workspace.name")} desc={t("settings.workspace.nameDesc")}>
