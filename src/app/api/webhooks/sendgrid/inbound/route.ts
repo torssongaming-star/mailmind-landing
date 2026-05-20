@@ -24,7 +24,7 @@
  * /dashboard, /app, /api/billing, /api/app).
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import {
   getInboxByEmail,
   findThreadByExternalId,
@@ -286,18 +286,17 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  const triageResult = await autoTriageNewMessage({
-    organizationId: inbox.organizationId,
-    threadId:       thread.id,
-    newEmailBody:   bodyText,
-  });
+  // Use after() so we ack SendGrid immediately (avoid 30s timeout + duplicate
+  // retries) while the Anthropic call continues on the warm lambda.
+  after(() =>
+    autoTriageNewMessage({
+      organizationId: inbox.organizationId,
+      threadId:       thread.id,
+      newEmailBody:   bodyText,
+    }).catch(err => console.error("[inbound] autoTriage failed", err))
+  );
 
-  return NextResponse.json({
-    status:  "ok",
-    threadId: thread.id,
-    draftId:  triageResult.ok ? triageResult.draftId : null,
-    triage:   triageResult.ok ? "generated" : `skipped: ${triageResult.reason}`,
-  });
+  return NextResponse.json({ status: "ok", threadId: thread.id });
 }
 
 function extractHeader(headersBlob: string, name: string): string | null {

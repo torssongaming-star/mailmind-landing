@@ -123,4 +123,6 @@ export const RATE_LIMITS = {
   inboundWebhook: { capacity: 600, refillPerSec: 10 },
   /** Push subscribe — 20 per minute per user */
   pushSubscribe:  { capacity: 20,  refillPerSec: 20 / 60 },
+  /** Stripe checkout creation — 5 per minute per user (DoS guard on Stripe API) */
+  checkout:       { capacity: 5,   refillPerSec: 5 / 60 },
 } as const;

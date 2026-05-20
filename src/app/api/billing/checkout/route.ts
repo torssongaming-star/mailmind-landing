@@ -2,6 +2,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { stripe, PRICE_IDS } from "@/lib/stripe";
 import { NextRequest, NextResponse } from "next/server";
 import * as db from "@/lib/db/queries";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { z } from "zod";
 
 const checkoutSchema = z.object({
@@ -14,6 +15,15 @@ export async function POST(req: NextRequest) {
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate-limit per user — protects the Stripe API from a hostile or buggy
+    // client hammering checkout (Denial-of-Wallet guard). 5 attempts / minute.
+    if (!(await rateLimit(`checkout:${userId}`, RATE_LIMITS.checkout))) {
+      return NextResponse.json(
+        { error: "För många förfrågningar. Försök igen om en minut." },
+        { status: 429 },
+      );
     }
 
     const user = await currentUser();
