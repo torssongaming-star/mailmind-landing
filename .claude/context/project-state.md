@@ -197,6 +197,12 @@ Fil: `src/app/(portal)/app/settings/KnowledgeSetupWizard.tsx`
 
 ---
 
+## Boot-time
+
+- `src/instrumentation.ts` finns, initierar Sentry (via `sentry.server.config`) och validerar env vid start: `DATABASE_URL`, `CLERK_SECRET_KEY`, `ANTHROPIC_API_KEY`, `RESEND_API_KEY` krävs alltid (`assertSet`); `STRIPE_WEBHOOK_SECRET`, `CRON_SECRET`, `ADMIN_HEALTH_SECRET`, `GMAIL_PUSH_OIDC_AUDIENCE` krävs i produktion (`requireInProduction`). Cold start failar tidigt vid misskonfigurerad deploy.
+
+---
+
 ## Known caveats
 
 - `usageCounters` skrivs från både `incrementAiDraftUsage` (manuell) och inline-upsert i `autoTriage.ts`. Båda konvergerar på `(organizationId, month)`.

@@ -16,11 +16,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { runHealthChecks } from "@/lib/admin/health";
+import { requireInProduction } from "@/lib/env";
 
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
-  const adminSecret = process.env.ADMIN_HEALTH_SECRET;
+  const adminSecret = requireInProduction("ADMIN_HEALTH_SECRET");
   if (adminSecret) {
     const url = new URL(req.url);
     const provided = url.searchParams.get("secret") ?? req.headers.get("x-admin-secret") ?? "";
