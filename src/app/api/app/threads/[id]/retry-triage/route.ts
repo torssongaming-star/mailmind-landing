@@ -11,13 +11,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getCurrentAccount } from "@/lib/app/entitlements";
-import { getThread, listMessages } from "@/lib/app/threads";
+import { getThread, listMessages, updateThread } from "@/lib/app/threads";
 import { autoTriageNewMessage } from "@/lib/app/autoTriage";
 
 export const runtime = "nodejs";
 
 export async function POST(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { userId } = await auth();
@@ -38,6 +38,20 @@ export async function POST(
   const thread = await getThread(orgId, threadId);
   if (!thread) return NextResponse.json({ error: "Thread not found" }, { status: 404 });
 
+  // Optional body — { bypassBulk: true } when the user clicks
+  // "Detta är inte reklam" on a bulk-classified thread.
+  const body = await req.json().catch(() => ({}));
+  const bypassBulk = Boolean((body as { bypassBulk?: boolean })?.bypassBulk);
+
+  // When unflagging a bulk thread, restore status + clear caseTypeSlug so
+  // the thread leaves the "Reklam" tab and appears in the normal inbox.
+  if (bypassBulk && thread.caseTypeSlug === "bulk") {
+    await updateThread(orgId, threadId, {
+      status:       "open",
+      caseTypeSlug: null,
+    });
+  }
+
   // Fetch the latest customer message to re-feed into the triage pipeline.
   const messages = await listMessages(orgId, threadId);
   const lastCustomer = [...messages].reverse().find(m => m.role === "customer");
@@ -46,9 +60,10 @@ export async function POST(
   }
 
   const result = await autoTriageNewMessage({
-    organizationId: orgId,
+    organizationId:   orgId,
     threadId,
-    newEmailBody:   lastCustomer.bodyText ?? "",
+    newEmailBody:     lastCustomer.bodyText ?? "",
+    bypassBulkFilter: bypassBulk,
   });
 
   if (!result.ok) {

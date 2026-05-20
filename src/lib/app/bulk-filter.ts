@@ -131,18 +131,13 @@ const BULK_SENDER_DOMAINS = [
  * Tuned for Swedish SMB context — avoids common business words.
  */
 const BULK_SUBJECT_TOKENS = [
-  // Swedish
+  // Swedish — only strong/unambiguous signals. "erbjudande" and "kampanj"
+  // alone are too common in legit B2B mail (kept out intentionally).
   "nyhetsbrev",
   "nyhetsmail",
   "veckobrev",
   "månadsbrev",
-  "erbjudande",
-  "erbjudanden",
-  "rabatt",
   "rabattkod",
-  "kampanj",
-  "rea",
-  "realisering",
   "extrapris",
   "välkommen tillbaka",
   "vi saknar dig",

@@ -62,8 +62,12 @@ export async function autoTriageNewMessage(input: {
   newEmailBody: string;
   /** Optional — when provided, enables header-based bulk filtering (Layer 0). */
   bulkHeaders?: BulkHeaders;
+  /** When true, skip both the heuristic and AI bulk-classification gates.
+   *  Used when a human explicitly clicks "Detta är inte reklam" so we trust
+   *  their intent over the automatic classifier. */
+  bypassBulkFilter?: boolean;
 }): Promise<{ ok: true; draftId: string; autoSent?: boolean } | { ok: false; reason: string }> {
-  const { organizationId, threadId, newEmailBody, bulkHeaders } = input;
+  const { organizationId, threadId, newEmailBody, bulkHeaders, bypassBulkFilter } = input;
 
   if (!isDbConnected()) {
     return { ok: false, reason: "db_unavailable" };
@@ -120,16 +124,18 @@ export async function autoTriageNewMessage(input: {
   // message are already in DB so the customer can audit filtered emails
   // in the "Reklam" tab. Org may disable via aiSettings.bulkFilterEnabled
   // or whitelist specific senders via aiSettings.bulkFilterWhitelist.
-  const bulkSignal = detectBulkEmail({
-    fromEmail: thread.fromEmail,
-    subject:   thread.subject ?? "",
-    bodyText:  newEmailBody,
-    headers:   bulkHeaders,
-    settings: {
-      enabled:   settings?.bulkFilterEnabled ?? true,
-      whitelist: settings?.bulkFilterWhitelist ?? [],
-    },
-  });
+  const bulkSignal = bypassBulkFilter
+    ? { detected: false as const }
+    : detectBulkEmail({
+        fromEmail: thread.fromEmail,
+        subject:   thread.subject ?? "",
+        bodyText:  newEmailBody,
+        headers:   bulkHeaders,
+        settings: {
+          enabled:   settings?.bulkFilterEnabled ?? true,
+          whitelist: settings?.bulkFilterWhitelist ?? [],
+        },
+      });
   if (bulkSignal.detected) {
     await updateThread(organizationId, threadId, {
       status:       "resolved",
@@ -229,7 +235,8 @@ export async function autoTriageNewMessage(input: {
   // When AI returns "ignore", it has identified the mail as auto-generated /
   // bulk that the header- and heuristic-filter missed. Treat it like a
   // bulk-filter hit: resolve the thread, no draft, no customer reply.
-  if (ai.output.action === "ignore") {
+  // Skipped when bypassBulkFilter — a human has already overruled the gate.
+  if (!bypassBulkFilter && ai.output.action === "ignore") {
     await updateThread(organizationId, threadId, {
       status:       "resolved",
       caseTypeSlug: "bulk",
@@ -248,6 +255,11 @@ export async function autoTriageNewMessage(input: {
     return { ok: false, reason: "bulk_email_filtered_by_ai" };
   }
 
+  // When bypass is on and AI still wants to ignore, fall through to here.
+  // Treat as escalate so the user gets a draft frame they can edit/send.
+  const draftAction: "ask" | "summarize" | "escalate" =
+    ai.output.action === "ignore" ? "escalate" : ai.output.action;
+
   switch (ai.output.action) {
     case "ask":
       bodyText = ai.output.question;
@@ -265,13 +277,20 @@ export async function autoTriageNewMessage(input: {
     case "escalate":
       metadata = { ...metadata, reason: ai.output.reason };
       break;
+    case "ignore":
+      // Only reachable when bypassBulkFilter is true — promoted to escalate.
+      metadata = {
+        ...metadata,
+        reason: `Markerad som ej reklam av användare. AI:s ursprungliga bedömning: ${ai.output.reason}`,
+      };
+      break;
   }
 
   const draft = await createDraft({
     organizationId,
     threadId,
     userId:    null, // system-triggered
-    action:    ai.output.action,
+    action:    draftAction,
     bodyText,
     metadata,
     aiModel:   ai.model,
@@ -339,7 +358,7 @@ export async function autoTriageNewMessage(input: {
     const sourceGrounded  = typeof meta?.source_grounded === "boolean" ? meta.source_grounded : false;
 
     const decision = canAutoSend({
-      action:           ai.output.action,
+      action:           draftAction,
       confidence,
       riskLevel,
       sourceGrounded,
