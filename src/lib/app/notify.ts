@@ -8,6 +8,10 @@ import type { WeeklyStats } from "./stats";
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = "Mailmind <noreply@mailmind.se>";
 
+// Address that humans actually read replies on. Without this, "noreply@"
+// becomes a black hole and Gmail's spam filters penalise the message.
+const REPLY_TO = process.env.SUPPORT_EMAIL_TO ?? "support@mailmind.se";
+
 export async function notifyNewThread(input: {
   toEmail: string;
   fromName: string | null;
@@ -209,10 +213,33 @@ export async function notifyWeeklyReport(toEmail: string, stats: WeeklyStats) {
 </body>
 </html>`;
 
+  // Plaintext fallback — spam filters trust messages with both parts more,
+  // and screen readers / minimal mail clients render this version.
+  const text = [
+    `Veckans sammanfattning – ${stats.orgName}`,
+    `${fmt(stats.weekStart)} – ${fmt(stats.weekEnd)}`,
+    "",
+    ...rows.map(([label, value]) => `${label.replace(/[^\w\sÅÄÖåäö-]/g, "").trim()}: ${value}`),
+    "",
+    `Öppna inkorgen: https://mailmind.se/app`,
+    "",
+    `Du får detta mejl varje måndag. Avregistrera dig eller hantera notiser på https://mailmind.se/app/settings.`,
+  ].join("\n");
+
+  const unsubscribeUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://mailmind.se"}/app/settings?unsubscribe=weekly`;
+
   await resend.emails.send({
-    from: FROM,
-    to:   toEmail,
+    from:    FROM,
+    to:      toEmail,
+    replyTo: REPLY_TO,
     subject: `Veckans sammanfattning – ${stats.orgName}`,
     html,
+    text,
+    // RFC 8058 — Gmail/Yahoo Feb 2024 sender policy requires these on any
+    // scheduled/bulk email. Without them the message is heavily downranked.
+    headers: {
+      "List-Unsubscribe":      `<${unsubscribeUrl}>, <mailto:${REPLY_TO}?subject=Unsubscribe%20weekly>`,
+      "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+    },
   });
 }
