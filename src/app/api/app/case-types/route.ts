@@ -10,6 +10,7 @@ import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { db, isDbConnected, caseTypes } from "@/lib/db";
 import { getCurrentAccount } from "@/lib/app/entitlements";
+import { requireOrgAdmin } from "@/lib/app/rbac";
 import { listCaseTypes } from "@/lib/app/threads";
 import { sql } from "drizzle-orm";
 
@@ -48,6 +49,8 @@ export async function POST(req: NextRequest) {
   if (!account.user || !account.organization) {
     return NextResponse.json({ error: "Account not provisioned" }, { status: 400 });
   }
+  const guard = requireOrgAdmin(account);
+  if (guard) return NextResponse.json(guard.body, { status: guard.status });
 
   const json = await req.json().catch(() => null);
   const parsed = PostBody.safeParse(json);

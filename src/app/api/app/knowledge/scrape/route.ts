@@ -14,7 +14,10 @@ import { z } from "zod";
 import { load } from "cheerio";
 import Anthropic from "@anthropic-ai/sdk";
 import { getCurrentAccount } from "@/lib/app/entitlements";
+import { requireOrgAdmin } from "@/lib/app/rbac";
 import { bulkCreateKnowledge } from "@/lib/app/knowledge";
+import { safeFetch } from "@/lib/utils/safe-fetch";
+import { rateLimit } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -44,13 +47,16 @@ function normalizeUrl(raw: string): string {
  * Output is capped to 8 000 chars to stay well under Claude's context for Haiku.
  */
 async function fetchPageText(url: string): Promise<string> {
-  const res = await fetch(url, {
-    headers: { "User-Agent": "Mailmind-Onboarding-Bot/1.0" },
-    signal: AbortSignal.timeout(10_000),
-    redirect: "follow",
+  // SSRF-guard: blocks private IPs, localhost, AWS/GCP metadata, http://,
+  // re-validates after redirects, caps bytes + timeout.
+  const result = await safeFetch(url, {
+    headers:   { "User-Agent": "Mailmind-Onboarding-Bot/1.0" },
+    timeoutMs: 10_000,
+    maxBytes:  3_000_000, // 3 MB ceiling — enough for normal marketing sites
   });
-  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-  const html = await res.text();
+  if (!result.ok) throw new Error(`Fetch failed: ${result.reason}`);
+  if (result.status < 200 || result.status >= 300) throw new Error(`Fetch failed: HTTP ${result.status}`);
+  const html = result.bodyText;
 
   const $ = load(html);
   // Drop boilerplate
@@ -87,6 +93,17 @@ export async function POST(req: NextRequest) {
 
   const account = await getCurrentAccount(userId);
   if (!account.user) return NextResponse.json({ error: "Not provisioned" }, { status: 403 });
+  const guard = requireOrgAdmin(account);
+  if (guard) return NextResponse.json(guard.body, { status: guard.status });
+
+  // Per-user rate limit — scraping triggers an Anthropic call per page, so
+  // an unrestricted endpoint is a denial-of-wallet vector. 5 scrapes per 5 min.
+  if (!(await rateLimit(`scrape:${userId}`, { capacity: 5, refillPerSec: 5 / 300 }))) {
+    return NextResponse.json(
+      { error: "För många hämtningar. Försök igen om en stund." },
+      { status: 429 },
+    );
+  }
 
   const json = await req.json().catch(() => null);
   const parsed = Body.safeParse(json);

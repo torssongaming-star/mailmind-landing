@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { updatePersonalSignature, updateAppendSignature } from "./actions";
+import { sanitizeEmailHtml } from "@/lib/utils/sanitize-email-html";
 
 // Inline SVG Icons for Visual Editor Toolbar
 const BoldIcon = () => (
@@ -477,18 +478,7 @@ export function PersonalSignatureEditor({
           )}
 
           {/* Static Read-only Preview */}
-          {preview === "preview" && (
-            <div>
-              <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                Förhandsvisning (hur mottagaren ser mejlet)
-              </label>
-              <div
-                className="w-full min-h-[120px] rounded-xl bg-white px-5 py-4 text-sm overflow-auto text-slate-900 border border-white/10"
-                style={{ color: "#0f172a" }}
-                dangerouslySetInnerHTML={{ __html: rawHtml || "<em style='color:#64748b'>Din signatur är tom…</em>" }}
-              />
-            </div>
-          )}
+          {preview === "preview" && <SignaturePreview rawHtml={rawHtml} />}
 
           {/* Toggle: Bifoga signatur i AI-utkast */}
           <div className="flex items-center justify-between rounded-xl border border-white/8 bg-white/[0.02] px-4 py-3">
@@ -543,6 +533,30 @@ export function PersonalSignatureEditor({
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Renders the user's own signature in a "what the recipient sees" preview.
+ * Sanitised so a stored payload from another teammate (org-wide signature) or
+ * a hostile paste can't execute scripts in this user's session.
+ */
+function SignaturePreview({ rawHtml }: { rawHtml: string }) {
+  const safe = useMemo(
+    () => (rawHtml ? sanitizeEmailHtml(rawHtml) : "<em style='color:#64748b'>Din signatur är tom…</em>"),
+    [rawHtml],
+  );
+  return (
+    <div>
+      <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
+        Förhandsvisning (hur mottagaren ser mejlet)
+      </label>
+      <div
+        className="w-full min-h-[120px] rounded-xl bg-white px-5 py-4 text-sm overflow-auto text-slate-900 border border-white/10"
+        style={{ color: "#0f172a" }}
+        dangerouslySetInnerHTML={{ __html: safe }}
+      />
     </div>
   );
 }

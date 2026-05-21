@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { getCurrentAccount } from "@/lib/app/entitlements";
+import { requireOrgAdmin } from "@/lib/app/rbac";
 import { updateKnowledgeEntry, deleteKnowledgeEntry } from "@/lib/app/knowledge";
 
 const PatchBody = z.object({
@@ -24,6 +25,8 @@ export async function PATCH(
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const account = await getCurrentAccount(userId);
   if (!account.user) return NextResponse.json({ error: "Not provisioned" }, { status: 403 });
+  const guard = requireOrgAdmin(account);
+  if (guard) return NextResponse.json(guard.body, { status: guard.status });
 
   const { id } = await params;
   const json = await req.json().catch(() => null);
@@ -42,6 +45,8 @@ export async function DELETE(
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const account = await getCurrentAccount(userId);
   if (!account.user) return NextResponse.json({ error: "Not provisioned" }, { status: 403 });
+  const guard = requireOrgAdmin(account);
+  if (guard) return NextResponse.json(guard.body, { status: guard.status });
 
   const { id } = await params;
   await deleteKnowledgeEntry(account.organization.id, id);

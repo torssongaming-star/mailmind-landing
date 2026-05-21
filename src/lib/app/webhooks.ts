@@ -4,6 +4,7 @@
 
 import { db, isDbConnected, webhookEndpoints, webhookDeliveries } from "@/lib/db";
 import { eq, and, desc } from "drizzle-orm";
+import { safeFetch } from "@/lib/utils/safe-fetch";
 
 export async function listWebhooks(organizationId: string) {
   if (!isDbConnected()) return [];
@@ -69,13 +70,27 @@ async function deliverWithRetry(
     if (RETRY_DELAYS_MS[attempt] > 0) {
       await new Promise<void>(r => setTimeout(r, RETRY_DELAYS_MS[attempt]));
     }
-    try {
-      const res = await fetch(url, { method: "POST", headers, body });
-      lastStatusCode = res.status;
-      if (res.ok) return { ok: true, statusCode: res.status, error: null };
-      lastError = `HTTP ${res.status}`;
-    } catch (e) {
-      lastError = e instanceof Error ? e.message : "Unknown error";
+    // SSRF-resistant fetch: blocks private IPs / localhost / metadata, forces
+    // https, re-validates after redirects, caps response bytes + timeout.
+    const result = await safeFetch(url, {
+      method:    "POST",
+      headers:   { ...headers, "Content-Type": "application/json" },
+      body,
+      timeoutMs: 5_000,
+      maxBytes:  16_000,
+    });
+    if (result.ok) {
+      lastStatusCode = result.status;
+      if (result.status >= 200 && result.status < 300) {
+        return { ok: true, statusCode: result.status, error: null };
+      }
+      lastError = `HTTP ${result.status}`;
+    } else {
+      // Permanent rejection (scheme/host blocked) — no point retrying.
+      if (result.reason.startsWith("scheme_not_allowed") || result.reason.startsWith("host_blocked")) {
+        return { ok: false, statusCode: null, error: result.reason };
+      }
+      lastError = result.reason;
     }
   }
 

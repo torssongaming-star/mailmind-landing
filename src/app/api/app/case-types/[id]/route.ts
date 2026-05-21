@@ -13,6 +13,7 @@ import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 import { db, isDbConnected, caseTypes } from "@/lib/db";
 import { getCurrentAccount } from "@/lib/app/entitlements";
+import { requireOrgAdmin } from "@/lib/app/rbac";
 
 export const runtime = "nodejs";
 
@@ -36,6 +37,8 @@ export async function PATCH(
   if (!account.user || !account.organization) {
     return NextResponse.json({ error: "Account not provisioned" }, { status: 400 });
   }
+  const guard = requireOrgAdmin(account);
+  if (guard) return NextResponse.json(guard.body, { status: guard.status });
 
   const { id } = await params;
   const json = await req.json().catch(() => null);
@@ -68,6 +71,8 @@ export async function DELETE(
   if (!account.user || !account.organization) {
     return NextResponse.json({ error: "Account not provisioned" }, { status: 400 });
   }
+  const guard = requireOrgAdmin(account);
+  if (guard) return NextResponse.json(guard.body, { status: guard.status });
 
   const { id } = await params;
   if (!isDbConnected()) return NextResponse.json({ error: "DB unavailable" }, { status: 503 });

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { getCurrentAccount, assertCanUseWebhooks } from "@/lib/app/entitlements";
+import { requireOrgAdmin } from "@/lib/app/rbac";
 import { listWebhooks, createWebhook } from "@/lib/app/webhooks";
 
 export const runtime = "nodejs";
@@ -26,7 +27,12 @@ export async function GET() {
 }
 
 const PostBody = z.object({
-  url:          z.string().url().max(2048),
+  // https only — webhook delivery refuses http anyway, fail at validation
+  // so the user gets a clear message instead of a silent permanent reject.
+  url:          z.string().url().max(2048).refine(
+    (u) => u.startsWith("https://"),
+    { message: "Webhook URL måste börja med https://" },
+  ),
   caseTypeSlug: z.string().max(100).default("*"),
   secret:       z.string().max(255).optional(),
 });
@@ -51,6 +57,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Forbidden", reason: gate.reason }, { status: 403 });
   }
   const { account } = gate;
+  const guard = requireOrgAdmin(account);
+  if (guard) return NextResponse.json(guard.body, { status: guard.status });
 
   const json = await req.json().catch(() => null);
   const parsed = PostBody.safeParse(json);

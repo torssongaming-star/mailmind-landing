@@ -3,19 +3,31 @@ import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 import { siteConfig } from "@/config/site";
 import { maskEmail } from "@/lib/utils";
+import { rateLimit } from "@/lib/rate-limit";
 
 // ── Validation Schema ────────────────────────────────────────────────────────
+// Strict max-lengths stop a hostile client from posting megabytes of HTML.
 const demoRequestSchema = z.object({
-  fullName: z.string().min(2, "Full name must be at least 2 characters"),
-  workEmail: z.string().email("Invalid work email address"),
-  companyName: z.string().min(1, "Company name is required"),
-  companyWebsite: z.string().optional(),
-  emailVolume: z.string().min(1, "Email volume is required"),
-  currentSystem: z.string().min(1, "Current system is required"),
-  message: z.string().optional(),
+  fullName:       z.string().min(2).max(120),
+  workEmail:      z.string().email().max(320),
+  companyName:    z.string().min(1).max(200),
+  companyWebsite: z.string().max(500).optional(),
+  emailVolume:    z.string().min(1).max(50),
+  currentSystem:  z.string().min(1).max(100),
+  message:        z.string().max(5000).optional(),
   // Honeypot field — should be empty
-  websiteUrl: z.string().optional(),
+  websiteUrl:     z.string().optional(),
 });
+
+/** HTML entity escape — keep ALL user input safe inside the email template. */
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 /**
  * POST /api/demo-request
  *
@@ -24,6 +36,19 @@ const demoRequestSchema = z.object({
  */
 export async function POST(req: NextRequest) {
   try {
+    // 0. Rate-limit per IP — 5 requests / 10 min. Stops Resend-spam and
+    //    honeypot bypasses without needing CAPTCHA in the MVP.
+    const ip =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+      req.headers.get("x-real-ip") ??
+      "unknown";
+    if (!(await rateLimit(`demo-request:${ip}`, { capacity: 5, refillPerSec: 5 / 600 }))) {
+      return NextResponse.json(
+        { error: "För många förfrågningar. Försök igen om en stund." },
+        { status: 429 },
+      );
+    }
+
     const body = await req.json();
 
     // 1. Validate with Zod
@@ -50,42 +75,51 @@ export async function POST(req: NextRequest) {
     const fromEmail = process.env.DEMO_REQUEST_FROM;
 
     if (!apiKey || !toEmail || !fromEmail) {
-      const missing = [];
-      if (!apiKey) missing.push("RESEND_API_KEY");
-      if (!toEmail) missing.push("DEMO_REQUEST_TO");
-      if (!fromEmail) missing.push("DEMO_REQUEST_FROM");
-      console.error("[api/demo-request] Missing environment variables:", missing.join(", "));
+      // Don't leak which env var is missing — that's a config-disclosure
+      // gift to an attacker. Log internally, return a generic message.
+      const missing = [
+        apiKey    ? null : "RESEND_API_KEY",
+        toEmail   ? null : "DEMO_REQUEST_TO",
+        fromEmail ? null : "DEMO_REQUEST_FROM",
+      ].filter(Boolean).join(", ");
+      console.error("[api/demo-request] Missing env vars:", missing);
       return NextResponse.json(
-        { error: `Email service not configured. Missing: ${missing.join(", ")}` },
-        { status: 500 }
+        { error: "Tjänsten är tillfälligt otillgänglig. Försök igen senare." },
+        { status: 500 },
       );
     }
 
-    // 4. Send email
+    // 4. Send email — every interpolated field is escaped to prevent the
+    //    attacker turning the internal demo email into a phishing template
+    //    (img/script injection, fake CTAs, etc.).
     const resend = new Resend(apiKey);
     const { error } = await resend.emails.send({
-      from: fromEmail,
-      to: toEmail,
-      subject: `New Demo Request: ${data.companyName}`,
+      from:    fromEmail,
+      to:      toEmail,
+      subject: `New Demo Request: ${data.companyName.slice(0, 80)}`,
       replyTo: data.workEmail,
       html: `
         <h2>New Demo Request</h2>
-        <p><strong>Name:</strong> ${data.fullName}</p>
-        <p><strong>Email:</strong> ${data.workEmail}</p>
-        <p><strong>Company:</strong> ${data.companyName}</p>
-        <p><strong>Website:</strong> ${data.companyWebsite || "Not provided"}</p>
-        <p><strong>Email Volume:</strong> ${data.emailVolume}</p>
-        <p><strong>Current System:</strong> ${data.currentSystem}</p>
+        <p><strong>Name:</strong> ${escapeHtml(data.fullName)}</p>
+        <p><strong>Email:</strong> ${escapeHtml(data.workEmail)}</p>
+        <p><strong>Company:</strong> ${escapeHtml(data.companyName)}</p>
+        <p><strong>Website:</strong> ${escapeHtml(data.companyWebsite || "Not provided")}</p>
+        <p><strong>Email Volume:</strong> ${escapeHtml(data.emailVolume)}</p>
+        <p><strong>Current System:</strong> ${escapeHtml(data.currentSystem)}</p>
         <p><strong>Message:</strong></p>
-        <p>${data.message || "No message provided"}</p>
+        <p>${escapeHtml(data.message || "No message provided")}</p>
         <hr />
-        <p><small>This request was sent from the ${siteConfig.siteName} landing page form.</small></p>
+        <p><small>This request was sent from the ${escapeHtml(siteConfig.siteName)} landing page form.</small></p>
       `,
     });
 
     if (error) {
+      // Don't echo Resend's error message back to a public caller — log it.
       console.error("[api/demo-request] Resend API error:", JSON.stringify(error, null, 2));
-      return NextResponse.json({ error: `Email service error: ${error.message}` }, { status: 500 });
+      return NextResponse.json(
+        { error: "Tjänsten är tillfälligt otillgänglig. Försök igen senare." },
+        { status: 502 },
+      );
     }
 
     return NextResponse.json({ success: true });

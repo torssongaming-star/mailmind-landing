@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { sanitizeEmailHtml } from "@/lib/utils/sanitize-email-html";
 
 export function AiSettingsEditor({
   initial,
@@ -96,17 +97,7 @@ export function AiSettingsEditor({
         </Field>
       </div>
 
-      <Field label="E-postsignatur (läggs till i AI:ns svar — valfritt, stödjer bilder och länkar)">
-        <div
-          ref={editorRef}
-          contentEditable
-          dangerouslySetInnerHTML={{ __html: initial.signature ?? "" }}
-          className="select-style w-full min-h-[80px] overflow-auto"
-        />
-        <p className="text-[10px] text-muted-foreground/60 mt-1 leading-relaxed">
-          Du kan kopiera och klistra in en befintlig e-postsignatur här för att behålla dess formatering.
-        </p>
-      </Field>
+      <SignatureField initialHtml={initial.signature} editorRef={editorRef} />
 
       {/* ── Bulk / marketing filter ──────────────────────────────────────────── */}
       <div className="border-t border-white/5 pt-4 space-y-3">
@@ -197,5 +188,37 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
       {children}
       {hint && <p className="text-[10px] text-muted-foreground/60 mt-1 leading-relaxed">{hint}</p>}
     </div>
+  );
+}
+
+/**
+ * Signature editor — contentEditable seeded with sanitised initial HTML.
+ * Without this, a malicious signature stored by one user could XSS another
+ * teammate who visits the settings page.
+ */
+function SignatureField({
+  initialHtml,
+  editorRef,
+}: {
+  initialHtml: string | null;
+  editorRef: React.RefObject<HTMLDivElement | null>;
+}) {
+  const safeInitial = useMemo(
+    () => (initialHtml ? sanitizeEmailHtml(initialHtml) : ""),
+    [initialHtml],
+  );
+  return (
+    <Field
+      label="E-postsignatur (läggs till i AI:ns svar — valfritt, stödjer bilder och länkar)"
+      hint="Du kan kopiera och klistra in en befintlig e-postsignatur här för att behålla dess formatering."
+    >
+      <div
+        ref={editorRef}
+        contentEditable
+        suppressContentEditableWarning
+        dangerouslySetInnerHTML={{ __html: safeInitial }}
+        className="select-style w-full min-h-[80px] overflow-auto"
+      />
+    </Field>
   );
 }

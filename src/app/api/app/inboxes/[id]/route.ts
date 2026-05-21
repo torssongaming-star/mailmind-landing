@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getCurrentAccount } from "@/lib/app/entitlements";
+import { requireOrgAdmin } from "@/lib/app/rbac";
 import { deleteInbox } from "@/lib/app/threads";
 import { writeAuditLog } from "@/lib/app/audit";
 
@@ -24,6 +25,8 @@ export async function DELETE(
   if (!account.user || !account.organization) {
     return NextResponse.json({ error: "Account not provisioned" }, { status: 400 });
   }
+  const guard = requireOrgAdmin(account);
+  if (guard) return NextResponse.json(guard.body, { status: guard.status });
 
   const { id } = await params;
   await deleteInbox(account.organization.id, id);

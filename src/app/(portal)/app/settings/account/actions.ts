@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { db, users } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { sanitizeHtmlServer } from "@/lib/utils/sanitize-html-server";
 
 export async function updatePersonalSignature(signature: string) {
   try {
@@ -14,9 +15,13 @@ export async function updatePersonalSignature(signature: string) {
       return { ok: false, error: "Signaturen är för lång (max 5 miljoner tecken, bilden är troligtvis för högupplöst/stor)" };
     }
 
+    // Server-side scrub before persisting — defence-in-depth so a payload
+    // can never round-trip through the DB and into another user's session.
+    const cleaned = sanitizeHtmlServer(signature.trim()) || null;
+
     await db
       .update(users)
-      .set({ signature: signature.trim() || null })
+      .set({ signature: cleaned })
       .where(eq(users.clerkUserId, userId));
 
     revalidatePath("/app/settings/account");

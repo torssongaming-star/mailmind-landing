@@ -59,9 +59,16 @@ export async function PATCH(
   const draft = await getDraft(orgId, draftId);
   if (!draft) return NextResponse.json({ error: "Draft not found" }, { status: 404 });
 
-  // Only pending drafts can be modified. Once sent/rejected, they're frozen.
-  if (draft.status !== "pending") {
-    return NextResponse.json({ error: `Draft is ${draft.status} and cannot be modified` }, { status: 409 });
+  // Status check is per-action so the edit→send round-trip works. Edit and
+  // send both accept pending+edited; send also tolerates "sending" so a
+  // duplicate click doesn't 409 mid-flight. The atomic claim in
+  // executeSendDraft is the real lock — see autoSend.ts.
+  const canMutate = draft.status === "pending" || draft.status === "edited";
+  if (!canMutate) {
+    return NextResponse.json(
+      { error: `Draft is ${draft.status} and cannot be modified` },
+      { status: 409 },
+    );
   }
 
   // ── EDIT ──────────────────────────────────────────────────────────────────
@@ -128,7 +135,15 @@ export async function PATCH(
     }),
   ]);
 
-  // Re-fetch draft for the updated thread status to return to client
+  // Look up the actual thread status — the draft's status is now "sent",
+  // but the thread might be "open" / "waiting" / "resolved" / "escalated"
+  // depending on what executeSendDraft transitioned it to.
+  const { getThread } = await import("@/lib/app/threads");
   const sent = await getDraft(orgId, draftId);
-  return NextResponse.json({ ok: true, status: "sent", threadStatus: sent?.status ?? "sent" });
+  const thread = sent ? await getThread(orgId, sent.threadId) : null;
+  return NextResponse.json({
+    ok:           true,
+    status:       "sent",
+    threadStatus: thread?.status ?? null,
+  });
 }

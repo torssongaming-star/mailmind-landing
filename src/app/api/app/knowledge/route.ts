@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { getCurrentAccount } from "@/lib/app/entitlements";
+import { requireOrgAdmin } from "@/lib/app/rbac";
 import { listKnowledge, createKnowledgeEntry } from "@/lib/app/knowledge";
 
 export async function GET() {
@@ -30,6 +31,8 @@ export async function POST(req: NextRequest) {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const account = await getCurrentAccount(userId);
   if (!account.user) return NextResponse.json({ error: "Not provisioned" }, { status: 403 });
+  const guard = requireOrgAdmin(account);
+  if (guard) return NextResponse.json(guard.body, { status: guard.status });
 
   const json = await req.json().catch(() => null);
   const parsed = CreateBody.safeParse(json);

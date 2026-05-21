@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { getCurrentAccount } from "@/lib/app/entitlements";
+import { requireOrgAdmin } from "@/lib/app/rbac";
 import { listTemplates, createTemplate } from "@/lib/app/notes";
 
 export const runtime = "nodejs";
@@ -45,6 +46,8 @@ export async function POST(req: NextRequest) {
   if (!account.access.canUseApp) {
     return NextResponse.json({ error: "App access blocked", reason: account.access.reason }, { status: 403 });
   }
+  const guard = requireOrgAdmin(account);
+  if (guard) return NextResponse.json(guard.body, { status: guard.status });
 
   const json = await req.json().catch(() => null);
   const parsed = Body.safeParse(json);

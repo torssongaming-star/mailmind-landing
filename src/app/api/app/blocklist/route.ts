@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { getCurrentAccount } from "@/lib/app/entitlements";
+import { requireOrgAdmin } from "@/lib/app/rbac";
 import { listBlocklist, addBlockEntry } from "@/lib/app/blocklist";
 
 export const runtime = "nodejs";
@@ -38,6 +39,8 @@ export async function POST(req: NextRequest) {
   if (!account.user || !account.organization) {
     return NextResponse.json({ error: "Account not provisioned" }, { status: 400 });
   }
+  const guard = requireOrgAdmin(account);
+  if (guard) return NextResponse.json(guard.body, { status: guard.status });
 
   const json = await req.json().catch(() => null);
   const parsed = PostBody.safeParse(json);

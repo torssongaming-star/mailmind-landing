@@ -11,6 +11,8 @@ import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { db, isDbConnected, aiSettings } from "@/lib/db";
 import { getCurrentAccount } from "@/lib/app/entitlements";
+import { requireOrgAdmin } from "@/lib/app/rbac";
+import { sanitizeHtmlServer } from "@/lib/utils/sanitize-html-server";
 import { getAiSettings, defaultAiSettings } from "@/lib/app/threads";
 
 export const runtime = "nodejs";
@@ -46,6 +48,8 @@ export async function PUT(req: NextRequest) {
   if (!account.user || !account.organization) {
     return NextResponse.json({ error: "Account not provisioned" }, { status: 400 });
   }
+  const guard = requireOrgAdmin(account);
+  if (guard) return NextResponse.json(guard.body, { status: guard.status });
 
   const json = await req.json().catch(() => null);
   const parsed = Body.safeParse(json);
@@ -61,6 +65,11 @@ export async function PUT(req: NextRequest) {
 
   const bulkEnabled  = parsed.data.bulkFilterEnabled   ?? true;
   const bulkWhitelist = parsed.data.bulkFilterWhitelist ?? [];
+  // Scrub signature HTML server-side before persisting — defence-in-depth
+  // against XSS via the org-wide signature visible to all teammates.
+  const cleanedSig = parsed.data.signature
+    ? (sanitizeHtmlServer(parsed.data.signature) || null)
+    : null;
 
   await db
     .insert(aiSettings)
@@ -69,7 +78,7 @@ export async function PUT(req: NextRequest) {
       tone:                 parsed.data.tone,
       language:             parsed.data.language,
       maxInteractions:      parsed.data.maxInteractions,
-      signature:            parsed.data.signature ?? null,
+      signature:            cleanedSig,
       bulkFilterEnabled:    bulkEnabled,
       bulkFilterWhitelist:  bulkWhitelist,
     })
@@ -79,7 +88,7 @@ export async function PUT(req: NextRequest) {
         tone:                 parsed.data.tone,
         language:             parsed.data.language,
         maxInteractions:      parsed.data.maxInteractions,
-        signature:            parsed.data.signature ?? null,
+        signature:            cleanedSig,
         bulkFilterEnabled:    bulkEnabled,
         bulkFilterWhitelist:  bulkWhitelist,
         updatedAt:            new Date(),
