@@ -9,6 +9,13 @@
  * Only runs in the Node.js runtime. Edge runtime is intentionally skipped
  * since neither Sentry-Node nor the env helpers run there.
  */
+import * as Sentry from "@sentry/nextjs";
+
+// Next.js 15+ calls this hook for any error in server components or route
+// handlers. Without forwarding to Sentry.captureRequestError, thrown errors
+// land in Vercel logs but never reach Sentry — exactly what we hit.
+export const onRequestError = Sentry.captureRequestError;
+
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     await import("../sentry.server.config");
