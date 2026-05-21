@@ -13,6 +13,7 @@ const dsn = process.env.SENTRY_DSN;
 if (dsn) {
   Sentry.init({
     dsn,
+    debug: process.env.SENTRY_DEBUG === "1",
     tracesSampleRate: 0.1,
     environment: process.env.VERCEL_ENV ?? "development",
     // Strip PII before send — strategi-revision: log helper already masks
