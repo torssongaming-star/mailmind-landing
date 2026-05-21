@@ -19,12 +19,21 @@ if (dsn) {
     // Strip PII before send — strategi-revision: log helper already masks
     // for console; we replicate the same logic here for Sentry events.
     beforeSend(event) {
-      const json = JSON.stringify(event);
-      const masked = json
-        .replace(/([a-zA-Z0-9._%+-])[a-zA-Z0-9._%+-]*(@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, "$1***$2")
-        .replace(/Bearer\s+[A-Za-z0-9._\-+/=]+/g, "Bearer ***")
-        .replace(/\b[a-f0-9]{32,}\b/gi, "[redacted-hex]");
-      return JSON.parse(masked) as Sentry.ErrorEvent;
+      // Mask PII in the *message and exception fields only* — masking the
+      // whole envelope JSON breaks Sentry's own event_id (32-char hex) and
+      // trace IDs, which makes Sentry return 400 and silently drop the event.
+      const maskString = (s: string) =>
+        s
+          .replace(/([a-zA-Z0-9._%+-])[a-zA-Z0-9._%+-]*(@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g, "$1***$2")
+          .replace(/Bearer\s+[A-Za-z0-9._\-+/=]+/g, "Bearer ***");
+
+      if (event.message) event.message = maskString(event.message);
+      if (event.exception?.values) {
+        for (const ex of event.exception.values) {
+          if (ex.value) ex.value = maskString(ex.value);
+        }
+      }
+      return event;
     },
     ignoreErrors: [
       // Noise — Next.js redirect throws by design
