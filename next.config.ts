@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 /**
  * Security headers — applied via Next's headers() API.
@@ -62,4 +63,14 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Wrap with Sentry's webpack plugin so client-side errors are captured.
+// Without this wrapper, sentry.client.config.ts is never loaded by Next.js
+// and Issues stays empty even with a correct DSN.
+//
+// Source map upload requires SENTRY_AUTH_TOKEN + SENTRY_ORG + SENTRY_PROJECT
+// in Vercel env — but event capture works without those, so we keep this
+// minimal. Add the token later for readable stack traces.
+export default withSentryConfig(nextConfig, {
+  silent:        !process.env.CI,
+  disableLogger: true,
+});
