@@ -12,9 +12,11 @@ const isProtectedRoute = createRouteMatcher([
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
-  // Always allow the health check even if it matches /api/admin(.*)
-  // because it handles its own ADMIN_HEALTH_SECRET auth.
-  if (req.nextUrl.pathname === "/api/admin/health") {
+  // Always allow these admin routes — they use ADMIN_HEALTH_SECRET, not Clerk.
+  if (
+    req.nextUrl.pathname === "/api/admin/health" ||
+    req.nextUrl.pathname === "/api/admin/sentry-test"
+  ) {
     return;
   }
 
