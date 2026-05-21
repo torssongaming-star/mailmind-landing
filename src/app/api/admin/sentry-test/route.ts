@@ -17,6 +17,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
 import { requireInProduction } from "@/lib/env";
+import * as Sentry from "@sentry/nextjs";
 
 export const runtime = "nodejs";
 
@@ -34,8 +35,25 @@ export async function GET(req: NextRequest) {
     if (!ok) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
 
-  // Throw so the Next.js error boundary forwards to Sentry. A plain
-  // captureException would also work but throwing exercises the full
-  // server-error pipeline.
+  // Diagnostic: log whether the Sentry client is initialized + DSN visible.
+  const client = Sentry.getClient();
+  const dsnSet = Boolean(process.env.SENTRY_DSN);
+  console.log("[sentry-test] diag", {
+    dsnEnvSet:        dsnSet,
+    dsnLengthChars:   process.env.SENTRY_DSN?.length ?? 0,
+    clientInitialized: Boolean(client),
+    clientDsn:        client?.getOptions().dsn ?? null,
+  });
+
+  // Explicit capture — flush before responding so we know if delivery itself
+  // works, independent of onRequestError auto-instrumentation.
+  const eventId = Sentry.captureException(
+    new Error("SentryTestError: explicit capture probe"),
+    { tags: { source: "sentry-test-route" } },
+  );
+  await Sentry.flush(5000);
+  console.log("[sentry-test] explicit captureException eventId:", eventId);
+
+  // Also throw, to exercise the onRequestError pathway separately.
   throw new Error("SentryTestError: intentional verification probe");
 }
