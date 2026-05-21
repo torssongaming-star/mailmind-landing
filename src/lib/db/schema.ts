@@ -203,6 +203,21 @@ export const users = pgTable(
   ]
 );
 
+export const signatureAssets = pgTable(
+  "signature_assets",
+  {
+    id:             uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    fileName:       varchar("file_name", { length: 255 }),
+    mimeType:       varchar("mime_type", { length: 100 }).notNull(),
+    data:           text("data").notNull(), // Base64 representation
+    createdAt:      timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("signature_assets_org_idx").on(t.organizationId),
+  ]
+);
+
 export const subscriptions = pgTable(
   "subscriptions",
   {
