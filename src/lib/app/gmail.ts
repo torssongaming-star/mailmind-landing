@@ -15,6 +15,12 @@
  */
 
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
+import {
+  encodeAddressHeader,
+  encodeBase64Body,
+  encodeHeaderUtf8,
+  sanitizeMessageId,
+} from "@/lib/utils/mime";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -441,43 +447,49 @@ export async function sendViaGmail(
 ): Promise<GmailSendResult> {
   const { from, to, subject, text, html, inReplyTo, references, gmailThreadId } = params;
 
+  // All headers go through the helpers: addresses get the display-name
+  // RFC 2047-encoded, Subject becomes an encoded-word for non-ASCII, and
+  // every field is CRLF-stripped so a poisoned thread subject can't inject
+  // BCC or rewrite Content-Type.
+  const safeInReplyTo = sanitizeMessageId(inReplyTo);
+  const safeReferences = sanitizeMessageId(references);
+
   const lines: string[] = [
-    `From: ${from}`,
-    `To: ${to}`,
-    `Subject: ${subject}`,
+    `From: ${encodeAddressHeader(from)}`,
+    `To: ${encodeAddressHeader(to)}`,
+    `Subject: ${encodeHeaderUtf8(subject)}`,
     "MIME-Version: 1.0",
   ];
 
-  if (inReplyTo)  lines.push(`In-Reply-To: ${inReplyTo}`);
-  if (references) lines.push(`References: ${references}`);
+  if (safeInReplyTo)  lines.push(`In-Reply-To: ${safeInReplyTo}`);
+  if (safeReferences) lines.push(`References: ${safeReferences}`);
 
   if (html) {
-    // Multipart message containing both text and html
+    // Multipart message containing both text and html. Use base64 for both
+    // parts — broken quoted-printable was the source of garbled å/ä/ö.
     const boundary = `----=_NextPart_${Date.now().toString(16)}`;
     lines.push(`Content-Type: multipart/alternative; boundary="${boundary}"`);
     lines.push("");
-    
-    // Text part
+
     lines.push(`--${boundary}`);
     lines.push("Content-Type: text/plain; charset=UTF-8");
-    lines.push("Content-Transfer-Encoding: quoted-printable");
+    lines.push("Content-Transfer-Encoding: base64");
     lines.push("");
-    lines.push(text);
-    
-    // HTML part
+    lines.push(encodeBase64Body(text));
+
     lines.push(`--${boundary}`);
     lines.push("Content-Type: text/html; charset=UTF-8");
-    lines.push("Content-Transfer-Encoding: quoted-printable");
+    lines.push("Content-Transfer-Encoding: base64");
     lines.push("");
-    lines.push(html);
-    
+    lines.push(encodeBase64Body(html));
+
     lines.push(`--${boundary}--`);
   } else {
     // Simple text message
     lines.push("Content-Type: text/plain; charset=UTF-8");
-    lines.push("Content-Transfer-Encoding: quoted-printable");
+    lines.push("Content-Transfer-Encoding: base64");
     lines.push("");
-    lines.push(text);
+    lines.push(encodeBase64Body(text));
   }
 
   const raw = Buffer.from(lines.join("\r\n")).toString("base64url");
