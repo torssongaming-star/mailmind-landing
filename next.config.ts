@@ -70,15 +70,16 @@ const nextConfig: NextConfig = {
 // Source map upload requires SENTRY_AUTH_TOKEN + SENTRY_ORG + SENTRY_PROJECT
 // in Vercel env — but event capture works without those, so we keep this
 // minimal. Add the token later for readable stack traces.
-export default withSentryConfig(nextConfig, {
-  silent:        !process.env.CI,
-  disableLogger: true,
-  // Fix for Vercel builds: if Sentry is not fully configured, the plugin 
-  // tries to read a .sentryclirc from an undefined path and crashes the build.
-  sourcemaps: {
-    disable: !process.env.SENTRY_AUTH_TOKEN,
-  },
-  // We also explicitly set empty strings for org/project to prevent crashes
-  org: process.env.SENTRY_ORG || "mailmind",
-  project: process.env.SENTRY_PROJECT || "mailmind",
-});
+let configToExport = nextConfig;
+
+// Fix for Vercel builds: if Sentry is not fully configured (missing token),
+// the @sentry/nextjs plugin crashes with 'TypeError: The "path" argument must be of type string.'
+// We bypass the Sentry wrapper entirely in this scenario to unblock the deploy.
+if (process.env.SENTRY_AUTH_TOKEN || !process.env.VERCEL) {
+  configToExport = withSentryConfig(nextConfig, {
+    silent: !process.env.CI,
+    disableLogger: true,
+  });
+}
+
+export default configToExport;
