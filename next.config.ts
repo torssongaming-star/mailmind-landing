@@ -73,4 +73,12 @@ const nextConfig: NextConfig = {
 export default withSentryConfig(nextConfig, {
   silent:        !process.env.CI,
   disableLogger: true,
+  // Fix for Vercel builds: if Sentry is not fully configured, the plugin 
+  // tries to read a .sentryclirc from an undefined path and crashes the build.
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
+  // We also explicitly set empty strings for org/project to prevent crashes
+  org: process.env.SENTRY_ORG || "mailmind",
+  project: process.env.SENTRY_PROJECT || "mailmind",
 });
