@@ -31,11 +31,13 @@ export const metadata: Metadata = {
     siteName: "Mailmind",
     locale: "sv_SE",
     type: "website",
-    images: [
+    // Use the existing 96x96 favicon as a placeholder until a proper
+     // 1200x630 og-image.png is added under public/.
+     images: [
       {
-        url: "/favicon.png",
-        width: 1200,
-        height: 630,
+        url: "/favicon-96x96.png",
+        width: 96,
+        height: 96,
         alt: "Mailmind — AI email support",
       },
     ],

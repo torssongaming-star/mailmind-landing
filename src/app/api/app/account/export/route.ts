@@ -17,6 +17,7 @@ import {
   aiDrafts, aiSettings, caseTypes, knowledgeEntries, replyTemplates,
   senderBlocklist, webhookEndpoints, inboxes, auditLogs,
   orgInvites, pushSubscriptions, subscriptions, licenseEntitlements, usageCounters,
+  signatureAssets,
 } from "@/lib/db";
 import { eq } from "drizzle-orm";
 import { writeAuditLog } from "@/lib/app/audit";
@@ -46,7 +47,7 @@ export async function GET(_req: NextRequest) {
   const [
     org, usersList, threads, drafts, settings, caseTypeList, knowledge,
     templates, blocks, webhooks, inboxList, audit, invites, pushSubs,
-    subs, entitlements, usage,
+    subs, entitlements, usage, sigAssets,
   ] = await Promise.all([
     db.select().from(organizations).where(eq(organizations.id, orgId)).then(r => r[0] ?? null),
     db.select().from(users).where(eq(users.organizationId, orgId)),
@@ -65,6 +66,15 @@ export async function GET(_req: NextRequest) {
     db.select().from(subscriptions).where(eq(subscriptions.organizationId, orgId)),
     db.select().from(licenseEntitlements).where(eq(licenseEntitlements.organizationId, orgId)),
     db.select().from(usageCounters).where(eq(usageCounters.organizationId, orgId)),
+    // GDPR completeness — signature asset metadata. Base64 payload skipped
+    // to keep the export small; users can re-download via the public URL.
+    db.select({
+      id:             signatureAssets.id,
+      organizationId: signatureAssets.organizationId,
+      fileName:       signatureAssets.fileName,
+      mimeType:       signatureAssets.mimeType,
+      createdAt:      signatureAssets.createdAt,
+    }).from(signatureAssets).where(eq(signatureAssets.organizationId, orgId)),
   ]);
 
   // Email messages — fetched per thread to keep relation intact
@@ -105,6 +115,7 @@ export async function GET(_req: NextRequest) {
     threads,
     messages: allMessages,
     drafts,
+    signatureAssets: sigAssets,
     auditLogs: audit,
   };
 

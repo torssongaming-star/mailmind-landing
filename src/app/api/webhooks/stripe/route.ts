@@ -90,7 +90,16 @@ export async function POST(req: NextRequest) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const clerkUserId = session.metadata?.clerkUserId;
-        const plan = (session.metadata?.plan as keyof typeof PLANS) || "starter";
+        // The DB plan enum is starter | team | business. Stripe metadata
+        // may carry "enterprise" if an enterprise price id is checked out
+        // — collapse it down to "business" so the insert doesn't fail.
+        // Enterprise differentiation is handled via custom entitlements,
+        // not the plan column.
+        const rawPlan = session.metadata?.plan as keyof typeof PLANS | undefined;
+        const plan: "starter" | "team" | "business" =
+          rawPlan === "enterprise" ? "business" :
+          rawPlan === "starter" || rawPlan === "team" || rawPlan === "business" ? rawPlan :
+          "starter";
         const billingPeriod = (session.metadata?.billingPeriod === "annual" ? "annual" : "monthly") as "monthly" | "annual";
 
         if (!clerkUserId) {

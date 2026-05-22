@@ -28,10 +28,15 @@ import {
 
 const GOOGLE_AUTH_URL  = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
+// Principle of least privilege:
+//   - gmail.readonly  — read inbound via Pub/Sub + History API
+//   - gmail.send      — send replies via users.messages.send
+// gmail.modify is not used anywhere in this codebase. Removing it
+// makes the Google OAuth verification narrower (fewer restricted
+// scopes = cheaper CASA assessment tier and faster review).
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
   "https://www.googleapis.com/auth/gmail.send",
-  "https://www.googleapis.com/auth/gmail.modify",
 ].join(" ");
 
 function redirectUri() {

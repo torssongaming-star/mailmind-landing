@@ -65,8 +65,8 @@ export async function PUT(req: NextRequest) {
   await writeAuditLog({
     organizationId: account.organization.id,
     userId:         account.user.id,
-    action:         "onboarding_completed", // closest existing audit type for "config change"
-    metadata:       { event: "organization_renamed", newName: parsed.data.name },
+    action:         "organization_renamed",
+    metadata:       { newName: parsed.data.name },
   });
 
   return NextResponse.json({ ok: true });

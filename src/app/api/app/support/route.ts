@@ -76,16 +76,16 @@ export async function POST(req: NextRequest) {
   });
 
   if (!result.ok) {
-    // Log full message so it isn't lost even if email delivery fails —
-    // you can fish it out of Vercel logs and reply manually.
+    // Don't log the full message — that's PII landing in plain text in
+    // Vercel logs. Log just enough metadata to investigate, plus a
+    // short prefix so you can correlate which message failed.
     console.error("[support] sendEmail failed:", {
-      error:    result.error,
-      to:       supportTo,
-      from:     fromEmail,
-      orgId:    account.organization.id,
+      error:         result.error,
+      orgId:         account.organization.id,
       orgName,
-      subject,
-      message,
+      subjectLength: subject.length,
+      messageLength: message.length,
+      messagePrefix: message.slice(0, 40),
     });
     return NextResponse.json({ error: "Kunde inte skicka meddelandet just nu — vi har loggat det och återkommer." }, { status: 502 });
   }

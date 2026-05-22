@@ -43,7 +43,7 @@ export default async function ThreadPage({
 
   const [messages, drafts, notes, priorThreads] = await Promise.all([
     listMessages(account.organization.id, id),
-    listDraftsForThread(id),
+    listDraftsForThread(account.organization.id, id),
     listNotes(account.organization.id, id),
     listThreadsByEmail(account.organization.id, thread.fromEmail, id),
   ]);

@@ -81,6 +81,7 @@ export type AuditAction =
   | "usage_limit_reached"
   | "billing_portal_opened"
   | "onboarding_completed"
+  | "organization_renamed"
   | "email_filtered_bulk"
   // Website portal actions (already written elsewhere; listed for reference)
   | "checkout_completed"

@@ -35,30 +35,12 @@ would break threading and harm the user's deliverability.
 
 ---
 
-## Restricted scope — `https://www.googleapis.com/auth/gmail.modify`
+## Removed: `gmail.modify`
 
-### "What features will you use?"
-Select: **Reply to or forward email**
-
-### "How will the scopes be used?"
-
-```
-Mailmind uses gmail.modify exclusively to:
-
-1. Add the message we just sent (via gmail.send) to the user's "Sent"
-   folder so it appears in their normal Gmail view, and
-
-2. Apply a Mailmind label to processed threads so the user can filter
-   handled vs. unhandled mail directly in Gmail.
-
-We do not delete, archive, or modify any message the user did not
-explicitly act on through the Mailmind dashboard. We do not permanently
-delete any message.
-
-We chose gmail.modify rather than the broader gmail.full because we
-never need to manage drafts, change settings, or impersonate the user
-beyond writing back the replies they have approved.
-```
+We previously requested gmail.modify but no longer use it. Replies sent
+via gmail.send are placed in the Sent folder automatically by the Gmail
+API, and we do not apply labels or modify other messages. Dropping the
+scope keeps Mailmind on the minimum set required for the product.
 
 ---
 

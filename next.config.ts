@@ -28,6 +28,35 @@ const OUTLOOK_FRAME_CSP =
 
 const DENY_FRAME_CSP = "frame-ancestors 'self';";
 
+/**
+ * Full CSP shipped in *Report-Only* mode — browsers don't block anything but
+ * they log violations to devtools. Use it to verify what would break before
+ * flipping the header name to `Content-Security-Policy` to enforce.
+ *
+ * Sources reflect the third parties Mailmind talks to:
+ *   - Clerk (auth UI + scripts)             clerk.com / clerk.accounts.dev
+ *   - Stripe (checkout + js.stripe.com)
+ *   - Sentry (ingest.de.sentry.io)
+ *   - PostHog EU (eu.i.posthog.com)
+ *   - Vercel analytics / speed insights     vitals.vercel-insights.com
+ */
+const REPORT_ONLY_CSP = [
+  "default-src 'self'",
+  // Next.js + Clerk + Stripe + PostHog need inline + eval during hydration.
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.clerk.accounts.dev https://*.clerk.com https://js.stripe.com https://eu.i.posthog.com",
+  "style-src 'self' 'unsafe-inline' https://*.clerk.accounts.dev",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "connect-src 'self' https://*.clerk.accounts.dev https://*.clerk.com https://api.stripe.com https://*.ingest.de.sentry.io https://eu.i.posthog.com https://vitals.vercel-insights.com",
+  "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://*.clerk.accounts.dev",
+  "worker-src 'self' blob:",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "form-action 'self' https://*.clerk.accounts.dev",
+  "frame-ancestors 'self'",
+  "upgrade-insecure-requests",
+].join("; ");
+
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
@@ -55,6 +84,10 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: [
           { key: "Content-Security-Policy", value: DENY_FRAME_CSP },
+          // Report-Only mirror with the full policy. Browsers log violations
+          // but don't block — flip the header name to enforce once devtools
+          // shows zero unexpected violations in production traffic.
+          { key: "Content-Security-Policy-Report-Only", value: REPORT_ONLY_CSP },
           { key: "X-Frame-Options", value: "DENY" },
           ...SHARED_SECURITY_HEADERS,
         ],

@@ -312,12 +312,17 @@ export async function appendMessage(input: {
       .then(r => r[0]);
     organizationId = t?.organizationId;
   }
+  // emailMessages.organizationId is NOT NULL. Failing fast here gives a clear
+  // error instead of a Postgres constraint violation from the insert path.
+  if (!organizationId) {
+    throw new Error(`appendMessage: could not resolve organizationId for thread ${input.threadId}`);
+  }
 
   const [row] = await db
     .insert(emailMessages)
     .values({
       threadId:           input.threadId,
-      organizationId:     organizationId ?? null,
+      organizationId,
       role:               input.role,
       bodyText:           input.bodyText ?? null,
       bodyHtml:           input.bodyHtml ?? null,
@@ -330,12 +335,18 @@ export async function appendMessage(input: {
 
 // ── AI drafts ────────────────────────────────────────────────────────────────
 
-export async function listDraftsForThread(threadId: string) {
+export async function listDraftsForThread(organizationId: string, threadId: string) {
   if (!isDbConnected()) return [] as AiDraft[];
+  // Defense-in-depth: even with a correct caller, scoping on both threadId
+  // AND organizationId means a buggy threadId from another org can never
+  // leak drafts.
   return db
     .select()
     .from(aiDrafts)
-    .where(eq(aiDrafts.threadId, threadId))
+    .where(and(
+      eq(aiDrafts.threadId, threadId),
+      eq(aiDrafts.organizationId, organizationId),
+    ))
     .orderBy(desc(aiDrafts.generatedAt));
 }
 

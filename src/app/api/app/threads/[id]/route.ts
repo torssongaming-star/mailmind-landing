@@ -32,7 +32,7 @@ export async function GET(
 
   const [messages, drafts] = await Promise.all([
     listMessages(account.organization.id, threadId),
-    listDraftsForThread(threadId),
+    listDraftsForThread(account.organization.id, threadId),
   ]);
 
   return NextResponse.json({ thread, messages, drafts });

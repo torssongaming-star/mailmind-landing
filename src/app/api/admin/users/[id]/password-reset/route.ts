@@ -1,16 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdminApi, getAdminIdentity } from "@/lib/admin/auth";
 import { createClerkClient } from "@clerk/nextjs/server";
+import { Resend } from "resend";
 import { db } from "@/lib/db";
 import { adminAuditLogs } from "@/lib/db/schema";
 
 /**
  * POST /api/admin/users/[id]/password-reset
- * 
- * Triggers a password reset instruction email from Clerk.
+ *
+ * Generates a 15-minute Clerk sign-in token, emails it to the user via
+ * Resend, and audits the action. From there the user can sign in and
+ * reset their password from account settings.
+ *
+ * Previous behaviour: returned success but only wrote an audit row —
+ * no email was sent, admin was misled into thinking the user had been
+ * notified. Now the route either truly delivers the email or fails loud.
  */
 export async function POST(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -18,35 +25,67 @@ export async function POST(
     await requireAdminApi();
     const admin = await getAdminIdentity();
     if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
-    
-    const userId = id;
-    const user = await clerk.users.getUser(userId);
 
-    // Trigger password reset email via Clerk
-    // Note: In newer Clerk versions, we send a password reset email invitation
-    // or use the 'createPasswordReset' flow if available.
-    // For now, we'll use the invite to reset flow if applicable, 
-    // but the most reliable way to "trigger" it is via the resetPasswordEmail method.
-    
-    // Clerk SDK doesn't always expose a direct "sendResetEmail" method anymore, 
-    // it's often handled via the frontend reset flow. 
-    // However, we can create a sign-in token or simply log that we've instructed the user.
-    
-    // As per user request: "Skickar instruktioner för lösenordsåterställning. Vi kan inte se eller ändra användarens lösenord."
-    
-    // We log it here.
-    await db.insert(adminAuditLogs).values({
-      actorClerkUserId: admin.clerkUserId,
-      actorEmail: admin.email || "unknown",
-      action: "password_reset_requested",
-      targetClerkUserId: userId,
-      metadata: { target_email: user.emailAddresses[0]?.emailAddress },
+    const clerk = createClerkClient({ secretKey: process.env.CLERK_SECRET_KEY });
+    const user = await clerk.users.getUser(id);
+    const targetEmail = user.emailAddresses[0]?.emailAddress;
+    if (!targetEmail) {
+      return NextResponse.json({ error: "User has no email address on file" }, { status: 400 });
+    }
+
+    // Clerk one-time sign-in token, valid 15 min.
+    const token = await clerk.signInTokens.createSignInToken({
+      userId:           id,
+      expiresInSeconds: 60 * 15,
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      message: "Password reset instructions logged and requested via audit log." 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://mailmind.se";
+    const signInUrl = `${appUrl}/login?__clerk_ticket=${encodeURIComponent(token.token)}`;
+
+    // Deliver via Resend. If this fails we DON'T claim success — the admin
+    // must know the user wasn't actually notified.
+    const apiKey   = process.env.RESEND_API_KEY;
+    const fromAddr = process.env.DEMO_REQUEST_FROM ?? "Mailmind <noreply@mailmind.se>";
+    if (!apiKey) {
+      return NextResponse.json({ error: "RESEND_API_KEY missing — cannot send email" }, { status: 500 });
+    }
+    const resend = new Resend(apiKey);
+    const { error: sendErr } = await resend.emails.send({
+      from:    fromAddr,
+      to:      targetEmail,
+      replyTo: process.env.SUPPORT_EMAIL_TO ?? "support@mailmind.se",
+      subject: "Återställ ditt Mailmind-lösenord",
+      text:
+        `Hej!\n\n` +
+        `En administratör har begärt en lösenordsåterställning för ditt Mailmind-konto.\n` +
+        `Klicka på länken nedan för att logga in (giltig i 15 minuter). När du är inloggad ` +
+        `kan du sätta ett nytt lösenord under Kontoinställningar.\n\n` +
+        `${signInUrl}\n\n` +
+        `Om du inte begärde detta kan du ignorera mejlet.`,
+    });
+
+    if (sendErr) {
+      console.error("[admin/password-reset] Resend failed:", sendErr);
+      return NextResponse.json(
+        { error: "Email delivery failed", detail: String(sendErr.message ?? sendErr) },
+        { status: 502 },
+      );
+    }
+
+    await db.insert(adminAuditLogs).values({
+      actorClerkUserId:  admin.clerkUserId,
+      actorEmail:        admin.email || "unknown",
+      action:            "password_reset_sent",
+      targetClerkUserId: id,
+      metadata: {
+        target_email:        targetEmail,
+        token_expires_in_s:  900,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      message: "Återställnings-mejl skickat. Länken är giltig i 15 minuter.",
     });
   } catch (error) {
     console.error("Password reset error:", error);
