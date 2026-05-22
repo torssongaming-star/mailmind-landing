@@ -63,6 +63,12 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    const existingList = await listCaseTypes(account.organization.id);
+    const exists = existingList.some(c => c.slug === parsed.data.slug);
+    if (!exists && existingList.length >= 30) {
+      return NextResponse.json({ error: "Maximum number of case types (30) reached." }, { status: 400 });
+    }
+
     const [row] = await db
       .insert(caseTypes)
       .values({

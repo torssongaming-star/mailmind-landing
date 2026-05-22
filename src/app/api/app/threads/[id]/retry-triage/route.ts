@@ -10,7 +10,6 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
 import { db, isDbConnected, aiSettings } from "@/lib/db";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { getThread, listMessages, updateThread, getAiSettings, defaultAiSettings } from "@/lib/app/threads";

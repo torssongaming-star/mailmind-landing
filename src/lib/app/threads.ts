@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Thread + message + AI draft repository.
  *
  * All reads/writes scoped to organizationId — the route handlers must never
@@ -273,7 +273,7 @@ export async function searchThreads(
 
 export async function listMessages(organizationId: string, threadId: string) {
   if (!isDbConnected()) return [] as EmailMessage[];
-  return db
+  const msgs = await db
     .select()
     .from(emailMessages)
     .where(and(
@@ -281,7 +281,10 @@ export async function listMessages(organizationId: string, threadId: string) {
       // Defense-in-depth — a buggy threadId from another org can never leak rows.
       eq(emailMessages.organizationId, organizationId),
     ))
-    .orderBy(asc(emailMessages.sentAt));
+    .orderBy(desc(emailMessages.sentAt))
+    .limit(50);
+  
+  return msgs.reverse();
 }
 
 export async function appendMessage(input: {

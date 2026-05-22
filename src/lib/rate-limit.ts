@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Distributed rate limiter backed by Upstash Redis (sliding window).
  *
  * When UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN are not set the
@@ -99,7 +99,7 @@ function _inMemoryLimit(key: string, opts: RateLimitOptions): boolean {
  * Returns true if the request is allowed, false if rate-limited.
  * Uses Upstash Redis when configured; falls back to in-memory token bucket.
  */
-export async function rateLimit(key: string, opts: RateLimitOptions): Promise<boolean> {
+export async function rateLimit(key: string, opts: RateLimitOptions, failOpen = true): Promise<boolean> {
   if (!getRedis()) {
     return _inMemoryLimit(key, opts);
   }
@@ -107,9 +107,12 @@ export async function rateLimit(key: string, opts: RateLimitOptions): Promise<bo
     const { success } = await getLimiter(opts).limit(key);
     return success;
   } catch (err) {
-    // Redis unavailable — fail open so a Redis outage doesn't take down the app
-    console.error("[rate-limit] Redis error, failing open:", err);
-    return true;
+    if (failOpen) {
+      console.error("[rate-limit] Redis error, failing open:", err);
+      return true;
+    }
+    console.error("[rate-limit] Redis error, failing closed:", err);
+    return false;
   }
 }
 

@@ -25,7 +25,7 @@
  * the Clerk middleware. proxy.ts must continue to exclude /api/webhooks/*.
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { Webhook } from "svix";
 import {
   getInboxByEmail,
@@ -38,6 +38,7 @@ import {
 import { autoTriageNewMessage } from "@/lib/app/autoTriage";
 import { writeAuditLog } from "@/lib/app/audit";
 import { isBlocked } from "@/lib/app/blocklist";
+import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -118,11 +119,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Could not parse from/to" }, { status: 400 });
   }
 
-  // Inbox lookup — bail early on unknown recipients, no body fetch needed.
   const inbox = await getInboxByEmail(toEmail);
   if (!inbox) {
     console.warn("[inbound] no inbox registered for masked address");
     return NextResponse.json({ status: "no_inbox" });
+  }
+
+  if (!(await rateLimit(`inbound:${inbox.id}`, RATE_LIMITS.inboundWebhook, false))) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
   // Blocklist — drop blocked senders without fetching body.
@@ -211,26 +215,24 @@ export async function POST(req: NextRequest) {
       threadId: thread.id,
       from:     fromEmail,
       to:       toEmail,
-      subject,
       source:   "resend_inbound",
       emailId,
     },
   });
 
-  // Auto-triage — must await on Vercel serverless so the function doesn't
-  // terminate before the AI call completes. The AI service has its own 15s
-  // timeout, well under Resend's webhook timeout.
-  const triageResult = await autoTriageNewMessage({
-    organizationId: inbox.organizationId,
-    threadId:       thread.id,
-    newEmailBody:   bodyText || (bodyHtml ?? ""),
+  // Auto-triage — move to background so Resend gets an immediate 200 OK.
+  after(async () => {
+    await autoTriageNewMessage({
+      organizationId: inbox.organizationId,
+      threadId:       thread!.id,
+      newEmailBody:   bodyText || (bodyHtml ?? ""),
+    });
   });
 
   return NextResponse.json({
     status:   "ok",
     threadId: thread.id,
-    draftId:  triageResult.ok ? triageResult.draftId : null,
-    triage:   triageResult.ok ? "generated" : `skipped: ${triageResult.reason}`,
+    triage:   "queued_in_background",
   });
 }
 

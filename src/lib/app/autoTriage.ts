@@ -90,6 +90,7 @@ export async function autoTriageNewMessage(input: {
   // Compute access — passing a stub user since this is a system-triggered call
   const access = computeAccess({
     user:         { id: "system", clerkUserId: "", organizationId, email: "", role: "owner", locale: "sv", signature: null, appendSignature: true, createdAt: new Date(), updatedAt: new Date() },
+    organization: orgRow,
     subscription: subRow,
 
     entitlements: entitlementsRow,
@@ -147,7 +148,6 @@ export async function autoTriageNewMessage(input: {
       metadata: {
         threadId,
         fromEmail: thread.fromEmail,
-        subject:   thread.subject,
         layer:     bulkSignal.layer,
         reason:    bulkSignal.reason,
       },
@@ -171,7 +171,6 @@ export async function autoTriageNewMessage(input: {
       metadata: {
         threadId,
         reason: "prompt_injection_detected",
-        snippet: newEmailBody.slice(0, 200),
       },
     });
   }
@@ -247,7 +246,6 @@ export async function autoTriageNewMessage(input: {
       metadata: {
         threadId,
         fromEmail: thread.fromEmail,
-        subject:   thread.subject,
         layer:     "ai_ignore",
         reason:    ai.output.reason,
       },
