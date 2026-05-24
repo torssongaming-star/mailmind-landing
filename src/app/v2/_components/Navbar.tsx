@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useAuth } from "@clerk/nextjs";
 import { Mail, ArrowRight, Menu, X } from "lucide-react";
 
 const NAV = [
@@ -14,7 +13,6 @@ const NAV = [
 ];
 
 export function Navbar() {
-  const { isSignedIn } = useAuth();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -65,22 +63,12 @@ export function Navbar() {
 
           {/* Actions */}
           <div className="flex items-center gap-2">
-            {isSignedIn ? (
-              <Link
-                href="/app"
-                className="hidden md:inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs text-white/70 hover:text-white hover:bg-white/[0.04] transition-colors"
-              >
-                Öppna app
-                <ArrowRight size={12} />
-              </Link>
-            ) : (
-              <Link
-                href="/login"
-                className="hidden md:inline-flex items-center h-8 px-3 rounded-lg text-xs text-white/70 hover:text-white hover:bg-white/[0.04] transition-colors"
-              >
-                Logga in
-              </Link>
-            )}
+            <Link
+              href="/login"
+              className="hidden md:inline-flex items-center h-8 px-3 rounded-lg text-xs text-white/70 hover:text-white hover:bg-white/[0.04] transition-colors"
+            >
+              Logga in
+            </Link>
             <Link
               href="/try"
               className="hidden md:inline-flex items-center gap-1.5 h-8 px-3.5 rounded-lg border border-primary/30 text-xs font-semibold text-primary hover:bg-primary/10 transition-colors"
@@ -121,11 +109,11 @@ export function Navbar() {
               </a>
             ))}
             <Link
-              href={isSignedIn ? "/app" : "/login"}
+              href="/login"
               onClick={() => setOpen(false)}
               className="text-base text-white/80 hover:text-white py-3 border-b border-white/8 transition-colors"
             >
-              {isSignedIn ? "Öppna app" : "Logga in"}
+              Logga in
             </Link>
             <Link
               href="/try"

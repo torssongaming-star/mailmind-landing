@@ -1,11 +1,19 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import dynamic from "next/dynamic";
 import { upsertKnowledgeArticleAction } from "@/lib/admin/actions";
 import { useRouter } from "next/navigation";
 import { Save, Send, Archive, ChevronLeft, Eye, Loader2, Edit } from "lucide-react";
 import Link from "next/link";
-import ReactMarkdown from "react-markdown";
+// react-markdown is ~124 KB minified and only needed when the user clicks
+// "Preview". Keep it out of the editor's initial chunk by loading it on demand.
+const ReactMarkdown = dynamic(() => import("react-markdown"), {
+  ssr: false,
+  loading: () => (
+    <div className="text-xs text-slate-500 italic">Laddar förhandsvisning…</div>
+  ),
+});
 import { cn } from "@/lib/utils";
 import { AdminKnowledgeArticle } from "@/lib/db/schema";
 

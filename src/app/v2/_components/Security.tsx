@@ -1,5 +1,3 @@
-"use client";
-
 import { Lock, Globe, ShieldCheck, Eye } from "lucide-react";
 import Link from "next/link";
 

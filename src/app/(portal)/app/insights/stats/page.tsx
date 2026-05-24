@@ -20,7 +20,11 @@ import {
   getAutoVsManualSent,
   getAiQualityMetrics,
 } from "@/lib/app/stats";
-import { DailyThreadsChart } from "./DailyThreadsChart";
+// Lazy client wrapper around DailyThreadsChart — keeps recharts (~351 KB) in
+// a code-split chunk loaded only when this route renders on the client.
+// Wrapper is needed because `next/dynamic` with `ssr: false` isn't allowed in
+// Server Components, and this page is async/server.
+import { LazyDailyThreadsChart } from "./LazyDailyThreadsChart";
 import { getTranslations } from "@/lib/i18n";
 import { getUserLocale } from "@/lib/i18n/get-locale";
 
@@ -74,7 +78,7 @@ export default async function StatsPage() {
           {t("portal.stats.charts.dailyThreads")}
         </h2>
         <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-5">
-          <DailyThreadsChart data={dailyThreads} />
+          <LazyDailyThreadsChart data={dailyThreads} />
         </div>
       </section>
 

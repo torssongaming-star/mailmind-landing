@@ -1,5 +1,3 @@
-"use client";
-
 import { Mail, Clock, AlertTriangle } from "lucide-react";
 
 const PROBLEMS = [

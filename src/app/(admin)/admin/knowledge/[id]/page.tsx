@@ -2,7 +2,7 @@ import { getKnowledgeArticle } from "@/lib/admin/queries";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ChevronLeft, Edit, User, Tag, Clock } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import { LazyMarkdown } from "@/components/admin/LazyMarkdown";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -93,7 +93,7 @@ export default async function KnowledgeArticlePage({ params }: { params: Promise
         </div>
 
         <div className="prose prose-invert prose-lg max-w-none prose-headings:text-white prose-headings:font-bold prose-headings:tracking-tight prose-strong:text-primary prose-a:text-primary hover:prose-a:text-cyan-300 prose-img:rounded-2xl">
-          <ReactMarkdown>{article.content}</ReactMarkdown>
+          <LazyMarkdown>{article.content}</LazyMarkdown>
         </div>
       </main>
     </div>

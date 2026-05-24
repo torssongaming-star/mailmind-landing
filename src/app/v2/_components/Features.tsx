@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Sparkles, Tag, BookOpen, ShieldCheck, MessageCircle, Globe, Inbox, FileText,
 } from "lucide-react";
