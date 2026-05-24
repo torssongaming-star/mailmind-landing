@@ -29,6 +29,10 @@ logs
 .env*.local
 .env
 
+# archive — never commit real credentials
+_arkiv/**/.env
+_arkiv/**/.env.*
+
 # vercel
 .vercel
 

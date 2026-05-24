@@ -168,7 +168,7 @@ Extrahera SÅ MÅNGA poster som finns på sidan — minst 10, gärna 30+. Frågo
       );
     }
   } catch {
-    return NextResponse.json({ error: "AI returned invalid JSON", raw }, { status: 500 });
+    return NextResponse.json({ error: "AI returned invalid JSON" }, { status: 500 });
   }
 
   if (entries.length === 0) {

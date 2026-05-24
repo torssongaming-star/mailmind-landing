@@ -196,6 +196,7 @@ export async function POST(req: NextRequest) {
 
   const now = new Date();
   await appendMessage({
+    organizationId:    inbox.organizationId,
     threadId:          thread.id,
     role:              "customer",
     bodyText:          bodyText || (bodyHtml ?? ""),

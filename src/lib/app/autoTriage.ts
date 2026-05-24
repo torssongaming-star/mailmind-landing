@@ -173,6 +173,9 @@ export async function autoTriageNewMessage(input: {
         reason: "prompt_injection_detected",
       },
     });
+    // Do NOT call the AI — log and surface for human review.
+    await updateThread(organizationId, threadId, { triageFailed: true }).catch(() => {});
+    return { ok: false, reason: "prompt_injection_detected" };
   }
 
   // Generate

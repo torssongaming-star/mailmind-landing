@@ -5,20 +5,21 @@
  * Configure in SendGrid:
  *   Settings → Inbound Parse → Add Host & URL
  *   Hostname: mail.mailmind.se
- *   URL: https://mailmind.se/api/webhooks/sendgrid/inbound
+ *   URL: https://mailmind.se/api/webhooks/sendgrid/inbound?token=<SENDGRID_INBOUND_SECRET>
  *   POST the raw, full MIME message: OFF (we want the parsed form)
  *
- * Routing:
- *   1. Extract `to` address from the form data
- *   2. Look up the matching inbox (globally unique email)
- *   3. Find or create thread (by external_thread_id if provided, else new)
- *   4. Append the customer message
- *   5. Auto-trigger AI draft via autoTriageNewMessage
+ * Auth:
+ *   Shared-secret token in query parameter (see §1 in POST handler).
+ *   Set SENDGRID_INBOUND_SECRET in Vercel; append the same value as ?token= to
+ *   the URL above. SendGrid Inbound Parse does not support ECDSA signatures.
  *
- * The endpoint is intentionally unauthenticated (SendGrid doesn't sign these
- * by default). We rely on:
- *   - Address ownership: only emails to known inboxes route to an org
- *   - Optional shared secret in URL or X-Mailmind-Secret header (TODO)
+ * Routing:
+ *   1. Verify ?token= against SENDGRID_INBOUND_SECRET (constant-time)
+ *   2. Extract `to` address from the form data
+ *   3. Look up the matching inbox (globally unique email)
+ *   4. Find or create thread (by external_thread_id if provided, else new)
+ *   5. Append the customer message
+ *   6. Auto-trigger AI draft via autoTriageNewMessage
  *
  * MUST be excluded from Clerk middleware (it is — proxy.ts only protects
  * /dashboard, /app, /api/billing, /api/app).
@@ -38,6 +39,7 @@ import { writeAuditLog } from "@/lib/app/audit";
 import { isBlocked } from "@/lib/app/blocklist";
 import { isSystemSender } from "@/lib/app/system-senders";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { constantTimeEquals } from "@/lib/env";
 
 export const runtime = "nodejs";
 
@@ -111,68 +113,35 @@ function pickMailmindAddress(toHeader: string): string | null {
   return candidates.length > 0 ? extractEmail(candidates[0]) : null;
 }
 
-import crypto from "crypto";
-
-function verifySendGridSignature(
-  publicKey: string,
-  signature: string,
-  timestamp: string,
-  payload: string
-): boolean {
-  try {
-    const verifier = crypto.createVerify("sha256");
-    verifier.update(timestamp + payload);
-    const key = `-----BEGIN PUBLIC KEY-----\n${publicKey}\n-----END PUBLIC KEY-----`;
-    return verifier.verify(key, signature, "base64");
-  } catch (err) {
-    console.error("[inbound] signature verification error:", err);
-    return false;
-  }
-}
-
 export async function POST(req: NextRequest) {
-  // 1. Signature Verification — HMAC is REQUIRED in prod (Fas 19 hardening).
-  //    The previous query-param fallback leaked secrets in URL logs and is
-  //    no longer accepted. Set SENDGRID_WEBHOOK_VERIFICATION_KEY in Vercel.
+  // 1. Auth — shared-secret token in URL query parameter.
   //
-  //    Exception: ALLOW_UNSIGNED_INBOUND=1 may be set in non-prod environments
-  //    only (e.g. local dev with curl). Refuses to engage if NODE_ENV=production.
-  const publicKey = process.env.SENDGRID_WEBHOOK_VERIFICATION_KEY;
-  const signature = req.headers.get("x-twilio-email-event-webhook-signature");
-  const timestamp = req.headers.get("x-twilio-email-event-webhook-timestamp");
+  //    SendGrid Inbound Parse does NOT support ECDSA signatures (those belong
+  //    to the Event Webhook product only). The `x-twilio-email-event-webhook-*`
+  //    headers are never sent by the Inbound Parse service, so any ECDSA check
+  //    here either silently passes (key unset) or rejects all real emails (key set).
+  //
+  //    Correct approach: append a random secret to the webhook URL in SendGrid:
+  //      https://mailmind.se/api/webhooks/sendgrid/inbound?token=<secret>
+  //    SendGrid preserves query parameters on POST, so the token travels with
+  //    every request. Set SENDGRID_INBOUND_SECRET in Vercel to match.
+  //
+  //    Local dev: set ALLOW_UNSIGNED_INBOUND=1 (blocked in NODE_ENV=production).
+  const secret   = process.env.SENDGRID_INBOUND_SECRET;
+  const provided = req.nextUrl.searchParams.get("token");
 
   const allowUnsigned =
     process.env.ALLOW_UNSIGNED_INBOUND === "1" &&
     process.env.NODE_ENV !== "production";
 
-  if (!publicKey) {
+  if (!secret) {
     if (!allowUnsigned) {
-      console.error("[inbound] SENDGRID_WEBHOOK_VERIFICATION_KEY not configured");
+      console.error("[inbound] SENDGRID_INBOUND_SECRET not configured");
       return NextResponse.json({ error: "misconfigured" }, { status: 500 });
     }
-  } else {
-    if (!signature || !timestamp) {
-      console.warn("[inbound] missing signature or timestamp headers");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const rawBody = await req.clone().text();
-    const isValid = verifySendGridSignature(publicKey, signature, timestamp, rawBody);
-
-    if (!isValid) {
-      console.warn("[inbound] invalid signature");
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Reject replays — timestamp must be within ±5 minutes of now
-    const ts = Number.parseInt(timestamp, 10);
-    if (Number.isFinite(ts)) {
-      const skew = Math.abs(Date.now() / 1000 - ts);
-      if (skew > 300) {
-        console.warn("[inbound] timestamp skew too large:", skew);
-        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-      }
-    }
+  } else if (!constantTimeEquals(provided, secret)) {
+    console.warn("[inbound] missing or invalid token");
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   let payload: Record<string, string>;
