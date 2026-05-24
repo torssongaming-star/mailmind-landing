@@ -36,6 +36,7 @@ import {
   updateThread,
 } from "@/lib/app/threads";
 import { autoTriageNewMessage } from "@/lib/app/autoTriage";
+import { enqueueAutoTriage } from "@/lib/queue";
 import { writeAuditLog } from "@/lib/app/audit";
 import { isBlocked } from "@/lib/app/blocklist";
 import { isSystemSender } from "@/lib/app/system-senders";
@@ -263,18 +264,28 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  // Use after() so we ack SendGrid immediately (avoid 30s timeout + duplicate
-  // retries) while the Anthropic call continues on the warm lambda.
-  after(() =>
-    autoTriageNewMessage({
-      organizationId: inbox.organizationId,
-      threadId:       thread.id,
-      newEmailBody:   bodyText,
-    }).catch(err => {
-      Sentry.captureException(err, { tags: { component: "webhook-sendgrid" } });
-      console.error("[inbound] autoTriage failed", err);
-    })
-  );
+  // Auto-triage — prefer the durable QStash queue (retries + DLQ + dashboard).
+  // Falls back to after() when QSTASH_TOKEN isn't set so local dev / preview
+  // deploys keep working without QStash. Either way SendGrid is acked
+  // immediately to avoid 30s timeout + duplicate retries.
+  const triageThreadId = thread.id;
+  const enqueued = await enqueueAutoTriage({
+    organizationId: inbox.organizationId,
+    threadId:       triageThreadId,
+    newEmailBody:   bodyText,
+  });
+  if (!enqueued.queued) {
+    after(() =>
+      autoTriageNewMessage({
+        organizationId: inbox.organizationId,
+        threadId:       triageThreadId,
+        newEmailBody:   bodyText,
+      }).catch(err => {
+        Sentry.captureException(err, { tags: { component: "webhook-sendgrid" } });
+        console.error("[inbound] autoTriage fallback failed", err);
+      })
+    );
+  }
 
   return NextResponse.json({ status: "ok", threadId: thread.id });
 }

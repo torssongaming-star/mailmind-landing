@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
+import { randomUUID } from "crypto";
+import { put } from "@vercel/blob";
+import * as Sentry from "@sentry/nextjs";
 import { db, isDbConnected, signatureAssets } from "@/lib/db";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 
@@ -10,6 +13,10 @@ export const runtime = "nodejs";
  *
  * Secure, Clerk-authenticated endpoint to receive signature image uploads.
  * Restricts access to authenticated users with provisioned organizations.
+ *
+ * Image bytes go to Vercel Blob; the DB row only stores metadata + the blob
+ * URL. Legacy rows still using the base64 `data` column are read transparently
+ * by the public serve route.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -65,7 +72,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Convert file content to Base64
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
@@ -79,28 +85,65 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const base64Data = buffer.toString("base64");
+    // Sanitize the filename for the blob path: only allow alphanumeric, dot,
+    // hyphen. Anything else (spaces, unicode, slashes) becomes `_`. Cap at
+    // 100 chars so we never produce an absurdly long blob key.
+    const safeFileName = (file.name || "signature_image")
+      .replace(/[^a-zA-Z0-9.\-]/g, "_")
+      .slice(0, 100);
 
-    // Insert signature asset into the database
+    // Upload to Vercel Blob. We include a UUID in the path so we own
+    // collision avoidance and don't need Blob's addRandomSuffix.
+    let blobUrl: string;
+    try {
+      const blob = await put(
+        `signatures/${account.organization.id}/${randomUUID()}-${safeFileName}`,
+        buffer,
+        {
+          access: "public",
+          contentType: file.type,
+          addRandomSuffix: false, // we already include a uuid
+        },
+      );
+      blobUrl = blob.url;
+    } catch (blobError) {
+      Sentry.captureException(blobError, {
+        tags: { component: "signature-upload", step: "blob-put" },
+      });
+      console.error("Signature image blob upload error:", blobError);
+      return NextResponse.json(
+        {
+          error:
+            "Signature storage unavailable. Set BLOB_READ_WRITE_TOKEN in your Vercel project (Storage → Create Blob → Copy token).",
+        },
+        { status: 500 },
+      );
+    }
+
+    // Insert signature asset metadata into the database. `data` stays NULL
+    // for new rows — the bytes live in Blob.
     const [inserted] = await db
       .insert(signatureAssets)
       .values({
         organizationId: account.organization.id,
         fileName: file.name || "signature_image",
         mimeType: file.type,
-        data: base64Data,
+        blobUrl,
       })
       .returning();
 
     if (!inserted) {
-      return NextResponse.json({ error: "Failed to store image in database" }, { status: 500 });
+      return NextResponse.json({ error: "Failed to store image metadata in database" }, { status: 500 });
     }
 
-    // Return the public deliverable URL
+    // Return the public deliverable URL. Same internal route as before so
+    // existing email templates referencing /api/public/signature-assets/{id}
+    // keep working — the route now 302s to the blob CDN under the hood.
     return NextResponse.json({
       url: `/api/public/signature-assets/${inserted.id}`,
     });
   } catch (error) {
+    Sentry.captureException(error, { tags: { component: "signature-upload" } });
     console.error("Signature image upload API error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }

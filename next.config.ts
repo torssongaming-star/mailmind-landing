@@ -1,5 +1,10 @@
 import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
+import bundleAnalyzer from "@next/bundle-analyzer";
+
+const withBundleAnalyzer = bundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 /**
  * Security headers — applied via Next's headers() API.
@@ -115,4 +120,4 @@ if (process.env.SENTRY_AUTH_TOKEN || !process.env.VERCEL) {
   });
 }
 
-export default configToExport;
+export default withBundleAnalyzer(configToExport);

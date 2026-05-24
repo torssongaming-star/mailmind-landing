@@ -44,6 +44,7 @@ import {
   updateInboxConfig,
 } from "@/lib/app/threads";
 import { autoTriageNewMessage } from "@/lib/app/autoTriage";
+import { enqueueAutoTriage } from "@/lib/queue";
 import { writeAuditLog } from "@/lib/app/audit";
 import { isBlocked } from "@/lib/app/blocklist";
 import { isSystemSender } from "@/lib/app/system-senders";
@@ -248,17 +249,29 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Auto-triage: use after() so the serverless function stays alive until
-      // the Anthropic call completes, even after the 200 response is sent.
-      // Without after(), Vercel may freeze the execution context mid-generation.
-      after(() =>
-        autoTriageNewMessage({
-          organizationId: inbox.organizationId,
-          threadId:       thread.id,
-          newEmailBody:   parsed.bodyText,
-          bulkHeaders:    parsed.bulkHeaders,
-        }).catch(err => log.error("autoTriage failed", { error: String(err) }))
-      );
+      // Auto-triage: prefer the durable QStash queue (retries + DLQ +
+      // dashboard). Falls back to after() when QSTASH_TOKEN isn't set so
+      // local dev and preview deploys keep working without QStash.
+      const triageThreadId = thread.id;
+      const enqueued = await enqueueAutoTriage({
+        organizationId: inbox.organizationId,
+        threadId:       triageThreadId,
+        newEmailBody:   parsed.bodyText,
+        bulkHeaders:    parsed.bulkHeaders,
+      });
+      if (!enqueued.queued) {
+        // Legacy after() path — keeps function alive until the Anthropic call
+        // completes after the 200 response is sent. Without it, Vercel may
+        // freeze the execution context mid-generation.
+        after(() =>
+          autoTriageNewMessage({
+            organizationId: inbox.organizationId,
+            threadId:       triageThreadId,
+            newEmailBody:   parsed.bodyText,
+            bulkHeaders:    parsed.bulkHeaders,
+          }).catch(err => log.error("autoTriage fallback failed", { error: String(err) }))
+        );
+      }
 
     } catch (err) {
       Sentry.captureException(err, { tags: { component: "webhook-gmail" } });

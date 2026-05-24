@@ -50,6 +50,7 @@ import {
   updateInboxConfig,
 } from "@/lib/app/threads";
 import { autoTriageNewMessage } from "@/lib/app/autoTriage";
+import { enqueueAutoTriage } from "@/lib/queue";
 import { writeAuditLog } from "@/lib/app/audit";
 import { isBlocked } from "@/lib/app/blocklist";
 import { isSystemSender } from "@/lib/app/system-senders";
@@ -246,19 +247,31 @@ async function processNotification(notification: GraphNotificationValue) {
   });
 
   // ── 6. Auto-triage ────────────────────────────────────────────────────────
-  // Use after() so the function stays alive past the response for the
-  // Anthropic call. Without it, Vercel freezes the context on 202 return.
-  after(() =>
-    autoTriageNewMessage({
-      organizationId: inbox.organizationId,
-      threadId:       thread.id,
-      newEmailBody:   parsed.bodyText,
-      bulkHeaders:    parsed.bulkHeaders,
-    }).catch(err => {
-      Sentry.captureException(err, { tags: { component: "webhook-outlook" } });
-      log.error("autoTriage failed", { error: String(err) });
-    })
-  );
+  // Prefer the durable QStash queue (retries + DLQ + dashboard). Falls back
+  // to after() when QSTASH_TOKEN isn't set so local dev / preview deploys
+  // keep working without QStash.
+  const triageThreadId = thread.id;
+  const enqueued = await enqueueAutoTriage({
+    organizationId: inbox.organizationId,
+    threadId:       triageThreadId,
+    newEmailBody:   parsed.bodyText,
+    bulkHeaders:    parsed.bulkHeaders,
+  });
+  if (!enqueued.queued) {
+    // Legacy after() path — keeps function alive past the response for the
+    // Anthropic call. Without it, Vercel freezes the context on 202 return.
+    after(() =>
+      autoTriageNewMessage({
+        organizationId: inbox.organizationId,
+        threadId:       triageThreadId,
+        newEmailBody:   parsed.bodyText,
+        bulkHeaders:    parsed.bulkHeaders,
+      }).catch(err => {
+        Sentry.captureException(err, { tags: { component: "webhook-outlook" } });
+        log.error("autoTriage fallback failed", { error: String(err) });
+      })
+    );
+  }
 
   // ── 7. Persist updated tokens ─────────────────────────────────────────────
   await updateInboxConfig(inbox.id, {

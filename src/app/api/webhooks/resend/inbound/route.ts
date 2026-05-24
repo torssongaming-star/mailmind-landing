@@ -37,6 +37,7 @@ import {
   updateThread,
 } from "@/lib/app/threads";
 import { autoTriageNewMessage } from "@/lib/app/autoTriage";
+import { enqueueAutoTriage } from "@/lib/queue";
 import { writeAuditLog } from "@/lib/app/audit";
 import { isBlocked } from "@/lib/app/blocklist";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
@@ -223,19 +224,35 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  // Auto-triage — move to background so Resend gets an immediate 200 OK.
-  after(async () => {
-    await autoTriageNewMessage({
-      organizationId: inbox.organizationId,
-      threadId:       thread!.id,
-      newEmailBody:   bodyText || (bodyHtml ?? ""),
-    });
+  // Auto-triage — prefer the durable QStash queue (retries + DLQ + dashboard).
+  // Falls back to after() when QSTASH_TOKEN isn't set so local dev / preview
+  // deploys keep working without QStash.
+  const triageBody = bodyText || (bodyHtml ?? "");
+  const triageThreadId = thread.id;
+  const enqueued = await enqueueAutoTriage({
+    organizationId: inbox.organizationId,
+    threadId:       triageThreadId,
+    newEmailBody:   triageBody,
   });
+  if (!enqueued.queued) {
+    after(async () => {
+      try {
+        await autoTriageNewMessage({
+          organizationId: inbox.organizationId,
+          threadId:       triageThreadId,
+          newEmailBody:   triageBody,
+        });
+      } catch (err) {
+        Sentry.captureException(err, { tags: { component: "webhook-resend" } });
+        console.error("[inbound] autoTriage fallback failed", err);
+      }
+    });
+  }
 
   return NextResponse.json({
     status:   "ok",
     threadId: thread.id,
-    triage:   "queued_in_background",
+    triage:   enqueued.queued ? "qstash" : "queued_in_background",
   });
 }
 

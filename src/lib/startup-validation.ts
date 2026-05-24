@@ -265,6 +265,52 @@ export function validateConfigOnStartup(): { ok: boolean; results: CheckResult[]
       reason: "Upstash Redis disabled (both unset) — in-memory rate limit in use",
     });
   }
+  // QStash trio: TOKEN is the soft-optional gate; if set, both signing keys
+  // must be present (verifySignatureAppRouter throws otherwise). If TOKEN is
+  // unset, all three may be missing and the auto-triage handler falls back to
+  // after() — fine for dev, but flag a soft warn in production so it's
+  // visible that durable triage isn't actually on.
+  const qstashTok = isSet("QSTASH_TOKEN");
+  const qstashCur = isSet("QSTASH_CURRENT_SIGNING_KEY");
+  const qstashNxt = isSet("QSTASH_NEXT_SIGNING_KEY");
+  if (qstashTok) {
+    if (!qstashCur) {
+      results.push({
+        name: "QSTASH_CURRENT_SIGNING_KEY",
+        category: "observability",
+        status: "error",
+        reason: "QSTASH_TOKEN is set so /api/jobs/triage requires signature verification — set QSTASH_CURRENT_SIGNING_KEY",
+      });
+    } else {
+      results.push({ name: "QSTASH_CURRENT_SIGNING_KEY", category: "observability", status: "ok" });
+    }
+    if (!qstashNxt) {
+      results.push({
+        name: "QSTASH_NEXT_SIGNING_KEY",
+        category: "observability",
+        status: "warn",
+        reason: "needed for QStash signing-key rotation grace — set alongside QSTASH_CURRENT_SIGNING_KEY",
+      });
+    } else {
+      results.push({ name: "QSTASH_NEXT_SIGNING_KEY", category: "observability", status: "ok" });
+    }
+    results.push({ name: "QSTASH_TOKEN", category: "observability", status: "ok" });
+  } else if (isProd()) {
+    results.push({
+      name: "QSTASH_TOKEN",
+      category: "observability",
+      status: "warn",
+      reason: "auto-triage falls back to Vercel after() in production — set QSTASH_TOKEN for durable queue + retries + DLQ",
+    });
+  } else {
+    results.push({
+      name: "QSTASH_TOKEN",
+      category: "observability",
+      status: "ok",
+      reason: "QStash disabled (unset) — auto-triage uses after() fire-and-forget fallback",
+    });
+  }
+
   results.push(
     ...pairedOptional(
       "NEXT_PUBLIC_POSTHOG_KEY",

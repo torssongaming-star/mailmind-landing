@@ -6,7 +6,12 @@ import { eq } from "drizzle-orm";
  * GET /api/public/signature-assets/[id]
  *
  * Public endpoint to fetch and serve hosted signature images.
- * Serves them as raw binary data with strong caching headers.
+ *
+ * Dual-path:
+ *   - New rows (blob_url is set): 302 redirect to Vercel Blob CDN.
+ *   - Legacy rows (data column populated, blob_url null): decode the base64
+ *     payload and return the raw bytes directly. Migrating these into Blob is
+ *     handled by `src/scripts/migrate-signatures-to-blob.ts`.
  */
 export async function GET(
   req: NextRequest,
@@ -30,6 +35,17 @@ export async function GET(
       .limit(1);
 
     if (!asset) {
+      return new NextResponse("Not Found", { status: 404 });
+    }
+
+    // Fast path — bytes live in Vercel Blob. Let the CDN serve them.
+    if (asset.blobUrl) {
+      return NextResponse.redirect(asset.blobUrl, 302);
+    }
+
+    // Legacy path — bytes are base64 in the DB row.
+    if (!asset.data) {
+      // No blob, no data — row is corrupt or mid-migration. Treat as missing.
       return new NextResponse("Not Found", { status: 404 });
     }
 

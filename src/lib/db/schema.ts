@@ -210,7 +210,10 @@ export const signatureAssets = pgTable(
     organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
     fileName:       varchar("file_name", { length: 255 }),
     mimeType:       varchar("mime_type", { length: 100 }).notNull(),
-    data:           text("data").notNull(), // Base64 representation
+    // Legacy: Base64 representation. Kept nullable for back-compat with rows
+    // uploaded before the move to Vercel Blob (see migrate-signatures-to-blob).
+    data:           text("data"),
+    blobUrl:        text("blob_url"), // Vercel Blob URL; null for legacy rows still in `data`
     createdAt:      timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
   (t) => [
