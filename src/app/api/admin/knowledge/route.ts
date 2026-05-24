@@ -9,15 +9,17 @@ import { adminKnowledgeArticles, adminAuditLogs, AdminKnowledgeArticle } from "@
  * Lists all articles
  */
 export async function GET(req: NextRequest) {
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) return NextResponse.json(adminGuard.body, { status: adminGuard.status });
+
   try {
-    await requireAdminApi();
     const { searchParams } = new URL(req.url);
     const status = searchParams.get("status") as AdminKnowledgeArticle["status"] | null;
     const category = searchParams.get("category") || undefined;
 
-    const articles = await listKnowledgeArticles({ 
-      status: status || undefined, 
-      category 
+    const articles = await listKnowledgeArticles({
+      status: status || undefined,
+      category
     });
     return NextResponse.json(articles);
   } catch {
@@ -30,8 +32,10 @@ export async function GET(req: NextRequest) {
  * Creates a new article
  */
 export async function POST(req: NextRequest) {
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) return NextResponse.json(adminGuard.body, { status: adminGuard.status });
+
   try {
-    await requireAdminApi();
     const admin = await getAdminIdentity();
     if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     const data = await req.json();

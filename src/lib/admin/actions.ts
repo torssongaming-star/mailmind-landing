@@ -33,7 +33,8 @@ export async function upsertKnowledgeArticleAction(data: {
   status?: "draft" | "published" | "archived";
   tags?: string[];
 }) {
-  await requireAdminApi();
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) throw new Error(adminGuard.body.error);
   const admin = await getAdminIdentity();
   if (!admin) throw new Error("No admin session");
 
@@ -103,7 +104,8 @@ export async function upsertKnowledgeArticleAction(data: {
  * Publishes a knowledge article.
  */
 export async function publishKnowledgeArticleAction(id: string) {
-  await requireAdminApi();
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) throw new Error(adminGuard.body.error);
   const admin = await getAdminIdentity();
   if (!admin) throw new Error("No admin session");
 
@@ -136,7 +138,8 @@ export async function publishKnowledgeArticleAction(id: string) {
  * Archives a knowledge article.
  */
 export async function archiveKnowledgeArticleAction(id: string) {
-  await requireAdminApi();
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) throw new Error(adminGuard.body.error);
   const admin = await getAdminIdentity();
   if (!admin) throw new Error("No admin session");
 
@@ -174,7 +177,8 @@ export async function createAdminNoteAction(data: {
   targetClerkUserId?: string;
   targetOrganizationId?: string;
 }) {
-  await requireAdminApi();
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) throw new Error(adminGuard.body.error);
   const admin = await getAdminIdentity();
   if (!admin) throw new Error("No admin session");
 
@@ -213,7 +217,8 @@ export async function updateCustomerStatusAction(data: {
   organizationId: string;
   status: "internal_test" | "pilot" | "active_customer" | "enterprise_lead" | "enterprise_customer" | "churned";
 }) {
-  await requireAdminApi();
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) throw new Error(adminGuard.body.error);
   const admin = await getAdminIdentity();
   if (!admin) throw new Error("No admin session");
 
@@ -256,7 +261,8 @@ export async function updateCustomerStatusAction(data: {
  * NOTE: For MVP, we'll log it and let the client call the Clerk SDK or our API.
  */
 export async function logPasswordResetAction(targetClerkUserId: string, email: string) {
-  await requireAdminApi();
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) throw new Error(adminGuard.body.error);
   const admin = await getAdminIdentity();
   if (!admin) throw new Error("No admin session");
 
@@ -311,7 +317,8 @@ export async function provisionCustomerAction(data: {
   aiTone: "formal" | "friendly" | "neutral";
   notes?: string;
 }) {
-  await requireAdminApi();
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) throw new Error(adminGuard.body.error);
   const admin = await getAdminIdentity();
   if (!admin) throw new Error("No admin session");
 
@@ -445,7 +452,8 @@ export async function createCustomerAction(data: {
  * Upserts ai_settings if the row doesn't exist yet.
  */
 export async function toggleDryRunAction(orgId: string, enabled: boolean) {
-  await requireAdminApi();
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) throw new Error(adminGuard.body.error);
   const admin = await getAdminIdentity();
   if (!admin) throw new Error("No admin session");
 
@@ -488,7 +496,8 @@ export async function toggleDryRunAction(orgId: string, enabled: boolean) {
  * Safety gate: caller should verify approved >= DRY_RUN_THRESHOLD before calling.
  */
 export async function toggleAutoSendAction(orgId: string, enabled: boolean) {
-  await requireAdminApi();
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) throw new Error(adminGuard.body.error);
   const admin = await getAdminIdentity();
   if (!admin) throw new Error("No admin session");
 
@@ -528,7 +537,8 @@ export async function toggleAutoSendAction(orgId: string, enabled: boolean) {
  * Only counts approved drafts toward the DRY_RUN_THRESHOLD.
  */
 export async function reviewDryRunDraftAction(draftId: string, orgId: string, approved: boolean) {
-  await requireAdminApi();
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) throw new Error(adminGuard.body.error);
   const admin = await getAdminIdentity();
   if (!admin) throw new Error("No admin session");
 
@@ -565,7 +575,8 @@ export async function reviewDryRunDraftAction(draftId: string, orgId: string, ap
  * Adds an internal note to an organization.
  */
 export async function createOrgNoteAction(orgId: string, content: string) {
-  await requireAdminApi();
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) throw new Error(adminGuard.body.error);
   const admin = await getAdminIdentity();
   if (!admin) throw new Error("No admin session");
 
@@ -592,7 +603,8 @@ export async function upsertOrgProfileAction(orgId: string, data: {
   status:  OrgStatus;
   summary?: string;
 }) {
-  await requireAdminApi();
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) throw new Error(adminGuard.body.error);
   const admin = await getAdminIdentity();
   if (!admin) throw new Error("No admin session");
 
@@ -641,7 +653,8 @@ export async function createPilotLeadAction(data: {
   summary?:     string;
   status:       OrgStatus;
 }) {
-  await requireAdminApi();
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) throw new Error(adminGuard.body.error);
   const admin = await getAdminIdentity();
   if (!admin) throw new Error("No admin session");
 
@@ -679,7 +692,8 @@ export async function updatePilotLeadAction(id: string, data: {
   status:         OrgStatus;
   nextFollowUpAt?: Date | null;
 }) {
-  await requireAdminApi();
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) throw new Error(adminGuard.body.error);
   const admin = await getAdminIdentity();
   if (!admin) throw new Error("No admin session");
 

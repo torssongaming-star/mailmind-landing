@@ -380,6 +380,8 @@ export const emailThreads = pgTable(
     // P2.3 — defense-in-depth filter for "from this customer" queries
     index("email_threads_org_from_idx").on(t.organizationId, t.fromEmail),
     index("email_threads_tags_gin").using("gin", t.tags),
+    // Composite index for retention purge query: status IN (...) AND lastMessageAt < horizon
+    index("email_threads_status_last_msg_idx").on(t.status, t.lastMessageAt),
   ]
 );
 
@@ -467,6 +469,11 @@ export const aiDrafts = pgTable(
   (t) => [
     index("ai_drafts_thread_idx").on(t.threadId, t.generatedAt),
     index("ai_drafts_org_status_idx").on(t.organizationId, t.status),
+    // Prevents two concurrent pending/edited drafts for the same thread (TOCTOU).
+    // Partial: only one pending or edited draft per thread at any time.
+    uniqueIndex("ai_drafts_pending_one_per_thread_idx")
+      .on(t.threadId)
+      .where(sql`status IN ('pending', 'edited')`),
   ]
 );
 

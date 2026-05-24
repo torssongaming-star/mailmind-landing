@@ -256,18 +256,18 @@ async function taskRenewOutlookSubscriptions() {
   let skipped = 0;
   const errors: string[] = [];
 
-  for (const inbox of outlookInboxes) {
+  await Promise.allSettled(outlookInboxes.map(async (inbox) => {
     const config = inbox.config as (OutlookInboxConfig & { renewalFailCount?: number }) | null;
     try {
       if (!config?.encryptedTokens || !config.subscriptionId || !config.subscriptionExpiry) {
         skipped++;
-        continue;
+        return;
       }
 
       const expiry = new Date(config.subscriptionExpiry);
       if (expiry > cutoff) {
         skipped++;
-        continue; // Not expiring soon — nothing to do
+        return; // Not expiring soon — nothing to do
       }
 
       let tokens = outlookDecryptTokens(config.encryptedTokens);
@@ -319,7 +319,7 @@ async function taskRenewOutlookSubscriptions() {
         // Never let alert failure swallow the original error
       }
     }
-  }
+  }));
 
   return { renewed, skipped, errors: errors.length > 0 ? errors : undefined };
 }

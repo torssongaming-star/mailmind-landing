@@ -32,7 +32,7 @@ import {
 } from "@/lib/app/threads";
 import { listActiveKnowledge } from "@/lib/app/knowledge";
 import { generateDraft, AiTransientError } from "@/lib/app/ai";
-import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
+import { rateLimitStrict, RATE_LIMITS } from "@/lib/rate-limit";
 import { trackEvent } from "@/lib/analytics";
 
 export const runtime = "nodejs";
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
   const orgId = account.organization.id;
 
   // Rate limit AI generation per org (60/min burst, refills at 1/sec)
-  if (!(await rateLimit(`ai:${orgId}`, RATE_LIMITS.aiDraft))) {
+  if (!(await rateLimitStrict(`ai:${orgId}`, RATE_LIMITS.aiDraft))) {
     return NextResponse.json(
       { error: "Too many AI requests. Please wait a moment." },
       { status: 429, headers: { "Retry-After": "60" } },

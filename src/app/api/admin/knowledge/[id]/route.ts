@@ -12,8 +12,10 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) return NextResponse.json(adminGuard.body, { status: adminGuard.status });
+
   try {
-    await requireAdminApi();
     const { id } = await params;
     const article = await getKnowledgeArticle(id);
     if (!article) return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -30,8 +32,10 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) return NextResponse.json(adminGuard.body, { status: adminGuard.status });
+
   try {
-    await requireAdminApi();
     const { id } = await params;
     const admin = await getAdminIdentity();
     if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });

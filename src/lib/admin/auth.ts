@@ -35,13 +35,15 @@ export async function requireMailmindAdmin() {
 
 /**
  * API-side guard for admin endpoints.
- * Throws an error or returns false if not authorized.
+ * Returns { status: 403, body: { error: string } } if not authorized, null if OK.
+ * Usage: const guard = await requireAdminApi(); if (guard) return NextResponse.json(guard.body, { status: guard.status });
  */
-export async function requireAdminApi() {
+export async function requireAdminApi(): Promise<{ status: 403; body: { error: string } } | null> {
   const isAdmin = await isMailmindAdmin();
   if (!isAdmin) {
-    throw new Error("Unauthorized: Internal Admin access required");
+    return { status: 403, body: { error: "Unauthorized: Internal Admin access required" } };
   }
+  return null;
 }
 
 /**

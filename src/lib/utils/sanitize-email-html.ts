@@ -23,7 +23,15 @@ export function sanitizeEmailHtml(rawHtml: string): string {
     // Strip the dangerous bits — DOMPurify's default deny-list is strong,
     // we only need to layer on what's specifically risky in emails.
     FORBID_TAGS: ["script", "style", "link", "iframe", "object", "embed", "form"],
-    FORBID_ATTR: ["onerror", "onload", "onclick", "onmouseover", "onfocus"],
+    // Allowlist keeps only attributes safe in email HTML.
+    // This is safer than FORBID_ATTR (which only blocks 5 of 200+ event handlers).
+    // DOMPurify already strips on* by default; explicit ALLOWED_ATTR adds defence-in-depth.
+    ALLOWED_ATTR: [
+      "href", "src", "alt", "title", "class", "id", "style",
+      "width", "height", "target", "rel",
+      "colspan", "rowspan", "align", "valign",
+      "border", "cellpadding", "cellspacing", "bgcolor", "color",
+    ],
     // Keep <a> and <img> — but URL schemes are vetted by ALLOWED_URI_REGEXP.
     ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i,
     // Don't keep the whole document, just the body content.

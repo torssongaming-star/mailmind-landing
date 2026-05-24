@@ -16,6 +16,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { requireOrgAdmin } from "@/lib/app/rbac";
 import { bulkCreateKnowledge } from "@/lib/app/knowledge";
+import { AI_MODEL } from "@/lib/app/ai";
 import { safeFetch } from "@/lib/utils/safe-fetch";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -139,7 +140,7 @@ export async function POST(req: NextRequest) {
   const client = new Anthropic({ apiKey });
 
   const response = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
+    model: AI_MODEL,
     max_tokens: 4000,
     system: `Du extraherar FAQ och prisinformation från hemsidetext.
 Returnera ENDAST giltig JSON-array utan markdown:

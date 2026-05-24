@@ -218,6 +218,7 @@ Fälten confidence, risk_level, source_grounded och sources är obligatoriska i 
 export function detectPromptInjection(s: string | null | undefined): boolean {
   if (!s) return false;
   const patterns = [
+    // English — classic
     /\bignore (?:all|any|the|your|previous|prior) instructions?\b/i,
     /\bdisregard (?:the |all )?(?:system|above|previous)\b/i,
     /\bnew instructions?:/i,
@@ -227,10 +228,33 @@ export function detectPromptInjection(s: string | null | undefined): boolean {
     /\bsystem prompt\b/i,
     /\b(?:override|bypass) (?:safety|filter|rules?|guidelines?)\b/i,
     /\bjailbreak\b/i,
+    // English — modern jailbreaks
+    /\bdo anything now\b/i,
+    /\bdan mode\b/i,
+    /\bact as (?:an? )?(?:unrestricted|unfiltered|uncensored)\b/i,
+    /\bpretend (?:you are|to be) (?:an? )?(?:ai|assistant|bot) (?:without|with no) (?:restrictions?|limits?|rules?|guidelines?)\b/i,
+    /\bforget (?:all |your )?(?:previous )?(?:instructions?|training|rules?|guidelines?)\b/i,
+    /\bprint (?:the |your )?(?:system|full) prompt\b/i,
+    /\brepeat (?:the )?(?:above|system|initial) (?:text|prompt|instructions?)\b/i,
+    /\bconfidential instructions?\b/i,
+    /\btoken smuggling\b/i,
+    /\bprompt injection\b/i,
     // Swedish variants
     /\b(?:ignorera|strunta i) (?:alla |dina |tidigare )?(?:instruktioner|regler)\b/i,
     /\bdu ska nu agera (?:som|enligt)\b/i,
     /\bdin nya roll är\b/i,
+    /\bglöm (?:alla |dina )?(?:tidigare |gamla )?(?:instruktioner|regler)\b/i,
+    /\bdu är nu\b/i,
+    // French variants
+    /\b(?:ignore|oublie|oublier) (?:toutes? (?:les )?)?(?:les )?instructions?\b/i,
+    /\btu es maintenant\b/i,
+    /\bnouvelles? instructions?:/i,
+    /\bagis? (?:comme|en tant que)\b/i,
+    // German variants
+    /\b(?:ignoriere|vergiss) (?:alle |deine |vorherigen )?(?:anweisungen|regeln|instruktionen)\b/i,
+    /\bdu bist jetzt\b/i,
+    /\bneue anweisungen:/i,
+    /\bverhalt(?:e)? dich (?:als?|wie)\b/i,
   ];
   return patterns.some(p => p.test(s));
 }

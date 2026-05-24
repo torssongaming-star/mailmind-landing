@@ -2,6 +2,7 @@
  * Webhook endpoint management and firing logic.
  */
 
+import crypto from "crypto";
 import { db, isDbConnected, webhookEndpoints, webhookDeliveries } from "@/lib/db";
 import { eq, and, desc } from "drizzle-orm";
 import { safeFetch } from "@/lib/utils/safe-fetch";
@@ -97,6 +98,15 @@ async function deliverWithRetry(
   return { ok: false, statusCode: lastStatusCode, error: lastError };
 }
 
+/**
+ * Signs a webhook payload with the org's secret using HMAC-SHA256.
+ * Receivers verify: HMAC-SHA256(secret, payload) === X-Mailmind-Signature value.
+ * Format follows the GitHub/Stripe convention: "sha256=<hex>".
+ */
+function signPayload(secret: string, payload: string): string {
+  return "sha256=" + crypto.createHmac("sha256", secret).update(payload, "utf8").digest("hex");
+}
+
 export async function fireWebhooksForThread(
   organizationId: string,
   thread: {
@@ -134,7 +144,11 @@ export async function fireWebhooksForThread(
     matching.map(async ep => {
       const start = Date.now();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (ep.secret) headers["X-Mailmind-Secret"] = ep.secret;
+      if (ep.secret) {
+        // HMAC-sign the payload — never send the raw secret over the wire.
+        // Receiver verifies: HMAC-SHA256(their_secret, body) === this header value.
+        headers["X-Mailmind-Signature"] = signPayload(ep.secret, payload);
+      }
 
       const result = await deliverWithRetry(ep.url, headers, payload);
 

@@ -107,6 +107,14 @@ export async function rateLimit(key: string, opts: RateLimitOptions, failOpen = 
     const { success } = await getLimiter(opts).limit(key);
     return success;
   } catch (err) {
+    // Alert Sentry so Redis failures don't silently degrade rate limiting.
+    // Dynamic import keeps Sentry out of the rate-limit module's static deps.
+    try {
+      const Sentry = await import("@sentry/nextjs");
+      Sentry.captureException(err, { tags: { component: "rate-limit", key } });
+    } catch {
+      // Sentry import or capture failed — don't let that affect the response
+    }
     if (failOpen) {
       console.error("[rate-limit] Redis error, failing open:", err);
       return true;
@@ -129,3 +137,12 @@ export const RATE_LIMITS = {
   /** Stripe checkout creation — 5 per minute per user (DoS guard on Stripe API) */
   checkout:       { capacity: 5,   refillPerSec: 5 / 60 },
 } as const;
+
+/**
+ * Like rateLimit() but always fails-closed — Redis errors are treated as
+ * rate-limited rather than allowing the request through. Use for any limit
+ * where a bypass would have financial cost (AI calls, Stripe checkout, etc.).
+ */
+export async function rateLimitStrict(key: string, opts: RateLimitOptions): Promise<boolean> {
+  return rateLimit(key, opts, false);
+}

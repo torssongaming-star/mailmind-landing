@@ -20,9 +20,11 @@ export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const adminGuard = await requireAdminApi();
+  if (adminGuard) return NextResponse.json(adminGuard.body, { status: adminGuard.status });
+
   try {
     const { id } = await params;
-    await requireAdminApi();
     const admin = await getAdminIdentity();
     if (!admin) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 

@@ -387,6 +387,7 @@ export async function POST(req: NextRequest) {
         && (h.role === "customer" || h.role === "assistant")
         && typeof h.body === "string"
       )
+      .map(h => ({ ...h, body: (h.body as string).slice(0, 2000) }))
       .slice(0, 6); // safety: cap replay length
   }
 
