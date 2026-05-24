@@ -28,7 +28,6 @@ import {
   getAiSettings,
   listMessages,
   setThreadExternalId,
-  updateInboxConfig,
 } from "./threads";
 import { sendEmail, replySubject, appendSignature, appendHtmlSignature } from "./email";
 import { textToHtml, htmlToText } from "../utils/html";
@@ -36,17 +35,18 @@ import { writeAuditLog } from "./audit";
 import {
   decryptTokens as gmailDecryptTokens,
   encryptTokens as gmailEncryptTokens,
-  getValidAccessToken as gmailGetValidAccessToken,
+  refreshAccessToken as gmailRefreshAccessToken,
   sendViaGmail,
   type GmailInboxConfig,
 } from "./gmail";
 import {
   decryptTokens as outlookDecryptTokens,
   encryptTokens as outlookEncryptTokens,
-  getValidAccessToken as outlookGetValidAccessToken,
+  refreshAccessToken as outlookRefreshAccessToken,
   sendViaOutlook,
   type OutlookInboxConfig,
 } from "./outlook";
+import { getValidAccessTokenLocked } from "./inbox-token-refresh";
 
 // ── Rule 1: confidence threshold ─────────────────────────────────────────────
 export const AUTO_SEND_CONFIDENCE_THRESHOLD = 0.90;
@@ -242,15 +242,13 @@ export async function executeSendDraft(params: {
         await revert(); return { ok: false, error: "gmail_no_tokens" };
       }
 
-      let tokens = gmailDecryptTokens(config.encryptedTokens);
-      const { token: accessToken, updated } = await gmailGetValidAccessToken(tokens);
-      if (updated) {
-        tokens = updated;
-        await updateInboxConfig(inboxRow.id, {
-          ...config,
-          encryptedTokens: gmailEncryptTokens(tokens),
-        } as Record<string, unknown>);
-      }
+      // Locked per-inbox refresh — prevents concurrent senders/webhooks from
+      // racing on Google's refresh_token endpoint and invalidating each other.
+      const { accessToken } = await getValidAccessTokenLocked(inboxRow.id, config, {
+        decrypt: gmailDecryptTokens,
+        encrypt: gmailEncryptTokens,
+        refresh: gmailRefreshAccessToken,
+      });
 
       const gmailResult = await sendViaGmail(accessToken, {
         from:          inboxEmail!,
@@ -279,15 +277,12 @@ export async function executeSendDraft(params: {
         await revert(); return { ok: false, error: "outlook_no_tokens" };
       }
 
-      let tokens = outlookDecryptTokens(config.encryptedTokens);
-      const { token: accessToken, updated } = await outlookGetValidAccessToken(tokens);
-      if (updated) {
-        tokens = updated;
-        await updateInboxConfig(inboxRow.id, {
-          ...config,
-          encryptedTokens: outlookEncryptTokens(tokens),
-        } as Record<string, unknown>);
-      }
+      // Locked per-inbox refresh — same rationale as the Gmail path above.
+      const { accessToken } = await getValidAccessTokenLocked(inboxRow.id, config, {
+        decrypt: outlookDecryptTokens,
+        encrypt: outlookEncryptTokens,
+        refresh: outlookRefreshAccessToken,
+      });
 
       const outlookResult = await sendViaOutlook(accessToken, {
         from:       inboxEmail!,

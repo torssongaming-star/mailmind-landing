@@ -23,10 +23,11 @@ import { writeAuditLog } from "@/lib/app/audit";
 import {
   decryptTokens as outlookDecryptTokens,
   encryptTokens as outlookEncryptTokens,
-  getValidAccessToken as outlookGetValidAccessToken,
+  refreshAccessToken as outlookRefreshAccessToken,
   renewMailSubscription,
   type OutlookInboxConfig,
 } from "@/lib/app/outlook";
+import { getValidAccessTokenLocked } from "@/lib/app/inbox-token-refresh";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -270,9 +271,15 @@ async function taskRenewOutlookSubscriptions() {
         return; // Not expiring soon — nothing to do
       }
 
-      let tokens = outlookDecryptTokens(config.encryptedTokens);
-      const { token: accessToken, updated } = await outlookGetValidAccessToken(tokens);
-      if (updated) tokens = updated;
+      // Locked per-inbox refresh — prevents the daily cron + a concurrent
+      // webhook from both calling Microsoft's refresh_token endpoint with
+      // the same refresh_token. Helper persists fresh tokens internally;
+      // we receive them back for the combined config write below.
+      const { accessToken, tokens } = await getValidAccessTokenLocked(inbox.id, config, {
+        decrypt: outlookDecryptTokens,
+        encrypt: outlookEncryptTokens,
+        refresh: outlookRefreshAccessToken,
+      });
 
       const newExpiry = await renewMailSubscription(accessToken, config.subscriptionId);
 

@@ -27,11 +27,12 @@ import { NextRequest, NextResponse, after } from "next/server";
 import {
   decryptTokens,
   encryptTokens,
-  getValidAccessToken,
+  refreshAccessToken,
   listHistory,
   getAndParseMessage,
   type GmailInboxConfig,
 } from "@/lib/app/gmail";
+import { getValidAccessTokenLocked } from "@/lib/app/inbox-token-refresh";
 import {
   getInboxByEmail,
   findThreadByExternalId,
@@ -150,17 +151,22 @@ export async function POST(req: NextRequest) {
   }
 
   // ── 3. Decrypt + refresh tokens if needed ─────────────────────────────────
-  let tokens = decryptTokens(config.encryptedTokens);
-  const { token: accessToken, updated } = await getValidAccessToken(tokens).catch(err => {
+  // Locked per-inbox refresh — prevents concurrent Pub/Sub deliveries from
+  // racing on Google's refresh_token endpoint. Helper persists fresh tokens
+  // internally inside the lock; we receive them back for the final write.
+  const refreshResult = await getValidAccessTokenLocked(inbox.id, config, {
+    decrypt: decryptTokens,
+    encrypt: encryptTokens,
+    refresh: refreshAccessToken,
+  }).catch(err => {
     log.error("token refresh failed", { error: String(err) });
-    return { token: null as unknown as string, updated: null };
+    return null;
   });
 
-  if (!accessToken) {
+  if (!refreshResult) {
     return NextResponse.json({ ok: true, skipped: "token_refresh_failed" });
   }
-
-  if (updated) tokens = updated;
+  const { accessToken, tokens } = refreshResult;
 
   // ── 4. Fetch history since last stored historyId ───────────────────────────
   const startHistoryId = config.historyId ?? String(newHistoryId);

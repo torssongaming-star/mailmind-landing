@@ -90,15 +90,25 @@ vi.mock("@/lib/app/audit", () => ({
 vi.mock("@/lib/app/gmail", () => ({
   decryptTokens:       vi.fn().mockReturnValue({ accessToken: "a", refreshToken: "r" }),
   encryptTokens:       vi.fn().mockReturnValue("enc"),
-  getValidAccessToken: vi.fn().mockResolvedValue({ token: "gmail-tok", updated: null }),
+  refreshAccessToken:  vi.fn().mockResolvedValue({ accessToken: "a", refreshToken: "r", expiresAt: Date.now() + 3600_000 }),
   sendViaGmail:        vi.fn().mockResolvedValue({ ok: true, messageId: "gm-1", gmailThreadId: "gt-1" }),
 }));
 
 vi.mock("@/lib/app/outlook", () => ({
   decryptTokens:       vi.fn().mockReturnValue({ accessToken: "a", refreshToken: "r" }),
   encryptTokens:       vi.fn().mockReturnValue("enc"),
-  getValidAccessToken: vi.fn().mockResolvedValue({ token: "outlook-tok", updated: null }),
+  refreshAccessToken:  vi.fn().mockResolvedValue({ accessToken: "a", refreshToken: "r", expiresAt: Date.now() + 3600_000 }),
   sendViaOutlook:      vi.fn().mockResolvedValue({ ok: true, messageId: "om-1" }),
+}));
+
+// Locked-refresh helper — bypass the lock + DB re-read in tests.
+vi.mock("@/lib/app/inbox-token-refresh", () => ({
+  getValidAccessTokenLocked: vi.fn().mockImplementation(async (_inboxId, _config, hooks) => {
+    // Default mock: return the access token from the (mocked) refresh call,
+    // matching the real helper's "refresh succeeded" branch.
+    const refreshed = await hooks.refresh({ accessToken: "stale", refreshToken: "r", expiresAt: 0 });
+    return { accessToken: refreshed.accessToken, tokens: refreshed, refreshed: true };
+  }),
 }));
 
 // ── Imported mock refs ────────────────────────────────────────────────────────

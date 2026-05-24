@@ -28,11 +28,12 @@ import { NextRequest, NextResponse, after } from "next/server";
 import {
   decryptTokens,
   encryptTokens,
-  getValidAccessToken,
+  refreshAccessToken,
   getAndParseMessage,
   getExpectedClientState,
   type OutlookInboxConfig,
 } from "@/lib/app/outlook";
+import { getValidAccessTokenLocked } from "@/lib/app/inbox-token-refresh";
 import { constantTimeEquals } from "@/lib/env";
 import { rateLimit, RATE_LIMITS } from "@/lib/rate-limit";
 import { createLogger } from "@/lib/log";
@@ -164,14 +165,20 @@ async function processNotification(notification: GraphNotificationValue) {
   if (dup) return;
 
   // ── 2. Decrypt + refresh tokens ───────────────────────────────────────────
-  let tokens = decryptTokens(config.encryptedTokens);
-  const { token: accessToken, updated } = await getValidAccessToken(tokens).catch(err => {
+  // Locked per-inbox refresh — prevents concurrent Graph notifications from
+  // racing on Microsoft's refresh_token endpoint. Helper persists fresh
+  // tokens internally; we get them back for any final config write.
+  const refreshResult = await getValidAccessTokenLocked(inbox.id, config, {
+    decrypt: decryptTokens,
+    encrypt: encryptTokens,
+    refresh: refreshAccessToken,
+  }).catch(err => {
     log.error("token refresh failed", { error: String(err) });
-    return { token: null as unknown as string, updated: null };
+    return null;
   });
 
-  if (!accessToken) return;
-  if (updated) tokens = updated;
+  if (!refreshResult) return;
+  const { accessToken, tokens } = refreshResult;
 
   // ── 4. Fetch + parse message ──────────────────────────────────────────────
   const parsed = await getAndParseMessage(accessToken, graphMessageId);
