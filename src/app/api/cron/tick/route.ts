@@ -13,6 +13,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { db, isDbConnected, organizations, users, subscriptions, licenseEntitlements, usageCounters, inboxes, emailThreads } from "@/lib/db";
 import { eq, and, lt, desc, isNotNull, inArray } from "drizzle-orm";
 import { wakeUpAllSnoozedThreads, updateInboxConfig } from "@/lib/app/threads";
@@ -28,6 +29,7 @@ import {
   type OutlookInboxConfig,
 } from "@/lib/app/outlook";
 import { getValidAccessTokenLocked } from "@/lib/app/inbox-token-refresh";
+import { mapWithConcurrency } from "@/lib/concurrency";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -110,6 +112,7 @@ async function taskExpireTrials() {
 
       expired++;
     } catch (err) {
+      Sentry.captureException(err, { tags: { component: "cron", task: "expireTrials" } });
       errors.push(String(err));
     }
   }));
@@ -170,6 +173,7 @@ async function taskUsageWarning() {
 
       sent++;
     } catch (err) {
+      Sentry.captureException(err, { tags: { component: "cron", task: "usageWarning" } });
       errors.push(String(err));
     }
   }));
@@ -221,7 +225,7 @@ async function taskWeeklyReport() {
   let skipped = 0;
   const errors: string[] = [];
 
-  await Promise.allSettled(allOrgs.map(async (org) => {
+  await mapWithConcurrency(allOrgs, 10, async (org) => {
     try {
       const stats = await getWeeklyStats(org.orgId, org.orgName);
 
@@ -234,9 +238,10 @@ async function taskWeeklyReport() {
       await notifyWeeklyReport(org.email, stats);
       sent++;
     } catch (err) {
+      Sentry.captureException(err, { tags: { component: "cron", task: "weeklyReport" } });
       errors.push(`org=${org.orgId}: ${String(err)}`);
     }
-  }));
+  });
 
   return { sent, skipped, errors: errors.length > 0 ? errors : undefined };
 }
@@ -292,6 +297,7 @@ async function taskRenewOutlookSubscriptions() {
 
       renewed++;
     } catch (err) {
+      Sentry.captureException(err, { tags: { component: "cron", task: "renewOutlookSubscriptions" } });
       errors.push(`inbox=${inbox.id}: ${String(err)}`);
 
       // Increment failure counter; alert owner on 2nd consecutive failure
@@ -360,6 +366,7 @@ async function taskPurgeDeletedOrgs() {
       await db.delete(organizations).where(eq(organizations.id, org.id));
       purged++;
     } catch (err) {
+      Sentry.captureException(err, { tags: { component: "cron", task: "purgeDeletedOrgs" } });
       errors.push(`org=${org.id}: ${String(err)}`);
     }
   }

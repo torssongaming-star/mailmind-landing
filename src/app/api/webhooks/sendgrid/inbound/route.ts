@@ -26,6 +26,7 @@
  */
 
 import { NextRequest, NextResponse, after } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import {
   getInboxByEmail,
   findThreadByExternalId,
@@ -148,6 +149,7 @@ export async function POST(req: NextRequest) {
   try {
     payload = await readPayload(req);
   } catch (err) {
+    Sentry.captureException(err, { tags: { component: "webhook-sendgrid" } });
     console.error("[inbound] failed to parse payload:", err);
     return NextResponse.json({ error: "bad payload" }, { status: 400 });
   }
@@ -268,7 +270,10 @@ export async function POST(req: NextRequest) {
       organizationId: inbox.organizationId,
       threadId:       thread.id,
       newEmailBody:   bodyText,
-    }).catch(err => console.error("[inbound] autoTriage failed", err))
+    }).catch(err => {
+      Sentry.captureException(err, { tags: { component: "webhook-sendgrid" } });
+      console.error("[inbound] autoTriage failed", err);
+    })
   );
 
   return NextResponse.json({ status: "ok", threadId: thread.id });

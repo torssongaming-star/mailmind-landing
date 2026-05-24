@@ -18,6 +18,7 @@
  */
 
 import { eq, or, and } from "drizzle-orm";
+import * as Sentry from "@sentry/nextjs";
 import { db, isDbConnected, inboxes as inboxesTable, users, aiDrafts } from "@/lib/db";
 import {
   getDraft,
@@ -166,6 +167,7 @@ export async function executeSendDraft(params: {
     try {
       await updateDraft(orgId, draftId, { status: "pending" });
     } catch (e) {
+      Sentry.captureException(e, { tags: { component: "autoSend" } });
       console.error("[autoSend] failed to revert draft status:", e);
     }
   };

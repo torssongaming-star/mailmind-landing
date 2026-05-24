@@ -25,6 +25,7 @@
  */
 
 import { NextRequest, NextResponse, after } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import {
   decryptTokens,
   encryptTokens,
@@ -111,6 +112,7 @@ export async function POST(req: NextRequest) {
     try {
       await processNotification(notification);
     } catch (err) {
+      Sentry.captureException(err, { tags: { component: "webhook-outlook" } });
       log.error("unhandled error", { error: String(err) });
     }
   }
@@ -173,6 +175,7 @@ async function processNotification(notification: GraphNotificationValue) {
     encrypt: encryptTokens,
     refresh: refreshAccessToken,
   }).catch(err => {
+    Sentry.captureException(err, { tags: { component: "webhook-outlook" } });
     log.error("token refresh failed", { error: String(err) });
     return null;
   });
@@ -251,7 +254,10 @@ async function processNotification(notification: GraphNotificationValue) {
       threadId:       thread.id,
       newEmailBody:   parsed.bodyText,
       bulkHeaders:    parsed.bulkHeaders,
-    }).catch(err => log.error("autoTriage failed", { error: String(err) }))
+    }).catch(err => {
+      Sentry.captureException(err, { tags: { component: "webhook-outlook" } });
+      log.error("autoTriage failed", { error: String(err) });
+    })
   );
 
   // ── 7. Persist updated tokens ─────────────────────────────────────────────

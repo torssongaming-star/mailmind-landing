@@ -19,6 +19,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { Webhook } from "svix";
 import { eq } from "drizzle-orm";
 import { db, isDbConnected, users, organizations } from "@/lib/db";
@@ -57,6 +58,7 @@ export async function POST(req: NextRequest) {
     const wh = new Webhook(secret);
     event = wh.verify(body, headers) as ClerkEvent;
   } catch (err) {
+    Sentry.captureException(err, { tags: { component: "webhook-clerk" } });
     console.error("[clerk-webhook] signature verification failed:", err);
     return NextResponse.json({ error: "Bad signature" }, { status: 400 });
   }
@@ -135,6 +137,7 @@ export async function POST(req: NextRequest) {
         break;
     }
   } catch (err) {
+    Sentry.captureException(err, { tags: { component: "webhook-clerk" } });
     console.error(`[clerk-webhook] error processing ${event.type}:`, err);
     return NextResponse.json({ received: true, warning: "processing error" });
   }

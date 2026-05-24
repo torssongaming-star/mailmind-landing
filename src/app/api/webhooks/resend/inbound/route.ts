@@ -26,6 +26,7 @@
  */
 
 import { NextRequest, NextResponse, after } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { Webhook } from "svix";
 import {
   getInboxByEmail,
@@ -150,6 +151,7 @@ export async function POST(req: NextRequest) {
   try {
     received = await fetchReceivedEmail(emailId);
   } catch (err) {
+    Sentry.captureException(err, { tags: { component: "webhook-resend" } });
     console.error("[inbound] failed to fetch received email:", err);
     // Return 5xx so Resend retries — the email exists, we just couldn't read it.
     return NextResponse.json({ error: "Could not fetch email body" }, { status: 502 });

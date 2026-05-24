@@ -24,6 +24,7 @@
  */
 
 import { NextRequest, NextResponse, after } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import {
   decryptTokens,
   encryptTokens,
@@ -159,6 +160,7 @@ export async function POST(req: NextRequest) {
     encrypt: encryptTokens,
     refresh: refreshAccessToken,
   }).catch(err => {
+    Sentry.captureException(err, { tags: { component: "webhook-gmail" } });
     log.error("token refresh failed", { error: String(err) });
     return null;
   });
@@ -259,6 +261,7 @@ export async function POST(req: NextRequest) {
       );
 
     } catch (err) {
+      Sentry.captureException(err, { tags: { component: "webhook-gmail" } });
       console.error(`[gmail/push] failed to process message ${gmailMsgId}:`, err);
     }
   }

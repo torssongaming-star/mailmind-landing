@@ -10,6 +10,7 @@
  */
 
 import { sql } from "drizzle-orm";
+import * as Sentry from "@sentry/nextjs";
 import {
   db,
   isDbConnected,
@@ -192,6 +193,7 @@ export async function autoTriageNewMessage(input: {
       customerHistory,
     });
   } catch (err) {
+    Sentry.captureException(err, { tags: { component: "autoTriage", organizationId } });
     if (err instanceof AiTransientError) {
       // Mark thread so users know triage failed and can retry manually.
       await updateThread(organizationId, threadId, { triageFailed: true }).catch(() => {});

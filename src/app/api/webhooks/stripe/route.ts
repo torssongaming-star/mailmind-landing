@@ -1,5 +1,6 @@
 import { stripe, getPlanFromPriceId } from "@/lib/stripe";
 import { NextRequest, NextResponse } from "next/server";
+import * as Sentry from "@sentry/nextjs";
 import { clerkClient } from "@clerk/nextjs/server";
 import * as db from "@/lib/db/queries";
 import { PLANS } from "@/lib/plans";
@@ -307,6 +308,7 @@ export async function POST(req: NextRequest) {
         break;
     }
   } catch (err) {
+    Sentry.captureException(err, { tags: { component: "webhook-stripe", event_type: event.type } });
     console.error(`[webhook/stripe] Error processing event ${event.type}:`, err);
     return NextResponse.json({ received: true, warning: "Processing error" });
   }
