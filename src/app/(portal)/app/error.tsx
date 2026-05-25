@@ -28,14 +28,14 @@ export default function AppError({
           !
         </div>
         <div>
-          <h1 className="text-xl font-bold text-white mb-2">Something went wrong</h1>
+          <h1 className="text-xl font-bold text-white mb-2">Något gick fel</h1>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            We hit an unexpected error. The team has been notified. You can try
-            again — most issues are transient.
+            Vi stötte på ett oväntat fel. Teamet är notifierat. Försök igen —
+            de flesta fel är tillfälliga.
           </p>
           {error.digest && (
             <p className="text-[10px] text-muted-foreground/50 font-mono mt-3">
-              Reference: {error.digest}
+              Referens: {error.digest}
             </p>
           )}
         </div>
@@ -44,13 +44,13 @@ export default function AppError({
             onClick={reset}
             className="px-5 py-2 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 transition-colors"
           >
-            Try again
+            Försök igen
           </button>
           <Link
             href="/app"
             className="px-5 py-2 rounded-xl border border-white/10 text-white text-sm font-semibold hover:bg-white/5 transition-colors"
           >
-            Back to app
+            Tillbaka till appen
           </Link>
         </div>
       </div>

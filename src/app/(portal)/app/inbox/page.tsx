@@ -103,7 +103,7 @@ export default async function InboxPage({
     return (
       <main className="max-w-full p-4 space-y-4">
         <header className="flex items-center justify-between">
-          <h1 className="text-xl font-bold text-white">Threads</h1>
+          <h1 className="text-xl font-bold text-white">Trådar</h1>
           <NewThreadButton compact />
         </header>
         <InboxFilters currentStatus={filterStatus} currentQuery={query} currentTag={tagFilter || undefined} counts={counts} compact />
@@ -122,9 +122,9 @@ export default async function InboxPage({
         {/* Main row: title + desktop filters + button */}
         <div className="flex items-center gap-4 px-6 py-3">
           <div className="hidden md:block">
-            <p className="text-[10px] uppercase tracking-widest text-muted-foreground leading-none mb-0.5">Inbox</p>
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground leading-none mb-0.5">Inkorg</p>
             <h1 className="text-base font-bold text-white leading-none">
-              Threads
+              Trådar
               <span className="ml-2 text-xs font-normal text-muted-foreground">
                 {threads.length}{threads.length !== all.length ? ` / ${all.length}` : ""}
               </span>
