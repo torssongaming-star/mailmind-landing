@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { AnimatedBackground } from "@/components/design-system/AnimatedBackground";
+import { RouteAwareAnimatedBackground } from "@/components/layout/RouteAwareAnimatedBackground";
 import { MotionProvider } from "@/components/layout/MotionProvider";
 import { Providers } from "@/components/layout/Providers";
 import { CookieBanner } from "@/components/layout/CookieBanner";
@@ -93,7 +93,7 @@ export default async function RootLayout({
             })
           }}
         />
-        <AnimatedBackground />
+        <RouteAwareAnimatedBackground />
         <Providers locale={locale}>
           <MotionProvider>
             {children}
