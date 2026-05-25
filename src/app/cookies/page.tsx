@@ -34,7 +34,7 @@ const LABEL: Record<string, string> = {
 
 export default function CookiesPage() {
   return (
-    <main className="min-h-screen bg-[hsl(var(--surface-base))] text-white">
+    <main className="min-h-screen bg-transparent text-white">
       <div className="mx-auto max-w-3xl px-6 py-12 md:py-16">
         <Link href="/" className="text-xs uppercase tracking-widest text-white/60 hover:text-white/85 transition-colors">
           ← Tillbaka till startsidan

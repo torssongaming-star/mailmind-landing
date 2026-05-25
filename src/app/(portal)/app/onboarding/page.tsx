@@ -52,7 +52,7 @@ export default async function OnboardingPage() {
   const suggestedOrgName = firstName ? `${firstName}'s Workspace` : `${email.split("@")[0]}'s Workspace`;
 
   return (
-    <main className="min-h-screen flex items-center justify-center p-6 bg-[hsl(var(--surface-base))] relative overflow-hidden">
+    <main className="min-h-screen flex items-center justify-center p-6 bg-transparent relative overflow-hidden">
       {/* Atmospheric glow */}
       <div
         className="absolute inset-0 pointer-events-none opacity-40"

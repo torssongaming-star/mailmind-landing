@@ -17,7 +17,7 @@ export const metadata: Metadata = {
  */
 export default function V2Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative min-h-screen bg-[hsl(var(--surface-base))] text-white antialiased">
+    <div className="relative min-h-screen bg-transparent text-white antialiased">
       {/* Subtle radial backdrop — single layer, no animation */}
       <div
         className="fixed inset-0 pointer-events-none -z-10"

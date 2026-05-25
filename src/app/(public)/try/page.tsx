@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function TryPage() {
   return (
-    <main className="min-h-screen bg-[hsl(var(--surface-base))] text-white">
+    <main className="min-h-screen bg-transparent text-white">
       {/* Atmospheric background */}
       <div
         className="fixed inset-0 pointer-events-none -z-10 opacity-40"

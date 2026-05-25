@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Användarvillkor" };
 
 export default function TermsPage() {
   return (
-    <main className="min-h-screen bg-[hsl(var(--surface-base))] text-white">
+    <main className="min-h-screen bg-transparent text-white">
       <div className="mx-auto max-w-4xl px-6 py-12 md:py-16">
         <Link
           href="/"

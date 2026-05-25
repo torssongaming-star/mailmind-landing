@@ -37,7 +37,6 @@ export function AnimatedBackground() {
   }, []);
 
   useEffect(() => {
-    if (isMobile) return; // canvas only runs on desktop
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
@@ -49,7 +48,7 @@ export function AnimatedBackground() {
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      const count = 150;
+      const count = isMobile ? 40 : 150;
 
       particles = Array.from({ length: count }).map(() => ({
         x: Math.random() * canvas.width,
@@ -105,24 +104,6 @@ export function AnimatedBackground() {
       cancelAnimationFrame(animationFrameId);
     };
   }, [isMobile]);
-
-  // Mobile: CSS-only background. Colours mirror the canvas's deep-blue palette
-  // (#030614 base, #0d2263 radial top, plus subtle blue accents) so the visual
-  // tone stays consistent without the rAF cost.
-  if (isMobile) {
-    return (
-      <div
-        className="fixed inset-0 -z-10 pointer-events-none bg-[#030614]"
-        style={{
-          backgroundImage:
-            "radial-gradient(ellipse at top, rgba(13,34,99,0.55), transparent 55%), " +
-            "radial-gradient(ellipse at bottom right, rgba(0,71,255,0.10), transparent 60%), " +
-            "radial-gradient(ellipse at bottom left, rgba(99,102,241,0.08), transparent 55%)",
-        }}
-        aria-hidden
-      />
-    );
-  }
 
   return (
     <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-[#030614]">

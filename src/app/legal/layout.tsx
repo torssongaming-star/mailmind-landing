@@ -21,7 +21,7 @@ const NAV = [
 
 export default function LegalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <main className="min-h-screen bg-[hsl(var(--surface-base))] text-white">
+    <main className="min-h-screen bg-transparent text-white">
       <div className="mx-auto max-w-6xl px-6 py-12 md:py-16 grid md:grid-cols-[220px_1fr] gap-8 md:gap-12">
         {/* Sidebar */}
         <aside className="md:sticky md:top-12 md:self-start space-y-1">

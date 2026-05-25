@@ -21,10 +21,6 @@ import { usePathname } from "next/navigation";
 import { AnimatedBackground } from "@/components/design-system/AnimatedBackground";
 
 /** Routes där AnimatedBackground INTE ska renderas. */
-const SKIP_PATHS = new Set<string>(["/"]);
-
 export function RouteAwareAnimatedBackground() {
-  const pathname = usePathname();
-  if (pathname && SKIP_PATHS.has(pathname)) return null;
   return <AnimatedBackground />;
 }

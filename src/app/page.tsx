@@ -30,11 +30,9 @@ async function detectCurrency(): Promise<Currency> {
 export default async function Home() {
   const currency = await detectCurrency();
 
-  // Samma subtila radial-bakgrund som /v2/layout.tsx — täcker root-layoutens
-  // utrymme (där RouteAwareAnimatedBackground nu hoppar över "/") så
-  // v2-komponenterna får den lugna bakgrund de designats för.
+  // Renderar V2 landing page components med global bakgrund
   return (
-    <div className="relative min-h-screen bg-[hsl(var(--surface-base))] text-white antialiased">
+    <div className="relative min-h-screen bg-transparent text-white antialiased">
       <div
         className="fixed inset-0 pointer-events-none -z-10"
         style={{
