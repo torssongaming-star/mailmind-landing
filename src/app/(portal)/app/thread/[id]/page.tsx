@@ -9,7 +9,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { getCurrentAccount } from "@/lib/app/entitlements";
-import { getThread, listMessages, listDraftsForThread, listThreadsByEmail } from "@/lib/app/threads";
+import { getThread, listMessages, listDraftsForThread, listThreadsByEmail, getAiSettings } from "@/lib/app/threads";
 import { listNotes } from "@/lib/app/notes";
 import { GenerateDraftButton } from "./GenerateDraftButton";
 import { DraftActions } from "./DraftActions";
@@ -20,6 +20,7 @@ import { TagEditor } from "./TagEditor";
 import { BlockSenderButton } from "./BlockSenderButton";
 import { DraftSources } from "@/components/app/DraftSources";
 import { ConfidenceBadge } from "@/components/app/ConfidenceBadge";
+import { DryRunBanner } from "@/components/app/DryRunBanner";
 import { getTranslations } from "@/lib/i18n";
 import { getUserLocale } from "@/lib/i18n/get-locale";
 
@@ -43,18 +44,21 @@ export default async function ThreadPage({
   const locale = await getUserLocale();
   const { t } = getTranslations(locale);
 
-  const [messages, drafts, notes, priorThreads] = await Promise.all([
+  const [messages, drafts, notes, priorThreads, aiSettings] = await Promise.all([
     listMessages(account.organization.id, id),
     listDraftsForThread(account.organization.id, id),
     listNotes(account.organization.id, id),
     listThreadsByEmail(account.organization.id, thread.fromEmail, id),
+    getAiSettings(account.organization.id),
   ]);
+  const dryRunEnabled = aiSettings?.dryRunEnabled ?? false;
 
   const canGenerate = account.access.canGenerateAiDraft;
   const blockedReason = account.access.canGenerateAiDraft ? null : account.access.reason;
 
   return (
     <main className="max-w-3xl mx-auto p-6 md:p-10 space-y-6">
+      <DryRunBanner enabled={dryRunEnabled} />
       <header className="space-y-2">
         <Link href="/app/inbox" className="text-xs text-muted-foreground hover:text-white transition-colors inline-block">
           ← {t("nav.inbox")}

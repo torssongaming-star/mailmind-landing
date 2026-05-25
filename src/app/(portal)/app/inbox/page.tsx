@@ -7,7 +7,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { getCurrentAccount } from "@/lib/app/entitlements";
-import { listThreads, wakeUpSnoozedThreads, listCaseTypes, countSnoozedThreads, searchThreads, listInboxes } from "@/lib/app/threads";
+import { listThreads, wakeUpSnoozedThreads, listCaseTypes, countSnoozedThreads, searchThreads, listInboxes, getAiSettings } from "@/lib/app/threads";
 import { NewThreadButton } from "./NewThreadButton";
 import { InboxFilters } from "./InboxFilters";
 import { InboxShell } from "./InboxShell";
@@ -50,7 +50,7 @@ export default async function InboxPage({
   // Server-side search bypasses the 200-row limit. Falls back to in-memory
   // filtering for facets (status, tag) on top of the search result.
   const useServerSearch = query.length >= 2;
-  const [mainPage, caseTypesList, snoozedCount, filteredCount, orgInboxes] = await Promise.all([
+  const [mainPage, caseTypesList, snoozedCount, filteredCount, orgInboxes, aiSettings] = await Promise.all([
     useServerSearch
       ? searchThreads(account.organization.id, query, 200).then(threads => ({ threads, nextCursor: null }))
       : isSnoozedView
@@ -63,7 +63,9 @@ export default async function InboxPage({
     // Count of auto-filtered bulk threads (used by the tab badge).
     listThreads(account.organization.id, { limit: 200, caseTypeSlug: "bulk" }).then(({ threads }) => threads.length),
     listInboxes(account.organization.id),
+    getAiSettings(account.organization.id),
   ]);
+  const dryRunEnabled = aiSettings?.dryRunEnabled ?? false;
   const all             = mainPage.threads;
   const initialNextCursor = mainPage.nextCursor;
   const firstInboxEmail = orgInboxes[0]?.email ?? null;
@@ -177,6 +179,7 @@ export default async function InboxPage({
       ) : (
         <InboxShell
           canGenerate={account.access.canGenerateAiDraft}
+          dryRunEnabled={dryRunEnabled}
           slaByCaseType={slaByCaseType}
           initialNextCursor={initialNextCursor}
           threads={threads.map(t => ({

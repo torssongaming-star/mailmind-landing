@@ -12,6 +12,7 @@ import { ExternalLink, ArrowLeft, AlertTriangle, RefreshCw } from "lucide-react"
 import { sanitizeEmailHtml } from "@/lib/utils/sanitize-email-html";
 import { DraftSources } from "@/components/app/DraftSources";
 import { ConfidenceBadge } from "@/components/app/ConfidenceBadge";
+import { DryRunBanner } from "@/components/app/DryRunBanner";
 import { DraftActions } from "../thread/[id]/DraftActions";
 import { GenerateDraftButton } from "../thread/[id]/GenerateDraftButton";
 import { InternalNotes, type Note } from "../thread/[id]/InternalNotes";
@@ -70,10 +71,13 @@ import { useI18n } from "@/lib/i18n/context";
 export function ThreadPanel({
   threadId,
   canGenerate,
+  dryRunEnabled = false,
   onBack,
 }: {
   threadId:    string;
   canGenerate: boolean;
+  /** When true, render DryRunBanner — utkast skickas inte till kund. */
+  dryRunEnabled?: boolean;
   /** Optional callback for mobile back-to-list button */
   onBack?:     () => void;
 }) {
@@ -245,6 +249,9 @@ export function ThreadPanel({
 
       {/* ── Scrollable body ──────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto px-4 md:px-6 py-5 space-y-4">
+
+        {/* Dry-run-banner — visas alltid när org har dry-run på */}
+        <DryRunBanner enabled={dryRunEnabled} />
 
         {/* Conversation */}
         {messages.map(m => (

@@ -49,11 +49,13 @@ import { useI18n } from "@/lib/i18n/context";
 export function InboxShell({
   threads,
   canGenerate,
+  dryRunEnabled = false,
   slaByCaseType = {},
   initialNextCursor = null,
 }: {
   threads:            Thread[];
   canGenerate:        boolean;
+  dryRunEnabled?:     boolean;
   slaByCaseType?:     Record<string, number>;
   initialNextCursor?: string | null;
 }) {
@@ -355,6 +357,7 @@ export function InboxShell({
             key={selectedId}
             threadId={selectedId}
             canGenerate={canGenerate}
+            dryRunEnabled={dryRunEnabled}
             onBack={() => setSelectedId(null)}
           />
         ) : (
