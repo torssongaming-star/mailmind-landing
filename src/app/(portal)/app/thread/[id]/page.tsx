@@ -21,6 +21,7 @@ import { BlockSenderButton } from "./BlockSenderButton";
 import { DraftSources } from "@/components/app/DraftSources";
 import { ConfidenceBadge } from "@/components/app/ConfidenceBadge";
 import { DryRunBanner } from "@/components/app/DryRunBanner";
+import { ThreadStatusActions } from "@/components/app/ThreadStatusActions";
 import { getTranslations } from "@/lib/i18n";
 import { getUserLocale } from "@/lib/i18n/get-locale";
 
@@ -79,6 +80,7 @@ export default async function ThreadPage({
             snoozedUntil={thread.snoozedUntil ?? null}
           />
           <BlockSenderButton fromEmail={thread.fromEmail} />
+          <ThreadStatusActions threadId={thread.id} status={thread.status} />
         </div>
         <TagEditor
           threadId={thread.id}

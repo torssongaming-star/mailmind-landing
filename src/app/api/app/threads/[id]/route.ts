@@ -10,6 +10,7 @@ import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import { getThread, listMessages, listDraftsForThread, updateThread } from "@/lib/app/threads";
+import { writeAuditLog } from "@/lib/app/audit";
 
 export const runtime = "nodejs";
 
@@ -39,7 +40,10 @@ export async function GET(
 }
 
 const PatchBody = z.object({
-  tags: z.array(z.string().trim().min(1).max(50)).max(20).optional(),
+  tags:   z.array(z.string().trim().min(1).max(50)).max(20).optional(),
+  /** Manual user action — only allow transitions to resolved/escalated.
+   *  Re-opening a closed thread is intentionally not supported here. */
+  status: z.enum(["resolved", "escalated"]).optional(),
 });
 
 export async function PATCH(
@@ -72,11 +76,25 @@ export async function PATCH(
     // Deduplicate + lowercase
     patch.tags = [...new Set(parsed.data.tags.map(t => t.toLowerCase()))];
   }
+  if (parsed.data.status !== undefined) {
+    patch.status = parsed.data.status;
+  }
 
   if (Object.keys(patch).length === 0) {
     return NextResponse.json({ error: "Nothing to update" }, { status: 400 });
   }
 
   await updateThread(account.organization.id, threadId, patch);
+
+  // Audit-trail for manual status transitions (mirrors bulk endpoint pattern)
+  if (parsed.data.status) {
+    await writeAuditLog({
+      organizationId: account.organization.id,
+      userId:         account.user.id,
+      action:         parsed.data.status === "resolved" ? "thread_resolved" : "thread_escalated",
+      metadata:       { threadId, source: "single_thread_patch" },
+    });
+  }
+
   return NextResponse.json({ ok: true, ...patch });
 }

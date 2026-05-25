@@ -13,6 +13,7 @@ import { sanitizeEmailHtml } from "@/lib/utils/sanitize-email-html";
 import { DraftSources } from "@/components/app/DraftSources";
 import { ConfidenceBadge } from "@/components/app/ConfidenceBadge";
 import { DryRunBanner } from "@/components/app/DryRunBanner";
+import { ThreadStatusActions } from "@/components/app/ThreadStatusActions";
 import { DraftActions } from "../thread/[id]/DraftActions";
 import { GenerateDraftButton } from "../thread/[id]/GenerateDraftButton";
 import { InternalNotes, type Note } from "../thread/[id]/InternalNotes";
@@ -237,10 +238,11 @@ export function ThreadPanel({
           </Link>
         </div>
 
-        {/* Snooze + Block */}
+        {/* Manuella thread-actions: Snooze + Block + Resolve + Escalate */}
         <div className="flex items-center gap-3 flex-wrap">
           <SnoozeButton threadId={thread.id} snoozedUntil={thread.snoozedUntil ? new Date(thread.snoozedUntil) : null} />
           <BlockSenderButton fromEmail={thread.fromEmail} />
+          <ThreadStatusActions threadId={thread.id} status={thread.status as "open" | "waiting" | "escalated" | "resolved"} />
         </div>
 
         {/* Tags */}
