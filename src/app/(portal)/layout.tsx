@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Sidebar } from "@/components/portal/Sidebar";
 import { SidebarSubscriptionBadge } from "@/components/portal/SidebarSubscriptionBadge";
 import { CommandPalette } from "@/components/portal/CommandPalette";
+import { ToastProvider } from "@/components/ui/Toast";
 import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
@@ -19,14 +20,16 @@ export const metadata: Metadata = {
  */
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#030614]/60 backdrop-blur-[1px]">
-      <Sidebar subscriptionBadge={<SidebarSubscriptionBadge />} />
-      {/* Main content area — offset by sidebar width on desktop; on mobile the
-          sticky mobile header inside <Sidebar> sits above this block. */}
-      <div className="flex flex-col min-h-screen lg:ml-64">
-        {children}
+    <ToastProvider>
+      <div className="min-h-screen bg-[#030614]/60 backdrop-blur-[1px]">
+        <Sidebar subscriptionBadge={<SidebarSubscriptionBadge />} />
+        {/* Main content area — offset by sidebar width on desktop; on mobile the
+            sticky mobile header inside <Sidebar> sits above this block. */}
+        <div className="flex flex-col min-h-screen lg:ml-64">
+          {children}
+        </div>
+        <CommandPalette />
       </div>
-      <CommandPalette />
-    </div>
+    </ToastProvider>
   );
 }

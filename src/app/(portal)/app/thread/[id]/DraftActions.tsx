@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { interpolateTemplate } from "@/lib/utils/templateVars";
+import { useGlobalToast } from "@/components/ui/Toast";
 
 type DraftAction = "ask" | "summarize" | "escalate";
 type DraftStatus = "pending" | "approved" | "edited" | "sending" | "sent" | "rejected";
@@ -119,6 +120,7 @@ export function DraftActions({
   onDone?: () => void;
 }) {
   const router = useRouter();
+  const toast = useGlobalToast();
   const [editing, setEditing] = useState(false);
   const [body, setBody] = useState(initialBody ?? "");
   const [pending, setPending] = useState(false);
@@ -132,8 +134,12 @@ export function DraftActions({
   /**
    * Returns true on success, false on failure. Callers can chain operations
    * conditionally — e.g. don't run "send" if "edit" failed.
+   *
+   * Side-effects: fires a toast on send/reject success or any failure.
+   * "edit" is intentionally silent — the parent component re-renders the
+   * draft with new body text, which is the user-facing confirmation.
    */
-  const call = async (payload: object): Promise<boolean> => {
+  const call = async (payload: { action: "edit" | "send" | "reject"; [k: string]: unknown }): Promise<boolean> => {
     setPending(true);
     setError(null);
     try {
@@ -144,11 +150,20 @@ export function DraftActions({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error ?? "Åtgärden misslyckades");
+      if (payload.action === "send") {
+        toast.success(
+          action === "escalate" ? "Tråden eskalerad" : "Svar skickat till kund",
+        );
+      } else if (payload.action === "reject") {
+        toast.info("Utkast avvisat");
+      }
       router.refresh();
       onDone?.();
       return true;
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Okänt fel");
+      const message = e instanceof Error ? e.message : "Okänt fel";
+      setError(message);
+      toast.error("Åtgärden misslyckades", { detail: message });
       return false;
     } finally {
       setPending(false);

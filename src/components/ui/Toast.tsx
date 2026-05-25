@@ -12,7 +12,7 @@
  * Render <ToastContainer toasts={toasts} /> once per page.
  */
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, createContext, useContext } from "react";
 import { X, CheckCircle2, AlertCircle, AlertTriangle, Info } from "lucide-react";
 
 export type ToastType = "success" | "error" | "warning" | "info";
@@ -127,4 +127,37 @@ export function ToastContainer({ toasts, onDismiss }: { toasts: Toast[]; onDismi
       ))}
     </div>
   );
+}
+
+// ── Global provider (for components deep in the tree) ─────────────────────────
+//
+// Existing callers using local useToast() + <ToastContainer /> continue to work
+// unchanged. Components that want toast access without prop-drilling wrap the
+// subtree once with <ToastProvider> and call useGlobalToast() anywhere below.
+//
+// Used by /app/(portal)/layout.tsx to expose toast to draft actions / banners.
+
+type ToastApi = ReturnType<typeof useToast>["toast"];
+const ToastContext = createContext<ToastApi | null>(null);
+
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const { toasts, toast, dismiss } = useToast();
+  return (
+    <ToastContext.Provider value={toast}>
+      {children}
+      <ToastContainer toasts={toasts} onDismiss={dismiss} />
+    </ToastContext.Provider>
+  );
+}
+
+/**
+ * Read toast API from the nearest <ToastProvider>. Returns a safe no-op
+ * implementation when no provider is mounted (e.g. unit tests) so callers
+ * never have to null-check.
+ */
+export function useGlobalToast(): ToastApi {
+  const ctx = useContext(ToastContext);
+  if (ctx) return ctx;
+  const noop = () => "";
+  return { success: noop, error: noop, warning: noop, info: noop };
 }
