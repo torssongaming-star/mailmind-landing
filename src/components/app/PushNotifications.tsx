@@ -164,7 +164,7 @@ export function PushNotifications({
              : status === "denied"   ? "Notiser blockerade i webbläsaren"
              :                         "Få push-notis när ett nytt ärende kommer in"}
           </p>
-          <p className="text-[11px] text-white/40 mt-0.5 leading-relaxed">
+          <p className="text-[11px] text-white/65 mt-0.5 leading-relaxed">
             {status === "subscribed" ? "Du får en notis när ett nytt mejl väntar på din inkorg."
              : status === "denied"   ? "Öppna webbläsarens platsinställningar och tillåt notiser för att aktivera."
              :                         "Funkar på iPhone (Safari), Android (Chrome) och alla desktop-webbläsare."}

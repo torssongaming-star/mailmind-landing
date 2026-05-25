@@ -6,9 +6,9 @@ export const metadata: Metadata = { title: "Personuppgiftsbiträdesavtal (DPA)" 
 export default function DpaPage() {
   return (
     <>
-      <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-1">Avtal</p>
+      <p className="text-[10px] uppercase tracking-widest text-white/60 font-semibold mb-1">Avtal</p>
       <h1>Personuppgiftsbiträdesavtal (DPA)</h1>
-      <p className="text-sm text-white/55 mt-1">Version 1.0 · Gäller från [DATUM]</p>
+      <p className="text-sm text-white/70 mt-1">Version 1.0 · Gäller från [DATUM]</p>
 
       <LegalNotice level="lawyer" extra={
         <span>Detta är ett <b>utkast</b> baserat på SCC + svensk praxis. Det MÅSTE granskas av advokat
@@ -217,7 +217,7 @@ export default function DpaPage() {
       </p>
 
       <h2>Bilaga 1 — Tekniska och organisatoriska åtgärder</h2>
-      <p className="text-sm text-white/55">
+      <p className="text-sm text-white/70">
         Detaljerad TOM-bilaga finns dokumenterad internt och tillhandahålls vid begäran.
         Innehåller bland annat: krypterings-specifikationer, nyckelhantering, backupstrategi,
         incident response-rutiner, åtkomstpolicies, medarbetar-training, fysisk säkerhet
@@ -225,14 +225,14 @@ export default function DpaPage() {
       </p>
 
       <h2>Bilaga 2 — Underbiträden</h2>
-      <p className="text-sm text-white/55">
+      <p className="text-sm text-white/70">
         Aktuell lista finns på{" "}
         <a href="/legal/sub-processors">mailmind.se/legal/sub-processors</a>{" "}
         och uppdateras vid förändring.
       </p>
 
       <hr className="border-white/10 my-10" />
-      <p className="text-xs text-white/40">
+      <p className="text-xs text-white/65">
         Frågor om databehandling? Kontakta vår personuppgiftsansvarige på{" "}
         <a href="mailto:dpo@mailmind.se">dpo@mailmind.se</a>.
       </p>

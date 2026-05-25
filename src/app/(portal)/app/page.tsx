@@ -91,7 +91,7 @@ export default async function AppHomePage() {
           <h2 className="text-2xl font-bold text-white tracking-tight">
             {t("portal.dashboard.welcome")}{clerkUser.firstName ? `, ${clerkUser.firstName}` : ""}
           </h2>
-          <p className="text-sm text-white/50 mt-1">
+          <p className="text-sm text-white/70 mt-1">
             {t("portal.dashboard.overview", { org: account.organization.name })}
           </p>
         </div>
@@ -110,7 +110,7 @@ export default async function AppHomePage() {
 
       {/* Plan + subscription */}
       <section className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm p-6">
-        <h2 className="text-[10px] font-semibold text-white/45 uppercase tracking-widest mb-4">
+        <h2 className="text-[10px] font-semibold text-white/60 uppercase tracking-widest mb-4">
           {t("portal.dashboard.subscription")}
         </h2>
         {plan ? (
@@ -122,11 +122,11 @@ export default async function AppHomePage() {
                   <StatusBadge status={account.subscription.status} locale={locale} />
                 )}
               </div>
-              <p className="text-sm text-white/55 mt-1">
+              <p className="text-sm text-white/70 mt-1">
                 {plan.price}/{t("portal.dashboard.stats.plan").toLowerCase()}
               </p>
               {account.subscription?.currentPeriodEnd && (
-                <p className="text-xs text-white/35 mt-2">
+                <p className="text-xs text-white/60 mt-2">
                   {account.subscription.cancelAtPeriodEnd ? t("portal.dashboard.cancelsOn") : t("portal.dashboard.renewsOn")}
                   {" "}
                   {new Date(account.subscription.currentPeriodEnd).toLocaleDateString(locale === "sv" ? "sv-SE" : "en-IE", {
@@ -145,7 +145,7 @@ export default async function AppHomePage() {
         ) : (
           <div>
             <p className="text-sm text-white">{t("portal.dashboard.noActiveSub")}</p>
-            <p className="text-xs text-white/45 mt-1">
+            <p className="text-xs text-white/65 mt-1">
               {t("portal.dashboard.choosePlan")}
             </p>
             <Link
@@ -421,13 +421,13 @@ function StatCard({
   return (
     <div className="group rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm p-5 transition-colors duration-200 hover:border-white/12">
       <div className="flex items-center justify-between mb-4">
-        <span className="text-[10px] font-semibold text-white/45 uppercase tracking-widest">{label}</span>
+        <span className="text-[10px] font-semibold text-white/60 uppercase tracking-widest">{label}</span>
         <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/15 flex items-center justify-center transition-colors duration-200 group-hover:bg-primary/15 group-hover:border-primary/25">
           <Icon size={14} className="text-primary" />
         </div>
       </div>
       <p className="text-2xl font-bold text-white mb-0.5 tracking-tight tabular-nums">{value}</p>
-      {sub && <p className="text-xs text-white/40">{sub}</p>}
+      {sub && <p className="text-xs text-white/60">{sub}</p>}
       {pct !== null && (
         <div className="mt-3">
           <div className="h-1 bg-white/5 rounded-full overflow-hidden">
@@ -436,7 +436,7 @@ function StatCard({
               style={{ width: `${Math.min(pct, 100)}%` }}
             />
           </div>
-          <p className={`text-[10px] mt-1.5 tabular-nums ${isWarning ? "text-amber-400" : "text-white/40"}`}>
+          <p className={`text-[10px] mt-1.5 tabular-nums ${isWarning ? "text-amber-400" : "text-white/60"}`}>
             {used?.toLocaleString()} / {limit?.toLocaleString()} {t("portal.dashboard.stats.used")}
           </p>
         </div>

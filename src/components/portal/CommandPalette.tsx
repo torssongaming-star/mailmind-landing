@@ -255,7 +255,7 @@ export function CommandPalette() {
             aria-label="Sök i Mailmind"
             className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none"
           />
-          <kbd className="hidden sm:inline-flex items-center gap-1 text-[10px] text-white/40 border border-white/10 rounded px-1.5 py-0.5 font-mono">
+          <kbd className="hidden sm:inline-flex items-center gap-1 text-[10px] text-white/60 border border-white/10 rounded px-1.5 py-0.5 font-mono">
             ESC
           </kbd>
         </div>
@@ -264,7 +264,7 @@ export function CommandPalette() {
         <div ref={listRef} className="max-h-[60vh] overflow-y-auto py-1">
           {items.length === 0 ? (
             <div className="px-4 py-8 text-center">
-              <p className="text-sm text-white/45">Inga träffar för &ldquo;{query}&rdquo;</p>
+              <p className="text-sm text-white/70">Inga träffar för &ldquo;{query}&rdquo;</p>
               <p className="text-[11px] text-white/30 mt-1">Försök med ett enklare ord</p>
             </div>
           ) : (
@@ -294,7 +294,7 @@ export function CommandPalette() {
                       <span className="flex-1 min-w-0">
                         <span className="text-sm truncate block">{item.label}</span>
                         {"hint" in item && item.hint && (
-                          <span className="text-[11px] text-white/40 truncate block">{item.hint}</span>
+                          <span className="text-[11px] text-white/60 truncate block">{item.hint}</span>
                         )}
                       </span>
                       {isActive && (
@@ -313,7 +313,7 @@ export function CommandPalette() {
 
         {/* Footer */}
         <div className="flex items-center justify-between gap-3 px-4 py-2 border-t border-white/8 bg-[hsl(var(--surface-deep))]/50">
-          <div className="flex items-center gap-3 text-[10px] text-white/35">
+          <div className="flex items-center gap-3 text-[10px] text-white/60">
             <span className="flex items-center gap-1">
               <kbd className="border border-white/10 rounded px-1 py-0.5 font-mono"><ChevronUp size={9} /></kbd>
               <kbd className="border border-white/10 rounded px-1 py-0.5 font-mono"><ChevronDown size={9} /></kbd>
@@ -345,11 +345,11 @@ export function CommandPaletteTrigger({ className }: { className?: string }) {
       onClick={trigger}
       aria-label="Öppna kommandopalett"
       title="Sök & navigera (⌘K)"
-      className={["inline-flex items-center gap-2 h-7 px-2.5 rounded-lg border border-white/10 text-white/55 hover:text-white hover:bg-white/[0.04] hover:border-white/20 transition-colors text-[11px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50", className].filter(Boolean).join(" ")}
+      className={["inline-flex items-center gap-2 h-7 px-2.5 rounded-lg border border-white/10 text-white/70 hover:text-white hover:bg-white/[0.04] hover:border-white/20 transition-colors text-[11px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50", className].filter(Boolean).join(" ")}
     >
       <Search size={11} />
       <span className="hidden sm:inline">Sök</span>
-      <kbd className="hidden sm:inline-flex items-center text-[9px] text-white/40 border border-white/10 rounded px-1 font-mono">⌘K</kbd>
+      <kbd className="hidden sm:inline-flex items-center text-[9px] text-white/60 border border-white/10 rounded px-1 font-mono">⌘K</kbd>
     </button>
   );
 }

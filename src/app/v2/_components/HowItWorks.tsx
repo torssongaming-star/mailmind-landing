@@ -26,7 +26,7 @@ export function HowItWorks() {
     <section id="how" className="py-20 md:py-28 px-6 border-t border-white/5">
       <div className="max-w-5xl mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-12 md:mb-16">
-          <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-2">
+          <p className="text-[10px] uppercase tracking-widest text-white/55 font-semibold mb-2">
             Så funkar det
           </p>
           <h2 className="text-3xl md:text-4xl font-semibold tracking-[-0.02em] text-white">
@@ -41,7 +41,7 @@ export function HowItWorks() {
             <div key={s.n} className="flex gap-5 group">
               {/* Step number */}
               <div className="shrink-0 relative">
-                <div className="w-11 h-11 rounded-2xl border border-white/10 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm flex items-center justify-center font-mono text-[13px] text-white/45 group-hover:border-primary/30 group-hover:text-primary transition-colors">
+                <div className="w-11 h-11 rounded-2xl border border-white/10 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm flex items-center justify-center font-mono text-[13px] text-white/65 group-hover:border-primary/30 group-hover:text-primary transition-colors">
                   {s.n}
                 </div>
                 {i < STEPS.length - 1 && i % 2 === 0 && (
@@ -50,7 +50,7 @@ export function HowItWorks() {
               </div>
               <div className="flex-1 min-w-0 pt-1">
                 <h3 className="text-base font-semibold text-white tracking-tight">{s.title}</h3>
-                <p className="text-sm text-white/55 leading-relaxed mt-1.5">{s.body}</p>
+                <p className="text-sm text-white/70 leading-relaxed mt-1.5">{s.body}</p>
               </div>
             </div>
           ))}

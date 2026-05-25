@@ -163,7 +163,7 @@ export default async function InboxPage({
           // tell the user the tab is empty, not the whole inbox.
           isFilteredView ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3">
-              <p className="text-sm text-white/55">Inga mejl klassade som reklam just nu</p>
+              <p className="text-sm text-white/70">Inga mejl klassade som reklam just nu</p>
               <Link
                 href="/app/inbox"
                 className="text-xs text-primary hover:text-cyan-300 transition-colors inline-flex items-center gap-1"
@@ -173,7 +173,7 @@ export default async function InboxPage({
             </div>
           ) : isSnoozedView ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3">
-              <p className="text-sm text-white/55">Inga snoozade trådar just nu</p>
+              <p className="text-sm text-white/70">Inga snoozade trådar just nu</p>
               <Link
                 href="/app/inbox"
                 className="text-xs text-primary hover:text-cyan-300 transition-colors inline-flex items-center gap-1"
@@ -186,7 +186,7 @@ export default async function InboxPage({
           )
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center gap-3">
-            <p className="text-sm text-white/55">Inga trådar matchar filtret</p>
+            <p className="text-sm text-white/70">Inga trådar matchar filtret</p>
             <Link
               href="/app/inbox"
               className="inline-flex items-center gap-1.5 h-8 px-3 rounded-lg text-xs font-medium text-primary border border-primary/25 hover:border-primary/40 hover:bg-primary/[0.05] transition-colors"

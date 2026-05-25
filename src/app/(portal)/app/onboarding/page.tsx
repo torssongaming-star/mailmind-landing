@@ -81,7 +81,7 @@ export default async function OnboardingPage() {
         <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-md p-8 shadow-2xl">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-white mb-2 tracking-tight">Välkommen till Mailmind</h1>
-            <p className="text-sm text-white/55 leading-relaxed">
+            <p className="text-sm text-white/70 leading-relaxed">
               Sätt upp arbetsytan på två minuter. Du kan ändra allt senare i inställningarna.
             </p>
           </div>
@@ -92,7 +92,7 @@ export default async function OnboardingPage() {
             initialStep={initialStep}
           />
 
-          <p className="text-[11px] text-white/35 mt-6 leading-relaxed">
+          <p className="text-[11px] text-white/60 mt-6 leading-relaxed">
             Genom att fortsätta godkänner du{" "}
             <a href="/terms" className="text-primary hover:underline">Villkoren</a>
             {" och "}

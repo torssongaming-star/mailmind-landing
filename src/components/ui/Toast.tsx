@@ -101,7 +101,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: () => void }
       <div className="flex-1 min-w-0">
         <p className="text-xs font-medium text-white leading-snug">{toast.message}</p>
         {toast.detail && (
-          <p className="text-[11px] text-white/50 mt-0.5 leading-snug">{toast.detail}</p>
+          <p className="text-[11px] text-white/65 mt-0.5 leading-snug">{toast.detail}</p>
         )}
       </div>
       <button

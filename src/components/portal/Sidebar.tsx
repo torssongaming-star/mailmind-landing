@@ -205,7 +205,7 @@ export function Sidebar({
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                     isActive
                       ? "bg-primary/10 text-primary"
-                      : "text-white/55 hover:text-white hover:bg-white/[0.04]"
+                      : "text-white/70 hover:text-white hover:bg-white/[0.04]"
                   )}
                 >
                   {isActive && (
@@ -233,7 +233,7 @@ export function Sidebar({
                     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50",
                     active
                       ? "text-white"
-                      : "text-white/55 hover:text-white hover:bg-white/[0.04]"
+                      : "text-white/70 hover:text-white hover:bg-white/[0.04]"
                   )}
                 >
                   <Icon
@@ -274,7 +274,7 @@ export function Sidebar({
                               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
                               childActive
                                 ? "text-primary bg-primary/[0.08] shadow-[inset_0_0_10px_rgba(6,182,212,0.05)]"
-                                : "text-white/40 hover:text-white/90 hover:bg-white/[0.03]"
+                                : "text-white/60 hover:text-white/90 hover:bg-white/[0.03]"
                             )}
                           >
                             {t(child.labelKey)}

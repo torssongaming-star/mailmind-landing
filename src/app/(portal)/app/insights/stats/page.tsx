@@ -74,7 +74,7 @@ export default async function StatsPage() {
 
       {/* Daily thread volume */}
       <section>
-        <h2 className="text-[10px] font-semibold text-white/45 uppercase tracking-widest mb-3">
+        <h2 className="text-[10px] font-semibold text-white/60 uppercase tracking-widest mb-3">
           {t("portal.stats.charts.dailyThreads")}
         </h2>
         <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-5">
@@ -84,7 +84,7 @@ export default async function StatsPage() {
 
       {/* Auto-sent vs manual */}
       <section>
-        <h2 className="text-[10px] font-semibold text-white/45 uppercase tracking-widest mb-3">
+        <h2 className="text-[10px] font-semibold text-white/60 uppercase tracking-widest mb-3">
           {t("portal.stats.charts.autoVsManual")}
         </h2>
         <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-5 space-y-4">
@@ -96,7 +96,7 @@ export default async function StatsPage() {
             <>
               <div className="flex items-baseline gap-3">
                 <span className="text-3xl font-bold text-white tracking-tight tabular-nums">{autoPct}%</span>
-                <span className="text-xs text-white/50">
+                <span className="text-xs text-white/70">
                   {t("portal.stats.charts.autoPct", { pct: autoPct.toString(), total: totalSent.toString() })}
                 </span>
               </div>
@@ -127,7 +127,7 @@ export default async function StatsPage() {
         <Card title={t("portal.stats.aiUsage.title")}>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold text-white tracking-tight tabular-nums">{draftsThisMonthUsed.toLocaleString()}</span>
-            <span className="text-sm text-white/40 tabular-nums">/ {draftLimit.toLocaleString()}</span>
+            <span className="text-sm text-white/60 tabular-nums">/ {draftLimit.toLocaleString()}</span>
           </div>
           <ProgressBar used={draftsThisMonthUsed} limit={draftLimit} />
           <div className="grid grid-cols-3 gap-2 mt-4 pt-4 border-t border-white/5">
@@ -145,7 +145,7 @@ export default async function StatsPage() {
                 : "—"}
             </span>
           </div>
-          <p className="text-xs text-white/45 mt-2">
+          <p className="text-xs text-white/65 mt-2">
             {responseStats.sampleSize > 0
               ? t("portal.stats.aiUsage.sampleSize", { count: responseStats.sampleSize.toString() })
               : t("portal.stats.aiUsage.noReplies")}
@@ -155,7 +155,7 @@ export default async function StatsPage() {
 
       {/* AI quality metrics — P3.2 */}
       <section>
-        <h2 className="text-[10px] font-semibold text-white/45 uppercase tracking-widest mb-3">
+        <h2 className="text-[10px] font-semibold text-white/60 uppercase tracking-widest mb-3">
           AI-kvalitet · senaste {aiQuality.windowDays} dagar
         </h2>
         <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-6 space-y-6">
@@ -216,7 +216,7 @@ export default async function StatsPage() {
           </div>
 
           {aiQuality.totalDrafts === 0 && (
-            <p className="text-xs text-white/45 italic text-center pt-2">
+            <p className="text-xs text-white/65 italic text-center pt-2">
               Inga AI-utkast än under perioden. Statistiken fylls på när AI:n börjar arbeta.
             </p>
           )}
@@ -225,7 +225,7 @@ export default async function StatsPage() {
 
       {/* Status breakdown */}
       <section>
-        <h2 className="text-[10px] font-semibold text-white/45 uppercase tracking-widest mb-3">
+        <h2 className="text-[10px] font-semibold text-white/60 uppercase tracking-widest mb-3">
           {t("portal.stats.status.title")}
         </h2>
         <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-5 space-y-2">
@@ -238,7 +238,7 @@ export default async function StatsPage() {
 
       {/* Top case types */}
       <section>
-        <h2 className="text-[10px] font-semibold text-white/45 uppercase tracking-widest mb-3">
+        <h2 className="text-[10px] font-semibold text-white/60 uppercase tracking-widest mb-3">
           {t("portal.stats.caseTypes.title")}
         </h2>
         <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-5">
@@ -279,7 +279,7 @@ export default async function StatsPage() {
 function MetricCard({ label, value }: { label: string; value: number }) {
   return (
     <div className="group rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm p-4 transition-colors duration-200 hover:border-white/12">
-      <p className="text-[10px] uppercase tracking-widest text-white/45 font-semibold mb-1">{label}</p>
+      <p className="text-[10px] uppercase tracking-widest text-white/60 font-semibold mb-1">{label}</p>
       <p className="text-2xl font-bold text-white tracking-tight tabular-nums">{value.toLocaleString()}</p>
     </div>
   );
@@ -288,7 +288,7 @@ function MetricCard({ label, value }: { label: string; value: number }) {
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm p-5">
-      <p className="text-[10px] font-semibold text-white/45 uppercase tracking-widest mb-3">{title}</p>
+      <p className="text-[10px] font-semibold text-white/60 uppercase tracking-widest mb-3">{title}</p>
       {children}
     </div>
   );
@@ -311,9 +311,9 @@ function QualityKpi({
   }[tone];
   return (
     <div className="space-y-1">
-      <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold">{label}</p>
+      <p className="text-[10px] uppercase tracking-widest text-white/60 font-semibold">{label}</p>
       <p className={`text-2xl font-bold tracking-tight tabular-nums ${toneClass}`}>{value}</p>
-      <p className="text-[11px] text-white/40">{hint}</p>
+      <p className="text-[11px] text-white/60">{hint}</p>
     </div>
   );
 }
@@ -322,7 +322,7 @@ function Mini({ label, value }: { label: string; value: number }) {
   return (
     <div className="text-center">
       <p className="text-lg font-bold text-white tabular-nums">{value}</p>
-      <p className="text-[10px] text-white/45 uppercase tracking-widest font-medium">{label}</p>
+      <p className="text-[10px] text-white/60 uppercase tracking-widest font-medium">{label}</p>
     </div>
   );
 }

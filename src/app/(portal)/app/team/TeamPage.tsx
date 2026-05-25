@@ -219,7 +219,7 @@ export function TeamPage({
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-white/10 bg-white/[0.03]">
             <span className="text-xs font-semibold text-white">{seatsUsed}</span>
             <span className="text-xs text-white/30">/</span>
-            <span className="text-xs text-white/50">{seatLimit}</span>
+            <span className="text-xs text-white/70">{seatLimit}</span>
             <span className="text-[10px] text-white/30 ml-0.5">platser</span>
           </div>
 
@@ -388,7 +388,7 @@ export function TeamPage({
                       <button
                         onClick={() => cancelInvite(inv.id)}
                         disabled={pending === `cancel-${inv.id}`}
-                        className="opacity-0 group-hover:opacity-100 text-[11px] text-white/40 hover:text-white transition-all"
+                        className="opacity-0 group-hover:opacity-100 text-[11px] text-white/65 hover:text-white transition-all"
                       >
                         {pending === `cancel-${inv.id}` ? "Avbryter…" : "Avbryt"}
                       </button>

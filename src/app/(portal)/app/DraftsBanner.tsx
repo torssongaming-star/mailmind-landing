@@ -22,7 +22,7 @@ export function DraftsBanner({ used, limit }: Props) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-white">{pct}% av din AI-kvot använd</p>
-        <p className="text-xs text-white/55 leading-relaxed mt-0.5">
+        <p className="text-xs text-white/70 leading-relaxed mt-0.5">
           Du har använt {used} av {limit} AI-utkast den här månaden.{" "}
           <Link href="/dashboard/billing" className="underline hover:text-white/80 transition-colors">
             Se planer →

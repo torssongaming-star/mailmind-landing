@@ -98,9 +98,9 @@ const SUBS: Sub[] = [
 export default function SubProcessorsPage() {
   return (
     <>
-      <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-1">Transparens</p>
+      <p className="text-[10px] uppercase tracking-widest text-white/60 font-semibold mb-1">Transparens</p>
       <h1>Underbiträden</h1>
-      <p className="text-sm text-white/55 mt-1">Senast uppdaterad: [DATUM]</p>
+      <p className="text-sm text-white/70 mt-1">Senast uppdaterad: [DATUM]</p>
 
       <LegalNotice level="review" extra={
         <span>Bekräfta att alla DPA-tillägg är signerade hos respektive leverantör innan sidan publiceras.
@@ -118,7 +118,7 @@ export default function SubProcessorsPage() {
       <div className="not-prose overflow-x-auto rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/50 my-6">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-[10px] uppercase tracking-widest text-white/40 font-semibold">
+            <tr className="text-left text-[10px] uppercase tracking-widest text-white/60 font-semibold">
               <th className="px-4 py-3 border-b border-white/8">Tjänst</th>
               <th className="px-4 py-3 border-b border-white/8">Syfte</th>
               <th className="px-4 py-3 border-b border-white/8">Data</th>
@@ -135,7 +135,7 @@ export default function SubProcessorsPage() {
                 <td className="px-4 py-3 text-white/60 align-top text-xs">{s.dataTypes}</td>
                 <td className="px-4 py-3 text-white/60 align-top text-xs">{s.region}</td>
                 <td className="px-4 py-3 text-white/60 align-top text-xs">{s.transfer}</td>
-                <td className="px-4 py-3 text-white/45 align-top text-xs tabular-nums whitespace-nowrap">{s.added}</td>
+                <td className="px-4 py-3 text-white/65 align-top text-xs tabular-nums whitespace-nowrap">{s.added}</td>
               </tr>
             ))}
           </tbody>

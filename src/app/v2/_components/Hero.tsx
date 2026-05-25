@@ -49,7 +49,7 @@ export function Hero() {
         </h1>
 
         {/* Subhead */}
-        <p className="mt-6 max-w-2xl mx-auto text-base md:text-lg text-white/55 leading-relaxed">
+        <p className="mt-6 max-w-2xl mx-auto text-base md:text-lg text-white/70 leading-relaxed">
           Mailmind triagerar inkommande mejl, kategoriserar dem och föreslår svar.
           Din agent godkänner med ett klick. AI:n är granskad, källgrundad och bygd för svenska SMB.
         </p>
@@ -71,14 +71,14 @@ export function Hero() {
           </Link>
           <Link
             href="/signup"
-            className="text-xs text-white/40 hover:text-white/70 transition-colors mt-2 sm:mt-0 sm:ml-2 underline-offset-4 hover:underline"
+            className="text-xs text-white/55 hover:text-white/80 transition-colors mt-2 sm:mt-0 sm:ml-2 underline-offset-4 hover:underline"
           >
             eller starta gratis prov →
           </Link>
         </div>
 
         {/* Trust line */}
-        <div className="mt-8 flex items-center justify-center gap-4 text-[11px] text-white/35">
+        <div className="mt-8 flex items-center justify-center gap-4 text-[11px] text-white/60">
           <span className="flex items-center gap-1.5">
             <ShieldCheck size={11} className="text-primary/70" />
             GDPR-anpassat

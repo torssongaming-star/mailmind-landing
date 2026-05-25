@@ -21,7 +21,7 @@ export function LegalFooter() {
           {/* Company */}
           <div className="col-span-2 md:col-span-1">
             <p className="text-sm font-semibold text-white">{siteConfig.siteName}</p>
-            <address className="not-italic text-xs text-white/50 mt-2 leading-relaxed">
+            <address className="not-italic text-xs text-white/65 mt-2 leading-relaxed">
               Mailmind.se<br />
               <a href="tel:+4684691039" className="text-primary hover:underline">+46 846 91 039</a><br />
               <a href={`mailto:${siteConfig.supportEmail ?? "hej@mailmind.se"}`} className="text-primary hover:underline">
@@ -32,39 +32,39 @@ export function LegalFooter() {
 
           {/* Produkt */}
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-3">Produkt</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/55 font-semibold mb-3">Produkt</p>
             <ul className="space-y-2 text-xs">
-              <li><Link href="/#features" className="text-white/55 hover:text-white transition-colors">Funktioner</Link></li>
-              <li><Link href="/#pricing" className="text-white/55 hover:text-white transition-colors">Priser</Link></li>
-              <li><Link href="/security" className="text-white/55 hover:text-white transition-colors">Säkerhet</Link></li>
-              <li><Link href="/app" className="text-white/55 hover:text-white transition-colors">Logga in</Link></li>
+              <li><Link href="/#features" className="text-white/65 hover:text-white transition-colors">Funktioner</Link></li>
+              <li><Link href="/#pricing" className="text-white/65 hover:text-white transition-colors">Priser</Link></li>
+              <li><Link href="/security" className="text-white/65 hover:text-white transition-colors">Säkerhet</Link></li>
+              <li><Link href="/app" className="text-white/65 hover:text-white transition-colors">Logga in</Link></li>
             </ul>
           </div>
 
           {/* Juridik */}
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-3">Juridik</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/55 font-semibold mb-3">Juridik</p>
             <ul className="space-y-2 text-xs">
-              <li><Link href="/terms" className="text-white/55 hover:text-white transition-colors">Användarvillkor</Link></li>
-              <li><Link href="/privacy" className="text-white/55 hover:text-white transition-colors">Integritetspolicy</Link></li>
-              <li><Link href="/legal/dpa" className="text-white/55 hover:text-white transition-colors">DPA</Link></li>
-              <li><Link href="/legal/sub-processors" className="text-white/55 hover:text-white transition-colors">Underbiträden</Link></li>
-              <li><Link href="/legal/aup" className="text-white/55 hover:text-white transition-colors">Acceptabel användning</Link></li>
-              <li><Link href="/legal/sla" className="text-white/55 hover:text-white transition-colors">SLA</Link></li>
+              <li><Link href="/terms" className="text-white/65 hover:text-white transition-colors">Användarvillkor</Link></li>
+              <li><Link href="/privacy" className="text-white/65 hover:text-white transition-colors">Integritetspolicy</Link></li>
+              <li><Link href="/legal/dpa" className="text-white/65 hover:text-white transition-colors">DPA</Link></li>
+              <li><Link href="/legal/sub-processors" className="text-white/65 hover:text-white transition-colors">Underbiträden</Link></li>
+              <li><Link href="/legal/aup" className="text-white/65 hover:text-white transition-colors">Acceptabel användning</Link></li>
+              <li><Link href="/legal/sla" className="text-white/65 hover:text-white transition-colors">SLA</Link></li>
             </ul>
           </div>
 
           {/* Stöd */}
           <div>
-            <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-3">Stöd</p>
+            <p className="text-[10px] uppercase tracking-widest text-white/55 font-semibold mb-3">Stöd</p>
             <ul className="space-y-2 text-xs">
-              <li><a href={`mailto:${siteConfig.supportEmail ?? "support@mailmind.se"}`} className="text-white/55 hover:text-white transition-colors">Support</a></li>
-              <li><a href="mailto:dpo@mailmind.se" className="text-white/55 hover:text-white transition-colors">Dataskyddsombud</a></li>
-              <li><a href="mailto:security@mailmind.se" className="text-white/55 hover:text-white transition-colors">Säkerhetsincidenter</a></li>
+              <li><a href={`mailto:${siteConfig.supportEmail ?? "support@mailmind.se"}`} className="text-white/65 hover:text-white transition-colors">Support</a></li>
+              <li><a href="mailto:dpo@mailmind.se" className="text-white/65 hover:text-white transition-colors">Dataskyddsombud</a></li>
+              <li><a href="mailto:security@mailmind.se" className="text-white/65 hover:text-white transition-colors">Säkerhetsincidenter</a></li>
               <li>
                 <button
                   onClick={openCookiePreferences}
-                  className="text-white/55 hover:text-white transition-colors text-left"
+                  className="text-white/65 hover:text-white transition-colors text-left"
                 >
                   Cookie-inställningar
                 </button>
@@ -73,7 +73,7 @@ export function LegalFooter() {
           </div>
         </div>
 
-        <div className="mt-10 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-white/35">
+        <div className="mt-10 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-white/60">
           <p>© {year} Mailmind.se. Alla rättigheter förbehållna.</p>
           <p className="flex items-center gap-3">
             <span>Byggd i Sverige</span>

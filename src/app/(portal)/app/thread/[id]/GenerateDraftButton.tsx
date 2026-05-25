@@ -59,7 +59,7 @@ export function GenerateDraftButton({
         )}
       </button>
       {pending && (
-        <p className="text-[10px] text-white/40 animate-pulse">Tar oftast 2–5 sekunder</p>
+        <p className="text-[10px] text-white/60 animate-pulse">Tar oftast 2–5 sekunder</p>
       )}
       {error && (
         <p className="text-[10px] text-red-400 max-w-[260px] text-right">{error}</p>

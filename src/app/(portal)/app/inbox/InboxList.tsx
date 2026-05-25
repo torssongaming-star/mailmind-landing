@@ -213,7 +213,7 @@ export function InboxList({ threads = [], slaByCaseType = {} }: { threads: Threa
                   <p className="text-xs text-muted-foreground truncate">
                     {thread.fromName ? `${thread.fromName} ` : ""}
                     <span className="text-white/30">&lt;{thread.fromEmail}&gt;</span>
-                    {thread.caseTypeSlug && <> · <span className="text-white/40">{thread.caseTypeSlug}</span></>}
+                    {thread.caseTypeSlug && <> · <span className="text-white/60">{thread.caseTypeSlug}</span></>}
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">

@@ -106,7 +106,7 @@ export function DataPrivacy({ isOwner, orgName, deletionRequestedAt }: Props) {
           <Download size={16} className="text-primary mt-0.5 shrink-0" />
           <div className="min-w-0">
             <p className="text-sm font-semibold text-white">Exportera alla data</p>
-            <p className="text-xs text-white/45 leading-relaxed mt-0.5">
+            <p className="text-xs text-white/65 leading-relaxed mt-0.5">
               Ladda ner allt vi sparat om ditt företag som JSON — tråd­ar, meddelanden,
               utkast, inställningar, kunskapsbas, audit-logg. (GDPR art. 20)
             </p>
@@ -128,7 +128,7 @@ export function DataPrivacy({ isOwner, orgName, deletionRequestedAt }: Props) {
             <AlertTriangle size={16} className="text-red-400 mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white">Kontot raderas om {daysLeft} dag{daysLeft !== 1 ? "ar" : ""}</p>
-              <p className="text-xs text-white/55 leading-relaxed mt-0.5">
+              <p className="text-xs text-white/70 leading-relaxed mt-0.5">
                 Begäran inkom {new Date(deletionRequestedAt).toLocaleDateString("sv-SE")}.
                 All data raderas permanent {pendingPurgeAt?.toLocaleDateString("sv-SE")}.
                 Du kan ångra fram tills dess.
@@ -151,7 +151,7 @@ export function DataPrivacy({ isOwner, orgName, deletionRequestedAt }: Props) {
             <ShieldCheck size={16} className="text-red-400/80 mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white">Radera konto och all data</p>
-              <p className="text-xs text-white/45 leading-relaxed mt-0.5">
+              <p className="text-xs text-white/65 leading-relaxed mt-0.5">
                 Permanent radering av alla data efter 30 dagars grace-period.
                 Klerk-användarkontot raderas inte — du kan logga in i en annan organisation efteråt.
               </p>

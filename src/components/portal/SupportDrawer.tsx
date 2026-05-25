@@ -113,7 +113,7 @@ export function SupportDrawer({
                 "px-1 py-3 text-xs font-semibold mr-6 border-b-2 -mb-px transition-colors",
                 tab === tabName
                   ? "text-white border-primary"
-                  : "text-white/35 border-transparent hover:text-white/60",
+                  : "text-white/60 border-transparent hover:text-white/85",
               ].join(" ")}
             >
               {tabName === "faq" ? t("settings.support.faq") : t("settings.support.contact")}
@@ -141,7 +141,7 @@ export function SupportDrawer({
                     />
                   </button>
                   {openFaq === i && (
-                    <p className="text-sm text-white/50 leading-relaxed pb-4 -mt-1">
+                    <p className="text-sm text-white/70 leading-relaxed pb-4 -mt-1">
                       {item.a}
                     </p>
                   )}
@@ -154,7 +154,7 @@ export function SupportDrawer({
                   href="https://mailmind.se/docs"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-2 text-xs text-white/35 hover:text-primary transition-colors"
+                  className="flex items-center gap-2 text-xs text-white/65 hover:text-primary transition-colors"
                 >
                   <ExternalLink className="w-3.5 h-3.5" />
                   {t("settings.support.docs")}
@@ -172,7 +172,7 @@ export function SupportDrawer({
                     <Check className="w-5 h-5 text-green-400" />
                   </div>
                   <p className="text-sm font-semibold text-white">{t("settings.support.sent")}</p>
-                  <p className="text-xs text-white/40 max-w-xs">
+                  <p className="text-xs text-white/65 max-w-xs">
                     {t("settings.support.sentDesc")}
                   </p>
                   <button
@@ -186,7 +186,7 @@ export function SupportDrawer({
                 <>
                   <div className="flex items-start gap-3 p-3 rounded-xl bg-primary/5 border border-primary/15">
                     <MessageSquare className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    <p className="text-xs text-white/50 leading-relaxed">
+                    <p className="text-xs text-white/70 leading-relaxed">
                       {t("settings.support.contactNudge")}
                     </p>
                   </div>

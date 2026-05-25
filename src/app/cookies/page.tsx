@@ -36,12 +36,12 @@ export default function CookiesPage() {
   return (
     <main className="min-h-screen bg-[hsl(var(--surface-base))] text-white">
       <div className="mx-auto max-w-3xl px-6 py-12 md:py-16">
-        <Link href="/" className="text-xs uppercase tracking-widest text-white/40 hover:text-white/70 transition-colors">
+        <Link href="/" className="text-xs uppercase tracking-widest text-white/60 hover:text-white/85 transition-colors">
           ← Tillbaka till startsidan
         </Link>
-        <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mt-8 mb-1">Policy</p>
+        <p className="text-[10px] uppercase tracking-widest text-white/60 font-semibold mt-8 mb-1">Policy</p>
         <h1 className="text-3xl font-bold tracking-tight mb-2">Cookie-policy</h1>
-        <p className="text-sm text-white/55">Version 1.0 · Gäller från [DATUM]</p>
+        <p className="text-sm text-white/70">Version 1.0 · Gäller från [DATUM]</p>
 
         <div className="mt-6">
           <LegalNotice level="review" extra={
@@ -73,7 +73,7 @@ export default function CookiesPage() {
           <div className="not-prose overflow-x-auto rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/50 my-6">
             <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[10px] uppercase tracking-widest text-white/40 font-semibold">
+                <tr className="text-left text-[10px] uppercase tracking-widest text-white/60 font-semibold">
                   <th className="px-4 py-3 border-b border-white/8">Namn</th>
                   <th className="px-4 py-3 border-b border-white/8">Kategori</th>
                   <th className="px-4 py-3 border-b border-white/8">Leverantör</th>

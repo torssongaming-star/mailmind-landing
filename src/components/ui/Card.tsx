@@ -76,7 +76,7 @@ export function CardHeader({
       <div className="min-w-0">
         <h3 className="text-sm font-semibold text-white">{title}</h3>
         {description && (
-          <p className="text-xs text-white/45 mt-1 leading-relaxed">{description}</p>
+          <p className="text-xs text-white/65 mt-1 leading-relaxed">{description}</p>
         )}
       </div>
       {action && <div className="shrink-0">{action}</div>}

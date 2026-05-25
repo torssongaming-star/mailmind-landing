@@ -207,7 +207,7 @@ export function ThreadPanel({
             <h2 className="text-base font-semibold text-white truncate tracking-tight">
               {thread.subject ?? t("inbox.noSubject")}
             </h2>
-            <p className="text-xs text-white/45 mt-1 flex items-center gap-1.5 flex-wrap">
+            <p className="text-xs text-white/60 mt-1 flex items-center gap-1.5 flex-wrap">
               {thread.fromName
                 ? <span><span className="text-white/80">{thread.fromName}</span> <span className="text-white/30">&lt;{thread.fromEmail}&gt;</span></span>
                 : <span>{thread.fromEmail}</span>}
@@ -226,7 +226,7 @@ export function ThreadPanel({
           <Link
             href={`/app/thread/${thread.id}`}
             aria-label={t("inbox.thread.statusLabels.open")}
-            className="shrink-0 inline-flex items-center gap-1.5 h-7 text-[10px] text-white/45 hover:text-white transition-colors border border-white/10 hover:border-white/20 hover:bg-white/[0.04] rounded-lg px-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+            className="shrink-0 inline-flex items-center gap-1.5 h-7 text-[10px] text-white/60 hover:text-white transition-colors border border-white/10 hover:border-white/20 hover:bg-white/[0.04] rounded-lg px-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
           >
             {t("inbox.thread.statusLabels.open")}
             <ExternalLink className="w-3 h-3" />
@@ -264,13 +264,13 @@ export function ThreadPanel({
           >
             <div className="flex items-center justify-between mb-2">
               <span className={`text-[10px] font-semibold uppercase tracking-widest ${
-                m.role === "customer"  ? "text-white/45"
+                m.role === "customer"  ? "text-white/60"
                 : m.role === "assistant" ? "text-primary/80"
                 : "text-cyan-300/80"
               }`}>
                 {m.role === "customer" ? t("inbox.thread.roles.customer") : m.role === "assistant" ? t("inbox.thread.roles.ai") : t("inbox.thread.roles.agent")}
               </span>
-              <span className="text-[10px] text-white/35 tabular-nums">
+              <span className="text-[10px] text-white/60 tabular-nums">
                 {new Date(m.sentAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE")}
               </span>
             </div>
@@ -320,7 +320,7 @@ export function ThreadPanel({
                 <AlertTriangle size={16} className="text-amber-400 mt-0.5 shrink-0" />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-white">Klassad som reklam</p>
-                  <p className="text-xs text-white/55 mt-0.5 leading-relaxed">
+                  <p className="text-xs text-white/65 mt-0.5 leading-relaxed">
                     Mailmind bedömde att detta är ett massutskick eller nyhetsbrev.
                     Om det är fel kan du återställa tråden nedan.
                   </p>
@@ -359,7 +359,7 @@ export function ThreadPanel({
             <AlertTriangle size={16} className="text-red-400 mt-0.5 shrink-0" />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white">AI-triagering misslyckades</p>
-              <p className="text-xs text-white/50 mt-0.5 leading-relaxed">
+              <p className="text-xs text-white/65 mt-0.5 leading-relaxed">
                 AI:n kunde inte generera ett utkast — troligen ett tillfälligt avbrott hos Anthropic. Inget mejl har skickats.
               </p>
               {retryError && (
@@ -401,7 +401,7 @@ export function ThreadPanel({
           <div className="flex items-center justify-between gap-4">
             <div className="min-w-0">
               <p className="text-sm font-semibold text-white">{t("inbox.thread.draft")}</p>
-              <p className="text-xs text-white/45 mt-1 leading-relaxed">
+              <p className="text-xs text-white/65 mt-1 leading-relaxed">
                 {canGenerate ? t("inbox.thread.statusLabels.canGenerate") : t("inbox.thread.statusLabels.limitReached")}
               </p>
             </div>
@@ -418,10 +418,10 @@ export function ThreadPanel({
         {drafts.length > 0 && (
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-3 flex-wrap">
-              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/45">
-                {t("inbox.thread.statusLabels.drafts")} <span className="tabular-nums text-white/30">({drafts.length})</span>
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-white/60">
+                {t("inbox.thread.statusLabels.drafts")} <span className="tabular-nums text-white/50">({drafts.length})</span>
               </p>
-              <p className="text-[10px] text-white/35 flex items-center gap-1.5">
+              <p className="text-[10px] text-white/55 flex items-center gap-1.5">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <circle cx="12" cy="12" r="10"/>
                   <path d="M12 16v-4M12 8h.01"/>
@@ -433,9 +433,9 @@ export function ThreadPanel({
               <div key={d.id} className="rounded-2xl border border-primary/15 bg-primary/[0.03] backdrop-blur-sm p-5 space-y-3 shadow-[0_2px_24px_-12px_hsl(189_94%_43%/0.3)]">
                 <div className="flex items-center gap-2 flex-wrap">
                   <ActionBadge action={d.action} t={t} />
-                  <span className="text-[9px] text-white/45 uppercase tracking-widest font-semibold px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/8">{d.status}</span>
+                  <span className="text-[9px] text-white/60 uppercase tracking-widest font-semibold px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/8">{d.status}</span>
                   <ConfidenceBadge confidence={(d.metadata as { confidence?: number } | null)?.confidence} />
-                  <span className="ml-auto text-[10px] text-white/35 tabular-nums">
+                  <span className="ml-auto text-[10px] text-white/60 tabular-nums">
                     {new Date(d.generatedAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE")}
                   </span>
                 </div>
@@ -446,7 +446,7 @@ export function ThreadPanel({
 
                 {d.action === "summarize" && d.metadata && (
                   <div className="border-t border-white/5 pt-3 space-y-1">
-                    <p className="text-[10px] text-white/45 uppercase tracking-widest font-semibold">{t("inbox.thread.statusLabels.summary")}</p>
+                    <p className="text-[10px] text-white/60 uppercase tracking-widest font-semibold">{t("inbox.thread.statusLabels.summary")}</p>
                     <p className="text-xs text-white/70 leading-relaxed">
                       {String((d.metadata as Record<string, unknown>).summary ?? "")}
                     </p>
@@ -477,7 +477,7 @@ export function ThreadPanel({
                   onDone={() => { load(); router.refresh(); }}
                 />
 
-                <p className="text-[10px] text-white/35 border-t border-white/5 pt-2 tabular-nums">
+                <p className="text-[10px] text-white/60 border-t border-white/5 pt-2 tabular-nums">
                   <span className="opacity-60">{d.aiModel}</span>
                   {d.status === "sent" && d.sentAt && <> · {t("inbox.thread.statusLabels.sent", { time: new Date(d.sentAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE") })}</>}
                 </p>

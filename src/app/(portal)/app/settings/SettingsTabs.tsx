@@ -98,7 +98,7 @@ export function SettingsTabs({
                 "shrink-0 md:w-full flex items-center gap-2 md:gap-3 px-4 py-2.5 text-left transition-colors group relative whitespace-nowrap",
                 isActive
                   ? "text-white bg-white/[0.05]"
-                  : "text-white/40 hover:text-white/70 hover:bg-white/[0.02]",
+                  : "text-white/60 hover:text-white/85 hover:bg-white/[0.02]",
               ].join(" ")}
             >
               {isActive && (
@@ -120,7 +120,7 @@ export function SettingsTabs({
           <current.icon className="w-5 h-5 text-primary shrink-0" />
           <div className="min-w-0">
             <h2 className="text-sm font-semibold text-white leading-none">{current.label}</h2>
-            <p className="text-[11px] text-white/35 mt-0.5">{current.desc}</p>
+            <p className="text-[11px] text-white/65 mt-0.5">{current.desc}</p>
           </div>
         </div>
 
@@ -190,7 +190,7 @@ function SettingsRow({ title, desc, children }: { title: string; desc: string; c
     <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
       <div className="space-y-1">
         <h3 className="text-sm font-semibold text-white">{title}</h3>
-        <p className="text-xs text-white/35 leading-relaxed">{desc}</p>
+        <p className="text-xs text-white/65 leading-relaxed">{desc}</p>
       </div>
       <div>{children}</div>
     </div>

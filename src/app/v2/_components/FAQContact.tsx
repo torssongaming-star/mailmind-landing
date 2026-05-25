@@ -39,7 +39,7 @@ export function FAQContact() {
 
         {/* FAQ */}
         <div>
-          <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-2">
+          <p className="text-[10px] uppercase tracking-widest text-white/55 font-semibold mb-2">
             Vanliga frågor
           </p>
           <h2 className="text-3xl md:text-4xl font-semibold tracking-[-0.02em] text-white mb-10">
@@ -150,7 +150,7 @@ function DemoRequestForm() {
           <Check size={16} className="text-green-400" />
         </div>
         <h3 className="text-base font-semibold text-white">Tack — vi hörs snart!</h3>
-        <p className="text-xs text-white/55 mt-2 leading-relaxed">
+        <p className="text-xs text-white/70 mt-2 leading-relaxed">
           Vi återkommer inom en arbetsdag för att hitta en tid som passar er.
         </p>
       </div>
@@ -168,7 +168,7 @@ function DemoRequestForm() {
         </div>
         <div>
           <h3 className="text-base font-semibold text-white tracking-tight leading-tight">Boka 20 min demo</h3>
-          <p className="text-[11px] text-white/45 leading-tight mt-0.5">Inget säljsamtal — bara produkten.</p>
+          <p className="text-[11px] text-white/60 leading-tight mt-0.5">Inget säljsamtal — bara produkten.</p>
         </div>
       </div>
 
@@ -262,7 +262,7 @@ function DemoRequestForm() {
         )}
       </button>
 
-      <p className="text-[10px] text-white/35 text-center leading-relaxed">
+      <p className="text-[10px] text-white/55 text-center leading-relaxed">
         Vi återkommer inom en arbetsdag · ingen registrering krävs
       </p>
 
@@ -297,7 +297,7 @@ function DemoRequestForm() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="block text-[10px] font-semibold uppercase tracking-wider text-white/45 mb-1">
+      <span className="block text-[10px] font-semibold uppercase tracking-wider text-white/60 mb-1">
         {label}
       </span>
       {children}

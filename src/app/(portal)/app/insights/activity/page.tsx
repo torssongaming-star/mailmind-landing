@@ -85,7 +85,7 @@ export default async function ActivityPage() {
                       <summary className="text-muted-foreground cursor-pointer hover:text-white/70">
                         {t("portal.activity.details")}
                       </summary>
-                      <pre className="text-[10px] text-white/50 mt-2 bg-black/30 p-2 rounded font-mono overflow-x-auto">
+                      <pre className="text-[10px] text-white/65 mt-2 bg-black/30 p-2 rounded font-mono overflow-x-auto">
                         {JSON.stringify(log.metadata, null, 2)}
                       </pre>
                     </details>

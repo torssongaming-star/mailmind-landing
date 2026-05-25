@@ -8,7 +8,7 @@ import { useI18n } from "@/lib/i18n/context";
 function FooterLinkGroup({ title, links }: { title: string; links: { href: string; label: string }[] }) {
   return (
     <div>
-      <h4 className="text-xs font-semibold text-white/50 uppercase tracking-widest mb-3">{title}</h4>
+      <h4 className="text-xs font-semibold text-white/65 uppercase tracking-widest mb-3">{title}</h4>
       <ul className="space-y-0.5">
         {links.map((link) => (
           <li key={link.label}>

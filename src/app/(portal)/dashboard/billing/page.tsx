@@ -158,9 +158,9 @@ export default async function BillingPage({
                   </div>
                   <p className="text-2xl font-bold text-white mb-1 tracking-tight tabular-nums">
                     {plan.price}
-                    <span className="text-xs text-white/40 font-normal">/mån</span>
+                    <span className="text-xs text-white/60 font-normal">/mån</span>
                   </p>
-                  <ul className="text-xs text-white/55 space-y-1 mb-3 mt-1">
+                  <ul className="text-xs text-white/70 space-y-1 mb-3 mt-1">
                     <li className="tabular-nums">{plan.draftsLimit.toLocaleString()} AI-utkast/mån</li>
                     <li className="tabular-nums">{plan.inboxLimit} inkorg{plan.inboxLimit > 1 ? "ar" : ""}</li>
                     <li className="tabular-nums">{plan.seatLimit} platser</li>

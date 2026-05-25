@@ -13,7 +13,7 @@ export function Security() {
     <section id="security" className="py-20 md:py-28 px-6 border-t border-white/5">
       <div className="max-w-5xl mx-auto">
         <div className="text-center max-w-2xl mx-auto mb-12 md:mb-16">
-          <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-2">
+          <p className="text-[10px] uppercase tracking-widest text-white/55 font-semibold mb-2">
             Säkerhet
           </p>
           <h2 className="text-3xl md:text-4xl font-semibold tracking-[-0.02em] text-white">
@@ -36,7 +36,7 @@ export function Security() {
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-sm font-semibold text-white tracking-tight">{p.title}</h3>
-                  <p className="text-[13px] text-white/55 leading-relaxed mt-1">{p.body}</p>
+                  <p className="text-[13px] text-white/65 leading-relaxed mt-1">{p.body}</p>
                 </div>
               </div>
             );

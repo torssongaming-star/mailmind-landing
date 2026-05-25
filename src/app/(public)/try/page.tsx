@@ -28,7 +28,7 @@ export default function TryPage() {
         <div className="flex items-center justify-between mb-10">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 text-xs text-white/40 hover:text-white transition-colors group"
+            className="inline-flex items-center gap-2 text-xs text-white/60 hover:text-white transition-colors group"
           >
             <ArrowLeft size={13} className="group-hover:-translate-x-0.5 transition-transform" />
             Tillbaka
@@ -56,12 +56,12 @@ export default function TryPage() {
           <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-white mb-3">
             Se AI:n triagera ett mejl
           </h1>
-          <p className="text-base text-white/55 max-w-xl mx-auto leading-relaxed">
+          <p className="text-base text-white/70 max-w-xl mx-auto leading-relaxed">
             Välj ett av tre exempelmejl nedan. AI:n analyserar det, avgör vad kunden vill ha
             och föreslår ett svar — precis som den gör för riktiga kunder.
           </p>
           <p className="text-xs text-white/30 mt-3">
-            Demo-företag: <span className="text-white/45 font-medium">Acme El &amp; VVS AB</span>
+            Demo-företag: <span className="text-white/60 font-medium">Acme El &amp; VVS AB</span>
           </p>
         </div>
 

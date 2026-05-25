@@ -54,7 +54,7 @@ function TemplatePicker({ onInsert, templateVars }: { onInsert: (text: string) =
     return (
       <button
         onClick={() => setOpen(true)}
-        className="text-xs text-white/45 hover:text-white inline-flex items-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:text-white"
+        className="text-xs text-white/65 hover:text-white inline-flex items-center gap-1.5 transition-colors focus-visible:outline-none focus-visible:text-white"
       >
         <span className="text-[15px] leading-none">＋</span> Infoga mall
       </button>
@@ -64,11 +64,11 @@ function TemplatePicker({ onInsert, templateVars }: { onInsert: (text: string) =
   return (
     <div className="rounded-xl border border-white/10 bg-[hsl(var(--surface-deep))]/95 backdrop-blur-md p-2 max-h-56 overflow-y-auto shadow-lg">
       <div className="flex items-center justify-between px-1 py-1 mb-1">
-        <span className="text-[10px] uppercase tracking-widest text-white/35 font-semibold">Mallar</span>
+        <span className="text-[10px] uppercase tracking-widest text-white/60 font-semibold">Mallar</span>
         <button
           onClick={() => setOpen(false)}
           aria-label="Stäng mallar"
-          className="text-[11px] text-white/40 hover:text-white transition-colors"
+          className="text-[11px] text-white/65 hover:text-white transition-colors"
         >
           Stäng
         </button>
@@ -80,7 +80,7 @@ function TemplatePicker({ onInsert, templateVars }: { onInsert: (text: string) =
         </div>
       )}
       {!loading && templates && templates.length === 0 && (
-        <p className="text-xs text-white/45 italic px-2 py-2">
+        <p className="text-xs text-white/65 italic px-2 py-2">
           Inga mallar ännu.{" "}
           <a href="/app/settings" className="text-primary hover:underline">Skapa en i inställningar →</a>
         </p>
@@ -94,7 +94,7 @@ function TemplatePicker({ onInsert, templateVars }: { onInsert: (text: string) =
                 className="w-full text-left px-2 py-1.5 rounded-md hover:bg-white/[0.04] transition-colors focus-visible:outline-none focus-visible:bg-white/[0.06]"
               >
                 <p className="text-xs text-white">{t.title}</p>
-                <p className="text-[10px] text-white/40 truncate">{t.bodyText}</p>
+                <p className="text-[10px] text-white/60 truncate">{t.bodyText}</p>
               </button>
             </li>
           ))}

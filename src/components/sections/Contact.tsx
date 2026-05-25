@@ -157,7 +157,7 @@ function ContactForm({
         </div>
         <div>
           <label htmlFor="companyWebsite" className={labelClass}>
-            {t("landing.contact.website")} <span className="text-white/50 font-normal">({t("landing.contact.optional")})</span>
+            {t("landing.contact.website")} <span className="text-white/65 font-normal">({t("landing.contact.optional")})</span>
           </label>
           <input
             type="url"
@@ -195,7 +195,7 @@ function ContactForm({
       {/* Message */}
       <div>
         <label htmlFor="message" className={labelClass}>
-          {t("landing.contact.message")} <span className="text-white/50 font-normal">({t("landing.contact.optional")})</span>
+          {t("landing.contact.message")} <span className="text-white/65 font-normal">({t("landing.contact.optional")})</span>
         </label>
         <textarea
           id="message"

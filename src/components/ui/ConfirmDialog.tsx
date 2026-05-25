@@ -105,7 +105,7 @@ export function ConfirmDialog({
           </div>
           <div className="flex-1 min-w-0 pt-0.5">
             <h2 id="confirm-dialog-title" className="text-sm font-semibold text-white">{title}</h2>
-            {body && <p className="text-xs text-white/55 mt-1.5 leading-relaxed">{body}</p>}
+            {body && <p className="text-xs text-white/70 mt-1.5 leading-relaxed">{body}</p>}
           </div>
         </div>
 

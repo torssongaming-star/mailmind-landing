@@ -99,7 +99,7 @@ export function CookieBanner() {
             <h2 id="cookie-banner-title" className="text-sm font-semibold text-white">
               Vi värnar om din integritet
             </h2>
-            <p id="cookie-banner-desc" className="text-xs text-white/55 leading-relaxed mt-1">
+            <p id="cookie-banner-desc" className="text-xs text-white/70 leading-relaxed mt-1">
               Vi använder cookies för att tjänsten ska fungera, komma ihåg dina inställningar
               och förstå hur den används. Du bestämmer.{" "}
               <Link href="/cookies" className="text-primary hover:underline">Läs mer</Link>
@@ -200,7 +200,7 @@ function Option({
       />
       <div className="min-w-0">
         <p className="text-xs font-semibold text-white">{label}</p>
-        <p className="text-[11px] text-white/45 leading-relaxed mt-0.5">{hint}</p>
+        <p className="text-[11px] text-white/65 leading-relaxed mt-0.5">{hint}</p>
       </div>
     </label>
   );

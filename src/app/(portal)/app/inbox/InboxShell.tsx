@@ -238,7 +238,7 @@ export function InboxShell({
             </div>
             <div className="text-center max-w-[220px]">
               <p className="text-sm font-medium text-white/70">Inga ärenden än</p>
-              <p className="text-[11px] text-white/40 mt-2 leading-relaxed">
+              <p className="text-[11px] text-white/60 mt-2 leading-relaxed">
                 Redo att ta emot mejl. Skicka ett testmejl till din inkorg för att komma igång.
               </p>
             </div>
@@ -375,7 +375,7 @@ export function InboxShell({
             <div className="text-center max-w-[280px]">
               <p className="text-sm font-medium text-white/70">{t("inbox.thread.statusLabels.selectThread")}</p>
               {localThreads.length > 0 && (
-                <p className="text-xs text-white/35 mt-1.5 leading-relaxed">
+                <p className="text-xs text-white/60 mt-1.5 leading-relaxed">
                   {locale === "sv"
                     ? "Välj en tråd till vänster för att se konversation, AI-utkast och åtgärder."
                     : "Pick a thread on the left to see the conversation, AI drafts and actions."}

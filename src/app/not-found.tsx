@@ -12,7 +12,7 @@ export default function NotFound() {
         <p className="text-7xl font-bold text-white/10 leading-none">404</p>
         <div className="space-y-2">
           <h1 className="text-xl font-bold">Sidan finns inte</h1>
-          <p className="text-sm text-white/55 leading-relaxed">
+          <p className="text-sm text-white/70 leading-relaxed">
             Länken är trasig eller så har sidan flyttats. Inget farligt har hänt.
           </p>
         </div>

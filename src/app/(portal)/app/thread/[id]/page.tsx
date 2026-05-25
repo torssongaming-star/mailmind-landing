@@ -196,7 +196,7 @@ export default async function ThreadPage({
                   </p>
                   <details className="text-xs">
                     <summary className="text-muted-foreground cursor-pointer">{locale === "sv" ? "Insamlad information" : "Collected info"}</summary>
-                    <pre className="text-[10px] text-white/50 mt-2 bg-black/30 p-2 rounded font-mono overflow-x-auto">
+                    <pre className="text-[10px] text-white/65 mt-2 bg-black/30 p-2 rounded font-mono overflow-x-auto">
                       {JSON.stringify((d.metadata as { collected_info?: unknown }).collected_info ?? {}, null, 2)}
                     </pre>
                   </details>

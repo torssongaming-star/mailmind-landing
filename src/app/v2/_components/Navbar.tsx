@@ -54,7 +54,7 @@ export function Navbar() {
               <a
                 key={item.href}
                 href={item.href}
-                className="text-[13px] text-white/55 hover:text-white transition-colors focus-visible:outline-none focus-visible:text-white"
+                className="text-[13px] text-white/70 hover:text-white transition-colors focus-visible:outline-none focus-visible:text-white"
               >
                 {item.label}
               </a>

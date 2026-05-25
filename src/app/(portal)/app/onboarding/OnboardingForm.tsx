@@ -381,7 +381,7 @@ function CaseTypesStep({ onNext }: { onNext: () => void }) {
             className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors ${
               opt.checked
                 ? "border-primary/40 bg-primary/5 text-white"
-                : "border-white/8 bg-white/[0.02] text-white/40 hover:text-white/70"
+                : "border-white/8 bg-white/[0.02] text-white/65 hover:text-white/85"
             }`}
           >
             <div className={`w-4 h-4 rounded flex items-center justify-center shrink-0 border transition-colors ${
@@ -528,7 +528,7 @@ function AiBehaviorStep({ onNext }: { onNext: () => void }) {
             <p>
               Det här värdet styr hur många gånger den får fråga <span className="text-white/60 font-medium">samma kund i samma ärende</span> innan den ger upp och skickar ärendet vidare till er.
             </p>
-            <p className="text-white/50">
+            <p className="text-white/65">
               Exempel med 3: AI:n frågar → kunden svarar → AI:n frågar igen → kunden svarar → AI:n frågar en sista gång → om den fortfarande saknar info eskalerar den till er.
             </p>
           </div>
@@ -607,7 +607,7 @@ function WebhooksStep({ onFinish, finishing }: { onFinish: () => void; finishing
           </p>
         </div>
         <p className="text-[10px] text-muted-foreground pt-1 border-t border-white/5">
-          Teknisk term för detta: <span className="text-white/40">webhook</span>. Fungerar med Slack, Zapier, Make, HubSpot, och de flesta moderna system.
+          Teknisk term för detta: <span className="text-white/65">webhook</span>. Fungerar med Slack, Zapier, Make, HubSpot, och de flesta moderna system.
         </p>
       </div>
 
@@ -654,7 +654,7 @@ function WebhooksStep({ onFinish, finishing }: { onFinish: () => void; finishing
         className={`w-full px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50 ${
           saved
             ? "bg-primary text-[#030614] hover:bg-cyan-300"
-            : "border border-white/10 text-white/50 hover:text-white hover:border-white/30"
+            : "border border-white/10 text-white/70 hover:text-white hover:border-white/30"
         }`}
       >
         {finishing ? "Slutför…" : saved ? "Gå till Mailmind →" : "Hoppa över, gå till Mailmind →"}

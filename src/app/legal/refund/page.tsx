@@ -6,9 +6,9 @@ export const metadata: Metadata = { title: "Återbetalningspolicy" };
 export default function RefundPage() {
   return (
     <>
-      <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-1">Policy</p>
+      <p className="text-[10px] uppercase tracking-widest text-white/60 font-semibold mb-1">Policy</p>
       <h1>Återbetalningspolicy</h1>
-      <p className="text-sm text-white/55 mt-1">Version 1.0 · Gäller från [DATUM]</p>
+      <p className="text-sm text-white/70 mt-1">Version 1.0 · Gäller från [DATUM]</p>
 
       <LegalNotice level="review" extra={
         <span>Granska att återbetalningsperioder och undantag stämmer med er verksamhet.

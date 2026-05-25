@@ -187,7 +187,7 @@ function Banner({
         </div>
         <div className="flex-1 min-w-0">
           <p className={`text-sm font-semibold ${s.titleColor}`}>{title}</p>
-          <p className="text-xs text-white/55 leading-relaxed mt-0.5">{body}</p>
+          <p className="text-xs text-white/65 leading-relaxed mt-0.5">{body}</p>
         </div>
       </div>
       {cta && (

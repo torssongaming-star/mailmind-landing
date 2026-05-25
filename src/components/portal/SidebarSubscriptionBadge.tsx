@@ -89,7 +89,7 @@ export async function SidebarSubscriptionBadge() {
           </p>
           <p className={[
             "text-[10px] leading-tight mt-0.5",
-            urgent ? "text-amber-300/70" : "text-white/40",
+            urgent ? "text-amber-300/70" : "text-white/65",
           ].join(" ")}>
             {urgent ? "Lägg till kort →" : "Hantera abonnemang"}
           </p>

@@ -99,7 +99,7 @@ export function UpgradePrompt({
           </div>
           <div className="flex-1 min-w-0">
             <h2 id="upgrade-prompt-title" className="text-base font-semibold text-white tracking-tight">{c.title}</h2>
-            <p className="text-sm text-white/55 leading-relaxed mt-1.5">{c.body}</p>
+            <p className="text-sm text-white/70 leading-relaxed mt-1.5">{c.body}</p>
           </div>
           <button
             onClick={onClose}
@@ -113,7 +113,7 @@ export function UpgradePrompt({
         {used !== undefined && limit !== undefined && (
           <div className="mb-5">
             <div className="flex items-center justify-between text-[11px] mb-1.5">
-              <span className="text-white/45 font-medium">Användning denna månad</span>
+              <span className="text-white/65 font-medium">Användning denna månad</span>
               <span className="text-white/70 tabular-nums font-semibold">{used.toLocaleString()} / {limit.toLocaleString()}</span>
             </div>
             <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
@@ -128,7 +128,7 @@ export function UpgradePrompt({
         <div className="flex flex-col-reverse sm:flex-row gap-2">
           <button
             onClick={onClose}
-            className="inline-flex items-center justify-center h-9 px-4 rounded-xl text-xs font-medium text-white/55 hover:text-white hover:bg-white/[0.04] transition-colors"
+            className="inline-flex items-center justify-center h-9 px-4 rounded-xl text-xs font-medium text-white/70 hover:text-white hover:bg-white/[0.04] transition-colors"
           >
             Inte nu
           </button>

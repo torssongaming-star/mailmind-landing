@@ -6,9 +6,9 @@ export const metadata: Metadata = { title: "Service Level Agreement (SLA)" };
 export default function SlaPage() {
   return (
     <>
-      <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-1">Servicenivå</p>
+      <p className="text-[10px] uppercase tracking-widest text-white/60 font-semibold mb-1">Servicenivå</p>
       <h1>Service Level Agreement (SLA)</h1>
-      <p className="text-sm text-white/55 mt-1">Version 1.0 · Gäller från [DATUM]</p>
+      <p className="text-sm text-white/70 mt-1">Version 1.0 · Gäller från [DATUM]</p>
 
       <LegalNotice level="review" extra={
         <span>Tjänstenivåer och kreditprocent bör anpassas till faktisk kapacitet ni kan leverera.
@@ -26,7 +26,7 @@ export default function SlaPage() {
       <div className="not-prose overflow-x-auto rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/50 my-6">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-[10px] uppercase tracking-widest text-white/40 font-semibold">
+            <tr className="text-left text-[10px] uppercase tracking-widest text-white/60 font-semibold">
               <th className="px-4 py-3 border-b border-white/8">Plan</th>
               <th className="px-4 py-3 border-b border-white/8">Månadsvis drifttid</th>
               <th className="px-4 py-3 border-b border-white/8">Max nedtid/månad</th>
@@ -79,7 +79,7 @@ export default function SlaPage() {
       <div className="not-prose overflow-x-auto rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/50 my-6">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-[10px] uppercase tracking-widest text-white/40 font-semibold">
+            <tr className="text-left text-[10px] uppercase tracking-widest text-white/60 font-semibold">
               <th className="px-4 py-3 border-b border-white/8">Allvarsgrad</th>
               <th className="px-4 py-3 border-b border-white/8">Beskrivning</th>
               <th className="px-4 py-3 border-b border-white/8">Starter</th>

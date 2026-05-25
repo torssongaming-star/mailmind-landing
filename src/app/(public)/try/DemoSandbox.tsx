@@ -34,7 +34,7 @@ function ExampleCard({
           <p className={`text-sm font-semibold ${selected ? "text-white" : "text-white/80"}`}>
             {example.label}
           </p>
-          <p className="text-xs text-white/45 mt-0.5 truncate">{example.description}</p>
+          <p className="text-xs text-white/65 mt-0.5 truncate">{example.description}</p>
         </div>
         {selected && (
           <div className="shrink-0 w-2 h-2 rounded-full bg-primary mt-1.5" />
@@ -56,7 +56,7 @@ function EmailPreview({ example }: { example: DemoExample }) {
     >
       {/* Email header */}
       <div className="px-5 py-4 border-b border-white/8 bg-white/[0.02]">
-        <div className="flex items-center gap-2 text-xs text-white/40 mb-1">
+        <div className="flex items-center gap-2 text-xs text-white/65 mb-1">
           <span className="font-medium text-white/60">Från:</span>
           <span>{example.from}</span>
         </div>
@@ -158,7 +158,7 @@ function TriageResult({
             {result.caseType && (
               <>
                 <span className="text-[10px] text-white/30">•</span>
-                <span className="text-[10px] uppercase tracking-wider text-white/50 font-medium">
+                <span className="text-[10px] uppercase tracking-wider text-white/65 font-medium">
                   {result.caseType}
                 </span>
               </>
@@ -173,7 +173,7 @@ function TriageResult({
       {/* Draft / question / reason */}
       {result.draft && (
         <div className="px-5 py-4 border-b border-white/8">
-          <p className="text-[10px] uppercase tracking-widest text-white/35 font-semibold mb-2">
+          <p className="text-[10px] uppercase tracking-widest text-white/60 font-semibold mb-2">
             {result.action === "summarize" ? "Föreslaget svar till kund" : "Följdfråga till kund"}
           </p>
           <p className="text-sm text-white/85 leading-relaxed whitespace-pre-line">{result.draft}</p>
@@ -182,7 +182,7 @@ function TriageResult({
 
       {/* Confidence */}
       <div className="px-5 py-3 border-b border-white/8">
-        <p className="text-[10px] uppercase tracking-widest text-white/35 font-semibold mb-2">
+        <p className="text-[10px] uppercase tracking-widest text-white/60 font-semibold mb-2">
           Konfidens
         </p>
         <ConfidenceBar value={result.confidence} />
@@ -191,7 +191,7 @@ function TriageResult({
       {/* Sources */}
       {result.sources.length > 0 && (
         <div className="px-5 py-3">
-          <p className="text-[10px] uppercase tracking-widest text-white/35 font-semibold mb-2">
+          <p className="text-[10px] uppercase tracking-widest text-white/60 font-semibold mb-2">
             Källhänvisningar
           </p>
           <ul className="space-y-1.5">
@@ -335,7 +335,7 @@ export function DemoSandbox({ examples }: { examples: DemoExample[] }) {
     <div className="space-y-6">
       {/* Step 1 — Pick an email */}
       <div>
-        <p className="text-[11px] uppercase tracking-widest text-white/40 font-semibold mb-3">
+        <p className="text-[11px] uppercase tracking-widest text-white/60 font-semibold mb-3">
           1 — Välj ett inkommande mejl
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -361,7 +361,7 @@ export function DemoSandbox({ examples }: { examples: DemoExample[] }) {
             transition={{ duration: 0.2 }}
             className="space-y-4"
           >
-            <p className="text-[11px] uppercase tracking-widest text-white/40 font-semibold">
+            <p className="text-[11px] uppercase tracking-widest text-white/60 font-semibold">
               2 — Mejlets innehåll
             </p>
             <EmailPreview example={selectedExample} />
@@ -414,7 +414,7 @@ export function DemoSandbox({ examples }: { examples: DemoExample[] }) {
             transition={{ duration: 0.3 }}
             className="space-y-4"
           >
-            <p className="text-[11px] uppercase tracking-widest text-white/40 font-semibold">
+            <p className="text-[11px] uppercase tracking-widest text-white/60 font-semibold">
               3 — AI:ns svar {result.turn ? `(${result.turn} av ${result.maxTurns ?? 2})` : ""}
             </p>
             <TriageResult result={result} exampleId={selectedId} />
@@ -428,10 +428,10 @@ export function DemoSandbox({ examples }: { examples: DemoExample[] }) {
                 className="rounded-2xl border border-white/10 bg-white/[0.02] p-4 space-y-3"
               >
                 <div>
-                  <p className="text-[11px] uppercase tracking-widest text-white/40 font-semibold mb-1">
+                  <p className="text-[11px] uppercase tracking-widest text-white/60 font-semibold mb-1">
                     4 — Svara som kund
                   </p>
-                  <p className="text-xs text-white/55 leading-relaxed">
+                  <p className="text-xs text-white/70 leading-relaxed">
                     Föreställ dig att du är kunden — svara på AI:ns följdfråga och se hur AI:n hanterar nästa runda.
                   </p>
                 </div>
@@ -481,7 +481,7 @@ export function DemoSandbox({ examples }: { examples: DemoExample[] }) {
                 <p className="text-sm font-semibold text-white">
                   Demon stannar här — men AI:n är redo för mer.
                 </p>
-                <p className="text-xs text-white/55 max-w-sm mx-auto leading-relaxed">
+                <p className="text-xs text-white/70 max-w-sm mx-auto leading-relaxed">
                   Skapa ett konto så hanterar den era riktiga kundmejl —
                   i er ton, med er kunskap.
                 </p>
@@ -501,7 +501,7 @@ export function DemoSandbox({ examples }: { examples: DemoExample[] }) {
 
             <button
               onClick={reset}
-              className="flex items-center gap-1.5 text-xs text-white/35 hover:text-white/60 transition-colors mx-auto"
+              className="flex items-center gap-1.5 text-xs text-white/60 hover:text-white/85 transition-colors mx-auto"
             >
               <RotateCcw size={11} />
               Testa ett annat mejl
@@ -523,7 +523,7 @@ export function DemoSandbox({ examples }: { examples: DemoExample[] }) {
         <p className="text-sm font-semibold text-white">
           Imponerad? Koppla din riktiga inkorg.
         </p>
-        <p className="text-xs text-white/50 max-w-sm mx-auto leading-relaxed">
+        <p className="text-xs text-white/70 max-w-sm mx-auto leading-relaxed">
           Det du just såg var ett demo med ett fiktivt företag. I din version lär sig
           AI:n din verksamhet och svarar på dina riktiga kundfrågor.
         </p>

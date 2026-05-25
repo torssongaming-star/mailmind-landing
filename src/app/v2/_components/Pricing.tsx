@@ -33,7 +33,7 @@ export function Pricing({ currency = "EUR" }: { currency?: Currency }) {
       <div className="max-w-6xl mx-auto">
         {/* Heading */}
         <div className="text-center max-w-2xl mx-auto mb-10 md:mb-12">
-          <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-2">
+          <p className="text-[10px] uppercase tracking-widest text-white/55 font-semibold mb-2">
             Priser
           </p>
           <h2 className="text-3xl md:text-4xl font-semibold tracking-[-0.02em] text-white">
@@ -41,7 +41,7 @@ export function Pricing({ currency = "EUR" }: { currency?: Currency }) {
             <br />
             <span className="text-white/45">Inga överraskningar.</span>
           </h2>
-          <p className="mt-5 text-sm text-white/55">
+          <p className="mt-5 text-sm text-white/70">
             Provperiod 14 dagar utan kostnad. Inga bindningstider, inga uppsägningsavgifter.
           </p>
         </div>
@@ -55,7 +55,7 @@ export function Pricing({ currency = "EUR" }: { currency?: Currency }) {
                 "h-8 px-4 rounded-lg text-xs font-semibold transition-all",
                 !isAnnual
                   ? "bg-white/[0.08] text-white shadow-sm"
-                  : "text-white/45 hover:text-white/70",
+                  : "text-white/60 hover:text-white/85",
               ].join(" ")}
             >
               Månadsvis
@@ -66,7 +66,7 @@ export function Pricing({ currency = "EUR" }: { currency?: Currency }) {
                 "h-8 px-4 rounded-lg text-xs font-semibold transition-all flex items-center gap-2",
                 isAnnual
                   ? "bg-white/[0.08] text-white shadow-sm"
-                  : "text-white/45 hover:text-white/70",
+                  : "text-white/60 hover:text-white/85",
               ].join(" ")}
             >
               Årsvis
@@ -125,7 +125,7 @@ export function Pricing({ currency = "EUR" }: { currency?: Currency }) {
                       </span>
                     )}
                   </div>
-                  <p className="text-[12px] text-white/45 mt-1 leading-relaxed">{plan.description}</p>
+                  <p className="text-[12px] text-white/65 mt-1 leading-relaxed">{plan.description}</p>
                 </div>
 
                 {/* Price block */}
@@ -136,9 +136,9 @@ export function Pricing({ currency = "EUR" }: { currency?: Currency }) {
                     <>
                       <p className="text-3xl font-semibold text-white tracking-tight tabular-nums">
                         {headlinePrice}
-                        <span className="text-xs text-white/40 font-normal">{headlineUnit}</span>
+                        <span className="text-xs text-white/60 font-normal">{headlineUnit}</span>
                       </p>
-                      <p className="text-[10px] text-white/35 mt-1 tabular-nums">
+                      <p className="text-[10px] text-white/60 mt-1 tabular-nums">
                         {subline}
                       </p>
                     </>
@@ -178,7 +178,7 @@ export function Pricing({ currency = "EUR" }: { currency?: Currency }) {
           })}
         </div>
 
-        <p className="mt-10 text-center text-xs text-white/35 max-w-xl mx-auto leading-relaxed">
+        <p className="mt-10 text-center text-xs text-white/55 max-w-xl mx-auto leading-relaxed">
           Alla priser exkl. moms. Årsabonnemang faktureras som en betalning och ger rabatt — exakt belopp per plan visas ovan.
           Ändra eller säg upp när som helst.
         </p>

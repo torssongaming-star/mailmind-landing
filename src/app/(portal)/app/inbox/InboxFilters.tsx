@@ -88,11 +88,11 @@ export function InboxFilters({
               className={`shrink-0 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
                 isActive
                   ? "bg-primary/[0.12] text-primary border border-primary/25"
-                  : "text-white/55 hover:text-white hover:bg-white/[0.06] border border-white/10"
+                  : "text-white/70 hover:text-white hover:bg-white/[0.06] border border-white/10"
               }`}
             >
               <span>{tab.label}</span>
-              <span className={`text-[10px] tabular-nums px-1 rounded ${isActive ? "bg-primary/15 text-primary" : "text-white/35"}`}>
+              <span className={`text-[10px] tabular-nums px-1 rounded ${isActive ? "bg-primary/15 text-primary" : "text-white/60"}`}>
                 {count}
               </span>
             </Link>

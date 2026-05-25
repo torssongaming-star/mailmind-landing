@@ -85,7 +85,7 @@ export function InternalNotes({
         <h2 className="text-[10px] font-semibold text-amber-400/80 uppercase tracking-widest">
           Interna anteckningar
         </h2>
-        <span className="text-[10px] text-white/35">Syns inte för kunden</span>
+        <span className="text-[10px] text-white/60">Syns inte för kunden</span>
       </header>
 
       {/* Existing notes */}
@@ -105,7 +105,7 @@ export function InternalNotes({
                   Ta bort
                 </button>
               </div>
-              <p className="text-[10px] text-white/35 mt-2 tabular-nums">
+              <p className="text-[10px] text-white/60 mt-2 tabular-nums">
                 {n.authorEmail ?? "Unknown author"}
                 {" · "}
                 {new Date(n.createdAt).toLocaleString("sv-SE")}

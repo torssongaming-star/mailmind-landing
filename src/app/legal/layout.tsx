@@ -25,7 +25,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
       <div className="mx-auto max-w-6xl px-6 py-12 md:py-16 grid md:grid-cols-[220px_1fr] gap-8 md:gap-12">
         {/* Sidebar */}
         <aside className="md:sticky md:top-12 md:self-start space-y-1">
-          <Link href="/" className="block text-xs uppercase tracking-widest text-white/40 hover:text-white/70 mb-4 transition-colors">
+          <Link href="/" className="block text-xs uppercase tracking-widest text-white/60 hover:text-white/85 mb-4 transition-colors">
             ← Tillbaka till {siteConfig.siteName}
           </Link>
           <p className="text-[10px] uppercase tracking-widest text-white/30 font-semibold px-2 py-2">
@@ -35,7 +35,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
             <Link
               key={item.href}
               href={item.href}
-              className="block px-3 py-1.5 rounded-lg text-[13px] text-white/55 hover:text-white hover:bg-white/[0.04] transition-colors"
+              className="block px-3 py-1.5 rounded-lg text-[13px] text-white/70 hover:text-white hover:bg-white/[0.04] transition-colors"
             >
               {item.label}
             </Link>

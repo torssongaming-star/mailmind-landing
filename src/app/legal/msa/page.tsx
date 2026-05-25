@@ -6,9 +6,9 @@ export const metadata: Metadata = { title: "Master Services Agreement (MSA)" };
 export default function MsaPage() {
   return (
     <>
-      <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-1">Avtal · enterprise</p>
+      <p className="text-[10px] uppercase tracking-widest text-white/60 font-semibold mb-1">Avtal · enterprise</p>
       <h1>Master Services Agreement (MSA)</h1>
-      <p className="text-sm text-white/55 mt-1">Version 1.0 · Mall för enterprise-avtal</p>
+      <p className="text-sm text-white/70 mt-1">Version 1.0 · Mall för enterprise-avtal</p>
 
       <LegalNotice level="lawyer" extra={
         <span>
