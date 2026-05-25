@@ -1,12 +1,10 @@
-﻿import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach } from "vitest";
 import { rateLimit, RATE_LIMITS } from "./rate-limit";
 
 describe("rateLimit", () => {
   // Use unique keys per test to avoid cross-contamination of the shared bucket map
   let testId = 0;
   const key = () => `test-${++testId}-${Date.now()}`;
-
-  beforeEach(() => { testId = 0; });
 
   it("allows requests within capacity", async () => {
     const k = key();
