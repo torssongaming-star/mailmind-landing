@@ -58,12 +58,7 @@ type Draft = {
   sentAt: string | Date | null;
 };
 
-const STATUS_CLASSES: Record<string, string> = {
-  open:      "bg-green-500/15 text-green-400 border-green-500/30",
-  waiting:   "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  escalated: "bg-red-500/15 text-red-400 border-red-500/30",
-  resolved:  "bg-white/10 text-muted-foreground border-white/15",
-};
+import { threadStatusClass } from "@/lib/ui/thread-status";
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -217,7 +212,7 @@ export function ThreadPanel({
                 ? <span><span className="text-white/80">{thread.fromName}</span> <span className="text-white/30">&lt;{thread.fromEmail}&gt;</span></span>
                 : <span>{thread.fromEmail}</span>}
               <span className="text-white/15">·</span>
-              <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full border ${STATUS_CLASSES[thread.status] ?? STATUS_CLASSES.resolved}`}>
+              <span className={`text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full border ${threadStatusClass(thread.status)}`}>
                 {thread.status}
               </span>
               {thread.caseTypeSlug && (

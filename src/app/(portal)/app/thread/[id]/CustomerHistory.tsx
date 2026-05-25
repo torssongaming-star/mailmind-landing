@@ -1,12 +1,6 @@
 import Link from "next/link";
 import type { EmailThread } from "@/lib/db/schema";
-
-const STATUS_CLASSES: Record<string, string> = {
-  open:      "bg-green-500/15 text-green-400 border-green-500/30",
-  waiting:   "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  escalated: "bg-red-500/15 text-red-400 border-red-500/30",
-  resolved:  "bg-white/10 text-muted-foreground border-white/15",
-};
+import { threadStatusClass } from "@/lib/ui/thread-status";
 
 export function CustomerHistory({
   fromEmail,
@@ -39,7 +33,7 @@ export function CustomerHistory({
               </p>
             </div>
             <span className={`shrink-0 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-              STATUS_CLASSES[t.status] ?? STATUS_CLASSES.resolved
+              threadStatusClass(t.status)
             }`}>
               {t.status}
             </span>

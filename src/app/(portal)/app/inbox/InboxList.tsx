@@ -16,16 +16,10 @@ type Thread = {
   tags:           string[];
 };
 
-const STATUS_CLASSES: Record<string, string> = {
-  open:      "bg-green-500/15 text-green-400 border-green-500/30",
-  waiting:   "bg-amber-500/15 text-amber-400 border-amber-500/30",
-  escalated: "bg-red-500/15 text-red-400 border-red-500/30",
-  resolved:  "bg-white/10 text-muted-foreground border-white/15",
-};
-
 const POLL_INTERVAL_MS = 30_000; // 30 seconds
 
 import { useI18n } from "@/lib/i18n/context";
+import { threadStatusClass } from "@/lib/ui/thread-status";
 
 export function InboxList({ threads = [], slaByCaseType = {} }: { threads: Thread[]; slaByCaseType?: Record<string, number> }) {
   const { t, locale } = useI18n();
@@ -247,7 +241,7 @@ export function InboxList({ threads = [], slaByCaseType = {} }: { threads: Threa
                     </span>
                   ))}
                   <span className={`text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
-                    STATUS_CLASSES[thread.status] ?? STATUS_CLASSES.resolved
+                    threadStatusClass(thread.status)
                   }`}>
                     {thread.status}
                   </span>
