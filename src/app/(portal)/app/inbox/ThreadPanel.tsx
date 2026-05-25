@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import { ExternalLink, ArrowLeft, AlertTriangle, RefreshCw } from "lucide-react";
 import { sanitizeEmailHtml } from "@/lib/utils/sanitize-email-html";
 import { DraftSources } from "@/components/app/DraftSources";
+import { ConfidenceBadge } from "@/components/app/ConfidenceBadge";
 import { DraftActions } from "../thread/[id]/DraftActions";
 import { GenerateDraftButton } from "../thread/[id]/GenerateDraftButton";
 import { InternalNotes, type Note } from "../thread/[id]/InternalNotes";
@@ -429,6 +430,7 @@ export function ThreadPanel({
                 <div className="flex items-center gap-2 flex-wrap">
                   <ActionBadge action={d.action} t={t} />
                   <span className="text-[9px] text-white/45 uppercase tracking-widest font-semibold px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/8">{d.status}</span>
+                  <ConfidenceBadge confidence={(d.metadata as { confidence?: number } | null)?.confidence} />
                   <span className="ml-auto text-[10px] text-white/35 tabular-nums">
                     {new Date(d.generatedAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE")}
                   </span>

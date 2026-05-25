@@ -19,6 +19,7 @@ import { CustomerHistory } from "./CustomerHistory";
 import { TagEditor } from "./TagEditor";
 import { BlockSenderButton } from "./BlockSenderButton";
 import { DraftSources } from "@/components/app/DraftSources";
+import { ConfidenceBadge } from "@/components/app/ConfidenceBadge";
 import { getTranslations } from "@/lib/i18n";
 import { getUserLocale } from "@/lib/i18n/get-locale";
 
@@ -162,6 +163,7 @@ export default async function ThreadPage({
                 <span className="text-[10px] text-muted-foreground uppercase tracking-wider">
                   {d.status}
                 </span>
+                <ConfidenceBadge confidence={(d.metadata as { confidence?: number } | null)?.confidence} />
                 <span className="ml-auto text-[10px] text-muted-foreground">
                   {new Date(d.generatedAt).toLocaleString(locale === "sv" ? "sv-SE" : "en-IE")}
                 </span>
