@@ -6,10 +6,18 @@
  * can render plan details (names, prices, features) without triggering
  * environment variable errors on the client.
  *
- * Annual pricing: 17% discount vs. paying month-to-month.
- *   Starter  €19/mån  → €189/år  (saves €39)
- *   Team     €49/mån  → €488/år  (saves €100)
- *   Business €99/mån  → €986/år  (saves €202)
+ * EUR annual pricing: ~17% discount vs. paying month-to-month.
+ *   Starter  €19/mån  → €189/år  (saves €39, −17%)
+ *   Team     €49/mån  → €488/år  (saves €100, −17%)
+ *   Business €99/mån  → €986/år  (saves €202, −17%)
+ *
+ * SEK annual pricing follows Stripe-configured tiers — rabatten varierar
+ * per plan eftersom årspriserna är satta direkt i Stripe (inte beräknade
+ * från månadspriset). Uppdatera savings-labels HÄR endast när Stripe-
+ * priserna ändras.
+ *   Starter  199 kr/mån → 1 999 kr/år (saves 389 kr, −16%)
+ *   Team     499 kr/mån → 5 299 kr/år (saves 689 kr, −12%)
+ *   Business 999 kr/mån → 11 499 kr/år (saves 489 kr, −4%)
  */
 
 export const PLANS = {
@@ -44,7 +52,7 @@ export const PLANS = {
   },
   team: {
     id: "team",
-    name: "Start as a Team",
+    name: "Team",
     price: "€49",
     priceAnnual: "€488",
     priceMonthlyAnnual: "€41",
@@ -70,7 +78,7 @@ export const PLANS = {
   },
   business: {
     id: "business",
-    name: "Start as a Business",
+    name: "Business",
     price: "€99",
     priceAnnual: "€986",
     priceMonthlyAnnual: "€82",

@@ -71,7 +71,7 @@ export function Pricing({ currency = "EUR" }: { currency?: Currency }) {
             >
               Årsvis
               <span className="text-[10px] font-bold uppercase tracking-wide text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded-full leading-none">
-                −17%
+                Spara
               </span>
             </button>
           </div>
@@ -179,7 +179,7 @@ export function Pricing({ currency = "EUR" }: { currency?: Currency }) {
         </div>
 
         <p className="mt-10 text-center text-xs text-white/35 max-w-xl mx-auto leading-relaxed">
-          Alla priser exkl. moms. Årsabonnemang faktureras som en betalning och ger 17% rabatt.
+          Alla priser exkl. moms. Årsabonnemang faktureras som en betalning och ger rabatt — exakt belopp per plan visas ovan.
           Ändra eller säg upp när som helst.
         </p>
       </div>
