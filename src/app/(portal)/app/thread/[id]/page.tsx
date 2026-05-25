@@ -18,6 +18,7 @@ import { SnoozeButton } from "./SnoozeButton";
 import { CustomerHistory } from "./CustomerHistory";
 import { TagEditor } from "./TagEditor";
 import { BlockSenderButton } from "./BlockSenderButton";
+import { DraftSources } from "@/components/app/DraftSources";
 import { getTranslations } from "@/lib/i18n";
 import { getUserLocale } from "@/lib/i18n/get-locale";
 
@@ -199,6 +200,12 @@ export default async function ThreadPage({
                   {String((d.metadata as { reason?: string })?.reason ?? t("inbox.thread.actions.escalate"))}
                 </p>
               )}
+
+              {/* Källhänvisning — alltid synlig (varningsruta när tomt) */}
+              {(() => {
+                const meta = d.metadata as { sources?: Array<{ kb_entry_id: string; snippet: string }> } | null;
+                return <DraftSources sources={meta?.sources ?? []} />;
+              })()}
 
               <DraftActions
                 draftId={d.id}
