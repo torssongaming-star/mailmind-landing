@@ -1,7 +1,12 @@
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, Eye, BookCheck, Flag } from "lucide-react";
+import { ArrowRight, ShieldCheck, Eye, BookCheck, Flag, PenLine } from "lucide-react";
 
-export function Hero() {
+/** Minsta antal LOI:s för att visa social-proof-pillen — under tröskeln är
+ *  "3 företag har skrivit på" sämre signal än ingen siffra alls. */
+const LOI_PROOF_THRESHOLD = 10;
+
+export function Hero({ loiCount = 0 }: { loiCount?: number }) {
+  const showLoiProof = loiCount >= LOI_PROOF_THRESHOLD;
   return (
     <section className="relative pt-32 md:pt-40 pb-16 md:pb-24 px-6 overflow-hidden">
       {/* Dot-grid background */}
@@ -71,6 +76,35 @@ export function Hero() {
             <span className="text-[10px] text-white/45 group-hover:text-white/65">utan registrering</span>
           </Link>
         </div>
+
+        {/* Social proof — endast när tröskeln nåtts. Pre-AB-väg till "X företag har skrivit på". */}
+        {showLoiProof ? (
+          <div className="mt-6 flex justify-center">
+            <Link
+              href="/loi"
+              className="group inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-primary/25 bg-primary/[0.05] text-[12px] text-white/80 hover:text-white hover:border-primary/40 hover:bg-primary/[0.08] transition-colors"
+            >
+              <span className="relative flex w-1.5 h-1.5">
+                <span className="absolute inline-flex w-full h-full rounded-full bg-primary opacity-75 animate-ping" />
+                <span className="relative inline-flex w-1.5 h-1.5 rounded-full bg-primary" />
+              </span>
+              <strong className="text-white font-semibold tabular-nums">{loiCount}</strong>
+              <span>företag har skrivit på avsiktsförklaringen</span>
+              <ArrowRight size={11} className="text-white/45 group-hover:text-white/75 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
+        ) : (
+          <div className="mt-6 flex justify-center">
+            <Link
+              href="/loi"
+              className="group inline-flex items-center gap-1.5 text-[12px] text-white/55 hover:text-white/85 transition-colors"
+            >
+              <PenLine size={12} aria-hidden />
+              <span>Skriv på vår avsiktsförklaring inför lansering</span>
+              <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+          </div>
+        )}
 
         {/* Trust line — produktens fyra LOCKED-säljpunkter, inte påhittade kundlogos. */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[11px] text-white/65">

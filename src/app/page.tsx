@@ -8,6 +8,7 @@ import { Security } from "./v2/_components/Security";
 import { Pricing } from "./v2/_components/Pricing";
 import { FAQContact } from "./v2/_components/FAQContact";
 import { LegalFooter } from "@/components/layout/LegalFooter";
+import { countVerifiedLois } from "@/lib/loi/queries";
 import type { Currency } from "@/lib/plans";
 
 // Force dynamic rendering so the geo-detect runs per-request
@@ -28,7 +29,10 @@ async function detectCurrency(): Promise<Currency> {
 }
 
 export default async function Home() {
-  const currency = await detectCurrency();
+  const [currency, loiCount] = await Promise.all([
+    detectCurrency(),
+    countVerifiedLois().catch(() => 0), // Tappar aldrig hero om DB är nere
+  ]);
 
   // Renderar V2 landing page components med global bakgrund
   return (
@@ -52,7 +56,7 @@ export default async function Home() {
       />
       <Navbar />
       <main>
-        <Hero />
+        <Hero loiCount={loiCount} />
         <Why />
         <HowItWorks />
         <Features />
