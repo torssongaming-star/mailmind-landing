@@ -13,12 +13,36 @@
  * kandidat eller inte.
  */
 
-export function ConfidenceBadge({ confidence }: { confidence: number | null | undefined }) {
+export function ConfidenceBadge({
+  confidence,
+  compact = false,
+}: {
+  confidence: number | null | undefined;
+  /** Compact-variant — bara procent + färg, för täta listor (inbox-rader). */
+  compact?: boolean;
+}) {
   if (typeof confidence !== "number" || Number.isNaN(confidence)) return null;
 
   const pct = Math.round(Math.max(0, Math.min(1, confidence)) * 100);
   const tier = tierFor(confidence);
   const styles = TIER_STYLES[tier];
+
+  if (compact) {
+    return (
+      <span
+        className={[
+          "inline-flex items-center text-[10px] font-bold tabular-nums px-1.5 py-0.5 rounded border leading-none",
+          styles.bg,
+          styles.text,
+          styles.border,
+        ].join(" ")}
+        title={`AI-säkerhet ${pct}% — ${styles.label}. ${styles.tooltip}`}
+        aria-label={`AI-säkerhet ${pct} procent — ${styles.label}`}
+      >
+        {pct}%
+      </span>
+    );
+  }
 
   return (
     <span

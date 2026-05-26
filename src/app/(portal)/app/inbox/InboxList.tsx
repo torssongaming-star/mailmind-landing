@@ -14,6 +14,9 @@ type Thread = {
   lastMessageAt:  Date | null;
   snoozedUntil:   Date | null;
   tags:           string[];
+  triageFailed?:  boolean;
+  /** AI-confidence (0..1) på senaste pending/edited utkast — null om saknas. */
+  confidence?:    number | null;
 };
 
 const POLL_INTERVAL_MS = 30_000; // 30 seconds
@@ -21,6 +24,7 @@ const POLL_INTERVAL_MS = 30_000; // 30 seconds
 import { useI18n } from "@/lib/i18n/context";
 import { threadStatusClass } from "@/lib/ui/thread-status";
 import { caseTypeDotClasses } from "@/lib/ui/case-type-color";
+import { ConfidenceBadge } from "@/components/app/ConfidenceBadge";
 
 export function InboxList({ threads = [], slaByCaseType = {} }: { threads: Thread[]; slaByCaseType?: Record<string, number> }) {
   const { t, locale } = useI18n();
@@ -228,7 +232,8 @@ export function InboxList({ threads = [], slaByCaseType = {} }: { threads: Threa
                     </span>
                   </p>
                 </div>
-                <div className="flex items-center gap-3 shrink-0">
+                <div className="flex items-center gap-2 shrink-0">
+                  <ConfidenceBadge confidence={thread.confidence} compact />
                   {slaBadge === "breached" && (
                     <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border bg-red-500/15 text-red-400 border-red-500/30">
                       {t("inbox.sla.breached")}

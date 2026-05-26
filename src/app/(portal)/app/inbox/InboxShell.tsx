@@ -14,6 +14,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { RefreshCw, Mail } from "lucide-react";
 import { ThreadPanel } from "./ThreadPanel";
+import { caseTypeDotClasses } from "@/lib/ui/case-type-color";
+import { ConfidenceBadge } from "@/components/app/ConfidenceBadge";
 
 type Thread = {
   id:            string;
@@ -26,6 +28,8 @@ type Thread = {
   snoozedUntil:  Date | null;
   tags:          string[];
   triageFailed:  boolean;
+  /** AI-confidence (0..1) på senaste pending/edited utkast — null om saknas. */
+  confidence?:   number | null;
 };
 
 const STATUS_DOT: Record<string, string> = {
@@ -311,16 +315,24 @@ export function InboxShell({
                     {thread.subject ?? t("inbox.noSubject")}
                   </p>
                   <div className="flex items-center gap-1.5 flex-wrap mt-1">
-                    {thread.caseTypeSlug && (
-                      <span className="text-[9px] text-white/30">{thread.caseTypeSlug}</span>
-                    )}
+                    {thread.caseTypeSlug && (() => {
+                      const { dot, ring } = caseTypeDotClasses(thread.caseTypeSlug);
+                      return (
+                        <span
+                          className={`inline-block w-2 h-2 rounded-full ring-2 ${dot} ${ring}`}
+                          title={thread.caseTypeSlug}
+                          aria-label={`Ärendetyp: ${thread.caseTypeSlug}`}
+                        />
+                      );
+                    })()}
+                    <ConfidenceBadge confidence={thread.confidence} compact />
                     {thread.tags.slice(0, 2).map(tag => (
                       <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
                         {tag}
                       </span>
                     ))}
                     {slaBreached && (
-                      <span className="text-[9px] font-bold text-red-400">SLA</span>
+                      <span className="text-[9px] font-bold text-red-400" title="SLA-tiden överskriden">FÖRSENAD</span>
                     )}
                     {thread.snoozedUntil && new Date(thread.snoozedUntil) > new Date() && (
                       <span className="text-[9px] text-amber-400">{t("inbox.status.snoozed").toLowerCase()}</span>

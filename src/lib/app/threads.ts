@@ -7,7 +7,7 @@
  * the resolved orgId here.
  */
 
-import { eq, and, or, desc, asc, lt, lte, isNotNull, sql } from "drizzle-orm";
+import { eq, and, or, desc, asc, lt, lte, isNotNull, inArray, sql } from "drizzle-orm";
 import {
   db,
   isDbConnected,
@@ -348,6 +348,51 @@ export async function listDraftsForThread(organizationId: string, threadId: stri
       eq(aiDrafts.organizationId, organizationId),
     ))
     .orderBy(desc(aiDrafts.generatedAt));
+}
+
+/**
+ * Batch-load the latest pending/edited draft confidence for many threads.
+ * Returns Map<threadId, confidence> — only entries with a numeric confidence
+ * are included (threads without a pending draft, or with one but no confidence
+ * in metadata, are simply absent from the map).
+ *
+ * Used by inbox-listan att rendera en kompakt confidence-pill per rad så att
+ * användaren ser auto-send-kandidater på en sekund utan att öppna varje tråd.
+ *
+ * Single query — sorted DESC by generatedAt så vi tar den senaste per thread
+ * via first-wins-loop på applikationsnivå. För 200 trådar är detta billigare
+ * än en window-function-CTE.
+ */
+export async function getPendingDraftConfidencesByThread(
+  organizationId: string,
+  threadIds: string[],
+): Promise<Map<string, number>> {
+  if (!isDbConnected() || threadIds.length === 0) return new Map();
+
+  const rows = await db
+    .select({
+      threadId:    aiDrafts.threadId,
+      metadata:    aiDrafts.metadata,
+      generatedAt: aiDrafts.generatedAt,
+    })
+    .from(aiDrafts)
+    .where(and(
+      eq(aiDrafts.organizationId, organizationId),
+      inArray(aiDrafts.threadId, threadIds),
+      sql`${aiDrafts.status} IN ('pending', 'edited')`,
+      eq(aiDrafts.isDryRun, false),
+    ))
+    .orderBy(desc(aiDrafts.generatedAt));
+
+  const out = new Map<string, number>();
+  for (const row of rows) {
+    if (out.has(row.threadId)) continue; // first hit per thread = newest
+    const meta = row.metadata as { confidence?: number } | null;
+    if (typeof meta?.confidence === "number") {
+      out.set(row.threadId, meta.confidence);
+    }
+  }
+  return out;
 }
 
 /** Returns the newest pending/edited draft for a thread, or null if none. */

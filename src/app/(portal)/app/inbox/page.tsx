@@ -8,7 +8,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getCurrentAccount } from "@/lib/app/entitlements";
-import { listThreads, wakeUpSnoozedThreads, listCaseTypes, countSnoozedThreads, searchThreads, listInboxes, getAiSettings } from "@/lib/app/threads";
+import { listThreads, wakeUpSnoozedThreads, listCaseTypes, countSnoozedThreads, searchThreads, listInboxes, getAiSettings, getPendingDraftConfidencesByThread } from "@/lib/app/threads";
 import { NewThreadButton } from "./NewThreadButton";
 import { InboxFilters } from "./InboxFilters";
 import { InboxShell } from "./InboxShell";
@@ -76,6 +76,13 @@ export default async function InboxPage({
     if (ct.slaHours != null) slaByCaseType[ct.slug] = ct.slaHours;
   }
 
+  // Hämta AI-confidence per tråd (senaste pending/edited utkast). En query för
+  // alla 200 trådar, mappas in i raden så InboxList kan visa kompakt pill.
+  const confidenceByThread = await getPendingDraftConfidencesByThread(
+    account.organization.id,
+    all.map(t => t.id),
+  );
+
   const threads = all.filter(t => {
     // Hide bulk-filtered threads from the default views (only show them on the Reklam tab)
     if (!isFilteredView && t.caseTypeSlug === "bulk") return false;
@@ -112,7 +119,7 @@ export default async function InboxPage({
         <InboxFilters currentStatus={filterStatus} currentQuery={query} currentTag={tagFilter || undefined} counts={counts} compact />
         <InboxList
           slaByCaseType={slaByCaseType}
-          threads={threads.map(t => ({ id: t.id, subject: t.subject, fromEmail: t.fromEmail, fromName: t.fromName, status: t.status, caseTypeSlug: t.caseTypeSlug, lastMessageAt: t.lastMessageAt, snoozedUntil: t.snoozedUntil ?? null, tags: t.tags ?? [], triageFailed: t.triageFailed ?? false }))}
+          threads={threads.map(t => ({ id: t.id, subject: t.subject, fromEmail: t.fromEmail, fromName: t.fromName, status: t.status, caseTypeSlug: t.caseTypeSlug, lastMessageAt: t.lastMessageAt, snoozedUntil: t.snoozedUntil ?? null, tags: t.tags ?? [], triageFailed: t.triageFailed ?? false, confidence: confidenceByThread.get(t.id) ?? null }))}
         />
       </main>
     );
@@ -212,6 +219,7 @@ export default async function InboxPage({
             snoozedUntil:  t.snoozedUntil ?? null,
             tags:          t.tags ?? [],
             triageFailed:  t.triageFailed ?? false,
+            confidence:    confidenceByThread.get(t.id) ?? null,
           }))}
         />
       )}
