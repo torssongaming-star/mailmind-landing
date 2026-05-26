@@ -70,7 +70,7 @@ export function EditPilotModal({ profile }: Props) {
             <div className="w-full max-w-lg bg-[#050B1C] border border-white/10 rounded-2xl shadow-2xl p-8 space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-white font-bold text-lg">Edit Profile</h2>
-                <button onClick={close} className="p-1.5 rounded-lg text-white/30 hover:text-white hover:bg-white/[0.06] transition-colors">
+                <button onClick={close} className="p-1.5 rounded-lg text-white/55 hover:text-white hover:bg-white/[0.06] transition-colors">
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -147,7 +147,7 @@ export function EditPilotModal({ profile }: Props) {
               <div className="flex gap-3 pt-2">
                 <button
                   onClick={close}
-                  className="flex-1 py-2.5 rounded-xl border border-white/10 text-white/50 hover:text-white text-xs font-bold uppercase tracking-widest transition-all"
+                  className="flex-1 py-2.5 rounded-xl border border-white/10 text-white/70 hover:text-white text-xs font-bold uppercase tracking-widest transition-all"
                 >
                   Avbryt
                 </button>
@@ -191,7 +191,7 @@ export function EditPilotModal({ profile }: Props) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <label className="text-[10px] font-semibold uppercase tracking-wider text-white/30">{label}</label>
+      <label className="text-[10px] font-semibold uppercase tracking-wider text-white/55">{label}</label>
       {children}
     </div>
   );
