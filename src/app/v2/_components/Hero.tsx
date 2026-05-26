@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, ShieldCheck, Zap } from "lucide-react";
+import { ArrowRight, ShieldCheck, Eye, BookCheck, Flag } from "lucide-react";
 
 export function Hero() {
   return (
@@ -41,20 +41,20 @@ export function Hero() {
           <span className="text-[11px] font-medium text-white/65 tracking-wide uppercase">AI för svensk B2B-support</span>
         </div>
 
-        {/* Headline — text-5xl/6xl (NOT 7xl), tight tracking, no gradient text */}
+        {/* Headline — konkret värdeprop, en mening. */}
         <h1 className="text-[40px] md:text-[64px] leading-[1.05] font-semibold tracking-[-0.025em] text-white">
-          Kundsupport som
+          AI som svarar på
           <br />
-          <span className="text-white/55">förstår dig.</span>
+          era kundmejl.
         </h1>
 
-        {/* Subhead */}
+        {/* Subhead — LOCKED-säljpunkterna i en mening. */}
         <p className="mt-6 max-w-2xl mx-auto text-base md:text-lg text-white/70 leading-relaxed">
-          Mailmind triagerar inkommande mejl, kategoriserar dem och föreslår svar.
-          Din agent godkänner med ett klick. AI:n är granskad, källgrundad och bygd för svenska SMB.
+          På svenska. Granskat innan utskick. Källgrundat i er kunskapsbas.
+          Du godkänner alltid innan något skickas till kund.
         </p>
 
-        {/* CTAs — primary = demo-led GTM (P1.3 fix). Self-serve sekundärt. */}
+        {/* CTAs — demo-led GTM. Två val: boka samtal eller testa själv. */}
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
           <Link
             href="#contact"
@@ -64,32 +64,35 @@ export function Hero() {
             <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
           </Link>
           <Link
-            href="#how"
-            className="inline-flex items-center gap-2 h-11 px-6 rounded-xl border border-white/10 text-sm font-medium text-white/80 hover:text-white hover:bg-white/[0.04] hover:border-white/20 transition-colors"
+            href="/try"
+            className="group inline-flex items-center gap-2 h-11 px-6 rounded-xl border border-white/15 text-sm font-medium text-white/85 hover:text-white hover:bg-white/[0.04] hover:border-white/25 transition-colors"
           >
-            Se hur det funkar
-          </Link>
-          <Link
-            href="/signup"
-            className="text-xs text-white/55 hover:text-white/80 transition-colors mt-2 sm:mt-0 sm:ml-2 underline-offset-4 hover:underline"
-          >
-            eller starta gratis prov →
+            Prova live-demo
+            <span className="text-[10px] text-white/45 group-hover:text-white/65">utan registrering</span>
           </Link>
         </div>
 
-        {/* Trust line */}
-        <div className="mt-8 flex items-center justify-center gap-4 text-[11px] text-white/60">
+        {/* Trust line — produktens fyra LOCKED-säljpunkter, inte påhittade kundlogos. */}
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[11px] text-white/65">
           <span className="flex items-center gap-1.5">
-            <ShieldCheck size={11} className="text-primary/70" />
-            GDPR-anpassat
+            <Eye size={11} className="text-primary/80" />
+            Granska före utskick
           </span>
           <span className="w-1 h-1 rounded-full bg-white/15" />
           <span className="flex items-center gap-1.5">
-            <Zap size={11} className="text-primary/70" />
-            Data i EU
+            <BookCheck size={11} className="text-primary/80" />
+            Källgrundad AI
           </span>
           <span className="w-1 h-1 rounded-full bg-white/15" />
-          <span>Byggd i Sverige</span>
+          <span className="flex items-center gap-1.5">
+            <ShieldCheck size={11} className="text-primary/80" />
+            GDPR · EU-data
+          </span>
+          <span className="w-1 h-1 rounded-full bg-white/15" />
+          <span className="flex items-center gap-1.5">
+            <Flag size={11} className="text-primary/80" />
+            Byggd i Sverige
+          </span>
         </div>
       </div>
 
