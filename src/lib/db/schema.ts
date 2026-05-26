@@ -595,6 +595,64 @@ export const pushSubscriptions = pgTable(
   ]
 );
 
+// ── Pre-launch Letter of Intent (LOI) ─────────────────────────────────────────
+//
+// Lagrar avsiktsförklaringar från företag som vill köpa Mailmind vid lansering.
+// Inte juridiskt bindande — men daterad viljeyttring som vi visar som
+// social proof i Hero och refererar till i säljmöten.
+//
+// Helt frikopplad från organizations-tabellen — detta är leadgen-data, inte
+// kund-data. När/om en lead konverterar till kund skapas en separat
+// organization-rad via normal onboarding-flöde.
+//
+// Schema:
+//   - signedAt = när användaren klickade "Skriv på"
+//   - intentText = ordagrant texten användaren såg och godkände (bevishållning)
+//   - ipAddress + userAgent = digital signaturbevis (icke-PII-fall i GDPR-mening,
+//     legitimt intresse för att kunna verifiera signaturen vid tvist)
+//   - status = pending → contacted → converted/declined (manuell uppdatering)
+//   - emailVerifiedAt = sätts av bekräftelse-mejlets klick-länk
+
+export const preLaunchIntentStatusEnum = pgEnum("pre_launch_intent_status", [
+  "pending",
+  "contacted",
+  "converted",
+  "declined",
+]);
+
+export const preLaunchIntents = pgTable(
+  "pre_launch_intents",
+  {
+    id:               uuid("id").primaryKey().defaultRandom(),
+    name:             varchar("name", { length: 255 }).notNull(),
+    email:            varchar("email", { length: 320 }).notNull(),
+    company:          varchar("company", { length: 255 }).notNull(),
+    role:             varchar("role", { length: 100 }),
+    companySize:      varchar("company_size", { length: 32 }),
+    phone:            varchar("phone", { length: 64 }),
+    /** Exakt text användaren såg och klickade "Skriv på" på — bevishållning. */
+    intentText:       text("intent_text").notNull(),
+    signedAt:         timestamp("signed_at", { withTimezone: true }).defaultNow().notNull(),
+    ipAddress:        varchar("ip_address", { length: 45 }),
+    userAgent:        text("user_agent"),
+    status:           preLaunchIntentStatusEnum("status").notNull().default("pending"),
+    /** Internt anteckningsfält för säljteamet — uppdateras via admin. */
+    notes:            text("notes"),
+    /** När bekräftelsemejlets klick-länk klickats (verifierar mejladressen). */
+    emailVerifiedAt:  timestamp("email_verified_at", { withTimezone: true }),
+    /** Token för bekräftelselänken — krypto-säkert UUID som single-use marker. */
+    verificationToken: varchar("verification_token", { length: 64 }),
+    createdAt:        timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:        timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    // En e-postadress + företag = en signatur. Försök igen → upsert.
+    uniqueIndex("pre_launch_intents_email_company_idx").on(t.email, t.company),
+    index("pre_launch_intents_signed_at_idx").on(t.signedAt),
+    index("pre_launch_intents_status_idx").on(t.status),
+  ]
+);
+
 // ── Relations ─────────────────────────────────────────────────────────────────
 
 export const organizationsRelations = relations(organizations, ({ many, one }) => ({
@@ -784,3 +842,6 @@ export type NewOrgInvite = typeof orgInvites.$inferInsert;
 
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;
+
+export type PreLaunchIntent = typeof preLaunchIntents.$inferSelect;
+export type NewPreLaunchIntent = typeof preLaunchIntents.$inferInsert;
