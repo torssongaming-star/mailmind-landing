@@ -17,6 +17,7 @@ import { listWebhooks } from "@/lib/app/webhooks";
 import { getTranslations } from "@/lib/i18n";
 import { getUserLocale } from "@/lib/i18n/get-locale";
 import { SettingsTabs } from "./SettingsTabs";
+import { PageHeader } from "@/components/portal/PageHeader";
 
 import type { Metadata } from "next";
 export const metadata: Metadata = { title: "Inställningar" };
@@ -47,15 +48,15 @@ export default async function SettingsPage() {
 
   return (
     <main className="p-4 md:p-8 space-y-6">
-      <header className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground mb-1">App</p>
-          <h1 className="text-xl md:text-2xl font-bold text-white truncate">{t("settings.title")}</h1>
-        </div>
-        <Link href="/app" className="shrink-0 text-xs text-muted-foreground hover:text-white transition-colors">
-          ← {t("nav.overview")}
-        </Link>
-      </header>
+      <PageHeader
+        eyebrow="App"
+        title={t("settings.title")}
+        action={
+          <Link href="/app" className="text-xs text-muted-foreground hover:text-white transition-colors">
+            ← {t("nav.overview")}
+          </Link>
+        }
+      />
 
       <SettingsTabs
         orgName={account.organization.name}
