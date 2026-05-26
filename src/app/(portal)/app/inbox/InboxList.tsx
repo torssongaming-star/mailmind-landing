@@ -20,6 +20,7 @@ const POLL_INTERVAL_MS = 30_000; // 30 seconds
 
 import { useI18n } from "@/lib/i18n/context";
 import { threadStatusClass } from "@/lib/ui/thread-status";
+import { caseTypeDotClasses } from "@/lib/ui/case-type-color";
 
 export function InboxList({ threads = [], slaByCaseType = {} }: { threads: Thread[]; slaByCaseType?: Record<string, number> }) {
   const { t, locale } = useI18n();
@@ -210,10 +211,21 @@ export function InboxList({ threads = [], slaByCaseType = {} }: { threads: Threa
                   <p className="text-sm font-semibold text-white truncate">
                     {thread.subject ?? t("inbox.noSubject")}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {thread.fromName ? `${thread.fromName} ` : ""}
-                    <span className="text-white/30">&lt;{thread.fromEmail}&gt;</span>
-                    {thread.caseTypeSlug && <> · <span className="text-white/60">{thread.caseTypeSlug}</span></>}
+                  <p className="text-xs text-muted-foreground truncate flex items-center gap-1.5">
+                    {thread.caseTypeSlug && (() => {
+                      const { dot, ring } = caseTypeDotClasses(thread.caseTypeSlug);
+                      return (
+                        <span
+                          className={`shrink-0 inline-block w-2 h-2 rounded-full ring-2 ${dot} ${ring}`}
+                          title={thread.caseTypeSlug}
+                          aria-label={`Ärendetyp: ${thread.caseTypeSlug}`}
+                        />
+                      );
+                    })()}
+                    <span className="truncate">
+                      {thread.fromName ? `${thread.fromName} ` : ""}
+                      <span className="text-white/30">&lt;{thread.fromEmail}&gt;</span>
+                    </span>
                   </p>
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
