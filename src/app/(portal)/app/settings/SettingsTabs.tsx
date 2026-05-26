@@ -12,9 +12,10 @@
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  Building2, Tag, BookOpen, FileText, ShieldOff, Webhook,
+  Building2, ShieldCheck, Tag, BookOpen, FileText, ShieldOff, Webhook,
 } from "lucide-react";
 import { AiSettingsEditor } from "./AiSettingsEditor";
+import { AiSafetyPanel } from "./AiSafetyPanel";
 import { CaseTypesEditor } from "./CaseTypesEditor";
 import { OrganizationEditor } from "./OrganizationEditor";
 import { TemplatesEditor } from "./TemplatesEditor";
@@ -31,6 +32,8 @@ type BlockEntry = { id: string; pattern: string; reason: string | null; createdA
 type Props = {
   orgName:         string;
   initialSettings: Pick<AiSettings, "tone" | "language" | "maxInteractions" | "signature" | "bulkFilterEnabled" | "bulkFilterWhitelist">;
+  dryRunEnabled:   boolean;
+  autoSendEnabled: boolean;
   caseTypes:       CaseType[];
   knowledge:       Pick<KnowledgeEntry, "id" | "question" | "answer" | "category" | "isActive">[];
   templates:       ReplyTemplate[];
@@ -40,13 +43,15 @@ type Props = {
 
 import { useI18n } from "@/lib/i18n/context";
 
-type SectionId = "general" | "casetypes" | "knowledge" | "templates" | "blocklist" | "webhooks";
+type SectionId = "general" | "aisafety" | "casetypes" | "knowledge" | "templates" | "blocklist" | "webhooks";
 
-const VALID_TABS: SectionId[] = ["general", "casetypes", "knowledge", "templates", "blocklist", "webhooks"];
+const VALID_TABS: SectionId[] = ["general", "aisafety", "casetypes", "knowledge", "templates", "blocklist", "webhooks"];
 
 export function SettingsTabs({
   orgName,
   initialSettings,
+  dryRunEnabled,
+  autoSendEnabled,
   caseTypes,
   knowledge,
   templates,
@@ -61,12 +66,13 @@ export function SettingsTabs({
   );
 
   const NAV = [
-    { id: "general",   label: t("settings.tabs.general"),   icon: Building2, desc: t("settings.tabs.generalDesc")   },
-    { id: "casetypes", label: t("settings.tabs.caseTypes"),  icon: Tag,       desc: t("settings.tabs.caseTypesDesc") },
-    { id: "knowledge", label: t("settings.tabs.knowledge"),  icon: BookOpen,  desc: t("settings.tabs.knowledgeDesc") },
-    { id: "templates", label: t("settings.tabs.templates"),  icon: FileText,  desc: t("settings.tabs.templatesDesc") },
-    { id: "blocklist", label: t("settings.tabs.blocklist"),  icon: ShieldOff, desc: t("settings.tabs.blocklistDesc") },
-    { id: "webhooks",  label: t("settings.tabs.webhooks"),   icon: Webhook,   desc: t("settings.tabs.webhooksDesc")  },
+    { id: "general",   label: t("settings.tabs.general"),    icon: Building2,   desc: t("settings.tabs.generalDesc")    },
+    { id: "aisafety",  label: t("settings.tabs.aiSafety"),   icon: ShieldCheck, desc: t("settings.tabs.aiSafetyDesc")   },
+    { id: "casetypes", label: t("settings.tabs.caseTypes"),  icon: Tag,         desc: t("settings.tabs.caseTypesDesc")  },
+    { id: "knowledge", label: t("settings.tabs.knowledge"),  icon: BookOpen,    desc: t("settings.tabs.knowledgeDesc")  },
+    { id: "templates", label: t("settings.tabs.templates"),  icon: FileText,    desc: t("settings.tabs.templatesDesc")  },
+    { id: "blocklist", label: t("settings.tabs.blocklist"),  icon: ShieldOff,   desc: t("settings.tabs.blocklistDesc")  },
+    { id: "webhooks",  label: t("settings.tabs.webhooks"),   icon: Webhook,     desc: t("settings.tabs.webhooksDesc")   },
   ] as const;
 
   const current = NAV.find(n => n.id === active)!;
@@ -134,6 +140,13 @@ export function SettingsTabs({
             <SettingsRow title={t("settings.workspace.aiBehavior")} desc={t("settings.workspace.aiBehaviorDesc")}>
               <AiSettingsEditor initial={initialSettings} />
             </SettingsRow>
+          </div>
+
+          <div className={active === "aisafety" ? "" : "hidden"}>
+            <AiSafetyPanel
+              dryRunEnabled={dryRunEnabled}
+              autoSendEnabled={autoSendEnabled}
+            />
           </div>
 
           <div className={active === "casetypes" ? "" : "hidden"}>

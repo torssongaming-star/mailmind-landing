@@ -679,6 +679,8 @@ export const en: typeof sv = {
     tabs: {
       general: "Workspace",
       generalDesc: "Name, AI tone and language",
+      aiSafety: "AI safety",
+      aiSafetyDesc: "Dry-run, auto-send and trust conditions",
       caseTypes: "Case Types",
       caseTypesDesc: "Categories and required fields",
       knowledge: "Knowledge Base",

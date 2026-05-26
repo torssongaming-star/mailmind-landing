@@ -677,6 +677,8 @@ export const sv = {
     tabs: {
       general: "Arbetsyta",
       generalDesc: "Namn, AI-ton och språk",
+      aiSafety: "AI-säkerhet",
+      aiSafetyDesc: "Dry-run, auto-svar och trygghetsvillkor",
       caseTypes: "Ärendetyper",
       caseTypesDesc: "Kategorier och obligatoriska fält",
       knowledge: "Kunskapsbas",

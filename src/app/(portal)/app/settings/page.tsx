@@ -67,6 +67,8 @@ export default async function SettingsPage() {
           bulkFilterEnabled:    initialSettings.bulkFilterEnabled,
           bulkFilterWhitelist:  initialSettings.bulkFilterWhitelist,
         }}
+        dryRunEnabled={initialSettings.dryRunEnabled ?? false}
+        autoSendEnabled={initialSettings.autoSendEnabled ?? false}
         caseTypes={caseTypes}
         knowledge={knowledge.map(k => ({
           id:       k.id,
