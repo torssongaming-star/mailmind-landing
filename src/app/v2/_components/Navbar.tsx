@@ -64,10 +64,10 @@ export function Navbar() {
           {/* Actions */}
           <div className="flex items-center gap-2">
             <Link
-              href="/login"
-              className="hidden md:inline-flex items-center h-8 px-3 rounded-lg text-xs text-white/70 hover:text-white hover:bg-white/[0.04] transition-colors"
+              href="/loi"
+              className="hidden md:inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs text-primary/80 hover:text-primary hover:bg-primary/[0.06] transition-colors"
             >
-              Logga in
+              Skriv på →
             </Link>
             <Link
               href="/try"
@@ -109,11 +109,11 @@ export function Navbar() {
               </a>
             ))}
             <Link
-              href="/login"
+              href="/loi"
               onClick={() => setOpen(false)}
-              className="text-base text-white/80 hover:text-white py-3 border-b border-white/8 transition-colors"
+              className="text-base text-primary hover:text-cyan-300 py-3 border-b border-white/8 transition-colors font-medium"
             >
-              Logga in
+              Skriv på avsiktsförklaring →
             </Link>
             <Link
               href="/try"
