@@ -89,13 +89,13 @@ export default async function LoiPage({
             Pre-launch
           </p>
           <h1 className="text-3xl md:text-[44px] font-semibold tracking-[-0.02em] text-white leading-[1.1]">
-            Avsiktsförklaring
+            Säkra er plats
           </h1>
           <p className="text-base text-white/75 leading-relaxed max-w-xl">
-            Vill ni ha Mailmind så snart vi lanserar? Skriv på en daterad
-            avsiktsförklaring nedan. Det är <strong className="text-white">inte juridiskt bindande</strong> — men
-            hjälper oss förstå efterfrågan och säkrar att ni får ett
-            personligt avrop vid launch.
+            Anmäl ert intresse nedan — vi kontaktar er personligt när Mailmind
+            är redo att ta emot kunder. Ni får prioriterad demo, assisterad
+            onboarding och möjlighet att påverka produkten innan lansering.
+            Det är <strong className="text-white">inte juridiskt bindande</strong> och kan dras tillbaka när som helst.
           </p>
         </header>
 

@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { AnnouncementBar } from "./v2/_components/AnnouncementBar";
 import { Navbar } from "./v2/_components/Navbar";
 import { Hero } from "./v2/_components/Hero";
 import { Why } from "./v2/_components/Why";
@@ -54,6 +55,7 @@ export default async function Home() {
         }}
         aria-hidden
       />
+      <AnnouncementBar />
       <Navbar />
       <main>
         <Hero loiCount={loiCount} />

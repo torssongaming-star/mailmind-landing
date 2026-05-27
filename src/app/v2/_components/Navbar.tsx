@@ -32,7 +32,7 @@ export function Navbar() {
     <>
       <nav
         className={[
-          "fixed top-0 inset-x-0 z-50 transition-all duration-200",
+          "fixed top-9 inset-x-0 z-50 transition-all duration-200",
           scrolled
             ? "border-b border-white/8 bg-[hsl(var(--surface-base))]/85 backdrop-blur-xl"
             : "border-b border-transparent bg-transparent",
@@ -67,7 +67,7 @@ export function Navbar() {
               href="/loi"
               className="hidden md:inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs text-primary/80 hover:text-primary hover:bg-primary/[0.06] transition-colors"
             >
-              Skriv på →
+              Säkra er plats →
             </Link>
             <Link
               href="/try"
@@ -113,7 +113,7 @@ export function Navbar() {
               onClick={() => setOpen(false)}
               className="text-base text-primary hover:text-cyan-300 py-3 border-b border-white/8 transition-colors font-medium"
             >
-              Skriv på avsiktsförklaring →
+              Säkra er plats vid lansering →
             </Link>
             <Link
               href="/try"

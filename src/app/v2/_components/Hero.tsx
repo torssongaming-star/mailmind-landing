@@ -100,7 +100,7 @@ export function Hero({ loiCount = 0 }: { loiCount?: number }) {
               className="group inline-flex items-center gap-2 h-9 px-5 rounded-xl border border-primary/30 bg-primary/[0.05] text-xs font-semibold text-primary hover:bg-primary/10 hover:border-primary/50 transition-colors"
             >
               <PenLine size={12} aria-hidden />
-              Skriv på avsiktsförklaring inför lansering
+              Säkra er plats inför lansering
               <ArrowRight size={11} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
           </div>
