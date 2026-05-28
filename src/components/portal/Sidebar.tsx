@@ -128,10 +128,14 @@ function groupIsActive(group: NavGroup, pathname: string): boolean {
 
 export function Sidebar({
   subscriptionBadge,
+  productSwitcher,
 }: {
   /** Pre-rendered server component (e.g. SidebarSubscriptionBadge) inserted
    *  above the support/back-to-site footer. Optional. */
   subscriptionBadge?: React.ReactNode;
+  /** Pre-rendered server component (ProductSwitcher) shown above the nav.
+   *  Only mounted when QUOTING_NAV_ENABLED=1. Optional. */
+  productSwitcher?: React.ReactNode;
 } = {}) {
   const pathname                      = usePathname();
   const { t }                         = useI18n();
@@ -187,6 +191,9 @@ export function Sidebar({
   // Shared nav body for both desktop sidebar and mobile drawer
   const navBody = (
     <>
+      {/* Product switcher slot — only rendered when QUOTING_NAV_ENABLED=1 */}
+      {productSwitcher}
+
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
         {NAV.map(item => {
