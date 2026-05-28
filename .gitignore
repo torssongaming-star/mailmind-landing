@@ -56,7 +56,12 @@ lint_mai*.txt
 lint_mai*_utf8.txt
 lint_output*.txt
 lint_output*_utf8.txt
+typecheck_mai*.txt
+typecheck_mai*_utf8.txt
+typecheck_output*.txt
+typecheck_output*_utf8.txt
 "# Linear Status.txt"
 console.log\(d
 household-bills
 \[,
+

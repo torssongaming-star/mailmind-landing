@@ -17,7 +17,6 @@
  * AnimatedBackground — de behåller den.
  */
 
-import { usePathname } from "next/navigation";
 import { AnimatedBackground } from "@/components/design-system/AnimatedBackground";
 
 /** Routes där AnimatedBackground INTE ska renderas. */

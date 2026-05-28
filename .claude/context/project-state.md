@@ -217,7 +217,7 @@ Fil: `src/app/(portal)/app/settings/KnowledgeSetupWizard.tsx`
 
 - **Multi-tenant first.** Varje query utan `organizationId` i WHERE är en läcka.
 - **Server before client.** Bygg repo-funktion + route, sedan UI.
-- **Commit inte utan att bli ombedd.**
+- **Commita automatiskt** när en task är klar och verifieringen är grön — ett commit per task, beskrivande meddelande. Aldrig secrets, .env eller debug-scripts i roten.
 - **Inga nya npm-paket** utan att kolla `package.json` och motivera i commit-meddelandet.
 - **Schema-ändringar:** uppdatera `src/lib/db/schema.ts`, säg till användaren att köra `npm run db:push`. Enum-tillägg kräver råa SQL-statements.
 - **`"use server"`-filer:** bara `export async function` — inga exporterade konstanter.

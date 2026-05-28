@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     // hyphen. Anything else (spaces, unicode, slashes) becomes `_`. Cap at
     // 100 chars so we never produce an absurdly long blob key.
     const safeFileName = (file.name || "signature_image")
-      .replace(/[^a-zA-Z0-9.\-]/g, "_")
+      .replace(/[^a-zA-Z0-9.-]/g, "_")
       .slice(0, 100);
 
     // Upload to Vercel Blob. We include a UUID in the path so we own

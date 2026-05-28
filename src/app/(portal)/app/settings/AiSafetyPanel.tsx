@@ -69,7 +69,7 @@ export function AiSafetyPanel({
 
         <ul className="space-y-2 pl-1">
           <Condition
-            label={`AI:ns säkerhet ≥ ${AUTO_SEND_CONFIDENCE_THRESHOLD_PERCENT} %`}
+            label={`AI:ns säkerhet ≥ ${AUTO_SEND_CONFIDENCE_THRESHOLD_PERCENT} %`}
             detail="Visas som grön &quot;auto-skickbar&quot;-pill på utkastet i Inkorgen."
           />
           <Condition

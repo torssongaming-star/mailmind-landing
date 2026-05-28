@@ -72,7 +72,7 @@ async function main() {
       }
 
       const safeFileName = (row.fileName || "signature_image")
-        .replace(/[^a-zA-Z0-9.\-]/g, "_")
+        .replace(/[^a-zA-Z0-9.-]/g, "_")
         .slice(0, 100);
 
       const blob = await put(
