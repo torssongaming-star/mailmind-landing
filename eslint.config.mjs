@@ -2,6 +2,62 @@ import nextPlugin from "@next/eslint-plugin-next";
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 
+// ── Import-boundary helpers (§3.4) ───────────────────────────────────────────
+// Dependency direction: platform-core → quoting-common → verticals.
+// Verticals never import each other; quoting-common never imports verticals;
+// platform core never imports quoting-common or any vertical directly.
+
+const VERTICAL_DIRS = ["solar", "construction", "trades"];
+
+/** Patterns that block direct imports of any vertical lib or component. */
+const ALL_VERTICAL_PATTERNS = VERTICAL_DIRS.flatMap((v) => [
+  {
+    group: [`@/lib/${v}`, `@/lib/${v}/**`],
+    message: `Import ${v} only via its public API — platform core must not depend on verticals.`,
+  },
+  {
+    group: [`@/components/${v}`, `@/components/${v}/**`],
+    message: `Import ${v} components only via their public API — platform core must not depend on verticals.`,
+  },
+]);
+
+/** Patterns that block direct imports of quoting-common from platform core. */
+const QUOTING_COMMON_PATTERNS = [
+  {
+    group: ["@/lib/quoting-common", "@/lib/quoting-common/**"],
+    message: "Platform core must not import quoting-common. Only verticals and quoting-aware modules should.",
+  },
+  {
+    group: ["@/components/quoting-common", "@/components/quoting-common/**"],
+    message: "Platform core must not import quoting-common components.",
+  },
+];
+
+/** Glob sets for vertical source trees (lib + app routes + components). */
+function verticalGlobs(v) {
+  return [
+    `src/lib/${v}/**/*.{ts,tsx}`,
+    `src/app/(portal)/${v}/**/*.{ts,tsx}`,
+    `src/components/${v}/**/*.{ts,tsx}`,
+  ];
+}
+
+/** Cross-vertical import patterns for a given vertical (blocks its sibling verticals). */
+function crossVerticalPatterns(ownVertical) {
+  return VERTICAL_DIRS.filter((v) => v !== ownVertical).flatMap((v) => [
+    {
+      group: [`@/lib/${v}`, `@/lib/${v}/**`],
+      message: `${ownVertical} must not import ${v} — verticals communicate via quoting-common events only.`,
+    },
+  ]);
+}
+
+/** Pattern that blocks direct @/lib/db access (must go via data layer). */
+const DB_DIRECT_PATTERN = {
+  group: ["@/lib/db", "@/lib/db/**"],
+  message: "Vertical routes must access the DB via @/lib/<vertical>/data/* or @/lib/quoting-common/data/*.",
+};
+
 const eslintConfig = [
   {
     ignores: [
@@ -31,6 +87,59 @@ const eslintConfig = [
       ...nextPlugin.configs.recommended.rules,
       ...nextPlugin.configs["core-web-vitals"].rules,
       "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_", varsIgnorePattern: "^_" }],
+    },
+  },
+
+  // ── Import boundaries ──────────────────────────────────────────────────────
+
+  // Rule 1: Platform core must not import verticals or quoting-common.
+  // Excludes the vertical/quoting-common source trees themselves.
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: [
+      ...VERTICAL_DIRS.flatMap((v) => [
+        `src/lib/${v}/**`,
+        `src/app/(portal)/${v}/**`,
+        `src/components/${v}/**`,
+      ]),
+      "src/lib/quoting-common/**",
+      "src/components/quoting-common/**",
+      "src/app/api/quoting/**",
+    ],
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [...QUOTING_COMMON_PATTERNS, ...ALL_VERTICAL_PATTERNS],
+      }],
+    },
+  },
+
+  // Rule 3: quoting-common must not import verticals.
+  {
+    files: [
+      "src/lib/quoting-common/**/*.{ts,tsx}",
+      "src/components/quoting-common/**/*.{ts,tsx}",
+    ],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: ALL_VERTICAL_PATTERNS }],
+    },
+  },
+
+  // Rule 2 + 4: each vertical must not import sibling verticals,
+  // and vertical route/component files must not import @/lib/db directly.
+  ...VERTICAL_DIRS.map((v) => ({
+    files: verticalGlobs(v),
+    rules: {
+      "no-restricted-imports": ["error", {
+        patterns: [...crossVerticalPatterns(v), DB_DIRECT_PATTERN],
+      }],
+    },
+  })),
+
+  // Rule 4 (continued): quoting API routes must not import @/lib/db directly.
+  {
+    files: ["src/app/api/quoting/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [DB_DIRECT_PATTERN] }],
     },
   },
 ];
