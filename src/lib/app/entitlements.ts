@@ -31,6 +31,7 @@ import type {
   Subscription,
   LicenseEntitlement,
   UsageCounter,
+  OrgProductAccess,
 } from "@/lib/db/schema";
 
 // ── Public types ──────────────────────────────────────────────────────────────
@@ -90,7 +91,27 @@ export type AccountSnapshot = {
   usersUsed: number;
   /** True when >= 80% of monthly AI draft quota is consumed on an active/trialing sub. */
   draftsWarning: boolean;
+  /**
+   * Product access map for this org — keyed by productKey (e.g. "solar").
+   * Empty object when no rows exist (mock mode or no products provisioned).
+   */
+  products: Record<string, { status: OrgProductAccess["status"]; limits: Record<string, number> }>;
 };
+
+// ── Product access ────────────────────────────────────────────────────────────
+
+/**
+ * Returns true if the org has active or trialing access to the given product key.
+ * False if the row is missing or status is "disabled".
+ */
+export function hasProductAccess(
+  account: AccountSnapshot,
+  key: string,
+): boolean {
+  const entry = account.products[key];
+  if (!entry) return false;
+  return entry.status === "active" || entry.status === "trialing";
+}
 
 // ── Core resolvers ────────────────────────────────────────────────────────────
 
@@ -160,6 +181,11 @@ export const getCurrentAccount = cache(async function getCurrentAccount(
     (entitlements?.maxAiDraftsPerMonth ?? 0) > 0 &&
     (usage?.aiDraftsUsed ?? 0) >= 0.8 * (entitlements?.maxAiDraftsPerMonth ?? 0);
 
+  const products: AccountSnapshot["products"] = {};
+  for (const row of portal.products ?? []) {
+    products[row.productKey] = { status: row.status, limits: row.limits };
+  }
+
   return {
     user,
     organization: portal.org,
@@ -172,6 +198,7 @@ export const getCurrentAccount = cache(async function getCurrentAccount(
     inboxesUsed,
     usersUsed,
     draftsWarning,
+    products,
   };
 });
 

@@ -18,6 +18,7 @@ import {
   licenseEntitlements,
   usageCounters,
   auditLogs,
+  orgProductAccess,
   type Subscription,
 } from "./schema";
 import {
@@ -76,7 +77,7 @@ export async function getPortalData(clerkUserId: string): Promise<PortalData> {
   const orgId = userRow.organizationId;
 
   // Parallel queries for the rest of the data
-  const [orgRow, subRow, entitlementRow, usageRow] = await Promise.all([
+  const [orgRow, subRow, entitlementRow, usageRow, productRows] = await Promise.all([
     db
       .select()
       .from(organizations)
@@ -117,6 +118,11 @@ export async function getPortalData(clerkUserId: string): Promise<PortalData> {
       ))
       .limit(1)
       .then((r) => r[0] ?? null),
+
+    db
+      .select()
+      .from(orgProductAccess)
+      .where(eq(orgProductAccess.organizationId, orgId)),
   ]);
 
   return {
@@ -125,6 +131,7 @@ export async function getPortalData(clerkUserId: string): Promise<PortalData> {
     subscription: subRow,
     entitlements: entitlementRow,
     usage:        usageRow,
+    products:     productRows,
     isMock:       false,
   };
 }

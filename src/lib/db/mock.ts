@@ -15,6 +15,7 @@ import type {
   LicenseEntitlement,
   UsageCounter,
   AuditLog,
+  OrgProductAccess,
 } from "./schema";
 
 // ── Mock IDs (stable UUIDs so relations work consistently) ────────────────────
@@ -128,6 +129,8 @@ export type PortalData = {
   subscription: Subscription | null;
   entitlements: LicenseEntitlement | null;
   usage:        UsageCounter | null;
+  /** Product access rows for the org. Empty array when no rows exist. */
+  products:     OrgProductAccess[];
   isMock:       boolean;
 };
 
@@ -137,5 +140,6 @@ export const MOCK_PORTAL_DATA: PortalData = {
   subscription: MOCK_SUBSCRIPTION,
   entitlements: MOCK_ENTITLEMENTS,
   usage:        MOCK_USAGE,
+  products:     [],
   isMock:       true,
 };
