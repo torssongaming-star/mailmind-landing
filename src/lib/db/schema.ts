@@ -845,3 +845,10 @@ export type NewPushSubscription = typeof pushSubscriptions.$inferInsert;
 
 export type PreLaunchIntent = typeof preLaunchIntents.$inferSelect;
 export type NewPreLaunchIntent = typeof preLaunchIntents.$inferInsert;
+
+// ── Quoting platform (Phase S0 onwards) ───────────────────────────────────────
+// Re-exported from a dedicated file so quoting/vertical schemas live separately.
+// Placed at the bottom so `organizations` is declared before this file evaluates
+// (schema.quoting.ts references organizations via a lazy `() => organizations.id`
+// callback in `.references()` — circular import is safe under this order).
+export * from "./schema.quoting";
