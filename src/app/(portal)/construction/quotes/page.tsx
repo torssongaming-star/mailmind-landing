@@ -11,6 +11,7 @@ import { getCurrentAccount, hasProductAccess } from "@/lib/app/entitlements";
 import { listQuotes } from "@/lib/quoting-common/data/quotes";
 import { listCustomers } from "@/lib/quoting-common/data/customers";
 import { QuoteStatusBadge } from "@/components/quoting-common/QuoteStatusBadge";
+import { NewQuoteButton } from "@/components/quoting-common/NewQuoteButton";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Offerter — Construction" };
@@ -40,9 +41,16 @@ export default async function ConstructionQuotesPage() {
             </p>
             <h1 className="text-xl font-semibold text-white tracking-tight">Offerter</h1>
           </div>
-          <Link href="/construction" className="text-xs text-white/40 hover:text-white transition-colors">
-            ← Översikt
-          </Link>
+          <div className="flex items-center gap-4">
+            <NewQuoteButton
+              vertical="construction"
+              detailBase="/construction/quotes"
+              customers={customers.map((c) => ({ id: c.id, name: c.name }))}
+            />
+            <Link href="/construction" className="text-xs text-white/40 hover:text-white transition-colors">
+              ← Översikt
+            </Link>
+          </div>
         </div>
       </div>
 
@@ -72,7 +80,11 @@ export default async function ConstructionQuotesPage() {
               <tbody>
                 {quotes.map((q, i) => (
                   <tr key={q.id} className={i % 2 === 0 ? "bg-white/[0.015]" : ""}>
-                    <td className="px-4 py-3 font-mono text-xs text-white/80">{q.number ?? q.id.slice(0, 8) + "…"}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-white/80">
+                      <Link href={`/construction/quotes/${q.id}`} className="hover:text-primary transition-colors">
+                        {q.number ?? q.id.slice(0, 8) + "…"}
+                      </Link>
+                    </td>
                     <td className="px-4 py-3 text-white/70">{q.customerId ? (customerMap[q.customerId] ?? "—") : "—"}</td>
                     <td className="px-4 py-3"><QuoteStatusBadge status={q.status} /></td>
                     <td className="px-4 py-3 text-right text-white/70 tabular-nums">
