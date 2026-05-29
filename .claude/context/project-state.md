@@ -82,6 +82,7 @@ Fas 22  ✅  Produkt-polering — sidebar trial-badge, skeleton loaders (inbox/t
 Fas 23  ✅  Legal & compliance — DPA, sub-processors, AUP, SLA, MSA, cookies, DPIA/ROPA, AI-disclaimer
 Fas 24  ✅  Strategi-revisions kritiska fixar — P2.1 fejk-entitlements, P2.2 db hard-fail, P2.3 email_messages orgId, P2.4 Google Pub/Sub OIDC, P2.5 GMAIL key, P2.7 canAutoSend tests, P2.8 Stripe period_end, P2.9 audit PII, P2.11 cleanup, P3.3 prompt-inj, P3.4 AI_MODEL env, P5.4 trial_will_end, P5.1 UpgradePrompt, P6.3 Sentry, P6.5 security.txt, P7.5 DB index DESC
 Fas S0  ✅  Quoting-plattformen: DB-scheman, entitlement-helper, produktregister, solar route-skelett, import-boundary lint, nav-switcher (QUOTING_NAV_ENABLED)
+Fas S1  ✅  Quoting-common kernel: DB-scheman (8 tabeller), domäntyper, data-lager, state machine (OFF-YYYY-NNNN), API-routes (customers + quotes CRUD), Solar UI (dashboard, quotes, customers)
 ```
 
 ## Återstår från strategi-revisionen
@@ -104,6 +105,38 @@ Större arbete (1+ vecka):
 ---
 
 ## Vad som gjorts sedan senast (Emil läser detta)
+
+### Fas S1 — Quoting-common kernel (klar 2026-05-29)
+
+**S1-1 — DB-scheman**
+- `src/lib/db/schema.quoting.ts`: 8 nya tabeller — `quoting_quote_number_sequences`, `quoting_customers`, `quoting_products`, `quoting_price_books`, `quoting_price_book_versions`, `quoting_quotes` (med `vertical`-diskriminator + `quoteStatusEnum`), `quoting_quote_lines`, `quoting_workflow_events`.
+- Nya enums: `priceBookStatusEnum`, `quoteStatusEnum`.
+
+**S1-2 — Domäntyper + data-lager**
+- `src/lib/quoting-common/domain/types.ts` — rena TS-typer (client-säkra).
+- `src/lib/quoting-common/data/customers.ts` — listCustomers, getCustomer, createCustomer, updateCustomer.
+- `src/lib/quoting-common/data/products.ts` — listProducts, getProduct, listPriceBooks, getLatestPublishedVersion.
+- `src/lib/quoting-common/data/quotes.ts` — fullständigt CRUD + quote-lines + workflow-events.
+
+**S1-3 — State machine + numrering**
+- `src/lib/quoting-common/domain/quote-state.ts` — QUOTE_TRANSITIONS, canTransition, allowedTransitions, isTerminal (pure functions).
+- `src/lib/quoting-common/data/quote-number.ts` — atomisk OFF-YYYY-NNNN via upsert+increment.
+- 20 vitest-tester, alla gröna.
+
+**S1-4 — API-routes**
+- `GET/POST /api/quoting/customers` — list + create.
+- `GET/POST /api/quoting/quotes` — list + create (number auto-assigned).
+- `GET/PATCH/DELETE /api/quoting/quotes/[id]` — detail, update med `canTransition`-validering, soft-delete.
+
+**S1-5 — Solar workspace UI**
+- `QuoteStatusBadge` — color-coded status-chip.
+- `/solar` — dashboard med summary cards.
+- `/solar/quotes` — offerttabell.
+- `/solar/customers` — kundtabell.
+
+**Verifiering:** `typecheck` ✅ · `lint` ✅ · `test` 134/134 ✅ · `build` ✅
+
+---
 
 ### Fas S0 — Quoting-plattformens fundament (klar 2026-05-29)
 
