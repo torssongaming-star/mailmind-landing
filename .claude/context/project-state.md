@@ -84,6 +84,7 @@ Fas 24  ✅  Strategi-revisions kritiska fixar — P2.1 fejk-entitlements, P2.2 
 Fas S0  ✅  Quoting-plattformen: DB-scheman, entitlement-helper, produktregister, solar route-skelett, import-boundary lint, nav-switcher (QUOTING_NAV_ENABLED)
 Fas S1  ✅  Quoting-common kernel: DB-scheman (8 tabeller), domäntyper, data-lager, state machine (OFF-YYYY-NNNN), API-routes (customers + quotes CRUD), Solar UI (dashboard, quotes, customers)
 Fas S2  ✅  KB + klassificering + Solar-engine substrat: KB-schema (quoting_kb_entries), Solar DB-scheman (solar_properties, solar_quote_extension, solar_roi_scenarios), Solar ROI-motor (pure fn, SE-marknad, 14 tester), KB data-lager + domäntyper, Solar API-routes (calculate, properties CRUD), KB egress-gate (12 tester)
+Fas S3  ⏳  AI authoring layer: KB API-route, full egress-gate (rendered-text-scan), AI authoring layer (quoting-common/ai/), Solar prompt-fragment, Solar quote-builder UI (RoofSurfaceForm + RoiResultCard + quote-detalj)
 ```
 
 ## Återstår från strategi-revisionen
