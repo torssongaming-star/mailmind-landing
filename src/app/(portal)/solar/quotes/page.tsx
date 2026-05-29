@@ -85,7 +85,12 @@ export default async function SolarQuotesPage() {
                     className={i % 2 === 0 ? "bg-white/[0.015]" : ""}
                   >
                     <td className="px-4 py-3 font-mono text-xs text-white/80">
-                      {q.number ?? "—"}
+                      <Link
+                        href={`/solar/quotes/${q.id}`}
+                        className="hover:text-primary transition-colors"
+                      >
+                        {q.number ?? q.id.slice(0, 8) + "…"}
+                      </Link>
                     </td>
                     <td className="px-4 py-3 text-white/70">
                       {q.customerId ? (customerMap[q.customerId] ?? "—") : "—"}
