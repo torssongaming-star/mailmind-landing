@@ -11,6 +11,7 @@ import { getCurrentAccount, hasProductAccess } from "@/lib/app/entitlements";
 import { listQuotes } from "@/lib/quoting-common/data/quotes";
 import { listCustomers } from "@/lib/quoting-common/data/customers";
 import { QuoteStatusBadge } from "@/components/quoting-common/QuoteStatusBadge";
+import { NewQuoteButton } from "@/components/quoting-common/NewQuoteButton";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Offerter — Solar" };
@@ -43,12 +44,19 @@ export default async function SolarQuotesPage() {
             </p>
             <h1 className="text-xl font-semibold text-white tracking-tight">Offerter</h1>
           </div>
-          <Link
-            href="/solar"
-            className="text-xs text-white/40 hover:text-white transition-colors"
-          >
-            ← Översikt
-          </Link>
+          <div className="flex items-center gap-4">
+            <NewQuoteButton
+              vertical="solar"
+              detailBase="/solar/quotes"
+              customers={customers.map((c) => ({ id: c.id, name: c.name }))}
+            />
+            <Link
+              href="/solar"
+              className="text-xs text-white/40 hover:text-white transition-colors"
+            >
+              ← Översikt
+            </Link>
+          </div>
         </div>
       </div>
 

@@ -9,7 +9,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { HardHat, FileText, BookOpen, ChevronRight } from "lucide-react";
+import { HardHat, FileText, BookOpen, Users, ChevronRight } from "lucide-react";
 import { getCurrentAccount, hasProductAccess } from "@/lib/app/entitlements";
 import { listQuotes } from "@/lib/quoting-common/data/quotes";
 import type { Metadata } from "next";
@@ -62,6 +62,22 @@ export default async function ConstructionPage() {
                 {activeQuotes > 0 && (
                   <p className="text-[11px] text-primary/70 mt-0.5">{activeQuotes} aktiva</p>
                 )}
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-white/20 group-hover:text-white/50 transition-colors" />
+          </Link>
+
+          <Link
+            href="/construction/customers"
+            className="group rounded-2xl border border-white/[0.07] bg-white/[0.025] hover:bg-white/[0.04] p-5 transition-colors flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-violet-500/10 border border-violet-500/20 flex items-center justify-center shrink-0">
+                <Users size={16} className="text-violet-400" />
+              </div>
+              <div>
+                <p className="text-xs text-white/50 font-medium">Kunder</p>
+                <p className="text-sm text-white/70 mt-0.5">Hantera kunder</p>
               </div>
             </div>
             <ChevronRight size={16} className="text-white/20 group-hover:text-white/50 transition-colors" />
