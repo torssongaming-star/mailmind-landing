@@ -26,6 +26,8 @@ import type { KbEntry, KbCategory, KbVisibility } from "@/lib/quoting-common/dom
 type Props = {
   initialEntries: KbEntry[];
   canManage:      boolean;
+  /** Vertical new entries are tagged with. Defaults to "solar". */
+  vertical?:      string;
 };
 
 type DraftForm = {
@@ -61,7 +63,7 @@ const LABEL_CLASS = "block text-[11px] font-medium text-white/50 mb-1";
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function KbManager({ initialEntries, canManage }: Props) {
+export function KbManager({ initialEntries, canManage, vertical = "solar" }: Props) {
   const [entries, setEntries]   = useState<KbEntry[]>(initialEntries);
   const [filter, setFilter]     = useState<"all" | KbVisibility>("all");
   const [form, setForm]         = useState<DraftForm | null>(null);
@@ -88,7 +90,7 @@ export function KbManager({ initialEntries, canManage }: Props) {
       body:       form.body.trim(),
       category:   form.category,
       visibility: form.visibility,
-      vertical:   "solar",
+      vertical,
       source:     form.source.trim() || undefined,
     };
 

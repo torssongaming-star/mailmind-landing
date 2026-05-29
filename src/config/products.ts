@@ -50,7 +50,6 @@ export const PRODUCTS = {
     displayName:      "Construction",
     navIcon:          "HardHat",
     enabledByDefault: false,
-    placeholder:      true,
   },
   trades: {
     key:              "trades",
