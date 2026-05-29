@@ -84,8 +84,72 @@ Fas 24  ✅  Strategi-revisions kritiska fixar — P2.1 fejk-entitlements, P2.2 
 Fas S0  ✅  Quoting-plattformen: DB-scheman, entitlement-helper, produktregister, solar route-skelett, import-boundary lint, nav-switcher (QUOTING_NAV_ENABLED)
 Fas S1  ✅  Quoting-common kernel: DB-scheman (8 tabeller), domäntyper, data-lager, state machine (OFF-YYYY-NNNN), API-routes (customers + quotes CRUD), Solar UI (dashboard, quotes, customers)
 Fas S2  ✅  KB + klassificering + Solar-engine substrat: KB-schema (quoting_kb_entries), Solar DB-scheman (solar_properties, solar_quote_extension, solar_roi_scenarios), Solar ROI-motor (pure fn, SE-marknad, 14 tester), KB data-lager + domäntyper, Solar API-routes (calculate, properties CRUD), KB egress-gate (12 tester)
-Fas S3  ⏳  AI authoring layer: KB API-route, full egress-gate (rendered-text-scan), AI authoring layer (quoting-common/ai/), Solar prompt-fragment, Solar quote-builder UI (RoofSurfaceForm + RoiResultCard + quote-detalj)
+Fas S3  ✅  AI authoring layer: KB API-route, full egress-gate (rendered-text-scan), AI authoring layer (quoting-common/ai/), Solar prompt-fragment, Solar quote-builder UI (RoofSurfaceForm + RoiResultCard + quote-detalj)
+Fas S4  ⏳  (planeras — se nedan)
 ```
+
+---
+
+### Fas S3 — AI authoring layer (klar 2026-05-29)
+
+**S3-1 — KB API-routes**
+- `GET/POST /api/quoting/kb` — list (member+) med optional vertical+visibility filter, create (admin/owner — defaults internal_only, audit-log kb_entry_created).
+- `GET/PATCH/DELETE /api/quoting/kb/[id]` — PATCH skriver kb_entry_promoted audit-log vid internal_only → customer_facing promotion.
+- `listCustomerFacingEntries` filterar hårt på visibility='customer_facing' i WHERE (strukturell enforcement §13.4).
+
+**S3-2 — Full egress-gate (rendered-text-scan)**
+- `runEgressGate(input, internalEntries): EgressResult` i `gate.ts`:
+  - Rule 1: internal-data scan — 60-tecken-snippet case-insensitive match mot internalEntries.body.
+  - Rule 2: placeholder-scan — `/\b(TODO|FIXME)\b/i` + `/\[FYLL I\]|\[INSERT\]|\[DATUM\]/i`.
+- 19 vitest-tester — alla gröna. Fix: separerade `PLACEHOLDER_WORD_RE` + `PLACEHOLDER_BRACKET_RE` (word-boundary fungerade inte mot `[`).
+
+**S3-3 — AI authoring layer**
+- `src/lib/quoting-common/ai/types.ts`: AiDraftInput + AiDraftResult (client-safe).
+- `src/lib/quoting-common/ai/author.ts`: `draftQuote()` — lazy Anthropic-klient, system-prompt med KB-poster (max 8) + prompt-fragment, `cache_control: ephemeral`, confidence < 0.6 → `low_confidence`, parse/API-fel → `parse_failed`. Aldrig throw.
+- 5 vitest-tester med `vi.hoisted()` mock (inga riktiga API-anrop). Täcker happy path, low-confidence, parse-failure, promptFragments-injection, caller-injected kbEntries.
+
+**S3-4 — Solar prompt-fragment + AI-draft endpoint**
+- `src/lib/solar/ai-prompts/solar.ts`: SOLAR_PROMPT_FRAGMENTS — terminologi, beräkningskonventioner, narrativ stil (med platshållare för motor-tal), ROT-avdrag-påminnelse. Ren data, inga DB/app-imports.
+- `POST /api/quoting/solar/draft`: auth → product-access → Zod → quote-check → listCustomerFacingEntries (audience-klassificerat) → draftQuote() → runEgressGate() → returnerar AiDraftResult med `egress_blocked`-flagga om grind utlöses.
+
+**S3-5 — Solar quote-builder UI**
+- `src/components/solar/RoofSurfaceForm.tsx`: dynamisk form med add/remove rader; per-rad Zod-validering med inline felmeddelanden.
+- `src/components/solar/RoiResultCard.tsx`: KPI-tabell (produktion, egenanvändning, besparing, ROT, NPV, IRR, CO₂) + kondenserad 10-rads årstabel; positiva metrics i emerald.
+- `src/app/(portal)/solar/quotes/[id]/SolarQuoteBuilder.tsx`: client-island state machine idle→calculating→calculated|error; POST /calculate + POST /draft; riskFlags som amber chips.
+- `src/app/(portal)/solar/quotes/[id]/page.tsx`: server page med auth+product gate; hämtar quote + kundnamn; renderar builder.
+- `/solar/quotes` offertlista: offert-nummer är nu klickbara länkar till detalj-sidan.
+
+**Verifiering (S3-6):** `typecheck` ✅ · `lint` ✅ · `test` 172/172 ✅
+
+---
+
+### Fas S4 — (planeras)
+
+Förslag på nästa fas (diskutera med Sebastian innan start):
+
+**S4-1 — KB admin-UI**
+- Lista, skapa, redigera och promota KB-poster i portalen (`/solar/kb` eller `/settings/kb`).
+- Visuell distinktion internal_only vs customer_facing; audit-log-vy för promotions.
+
+**S4-2 — Solar-offert PDF**
+- Generera en kundvändande PDF med narrativeText + ROI-nyckeltal + logo.
+- Egress-gate körs alltid innan PDF skapas.
+- Förslag: `@react-pdf/renderer` (motivering i commit om det väljs).
+
+**S4-3 — Offert-skicka-flöde**
+- Status-transition `ready → sent` via API.
+- Skicka PDF-länk till kund via e-post (Resend).
+- Quote `validUntil` ger cron-jobb för `sent → expired`.
+
+**S4-4 — Construction/Trades vertikals-skelett**
+- Analogt med Solar: engine-stub, prompt-fragment, quote-builder, API-routes.
+- Primärt: möjliggör flervertikal demo för enterprise-leads.
+
+**S4-5 — Offert-signering (e-signatur)**
+- Enkel "godkänn offert"-länk med token (ingen tredjepartstjänst i MVP).
+- Status-transition `sent/viewed → accepted → signed`.
+
+---
 
 ## Återstår från strategi-revisionen
 
