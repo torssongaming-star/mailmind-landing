@@ -83,6 +83,7 @@ Fas 23  ✅  Legal & compliance — DPA, sub-processors, AUP, SLA, MSA, cookies,
 Fas 24  ✅  Strategi-revisions kritiska fixar — P2.1 fejk-entitlements, P2.2 db hard-fail, P2.3 email_messages orgId, P2.4 Google Pub/Sub OIDC, P2.5 GMAIL key, P2.7 canAutoSend tests, P2.8 Stripe period_end, P2.9 audit PII, P2.11 cleanup, P3.3 prompt-inj, P3.4 AI_MODEL env, P5.4 trial_will_end, P5.1 UpgradePrompt, P6.3 Sentry, P6.5 security.txt, P7.5 DB index DESC
 Fas S0  ✅  Quoting-plattformen: DB-scheman, entitlement-helper, produktregister, solar route-skelett, import-boundary lint, nav-switcher (QUOTING_NAV_ENABLED)
 Fas S1  ✅  Quoting-common kernel: DB-scheman (8 tabeller), domäntyper, data-lager, state machine (OFF-YYYY-NNNN), API-routes (customers + quotes CRUD), Solar UI (dashboard, quotes, customers)
+Fas S2  ✅  KB + klassificering + Solar-engine substrat: KB-schema (quoting_kb_entries), Solar DB-scheman (solar_properties, solar_quote_extension, solar_roi_scenarios), Solar ROI-motor (pure fn, SE-marknad, 14 tester), KB data-lager + domäntyper, Solar API-routes (calculate, properties CRUD), KB egress-gate (12 tester)
 ```
 
 ## Återstår från strategi-revisionen
@@ -105,6 +106,38 @@ Större arbete (1+ vecka):
 ---
 
 ## Vad som gjorts sedan senast (Emil läser detta)
+
+### Fas S2 — KB + klassificering + Solar-engine substrat (klar 2026-05-29)
+
+**S2-1 — Solar DB-scheman + KB-schema**
+- `src/lib/db/schema.solar.ts`: `solar_properties`, `solar_quote_extension` (1:1 unik mot quote), `solar_roi_scenarios` (append-only, versioned engine output).
+- `src/lib/db/schema.quoting.ts`: `quoting_kb_entries` + `kbCategoryEnum` + `kbVisibilityEnum` (default `internal_only` — fail-safe §13.4).
+- Re-exporterade från `src/lib/db/schema.ts`.
+
+**S2-2 — Solar ROI-motor**
+- `src/lib/solar/engine/types.ts`: `SolarEngineInputSchema` (Zod, SE-marknadens defaults), `SolarEngineResult`, `YearlyDataPoint`, `ENGINE_VERSION = "solar-roi@1.0.0"`.
+- `src/lib/solar/engine/roi.ts`: `runSolarRoi(input): SolarEngineResult` — ren deterministisk funktion. kWp-baserad produktion med PVGIS-kalibrerade tilt/azimut-tabeller (59°N), Quaschning self-consumption, DCF (NPV + IRR bisection), ROT-avdrag, CO₂ (0.045 kg/kWh).
+- 14 vitest-tester — alla gröna.
+
+**S2-3 — KB data-lager**
+- `KbEntry`, `KbCategory`, `KbVisibility`, `CreateKbEntryInput`, `UpdateKbEntryInput` tillagda i `domain/types.ts`.
+- `src/lib/quoting-common/data/kb.ts`: listKbEntries, listCustomerFacingEntries (audience-gated), getKbEntry, createKbEntry (default internal_only), updateKbEntry, deleteKbEntry.
+
+**S2-4 — Solar API-routes**
+- `src/lib/solar/data/properties.ts` — CRUD för solar_properties.
+- `src/lib/solar/data/scenarios.ts` — append + query solar_roi_scenarios.
+- `POST /api/quoting/solar/calculate` — validerar input → kör motor → persist versioned scenario.
+- `GET/POST /api/quoting/solar/properties` — list + create.
+- `GET/PATCH/DELETE /api/quoting/solar/properties/[id]` — CRUD per property.
+- ESLint-fix: separerade Rule 2 (cross-vertical imports) från Rule 4 (DB-direkt) — `src/lib/<v>/data/**` undantagna från DB-direktimport-restriktionen.
+
+**S2-5 — KB egress-gate**
+- `src/lib/quoting-common/egress/gate.ts`: filterCustomerFacing, isCustomerFacing, extractBodies (med vertical-scope + maxEntries), auditBlocked.
+- Fail-safe: okänd/internal_only blockeras alltid. 12 vitest-tester — alla gröna.
+
+**Verifiering (S2-6):** `typecheck` ✅ · `lint` ✅ · `test` 160/160 ✅ · `build` ✅
+
+---
 
 ### Fas S1 — Quoting-common kernel (klar 2026-05-29)
 
@@ -135,6 +168,72 @@ Större arbete (1+ vecka):
 - `/solar/customers` — kundtabell.
 
 **Verifiering:** `typecheck` ✅ · `lint` ✅ · `test` 134/134 ✅ · `build` ✅
+
+> **DB-migration för S2** — kör i Neon SQL Editor (Sebastian):
+> ```sql
+> -- Enums
+> CREATE TYPE kb_category AS ENUM ('faq','policy','spec','caveat','other');
+> CREATE TYPE kb_visibility AS ENUM ('internal_only','customer_facing');
+>
+> -- quoting_kb_entries
+> CREATE TABLE quoting_kb_entries (
+>   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+>   organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+>   title varchar(300) NOT NULL,
+>   body text NOT NULL,
+>   category kb_category NOT NULL DEFAULT 'other',
+>   visibility kb_visibility NOT NULL DEFAULT 'internal_only',
+>   vertical varchar(50),
+>   source varchar(200),
+>   created_by uuid,
+>   created_at timestamptz NOT NULL DEFAULT now(),
+>   updated_at timestamptz NOT NULL DEFAULT now()
+> );
+> CREATE INDEX ON quoting_kb_entries (organization_id);
+> CREATE INDEX ON quoting_kb_entries (organization_id, vertical);
+> CREATE INDEX ON quoting_kb_entries (organization_id, visibility);
+>
+> -- solar_properties
+> CREATE TABLE solar_properties (
+>   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+>   organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+>   customer_id uuid REFERENCES quoting_customers(id) ON DELETE SET NULL,
+>   address jsonb,
+>   roof_surfaces jsonb NOT NULL DEFAULT '[]',
+>   imagery_source varchar(50),
+>   imagery_ref jsonb,
+>   created_at timestamptz NOT NULL DEFAULT now(),
+>   updated_at timestamptz NOT NULL DEFAULT now()
+> );
+> CREATE INDEX ON solar_properties (organization_id);
+> CREATE INDEX ON solar_properties (customer_id);
+>
+> -- solar_quote_extension
+> CREATE TABLE solar_quote_extension (
+>   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+>   organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+>   quote_id uuid NOT NULL REFERENCES quoting_quotes(id) ON DELETE CASCADE,
+>   property_id uuid REFERENCES solar_properties(id) ON DELETE SET NULL,
+>   meta jsonb,
+>   created_at timestamptz NOT NULL DEFAULT now(),
+>   updated_at timestamptz NOT NULL DEFAULT now()
+> );
+> CREATE UNIQUE INDEX ON solar_quote_extension (quote_id);
+> CREATE INDEX ON solar_quote_extension (organization_id);
+>
+> -- solar_roi_scenarios
+> CREATE TABLE solar_roi_scenarios (
+>   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+>   organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+>   quote_id uuid NOT NULL REFERENCES quoting_quotes(id) ON DELETE CASCADE,
+>   engine_version varchar(50) NOT NULL,
+>   inputs jsonb NOT NULL,
+>   results jsonb NOT NULL,
+>   created_at timestamptz NOT NULL DEFAULT now()
+> );
+> CREATE INDEX ON solar_roi_scenarios (quote_id);
+> CREATE INDEX ON solar_roi_scenarios (organization_id);
+> ```
 
 ---
 
