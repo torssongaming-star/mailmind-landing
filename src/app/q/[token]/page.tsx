@@ -16,7 +16,7 @@
 import { notFound } from "next/navigation";
 import { verifyShareToken } from "@/lib/quoting-common/sharing/token";
 import {
-  getQuoteByIdUnscoped,
+  getQuote,
   updateQuote,
   getOrganizationName,
 } from "@/lib/quoting-common/data/quotes";
@@ -55,13 +55,12 @@ const ACCEPTABLE: QuoteStatus[] = ["sent", "viewed", "accepted"];
 export default async function PublicQuotePage({ params }: Props) {
   const { token } = await params;
 
-  const quoteId = verifyShareToken(token);
-  if (!quoteId) notFound();
+  const claims = verifyShareToken(token);
+  if (!claims) notFound();
 
-  const quote = await getQuoteByIdUnscoped(quoteId);
+  const { orgId, quoteId } = claims;
+  const quote = await getQuote(orgId, quoteId);
   if (!quote) notFound();
-
-  const orgId = quote.organizationId;
 
   const [customer, cfEntries, internalEntries, orgName] = await Promise.all([
     quote.customerId ? getCustomer(orgId, quote.customerId) : Promise.resolve(null),

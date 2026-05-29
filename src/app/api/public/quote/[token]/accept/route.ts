@@ -14,14 +14,17 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { z } from "zod";
 import { verifyShareToken } from "@/lib/quoting-common/sharing/token";
 import {
-  getQuoteByIdUnscoped,
+  getQuote,
   updateQuote,
   appendWorkflowEvent,
 } from "@/lib/quoting-common/data/quotes";
+import { listCustomerFacingEntries } from "@/lib/quoting-common/data/kb";
 import { canTransition } from "@/lib/quoting-common/domain/quote-state";
+import { rateLimit } from "@/lib/rate-limit";
 import type { QuoteStatus } from "@/lib/quoting-common/domain/types";
 
 export const runtime = "nodejs";
@@ -38,18 +41,24 @@ const PATH: QuoteStatus[] = ["viewed", "accepted", "signed"];
 export async function POST(req: NextRequest, { params }: RouteContext) {
   const { token } = await params;
 
-  const quoteId = verifyShareToken(token);
-  if (!quoteId) return NextResponse.json({ error: "Ogiltig länk" }, { status: 404 });
+  // Rate limit unauthenticated traffic per-IP — 10 attempts / minute.
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() ?? "unknown";
+  if (!(await rateLimit(`quote-accept:${ip}`, { capacity: 10, refillPerSec: 10 / 60 }))) {
+    return NextResponse.json({ error: "För många försök. Försök igen om en stund." }, { status: 429 });
+  }
+
+  const claims = verifyShareToken(token);
+  if (!claims) return NextResponse.json({ error: "Ogiltig länk" }, { status: 404 });
 
   const parsed = Body.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) {
     return NextResponse.json({ error: "Ange ditt namn för att signera." }, { status: 400 });
   }
 
-  const quote = await getQuoteByIdUnscoped(quoteId);
+  const { orgId, quoteId } = claims;
+  const quote = await getQuote(orgId, quoteId);
   if (!quote) return NextResponse.json({ error: "Offerten hittades inte" }, { status: 404 });
 
-  const orgId = quote.organizationId;
   const status = quote.status as QuoteStatus;
 
   // Already signed → success (idempotent)
@@ -90,14 +99,25 @@ export async function POST(req: NextRequest, { params }: RouteContext) {
     current = next;
   }
 
+  // Snapshot the exact customer-visible content the signer agreed to, and hash
+  // it for tamper-evident proof. We hash the same material the public view
+  // renders: narrative + persisted ROI summary + customer-facing KB bodies.
+  const cfEntries = await listCustomerFacingEntries(orgId, quote.vertical);
+  const narrative = typeof quote.meta?.narrativeText === "string" ? quote.meta.narrativeText : "";
+  const roiSummary = Array.isArray(quote.meta?.roiSummary) ? quote.meta.roiSummary : [];
+  const snapshot = JSON.stringify({ narrative, roiSummary, kb: cfEntries.map((e) => ({ id: e.id, title: e.title, body: e.body })) });
+  const contentHash = createHash("sha256").update(snapshot).digest("hex");
+
   // Record signature metadata
   await updateQuote(orgId, quoteId, {
     meta: {
       ...(quote.meta ?? {}),
       signature: {
-        signerName: parsed.data.signerName,
-        signedAt:   new Date().toISOString(),
-        method:     "share_link",
+        signerName:  parsed.data.signerName,
+        signedAt:    new Date().toISOString(),
+        method:      "share_link",
+        ip,
+        contentHash,
       },
     },
   });

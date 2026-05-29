@@ -186,7 +186,7 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
   let acceptUrl: string | null = null;
   if (isShareConfigured()) {
     const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://mailmind.se";
-    acceptUrl = `${base.replace(/\/$/, "")}/q/${createShareToken(id)}`;
+    acceptUrl = `${base.replace(/\/$/, "")}/q/${createShareToken(orgId, id)}`;
   }
 
   // Build + send the email

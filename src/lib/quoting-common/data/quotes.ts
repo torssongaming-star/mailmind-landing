@@ -87,25 +87,6 @@ export async function getQuote(orgId: string, id: string): Promise<Quote | null>
   return rows[0] ? toQuote(rows[0]) : null;
 }
 
-/**
- * Fetch a quote by id WITHOUT an org predicate.
- *
- * ⚠ Use ONLY for capability-based public access (signed share tokens), where
- * the token itself is the authorisation and the org is not yet known. The
- * returned quote carries `organizationId`; all subsequent reads/writes in the
- * request MUST be re-scoped to that org. Never call this from an authenticated
- * portal/API path — use `getQuote(orgId, id)` there.
- */
-export async function getQuoteByIdUnscoped(id: string): Promise<Quote | null> {
-  const rows = await db
-    .select()
-    .from(quotingQuotes)
-    .where(eq(quotingQuotes.id, id))
-    .limit(1);
-
-  return rows[0] ? toQuote(rows[0]) : null;
-}
-
 /** Organisation display name by id (for public quote documents). */
 export async function getOrganizationName(orgId: string): Promise<string | null> {
   const rows = await db
