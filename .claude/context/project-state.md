@@ -81,6 +81,7 @@ Fas 21  ✅  GDPR & datahygien — data-export-API, account-deletion 30d grace, 
 Fas 22  ✅  Produkt-polering — sidebar trial-badge, skeleton loaders (inbox/team), root 404, subscription-renewal alert
 Fas 23  ✅  Legal & compliance — DPA, sub-processors, AUP, SLA, MSA, cookies, DPIA/ROPA, AI-disclaimer
 Fas 24  ✅  Strategi-revisions kritiska fixar — P2.1 fejk-entitlements, P2.2 db hard-fail, P2.3 email_messages orgId, P2.4 Google Pub/Sub OIDC, P2.5 GMAIL key, P2.7 canAutoSend tests, P2.8 Stripe period_end, P2.9 audit PII, P2.11 cleanup, P3.3 prompt-inj, P3.4 AI_MODEL env, P5.4 trial_will_end, P5.1 UpgradePrompt, P6.3 Sentry, P6.5 security.txt, P7.5 DB index DESC
+Fas S0  ✅  Quoting-plattformen: DB-scheman, entitlement-helper, produktregister, solar route-skelett, import-boundary lint, nav-switcher (QUOTING_NAV_ENABLED)
 ```
 
 ## Återstår från strategi-revisionen
@@ -103,6 +104,49 @@ Större arbete (1+ vecka):
 ---
 
 ## Vad som gjorts sedan senast (Emil läser detta)
+
+### Fas S0 — Quoting-plattformens fundament (klar 2026-05-29)
+
+Alla S0-tasks (S0-1 → S0-7) levererade. Kortfattat:
+
+**S0-1 — DB-scheman**
+- `src/lib/db/schema.quoting.ts`: tre nya tabeller — `products` (registry), `org_product_access` (entitlements per tenant, enum `trialing|active|disabled`), `quoting_usage_counters` (vertikala usage-räknare per org+månad).
+- Re-exporterade från `src/lib/db/schema.ts` så Drizzle ser dem i samma schema-objekt.
+- Tabellerna skapades i Neon via SQL (Sebastian kör).
+
+**S0-2 — Entitlement-helper**
+- `AccountSnapshot` utvidgad med `products: Record<string, { status, limits }>`.
+- Ny helper `hasProductAccess(account, key): boolean` — `true` för `active`/`trialing`, `false` annars.
+- `src/lib/db/queries.ts` hämtar `org_product_access` parallellt i `getPortalData`.
+- 6 vitest-tester i `src/lib/app/entitlements.products.test.ts` — alla gröna.
+
+**S0-3 — Produktregister**
+- `src/config/products.ts`: `PRODUCTS`-registry med `mail`, `solar`, `construction` (placeholder), `trades` (placeholder). `as const satisfies` för full typinferens.
+- `drizzle/seed-products.sql`: idempotenta INSERTs i Neon (Sebastian kör).
+
+**S0-4 — Solar route-skelett**
+- `src/app/(portal)/solar/layout.tsx`: auth → account → `hasProductAccess('solar')`-gate → redirect `/app` om icke-entitled.
+- `src/app/(portal)/solar/page.tsx`: placeholder-dashboard.
+
+**S0-5 — Import-boundary lint**
+- `eslint.config.mjs`: fyra `no-restricted-imports`-regelblock som speglar §3.4:
+  - Plattformskärnan får inte importera vertikaler/quoting-common.
+  - Quoting-common får inte importera vertikaler.
+  - Vertikaler får inte importera varandras syskon.
+  - Routes/API-routes får inte gå runt datalagret direkt till `@/lib/db`.
+
+**S0-6 — Nav-switcher**
+- `src/components/portal/ProductSwitcher.tsx`: async server component — filtrerar PRODUCTS på `!placeholder && hasProductAccess`, renderar workspace-länkar. Dold om < 2 entries.
+- Portal-layouten monterar switchern bakom `QUOTING_NAV_ENABLED=1`.
+- Sidebar-klienten tar `productSwitcher?: React.ReactNode` slot.
+
+**LOI verify — bonus**
+- `src/app/loi/verified/page.tsx`: dedikerad välkomstsida efter e-postbekräftelse ("Välkommen till framtiden."). Energisk, professionell, ingen retur till formulärsidan.
+- `src/app/api/loi/verify/route.ts`: success redirect ändrad till `/loi/verified` (error-redirect till `/loi?verified=…` oförändrad).
+
+**Verifiering (S0-7):** `typecheck` ✅ · `lint` ✅ · `test` 114/114 ✅ · `build` ✅
+
+
 
 ### Strategi-revision P2.1 — riktiga limit-räknare (klar)
 - `src/lib/app/entitlements.ts`: `AccountSnapshot` har nu fälten `inboxesUsed` och `usersUsed` som räknas via två parallella `COUNT(*)` mot `inboxes` resp. `users` med `organizationId` i WHERE. Tidigare hårdkodade `0`/`1` → inbox- och seat-limit höll aldrig.
