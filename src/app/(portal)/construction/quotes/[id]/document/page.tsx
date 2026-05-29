@@ -11,10 +11,11 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getCurrentAccount, hasProductAccess } from "@/lib/app/entitlements";
-import { getQuote } from "@/lib/quoting-common/data/quotes";
+import { getQuote, listQuoteLines } from "@/lib/quoting-common/data/quotes";
 import { getCustomer } from "@/lib/quoting-common/data/customers";
 import { listKbEntries, listCustomerFacingEntries } from "@/lib/quoting-common/data/kb";
 import { runEgressGate } from "@/lib/quoting-common/egress/gate";
+import { QuoteLinesPrintTable } from "@/components/quoting-common/QuoteLinesPrintTable";
 import { PrintButton } from "./PrintButton";
 import type { Metadata } from "next";
 
@@ -48,10 +49,11 @@ export default async function ConstructionQuoteDocumentPage({ params }: Props) {
   const quote = await getQuote(orgId, id);
   if (!quote) notFound();
 
-  const [customer, cfEntries, internalEntries] = await Promise.all([
+  const [customer, cfEntries, internalEntries, lines] = await Promise.all([
     quote.customerId ? getCustomer(orgId, quote.customerId) : Promise.resolve(null),
     listCustomerFacingEntries(orgId, "construction"),
     listKbEntries(orgId, { visibility: "internal_only" }),
+    listQuoteLines(orgId, id),
   ]);
 
   const orgName = account.organization!.name ?? "Mailmind";
@@ -130,6 +132,9 @@ export default async function ConstructionQuoteDocumentPage({ params }: Props) {
         ) : (
           <div className="mb-8 rounded-lg bg-slate-50 px-4 py-3 text-sm text-slate-500">Ingen kalkyl är sparad för den här offerten ännu.</div>
         )}
+
+        {/* Line items */}
+        <QuoteLinesPrintTable lines={lines} />
 
         {cfEntries.length > 0 && (
           <div className="mb-8">

@@ -19,10 +19,12 @@ import {
   getQuote,
   updateQuote,
   getOrganizationName,
+  listQuoteLines,
 } from "@/lib/quoting-common/data/quotes";
 import { getCustomer } from "@/lib/quoting-common/data/customers";
 import { listKbEntries, listCustomerFacingEntries } from "@/lib/quoting-common/data/kb";
 import { runEgressGate } from "@/lib/quoting-common/egress/gate";
+import { QuoteLinesPrintTable } from "@/components/quoting-common/QuoteLinesPrintTable";
 import type { QuoteStatus } from "@/lib/quoting-common/domain/types";
 import { AcceptForm } from "./AcceptForm";
 import type { Metadata } from "next";
@@ -62,11 +64,12 @@ export default async function PublicQuotePage({ params }: Props) {
   const quote = await getQuote(orgId, quoteId);
   if (!quote) notFound();
 
-  const [customer, cfEntries, internalEntries, orgName] = await Promise.all([
+  const [customer, cfEntries, internalEntries, orgName, lines] = await Promise.all([
     quote.customerId ? getCustomer(orgId, quote.customerId) : Promise.resolve(null),
     listCustomerFacingEntries(orgId, quote.vertical),
     listKbEntries(orgId, { visibility: "internal_only" }),
     getOrganizationName(orgId),
+    listQuoteLines(orgId, quoteId),
   ]);
 
   const narrative = typeof quote.meta?.narrativeText === "string" ? quote.meta.narrativeText : "";
@@ -135,6 +138,8 @@ export default async function PublicQuotePage({ params }: Props) {
                 </table>
               </div>
             )}
+
+            <QuoteLinesPrintTable lines={lines} />
 
             {cfEntries.length > 0 && (
               <div className="mb-8">

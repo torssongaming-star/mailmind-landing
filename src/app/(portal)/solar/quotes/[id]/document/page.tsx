@@ -18,11 +18,12 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getCurrentAccount, hasProductAccess } from "@/lib/app/entitlements";
-import { getQuote } from "@/lib/quoting-common/data/quotes";
+import { getQuote, listQuoteLines } from "@/lib/quoting-common/data/quotes";
 import { getCustomer } from "@/lib/quoting-common/data/customers";
 import { getLatestScenario } from "@/lib/solar/data/scenarios";
 import { listKbEntries, listCustomerFacingEntries } from "@/lib/quoting-common/data/kb";
 import { runEgressGate } from "@/lib/quoting-common/egress/gate";
+import { QuoteLinesPrintTable } from "@/components/quoting-common/QuoteLinesPrintTable";
 import type { SolarEngineResult } from "@/lib/solar/engine/types";
 import { PrintButton } from "./PrintButton";
 import type { Metadata } from "next";
@@ -54,11 +55,12 @@ export default async function SolarQuoteDocumentPage({ params }: Props) {
   const quote = await getQuote(orgId, id);
   if (!quote) notFound();
 
-  const [customer, scenario, cfEntries, internalEntries] = await Promise.all([
+  const [customer, scenario, cfEntries, internalEntries, lines] = await Promise.all([
     quote.customerId ? getCustomer(orgId, quote.customerId) : Promise.resolve(null),
     getLatestScenario(orgId, id),
     listCustomerFacingEntries(orgId, "solar"),
     listKbEntries(orgId, { visibility: "internal_only" }),
+    listQuoteLines(orgId, id),
   ]);
 
   const result = (scenario?.results as SolarEngineResult | undefined) ?? null;
@@ -174,6 +176,9 @@ export default async function SolarQuoteDocumentPage({ params }: Props) {
             Ingen ROI-beräkning är sparad för den här offerten ännu.
           </div>
         )}
+
+        {/* Line items */}
+        <QuoteLinesPrintTable lines={lines} />
 
         {/* Customer-facing KB highlights */}
         {cfEntries.length > 0 && (
