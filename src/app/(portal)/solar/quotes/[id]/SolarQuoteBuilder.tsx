@@ -54,15 +54,22 @@ const DEFAULTS = {
 export function SolarQuoteBuilder({
   quote,
   customerName,
+  customerEmail,
+  canManage,
 }: {
-  quote:        Quote;
-  customerName: string;
+  quote:         Quote;
+  customerName:  string;
+  customerEmail: string | null;
+  canManage:     boolean;
 }) {
   const [scalars, setScalars]   = useState(DEFAULTS);
   const [calcState, setCalc]    = useState<CalculateState>({ phase: "idle" });
   const [draftState, setDraft]  = useState<DraftState>({ phase: "idle" });
   const [scopeBrief, setScopeBrief] = useState("");
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [sendState, setSendState] = useState<
+    { phase: "idle" | "sending" | "sent" } | { phase: "error"; message: string }
+  >({ phase: quote.status === "sent" || quote.status === "viewed" ? "sent" : "idle" });
 
   // ── Calculate ─────────────────────────────────────────────────────────────
 
@@ -152,6 +159,24 @@ export function SolarQuoteBuilder({
       setSaveState(res.ok ? "saved" : "error");
     } catch {
       setSaveState("error");
+    }
+  }
+
+  // ── Send to customer ────────────────────────────────────────────────────────
+
+  async function handleSend() {
+    setSendState({ phase: "sending" });
+    try {
+      const res = await fetch(`/api/quoting/solar/quotes/${quote.id}/send`, { method: "POST" });
+      const json = await res.json().catch(() => ({})) as { ok?: boolean; error?: string; blockedReasons?: string[] };
+      if (!res.ok || !json.ok) {
+        const extra = json.blockedReasons?.length ? ` (${json.blockedReasons.join(", ")})` : "";
+        setSendState({ phase: "error", message: (json.error ?? "Kunde inte skicka.") + extra });
+        return;
+      }
+      setSendState({ phase: "sent" });
+    } catch {
+      setSendState({ phase: "error", message: "Nätverksfel. Försök igen." });
     }
   }
 
@@ -331,6 +356,46 @@ export function SolarQuoteBuilder({
           </div>
         )}
       </Card>
+
+      {/* ── Send to customer ── */}
+      {canManage && (
+        <Card variant="default" padding="md">
+          <CardHeader
+            title="Skicka till kund"
+            description="Skickar offerten via e-post och markerar den som skickad. Egress-grinden körs innan utskick."
+          />
+          {sendState.phase === "sent" ? (
+            <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3 text-sm text-emerald-400">
+              Offerten är skickad{customerEmail ? ` till ${customerEmail}` : ""}.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {!customerEmail && (
+                <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 text-[11px] text-amber-400/90">
+                  Kunden saknar e-postadress. Lägg till en e-post på kunden innan du skickar.
+                </div>
+              )}
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[11px] text-white/40">
+                  {customerEmail ? `Mottagare: ${customerEmail}` : "Ingen mottagare angiven"}
+                </span>
+                <Button
+                  size="sm"
+                  onClick={handleSend}
+                  disabled={!customerEmail || sendState.phase === "sending"}
+                >
+                  {sendState.phase === "sending" ? "Skickar…" : "Skicka offert"}
+                </Button>
+              </div>
+              {sendState.phase === "error" && (
+                <div className="rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-sm text-red-400">
+                  {sendState.message}
+                </div>
+              )}
+            </div>
+          )}
+        </Card>
+      )}
     </div>
   );
 }

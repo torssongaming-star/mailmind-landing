@@ -87,6 +87,8 @@ export type AuditAction =
   | "kb_entry_promoted"
   | "kb_entry_created"
   | "kb_entry_deleted"
+  | "quote_sent"
+  | "quote_expired"
   // Website portal actions (already written elsewhere; listed for reference)
   | "checkout_completed"
   | "subscription_updated"

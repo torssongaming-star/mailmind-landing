@@ -14,7 +14,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import * as Sentry from "@sentry/nextjs";
-import { db, isDbConnected, organizations, users, subscriptions, licenseEntitlements, usageCounters, inboxes, emailThreads } from "@/lib/db";
+import { db, isDbConnected, organizations, users, subscriptions, licenseEntitlements, usageCounters, inboxes, emailThreads, quotingQuotes } from "@/lib/db";
 import { eq, and, lt, desc, isNotNull, inArray } from "drizzle-orm";
 import { wakeUpAllSnoozedThreads, updateInboxConfig } from "@/lib/app/threads";
 import { notifyUsageWarning, notifyTrialExpired, notifyWeeklyReport } from "@/lib/app/notify";
@@ -394,6 +394,40 @@ async function taskRetentionPurge() {
   return { purged: result.length };
 }
 
+// ── task: expire quotes past their validUntil date ───────────────────────────
+
+async function taskExpireQuotes() {
+  // validUntil is a DATE column (YYYY-MM-DD). Expire any quote still in an
+  // active outbound status (sent / viewed) whose validity date has passed.
+  const today = new Date().toISOString().slice(0, 10);
+
+  const expired = await db
+    .update(quotingQuotes)
+    .set({ status: "expired", updatedAt: new Date() })
+    .where(and(
+      inArray(quotingQuotes.status, ["sent", "viewed"]),
+      isNotNull(quotingQuotes.validUntil),
+      lt(quotingQuotes.validUntil, today),
+    ))
+    .returning({ id: quotingQuotes.id, organizationId: quotingQuotes.organizationId });
+
+  // Best-effort audit log per expired quote — don't fail the cron on log errors.
+  for (const q of expired) {
+    try {
+      await writeAuditLog({
+        organizationId: q.organizationId,
+        userId:         null,
+        action:         "quote_expired",
+        metadata:       { quoteId: q.id },
+      });
+    } catch (err) {
+      Sentry.captureException(err, { tags: { component: "cron", task: "expireQuotes" } });
+    }
+  }
+
+  return { expired: expired.length };
+}
+
 // ── handler ───────────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
@@ -437,6 +471,9 @@ export async function GET(req: NextRequest) {
 
   // Daily: retention — drop closed threads older than 12 months
   results.retentionPurge = await taskRetentionPurge();
+
+  // Daily: expire quotes whose validUntil date has passed
+  results.expireQuotes = await taskExpireQuotes();
 
   // Weekly on Monday: usage warnings + weekly report
   if (isUtcDay(1)) {

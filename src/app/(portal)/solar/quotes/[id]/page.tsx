@@ -10,6 +10,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getCurrentAccount, hasProductAccess } from "@/lib/app/entitlements";
+import { hasOrgAdminRole } from "@/lib/app/rbac";
 import { getQuote } from "@/lib/quoting-common/data/quotes";
 import { getCustomer } from "@/lib/quoting-common/data/customers";
 import { QuoteStatusBadge } from "@/components/quoting-common/QuoteStatusBadge";
@@ -71,7 +72,12 @@ export default async function SolarQuoteDetailPage({ params }: Props) {
       </div>
 
       <main className="flex-1 px-6 py-6 max-w-4xl w-full">
-        <SolarQuoteBuilder quote={quote} customerName={customerName} />
+        <SolarQuoteBuilder
+          quote={quote}
+          customerName={customerName}
+          customerEmail={customer?.email ?? null}
+          canManage={hasOrgAdminRole(account)}
+        />
       </main>
     </div>
   );
