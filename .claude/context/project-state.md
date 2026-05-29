@@ -89,7 +89,24 @@ Fas S4  ✅  KB admin-UI, printbart offertdokument (egress-skyddat), skicka-flö
 Säkerhet ✅  Härdning av publika offertflödet: org-scopade share-tokens (boundary-hål borttaget), rate limiting på accept-endpoint, signatur-snapshot (SHA-256 content hash)
 Fas S5  ✅  Kund- + offert-CRUD i UI: CustomerManager (skapa/redigera), customer [id] PATCH-route, NewQuoteButton (skapa offert → builder); solar + construction
 Construction ✅  Full quote-builder med paritet mot solar: prompt-fragment, calculate (estimat → quote.meta), draft (AI + egress), send (Resend + share-länk), builder-UI, detalj + dokument-vy. Estimat i quote.meta (ingen migration). Återanvänder hela quoting-common-kärnan.
-Analys-uppföljning ✅  #7 Workflow-timeline (QuoteTimeline på detaljsidorna), dashboard-KPI:er (QuoteMetricsRow: pipeline/vunnet/konvertering), #8 Offertrader (QuoteLinesEditor + PUT /quotes/[id]/lines med total-omräkning). Aktiverar quoting_quote_lines från S1.
+Analys-uppföljning ✅  #7 Workflow-timeline (QuoteTimeline på detaljsidorna), dashboard-KPI:er (QuoteMetricsRow: pipeline/vunnet/konvertering), #8 Offertrader (QuoteLinesEditor + PUT /quotes/[id]/lines med total-omräkning, visas på dokument + publik vy). Aktiverar quoting_quote_lines från S1.
+Polering ✅  Arkivera kunder (soft-archive via meta.archived, ingen migration), Construction estimat-audit-tabell (construction_estimate_scenarios — KRÄVER MIGRATION, se SQL nedan), i18n av publik offertvy (/q/[token]?lang=en), PDF-bilaga i utskick (dependency-fri generator, base-14 Helvetica).
+
+> **DB-migration för Construction estimat-audit (Sebastian, kör i Neon SQL Editor):**
+> ```sql
+> CREATE TABLE construction_estimate_scenarios (
+>   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+>   organization_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+>   quote_id uuid NOT NULL REFERENCES quoting_quotes(id) ON DELETE CASCADE,
+>   engine_version varchar(50) NOT NULL,
+>   inputs jsonb NOT NULL,
+>   results jsonb NOT NULL,
+>   created_at timestamptz NOT NULL DEFAULT now()
+> );
+> CREATE INDEX construction_estimate_scenarios_quote_idx ON construction_estimate_scenarios (quote_id);
+> CREATE INDEX construction_estimate_scenarios_org_idx ON construction_estimate_scenarios (organization_id);
+> ```
+> Scenario-skrivningen är **best-effort** (try/catch) — `calculate` fungerar även utan tabellen (estimatet sparas alltid i `quote.meta`). När tabellen finns aktiveras audit-spåret automatiskt.
 ```
 
 ---

@@ -72,7 +72,14 @@ export async function POST(req: NextRequest) {
   const result = runConstructionEstimate(parsed.data);
 
   // Append a frozen, versioned scenario (audit trail — mirrors solar).
-  await saveEstimateScenario(orgId, quoteId, result.engineVersion, parsed.data, result);
+  // Best-effort: the construction_estimate_scenarios table requires a migration;
+  // until it exists we must not break the calculation. The estimate is also
+  // persisted on quote.meta below, so the result is never lost.
+  try {
+    await saveEstimateScenario(orgId, quoteId, result.engineVersion, parsed.data, result);
+  } catch (err) {
+    console.error("[construction/calculate] scenario persist skipped:", err instanceof Error ? err.message : err);
+  }
 
   // Vertical-agnostic display figures for the public /q view + document.
   const roiSummary = [
