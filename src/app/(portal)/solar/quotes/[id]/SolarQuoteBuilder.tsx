@@ -14,6 +14,8 @@
  */
 
 import { useState } from "react";
+import Link from "next/link";
+import { FileText } from "lucide-react";
 import { RoofSurfaceForm } from "@/components/solar/RoofSurfaceForm";
 import { RoiResultCard } from "@/components/solar/RoiResultCard";
 import { Button } from "@/components/ui/button";
@@ -60,6 +62,7 @@ export function SolarQuoteBuilder({
   const [calcState, setCalc]    = useState<CalculateState>({ phase: "idle" });
   const [draftState, setDraft]  = useState<DraftState>({ phase: "idle" });
   const [scopeBrief, setScopeBrief] = useState("");
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
 
   // ── Calculate ─────────────────────────────────────────────────────────────
 
@@ -127,8 +130,28 @@ export function SolarQuoteBuilder({
         narrativeText: json.draft.narrativeText,
         riskFlags:     json.draft.riskFlags,
       });
+      setSaveState("idle");
     } catch {
       setDraft({ phase: "error", message: "Nätverksfel. Försök igen." });
+    }
+  }
+
+  // ── Persist narrative to the quote (for the printable document) ──────────────
+
+  async function handleSaveNarrative() {
+    if (draftState.phase !== "done") return;
+    setSaveState("saving");
+    try {
+      const res = await fetch(`/api/quoting/quotes/${quote.id}`, {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({
+          meta: { ...(quote.meta ?? {}), narrativeText: draftState.narrativeText },
+        }),
+      });
+      setSaveState(res.ok ? "saved" : "error");
+    } catch {
+      setSaveState("error");
     }
   }
 
@@ -270,6 +293,34 @@ export function SolarQuoteBuilder({
               <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap">
                 {draftState.narrativeText}
               </p>
+            </div>
+
+            {/* Save + open document */}
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[11px] text-white/40">
+                {saveState === "saved"
+                  ? "Sparat på offerten."
+                  : saveState === "error"
+                  ? "Kunde inte spara — försök igen."
+                  : "Spara utkastet för att inkludera det i offertdokumentet."}
+              </span>
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleSaveNarrative}
+                  disabled={saveState === "saving"}
+                >
+                  {saveState === "saving" ? "Sparar…" : saveState === "saved" ? "Sparat ✓" : "Spara utkast"}
+                </Button>
+                <Link
+                  href={`/solar/quotes/${quote.id}/document`}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-[#050B1C]/50 px-4 py-1.5 text-sm font-medium text-foreground hover:bg-white/5 hover:border-primary/30 transition-all"
+                >
+                  <FileText size={14} />
+                  Offertdokument
+                </Link>
+              </div>
             </div>
           </div>
         )}
