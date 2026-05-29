@@ -39,6 +39,8 @@ export type SendEmailInput = {
   from?: string;
   /** Custom headers (Message-ID, In-Reply-To, References, etc.) */
   headers?: Record<string, string>;
+  /** File attachments (e.g. a generated quote PDF). */
+  attachments?: Array<{ filename: string; content: Buffer | string }>;
 };
 
 /** Append a signature to the body if one is provided. Pure helper. */
@@ -78,6 +80,7 @@ export async function sendEmail(input: SendEmailInput): Promise<SendEmailResult>
       html:    input.html,
       replyTo: input.replyTo,
       headers: input.headers,
+      ...(input.attachments?.length ? { attachments: input.attachments } : {}),
     });
 
     if (result.error) {

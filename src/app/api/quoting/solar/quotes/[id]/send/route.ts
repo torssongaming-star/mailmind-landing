@@ -28,6 +28,7 @@ import { listKbEntries, listCustomerFacingEntries } from "@/lib/quoting-common/d
 import { runEgressGate } from "@/lib/quoting-common/egress/gate";
 import { canTransition } from "@/lib/quoting-common/domain/quote-state";
 import { createShareToken, isShareConfigured } from "@/lib/quoting-common/sharing/token";
+import { renderQuotePdf } from "@/lib/quoting-common/pdf/quote-pdf";
 import { sendEmail } from "@/lib/app/email";
 import { writeAuditLog } from "@/lib/app/audit";
 import type { SolarEngineResult } from "@/lib/solar/engine/types";
@@ -191,14 +192,39 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
 
   // Build + send the email
   const orgName = account.organization.name ?? "Mailmind Solar";
+  const quoteNumber = quote.number ?? id.slice(0, 8);
   const email = buildEmail({
     customerName: customer.name,
     orgName,
-    quoteNumber:  quote.number ?? id.slice(0, 8),
+    quoteNumber,
     narrative,
     result,
     validUntil:   quote.validUntil,
     acceptUrl,
+  });
+
+  // Generate a PDF copy of the quote to attach (dependency-free renderer).
+  const figures = result
+    ? [
+        { label: "Årsproduktion (år 1)", value: kwh(result.annualProductionKwhY1) },
+        { label: "Årlig besparing (år 1)", value: sek(result.annualSavingsSekY1) },
+        { label: "ROT-avdrag", value: sek(result.rotDeductionSek) },
+        { label: "Nettokostnad efter ROT", value: sek(result.netSystemCostSek) },
+        { label: "Återbetalningstid", value: `${fmt(result.paybackYears, 1)} år` },
+      ]
+    : [];
+  const pdf = renderQuotePdf({
+    orgName,
+    quoteNumber,
+    dateLabel:     new Date(quote.createdAt).toLocaleDateString("sv-SE"),
+    customerName:  customer.name,
+    customerEmail: customer.email,
+    heading:       "Offert — Solcellsanläggning",
+    narrative,
+    figures,
+    included:      cfEntries.slice(0, 6).map((e) => ({ title: e.title, body: e.body })),
+    validLabel:    quote.validUntil ? `Offerten gäller till och med ${new Date(quote.validUntil).toLocaleDateString("sv-SE")}.` : null,
+    footer:        orgName,
   });
 
   const sendResult = await sendEmail({
@@ -206,6 +232,7 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
     subject: email.subject,
     text:    email.text,
     html:    email.html,
+    attachments: [{ filename: `Offert-${quoteNumber}.pdf`, content: pdf }],
   });
 
   if (!sendResult.ok) {

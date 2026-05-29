@@ -19,6 +19,7 @@ import { listKbEntries, listCustomerFacingEntries } from "@/lib/quoting-common/d
 import { runEgressGate } from "@/lib/quoting-common/egress/gate";
 import { canTransition } from "@/lib/quoting-common/domain/quote-state";
 import { createShareToken, isShareConfigured } from "@/lib/quoting-common/sharing/token";
+import { renderQuotePdf } from "@/lib/quoting-common/pdf/quote-pdf";
 import { sendEmail } from "@/lib/app/email";
 import { writeAuditLog } from "@/lib/app/audit";
 import type { QuoteStatus } from "@/lib/quoting-common/domain/types";
@@ -141,7 +142,24 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
   <p style="margin-top:24px;">Med vänliga hälsningar,<br><strong>${orgName}</strong></p>
 </div>`.trim();
 
-  const sendResult = await sendEmail({ to: customer.email, subject, text: textLines.join("\n"), html });
+  const pdf = renderQuotePdf({
+    orgName,
+    quoteNumber,
+    dateLabel:     new Date(quote.createdAt).toLocaleDateString("sv-SE"),
+    customerName:  customer.name,
+    customerEmail: customer.email,
+    heading:       "Offert — Byggprojekt",
+    narrative,
+    figures,
+    included:      cfEntries.slice(0, 6).map((e) => ({ title: e.title, body: e.body })),
+    validLabel:    quote.validUntil ? `Offerten gäller till och med ${new Date(quote.validUntil).toLocaleDateString("sv-SE")}.` : null,
+    footer:        orgName,
+  });
+
+  const sendResult = await sendEmail({
+    to: customer.email, subject, text: textLines.join("\n"), html,
+    attachments: [{ filename: `Offert-${quoteNumber}.pdf`, content: pdf }],
+  });
   if (!sendResult.ok) {
     return NextResponse.json(
       { error: "E-post kunde inte skickas", reason: "email_failed", detail: sendResult.error },
