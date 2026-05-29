@@ -86,7 +86,26 @@ Fas S1  ✅  Quoting-common kernel: DB-scheman (8 tabeller), domäntyper, data-l
 Fas S2  ✅  KB + klassificering + Solar-engine substrat: KB-schema (quoting_kb_entries), Solar DB-scheman (solar_properties, solar_quote_extension, solar_roi_scenarios), Solar ROI-motor (pure fn, SE-marknad, 14 tester), KB data-lager + domäntyper, Solar API-routes (calculate, properties CRUD), KB egress-gate (12 tester)
 Fas S3  ✅  AI authoring layer: KB API-route, full egress-gate (rendered-text-scan), AI authoring layer (quoting-common/ai/), Solar prompt-fragment, Solar quote-builder UI (RoofSurfaceForm + RoiResultCard + quote-detalj)
 Fas S4  ✅  KB admin-UI, printbart offertdokument (egress-skyddat), skicka-flöde (Resend + expiry-cron), Construction-vertikalskelett (engine + workspace), e-signering (publik token-gated offertvy)
+Säkerhet ✅  Härdning av publika offertflödet: org-scopade share-tokens (boundary-hål borttaget), rate limiting på accept-endpoint, signatur-snapshot (SHA-256 content hash)
+Fas S5  ✅  Kund- + offert-CRUD i UI: CustomerManager (skapa/redigera), customer [id] PATCH-route, NewQuoteButton (skapa offert → builder); solar + construction
 ```
+
+---
+
+### Säkerhetshärdning + Fas S5 (klar 2026-05-29)
+
+**Säkerhetshärdning av publika offertflödet**
+- **Org-scopade share-tokens:** token-payloaden bäddar nu in `<orgId>:<quoteId>` i HMAC:en. Publika flödet använder vanliga org-scopade `getQuote(orgId, quoteId)` — `getQuoteByIdUnscoped` borttagen helt (boundary-hålet stängt). Test för swappat-orgId-förfalskning.
+- **Rate limiting:** `POST /api/public/quote/[token]/accept` — 10/min per IP (återanvänder Upstash-limitern, fail-open).
+- **Signatur-snapshot:** vid signering hashas exakt kundvänt innehåll (narrativ + roiSummary + KB-bodies) med SHA-256; `contentHash` + IP sparas i `quote.meta.signature` som manipuleringssäkert bevis.
+
+**Fas S5 — Kund- + offert-CRUD i UI**
+- `/api/quoting/customers/[id]`: GET + PATCH (member+). Ingen DELETE (FK från offerter; arkivering/merge är framtida).
+- `CustomerManager` (quoting-common island): lista + skapa + redigera kunder via modal, e-postvalidering. Återanvänds av `/solar/customers` + `/construction/customers`.
+- `NewQuoteButton` (quoting-common island): skapa-offert-dialog (välj kund + giltighet) → POST `/api/quoting/quotes` → router till builder. På solar offertlista.
+- Construction-dashboard fick Kunder-kort.
+
+> **Varför detta var blockeraren:** hela S3/S4-flödet (bygg → kalkylera → AI-utkast → skicka → signera) fanns men kunde inte startas utan råa API-anrop — ingen UI för att skapa kund/offert. S5 stänger det.
 
 ---
 
