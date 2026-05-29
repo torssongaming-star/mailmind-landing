@@ -196,3 +196,45 @@ export type AppendWorkflowEventInput = {
   actorUserId?: string;
   reason?:     string;
 };
+
+// ── KnowledgeBase ─────────────────────────────────────────────────────────────
+
+/**
+ * KB entry categories — matches `kb_category` pgEnum.
+ */
+export type KbCategory = "faq" | "policy" | "spec" | "caveat" | "other";
+
+/**
+ * Audience classification — matches `kb_visibility` pgEnum.
+ *
+ * `internal_only` is the fail-safe default: only entries explicitly
+ * promoted to `customer_facing` may appear in outbound quote text or PDFs.
+ */
+export type KbVisibility = "internal_only" | "customer_facing";
+
+export type KbEntry = {
+  id:             string;
+  organizationId: string;
+  title:          string;
+  body:           string;
+  category:       KbCategory;
+  visibility:     KbVisibility;
+  /** NULL = universal; 'solar' | 'construction' | 'trades' = vertical-scoped */
+  vertical:       string | null;
+  source:         string | null;
+  createdBy:      string | null;
+  createdAt:      Date;
+  updatedAt:      Date;
+};
+
+export type CreateKbEntryInput = {
+  title:       string;
+  body:        string;
+  category?:   KbCategory;
+  visibility?: KbVisibility;
+  vertical?:   string;
+  source?:     string;
+  createdBy?:  string;
+};
+
+export type UpdateKbEntryInput = Partial<Omit<CreateKbEntryInput, "createdBy">>;
