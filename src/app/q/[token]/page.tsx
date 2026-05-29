@@ -25,6 +25,7 @@ import { getCustomer } from "@/lib/quoting-common/data/customers";
 import { listKbEntries, listCustomerFacingEntries } from "@/lib/quoting-common/data/kb";
 import { runEgressGate } from "@/lib/quoting-common/egress/gate";
 import { QuoteLinesPrintTable } from "@/components/quoting-common/QuoteLinesPrintTable";
+import { getTranslations, type Locale } from "@/lib/i18n";
 import type { QuoteStatus } from "@/lib/quoting-common/domain/types";
 import { AcceptForm } from "./AcceptForm";
 import type { Metadata } from "next";
@@ -32,7 +33,15 @@ import type { Metadata } from "next";
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Din offert", robots: { index: false, follow: false } };
 
-type Props = { params: Promise<{ token: string }> };
+type Props = {
+  params:       Promise<{ token: string }>;
+  searchParams: Promise<{ lang?: string }>;
+};
+
+/** Resolve the public-view locale from ?lang (defaults to Swedish). */
+function resolveLocale(lang?: string): Locale {
+  return lang === "en" ? "en" : "sv";
+}
 
 /**
  * Vertical-agnostic figure list persisted by the send route into
@@ -54,8 +63,12 @@ function readRoiSummary(meta: Record<string, unknown> | null | undefined): RoiFi
 // Statuses where the customer may still accept the quote.
 const ACCEPTABLE: QuoteStatus[] = ["sent", "viewed", "accepted"];
 
-export default async function PublicQuotePage({ params }: Props) {
+export default async function PublicQuotePage({ params, searchParams }: Props) {
   const { token } = await params;
+  const { lang } = await searchParams;
+  const locale = resolveLocale(lang);
+  const { t } = getTranslations(locale);
+  const dateLocale = locale === "en" ? "en-GB" : "sv-SE";
 
   const claims = verifyShareToken(token);
   if (!claims) notFound();
@@ -97,25 +110,25 @@ export default async function PublicQuotePage({ params }: Props) {
         {/* Header */}
         <div className="flex items-start justify-between border-b border-slate-200 pb-6 mb-8">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">Din offert</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">{t("quoting.publicTitle")}</h1>
             <p className="text-sm text-slate-500 mt-1">{display}</p>
           </div>
           <div className="text-right text-sm text-slate-500">
             <p className="font-mono font-semibold text-slate-700">{quote.number ?? quoteId.slice(0, 8)}</p>
-            <p className="mt-1">{new Date(quote.createdAt).toLocaleDateString("sv-SE")}</p>
+            <p className="mt-1">{new Date(quote.createdAt).toLocaleDateString(dateLocale)}</p>
           </div>
         </div>
 
         {!egress.ok ? (
           <div className="rounded-lg bg-slate-50 px-5 py-6 text-center">
-            <p className="text-sm font-medium text-slate-700">Offerten är inte tillgänglig just nu.</p>
-            <p className="text-xs text-slate-500 mt-1">Kontakta din säljare för en uppdaterad version.</p>
+            <p className="text-sm font-medium text-slate-700">{t("quoting.unavailableTitle")}</p>
+            <p className="text-xs text-slate-500 mt-1">{t("quoting.unavailableBody")}</p>
           </div>
         ) : (
           <>
             {customer && (
               <div className="mb-8">
-                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">Kund</p>
+                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">{t("quoting.customer")}</p>
                 <p className="text-base font-medium text-slate-800">{customer.name}</p>
               </div>
             )}
@@ -127,7 +140,7 @@ export default async function PublicQuotePage({ params }: Props) {
             {figures.length > 0 && (
               <div className="mb-8">
                 <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-3">
-                  Beräknad avkastning
+                  {t("quoting.estimatedReturn")}
                 </p>
                 <table className="w-full text-sm">
                   <tbody className="divide-y divide-slate-100">
@@ -139,11 +152,23 @@ export default async function PublicQuotePage({ params }: Props) {
               </div>
             )}
 
-            <QuoteLinesPrintTable lines={lines} />
+            <QuoteLinesPrintTable
+              lines={lines}
+              labels={{
+                title:    t("quoting.specification"),
+                description: t("quoting.included"),
+                quantity: t("quoting.quantity"),
+                unitPrice: t("quoting.unitPrice"),
+                amount:   t("quoting.amount"),
+                subtotal: t("quoting.subtotal"),
+                vat:      t("quoting.vat"),
+                total:    t("quoting.total"),
+              }}
+            />
 
             {cfEntries.length > 0 && (
               <div className="mb-8">
-                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-3">Vad som ingår</p>
+                <p className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-3">{t("quoting.included")}</p>
                 <ul className="space-y-2">
                   {cfEntries.slice(0, 6).map((e) => (
                     <li key={e.id} className="text-sm text-slate-700">
@@ -156,26 +181,40 @@ export default async function PublicQuotePage({ params }: Props) {
 
             {quote.validUntil && (
               <p className="text-sm text-slate-500 border-t border-slate-200 pt-4 mb-8">
-                Offerten gäller till och med {new Date(quote.validUntil).toLocaleDateString("sv-SE")}.
+                {t("quoting.validThrough", { date: new Date(quote.validUntil).toLocaleDateString(dateLocale) })}
               </p>
             )}
 
             {/* Acceptance area */}
             {alreadySigned ? (
               <div className="rounded-xl border border-emerald-300 bg-emerald-50 px-5 py-4 text-center">
-                <p className="text-sm font-semibold text-emerald-800">Offerten är redan accepterad. Tack!</p>
+                <p className="text-sm font-semibold text-emerald-800">{t("quoting.alreadySigned")}</p>
               </div>
             ) : isExpired ? (
               <div className="rounded-xl border border-amber-300 bg-amber-50 px-5 py-4 text-center">
-                <p className="text-sm font-medium text-amber-800">Offerten har gått ut.</p>
-                <p className="text-xs text-amber-700 mt-1">Kontakta din säljare för en ny offert.</p>
+                <p className="text-sm font-medium text-amber-800">{t("quoting.expiredTitle")}</p>
+                <p className="text-xs text-amber-700 mt-1">{t("quoting.expiredBody")}</p>
               </div>
             ) : isRejected ? (
               <div className="rounded-xl border border-slate-300 bg-slate-50 px-5 py-4 text-center">
-                <p className="text-sm text-slate-600">Offerten är inte längre aktiv.</p>
+                <p className="text-sm text-slate-600">{t("quoting.inactive")}</p>
               </div>
             ) : canAccept ? (
-              <AcceptForm token={token} />
+              <AcceptForm
+                token={token}
+                labels={{
+                  title:           t("quoting.acceptTitle"),
+                  body:            t("quoting.acceptBody"),
+                  namePlaceholder: t("quoting.namePlaceholder"),
+                  signButton:      t("quoting.signButton"),
+                  signing:         t("quoting.signing"),
+                  doneTitle:       t("quoting.doneTitle"),
+                  doneBody:        t("quoting.doneBody"),
+                  nameRequired:    t("quoting.nameRequired"),
+                  networkError:    t("quoting.networkError"),
+                  signError:       t("quoting.signError"),
+                }}
+              />
             ) : null}
           </>
         )}

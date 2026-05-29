@@ -754,6 +754,38 @@ export const sv = {
       ],
     },
   },
+  // Customer-facing public quote view (/q/[token]). Localised so a Swedish
+  // company can share an English quote link with an international customer.
+  quoting: {
+    publicTitle: "Din offert",
+    customer: "Kund",
+    estimatedReturn: "Beräknad avkastning",
+    specification: "Specifikation",
+    included: "Vad som ingår",
+    subtotal: "Delsumma",
+    vat: "Moms (25 %)",
+    total: "Totalt",
+    quantity: "Antal",
+    unitPrice: "À-pris",
+    amount: "Summa",
+    validThrough: "Offerten gäller till och med {date}.",
+    unavailableTitle: "Offerten är inte tillgänglig just nu.",
+    unavailableBody: "Kontakta din säljare för en uppdaterad version.",
+    acceptTitle: "Acceptera offerten",
+    acceptBody: "Genom att signera bekräftar du att du accepterar offerten enligt angivna villkor.",
+    namePlaceholder: "För- och efternamn",
+    signButton: "Signera & acceptera",
+    signing: "Signerar…",
+    doneTitle: "Tack! Offerten är accepterad.",
+    doneBody: "Vi har registrerat din signering och återkommer inom kort.",
+    alreadySigned: "Offerten är redan accepterad. Tack!",
+    expiredTitle: "Offerten har gått ut.",
+    expiredBody: "Kontakta din säljare för en ny offert.",
+    inactive: "Offerten är inte längre aktiv.",
+    nameRequired: "Ange ditt namn för att signera.",
+    networkError: "Nätverksfel. Försök igen.",
+    signError: "Kunde inte signera. Försök igen.",
+  },
 };
 
 export type Translations = typeof sv;
