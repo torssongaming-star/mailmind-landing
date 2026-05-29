@@ -6,7 +6,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Sun, FileText, Users, ChevronRight } from "lucide-react";
+import { Sun, FileText, Users, BookOpen, ChevronRight } from "lucide-react";
 import { getCurrentAccount, hasProductAccess } from "@/lib/app/entitlements";
 import { listQuotes } from "@/lib/quoting-common/data/quotes";
 import { listCustomers } from "@/lib/quoting-common/data/customers";
@@ -89,15 +89,22 @@ export default async function SolarPage() {
             </div>
             <ChevronRight size={16} className="text-white/20 group-hover:text-white/50 transition-colors" />
           </Link>
-        </div>
 
-        {/* Coming next banner */}
-        <div className="rounded-2xl border border-white/[0.06] bg-primary/[0.03] px-5 py-4">
-          <p className="text-xs font-semibold text-primary/70 mb-1">Nästa steg — S2</p>
-          <p className="text-sm text-white/60 leading-relaxed">
-            Kunskapsbas, ROI-motor (PVGIS), offert-byggare och ROT-beräkning
-            landas i nästa fas.
-          </p>
+          <Link
+            href="/solar/kb"
+            className="group rounded-2xl border border-white/[0.07] bg-white/[0.025] hover:bg-white/[0.04] p-5 transition-colors flex items-center justify-between"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                <BookOpen size={16} className="text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-xs text-white/50 font-medium">Kunskapsbas</p>
+                <p className="text-sm text-white/70 mt-0.5">Fakta för AI-offerter</p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="text-white/20 group-hover:text-white/50 transition-colors" />
+          </Link>
         </div>
 
       </main>
