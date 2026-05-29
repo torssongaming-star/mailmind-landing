@@ -85,8 +85,48 @@ Fas S0  ✅  Quoting-plattformen: DB-scheman, entitlement-helper, produktregiste
 Fas S1  ✅  Quoting-common kernel: DB-scheman (8 tabeller), domäntyper, data-lager, state machine (OFF-YYYY-NNNN), API-routes (customers + quotes CRUD), Solar UI (dashboard, quotes, customers)
 Fas S2  ✅  KB + klassificering + Solar-engine substrat: KB-schema (quoting_kb_entries), Solar DB-scheman (solar_properties, solar_quote_extension, solar_roi_scenarios), Solar ROI-motor (pure fn, SE-marknad, 14 tester), KB data-lager + domäntyper, Solar API-routes (calculate, properties CRUD), KB egress-gate (12 tester)
 Fas S3  ✅  AI authoring layer: KB API-route, full egress-gate (rendered-text-scan), AI authoring layer (quoting-common/ai/), Solar prompt-fragment, Solar quote-builder UI (RoofSurfaceForm + RoiResultCard + quote-detalj)
-Fas S4  ⏳  (planeras — se nedan)
+Fas S4  ✅  KB admin-UI, printbart offertdokument (egress-skyddat), skicka-flöde (Resend + expiry-cron), Construction-vertikalskelett (engine + workspace), e-signering (publik token-gated offertvy)
 ```
+
+---
+
+### Fas S4 — Leveranslager: KB-admin, dokument, skicka, flervertikal, e-sign (klar 2026-05-29)
+
+**S4-0 — Fix:** `src/lib/solar/engine/types.ts` var aldrig commitad (missades i S2-2) — nu spårad. Två tomma skräpfiler från en trasig shell-glob borttagna.
+
+**S4-1 — KB admin-UI**
+- `src/components/solar/KbManager.tsx`: client-island — lista/filtrera (alla/kundvänd/intern), skapa/redigera/ta bort via `/api/quoting/kb`. Synlighetsbadge (Globe=kund, Lock=intern), promotion-varning, useToast + ConfirmDialog. Skrivkontroller dolda för members. `vertical`-prop (default solar) gör den vertikal-agnostisk.
+- `/solar/kb` + `/construction/kb` serveras av samma island.
+
+**S4-2 — Printbart offertdokument**
+- `/solar/quotes/[id]/document`: A4-print-optimerad kundvänd offert (narrativ + ROI-tabell + KB-highlights + giltighet). `runEgressGate` skannar sammansatt kundtext före render — narrativ undanhålls vid läcka. Print-to-PDF via `window.print()` (ingen PDF-dependency: sparar ~2 MB + cold-start).
+- Builder: "Spara utkast" persisterar narrativ till `quote.meta` via PATCH; "Offertdokument"-länk.
+
+**S4-3 — Skicka-flöde + expiry-cron**
+- `POST /api/quoting/solar/quotes/[id]/send`: owner/admin, kräver kund-e-post, egress-gate före utskick, status via state machine (→ready→sent), workflow-event + audit (`quote_sent`). E-post via Resend (inline narrativ + ROI).
+- `cron/tick` `taskExpireQuotes`: flippar sent/viewed-offerter förbi `validUntil` → expired (`quote_expired` audit).
+- Builder: "Skicka till kund"-kort.
+
+**S4-4 — Construction-vertikalskelett**
+- `src/lib/construction/engine/`: `ConstructionEstimateInputSchema` + `runConstructionEstimate` (ren fn — material + arbete + moms + ROT på arbete, capad). `construction-estimate@1.0.0`. 7 tester.
+- `/construction` (workspace, quotes, kb) — återanvänder hela quoting-common-stacken. Bevisar att kärnan är vertikal-agnostisk: bara motorn skiljer.
+- `products.ts`: construction inte längre placeholder.
+
+**S4-5 — E-signering (publik token-gated offertvy)**
+- `src/lib/quoting-common/sharing/token.ts`: stateless HMAC-SHA256 share-tokens (ingen DB-tabell). Timing-safe verify; feature av om `QUOTE_SHARE_SECRET` saknas. 7 tester.
+- `/q/[token]`: publik oautentiserad offertvy. HMAC verifieras före DB-läsning; egress-gate; sent→viewed open-tracking; accept-UI gated på status.
+- `POST /api/public/quote/[token]/accept`: viewed→accepted→signed, signatur (namn+tid) i `quote.meta.signature`.
+- Send-route persisterar vertikal-agnostisk `quote.meta.roiSummary` så publika vyn aldrig importerar en vertikal; mailar signeringslänk om konfigurerat.
+
+**Verifiering (S4-6):** `typecheck` ✅ · `lint` ✅ · `test` 186/186 ✅ · `build` ✅
+
+> **Inga DB-migrationer krävs för S4.** Share-tokens är stateless; Construction och meta-fält använder befintliga tabeller (`quoting_quotes.meta` JSONB).
+>
+> **Ny env (Sebastian, valfritt):**
+> - `QUOTE_SHARE_SECRET` — aktiverar publika signeringslänkar (`/q/[token]`). Sätt en lång slumpsträng i Vercel. Utan den fungerar allt utom den publika länken (utskick sker fortfarande med inline-innehåll). Rotering ogiltigförklarar alla utestående länkar.
+> - `NEXT_PUBLIC_APP_URL` — bas för länken (default `https://mailmind.se`, befintlig konvention).
+>
+> **DB-provisionering för att testa Construction:** lägg till en rad i `org_product_access` med `product_key='construction'`, `status='active'` för din org (annars redirectar `/construction` till `/app`).
 
 ---
 
