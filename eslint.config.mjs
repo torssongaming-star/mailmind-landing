@@ -124,14 +124,28 @@ const eslintConfig = [
     },
   },
 
-  // Rule 2 + 4: each vertical must not import sibling verticals,
-  // and vertical route/component files must not import @/lib/db directly.
+  // Rule 2: each vertical must not import sibling verticals (applies to all
+  // files in the vertical tree, including data layers).
   ...VERTICAL_DIRS.map((v) => ({
     files: verticalGlobs(v),
     rules: {
       "no-restricted-imports": ["error", {
-        patterns: [...crossVerticalPatterns(v), DB_DIRECT_PATTERN],
+        patterns: crossVerticalPatterns(v),
       }],
+    },
+  })),
+
+  // Rule 4: vertical routes/components/engines must not import @/lib/db
+  // directly — they must go via @/lib/<vertical>/data/*.
+  // Data layer files (src/lib/<v>/data/**) are EXEMPT: they ARE the abstraction.
+  ...VERTICAL_DIRS.map((v) => ({
+    files: [
+      `src/app/(portal)/${v}/**/*.{ts,tsx}`,
+      `src/components/${v}/**/*.{ts,tsx}`,
+      `src/lib/${v}/engine/**/*.{ts,tsx}`,
+    ],
+    rules: {
+      "no-restricted-imports": ["error", { patterns: [DB_DIRECT_PATTERN] }],
     },
   })),
 
