@@ -86,3 +86,54 @@ export function auditBlocked(
   }
   return blocked;
 }
+
+// ── Rendered-text scan ────────────────────────────────────────────────────────
+
+export type EgressInput  = { renderedText: string };
+export type EgressResult = { ok: boolean; blockedReasons: string[] };
+
+/**
+ * Placeholder patterns that must never appear in customer-visible output.
+ * Two expressions: word-boundary anchored for bare words, literal for brackets.
+ */
+const PLACEHOLDER_WORD_RE    = /\b(TODO|FIXME)\b/i;
+const PLACEHOLDER_BRACKET_RE = /\[FYLL I\]|\[INSERT\]|\[DATUM\]/i;
+
+/**
+ * Full egress gate — scans rendered output before it leaves the system.
+ *
+ * Pure function: no DB access. Callers must inject:
+ *   - `internalEntries` — the org's KB entries with `visibility = 'internal_only'`
+ *
+ * Rules applied:
+ *   1. Internal-data scan: if renderedText contains a substring from any
+ *      internal_only entry body (first 60 chars, case-insensitive) → blocked.
+ *   2. Placeholder scan: TODO / FIXME / [FYLL I] / [INSERT] / [DATUM] → blocked.
+ *
+ * `ok = true` only when no rules fire.
+ */
+export function runEgressGate(
+  input:           EgressInput,
+  internalEntries: KbEntry[],
+): EgressResult {
+  const blockedReasons: string[] = [];
+  const text = input.renderedText;
+
+  // Rule 1 — internal-data scan
+  const internalOnly = internalEntries.filter((e) => !isCustomerFacing(e));
+  const textLower    = text.toLowerCase();
+  for (const entry of internalOnly) {
+    const snippet = entry.body.slice(0, 60).trim();
+    if (snippet.length > 10 && textLower.includes(snippet.toLowerCase())) {
+      blockedReasons.push("internal_data_detected");
+      break; // one flag is enough — don't spam multiple identical reasons
+    }
+  }
+
+  // Rule 2 — placeholder scan
+  if (PLACEHOLDER_WORD_RE.test(text) || PLACEHOLDER_BRACKET_RE.test(text)) {
+    blockedReasons.push("placeholder_detected");
+  }
+
+  return { ok: blockedReasons.length === 0, blockedReasons };
+}

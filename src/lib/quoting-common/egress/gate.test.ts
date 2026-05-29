@@ -4,6 +4,7 @@ import {
   isCustomerFacing,
   extractBodies,
   auditBlocked,
+  runEgressGate,
 } from "./gate";
 import type { KbEntry } from "../domain/types";
 
@@ -101,5 +102,66 @@ describe("auditBlocked", () => {
 
   it("returns empty map when all entries are customer_facing", () => {
     expect(auditBlocked([CUSTOMER, SOLAR_CF])).toHaveLength(0);
+  });
+});
+
+// ── runEgressGate ─────────────────────────────────────────────────────────────
+
+const INTERNAL_LONG = {
+  ...BASE,
+  id:         "int-long",
+  visibility: "internal_only" as const,
+  body:       "Our internal margin is 42 percent on all solar installations",
+};
+
+describe("runEgressGate", () => {
+  it("empty text + no internal entries → ok", () => {
+    const r = runEgressGate({ renderedText: "" }, []);
+    expect(r.ok).toBe(true);
+    expect(r.blockedReasons).toHaveLength(0);
+  });
+
+  it("text containing TODO → placeholder_detected", () => {
+    const r = runEgressGate({ renderedText: "Please review. TODO: add price." }, []);
+    expect(r.ok).toBe(false);
+    expect(r.blockedReasons).toContain("placeholder_detected");
+  });
+
+  it("text containing [FYLL I] → placeholder_detected", () => {
+    const r = runEgressGate({ renderedText: "Kontakta [FYLL I] för mer info." }, []);
+    expect(r.ok).toBe(false);
+    expect(r.blockedReasons).toContain("placeholder_detected");
+  });
+
+  it("text with substring from internal_only entry → internal_data_detected", () => {
+    const renderedText = "Our internal margin is 42 percent on all solar installations and we are proud.";
+    const r = runEgressGate({ renderedText }, [INTERNAL_LONG]);
+    expect(r.ok).toBe(false);
+    expect(r.blockedReasons).toContain("internal_data_detected");
+  });
+
+  it("text with substring from customer_facing entry → ok (not blocked)", () => {
+    const cfEntry = { ...BASE, id: "cf1", visibility: "customer_facing" as const,
+      body: "We offer a 25-year production warranty on all panels." };
+    const renderedText = "We offer a 25-year production warranty on all panels.";
+    const r = runEgressGate({ renderedText }, [cfEntry]);
+    expect(r.ok).toBe(true);
+  });
+
+  it("clean text with irrelevant internal entries → ok", () => {
+    const r = runEgressGate(
+      { renderedText: "Your solar system will produce 8 500 kWh per year." },
+      [INTERNAL_LONG],
+    );
+    expect(r.ok).toBe(true);
+  });
+
+  it("text with both placeholder and internal match → two blocked reasons", () => {
+    const renderedText = "TODO: Our internal margin is 42 percent on all solar installations";
+    const r = runEgressGate({ renderedText }, [INTERNAL_LONG]);
+    expect(r.ok).toBe(false);
+    expect(r.blockedReasons).toHaveLength(2);
+    expect(r.blockedReasons).toContain("placeholder_detected");
+    expect(r.blockedReasons).toContain("internal_data_detected");
   });
 });
