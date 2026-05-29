@@ -88,6 +88,7 @@ Fas S3  ✅  AI authoring layer: KB API-route, full egress-gate (rendered-text-s
 Fas S4  ✅  KB admin-UI, printbart offertdokument (egress-skyddat), skicka-flöde (Resend + expiry-cron), Construction-vertikalskelett (engine + workspace), e-signering (publik token-gated offertvy)
 Säkerhet ✅  Härdning av publika offertflödet: org-scopade share-tokens (boundary-hål borttaget), rate limiting på accept-endpoint, signatur-snapshot (SHA-256 content hash)
 Fas S5  ✅  Kund- + offert-CRUD i UI: CustomerManager (skapa/redigera), customer [id] PATCH-route, NewQuoteButton (skapa offert → builder); solar + construction
+Construction ✅  Full quote-builder med paritet mot solar: prompt-fragment, calculate (estimat → quote.meta), draft (AI + egress), send (Resend + share-länk), builder-UI, detalj + dokument-vy. Estimat i quote.meta (ingen migration). Återanvänder hela quoting-common-kärnan.
 ```
 
 ---
