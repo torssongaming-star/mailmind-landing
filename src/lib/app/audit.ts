@@ -83,6 +83,10 @@ export type AuditAction =
   | "onboarding_completed"
   | "organization_renamed"
   | "email_filtered_bulk"
+  // Quoting actions
+  | "kb_entry_promoted"
+  | "kb_entry_created"
+  | "kb_entry_deleted"
   // Website portal actions (already written elsewhere; listed for reference)
   | "checkout_completed"
   | "subscription_updated"

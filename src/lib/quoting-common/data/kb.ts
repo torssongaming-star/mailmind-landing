@@ -40,12 +40,24 @@ function toKbEntry(row: typeof quotingKbEntries.$inferSelect): KbEntry {
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 
-/** All KB entries for the org (internal + customer-facing), newest first. */
-export async function listKbEntries(orgId: string): Promise<KbEntry[]> {
+export type ListKbEntriesOpts = {
+  vertical?:   string;
+  visibility?: "internal_only" | "customer_facing";
+};
+
+/** All KB entries for the org, newest first. Optional vertical + visibility filter. */
+export async function listKbEntries(
+  orgId: string,
+  opts?: ListKbEntriesOpts,
+): Promise<KbEntry[]> {
+  const conditions = [eq(quotingKbEntries.organizationId, orgId)];
+  if (opts?.vertical)   conditions.push(eq(quotingKbEntries.vertical, opts.vertical));
+  if (opts?.visibility) conditions.push(eq(quotingKbEntries.visibility, opts.visibility));
+
   const rows = await db
     .select()
     .from(quotingKbEntries)
-    .where(eq(quotingKbEntries.organizationId, orgId))
+    .where(and(...conditions))
     .orderBy(desc(quotingKbEntries.createdAt));
   return rows.map(toKbEntry);
 }
