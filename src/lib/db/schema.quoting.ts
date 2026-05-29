@@ -6,6 +6,9 @@
  *   • `org_product_access`    — per-tenant enablement of a product, status + limits
  *   • `quoting_usage_counters`— per-tenant, per-vertical monthly usage
  *
+ * Scope landed in S2-1:
+ *   • `quoting_kb_entries`   — universal KB with audience classification (internal_only | customer_facing)
+ *
  * Scope landed in S1-1:
  *   • `quoting_quote_number_sequences` — per-org, per-year atomic OFF-YYYY-NNNN counter
  *   • `quoting_customers`              — universal prospect/customer records
@@ -33,6 +36,7 @@ import {
   boolean,
   integer,
   numeric,
+  text,
   timestamp,
   date,
   jsonb,
@@ -410,6 +414,70 @@ export const quotingWorkflowEvents = pgTable(
   ],
 );
 
+// ── S2 Enums ──────────────────────────────────────────────────────────────────
+
+/**
+ * Knowledge base entry categories.
+ */
+export const kbCategoryEnum = pgEnum("kb_category", [
+  "faq",
+  "policy",
+  "spec",
+  "caveat",
+  "other",
+]);
+
+/**
+ * Audience classification for a KB entry.
+ *
+ *   internal_only   — usable for reasoning/calculation, NEVER emitted to customer.
+ *   customer_facing — approved for outbound quote/PDF/email.
+ *
+ * Default is `internal_only` (fail-safe). Promotion is an explicit admin action.
+ * This is the structural solution to KB data leakage (§13.4).
+ */
+export const kbVisibilityEnum = pgEnum("kb_visibility", [
+  "internal_only",
+  "customer_facing",
+]);
+
+// ── S2 Tables ─────────────────────────────────────────────────────────────────
+
+/**
+ * Universal knowledge base — shared across all verticals within a tenant.
+ *
+ * `visibility` defaults to `internal_only` (fail-safe). Only entries
+ * explicitly set to `customer_facing` are used in customer-visible output.
+ *
+ * `vertical` is nullable — NULL means the entry is universal across all
+ * verticals; 'solar'/'construction'/'trades' scopes it to one vertical.
+ *
+ * `embedding` is reserved for future pgvector retrieval (S3+). NULL for now.
+ *
+ * Tenant-scoped via `organization_id`.
+ */
+export const quotingKbEntries = pgTable(
+  "quoting_kb_entries",
+  {
+    id:             uuid("id").primaryKey().defaultRandom(),
+    organizationId: uuid("organization_id").notNull().references(() => organizations.id, { onDelete: "cascade" }),
+    title:          varchar("title", { length: 300 }).notNull(),
+    body:           text("body").notNull(),
+    category:       kbCategoryEnum("category").notNull().default("other"),
+    visibility:     kbVisibilityEnum("visibility").notNull().default("internal_only"),
+    vertical:       varchar("vertical", { length: 50 }),
+    source:         varchar("source", { length: 200 }),
+    createdBy:      uuid("created_by"),
+    createdAt:      timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt:      timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("quoting_kb_entries_org_idx").on(t.organizationId),
+    index("quoting_kb_entries_org_vertical_idx").on(t.organizationId, t.vertical),
+    index("quoting_kb_entries_org_visibility_idx").on(t.organizationId, t.visibility),
+  ],
+);
+
 // ── Inferred types (for application code) ─────────────────────────────────────
 
 export type Product = typeof products.$inferSelect;
@@ -437,3 +505,7 @@ export type QuotingQuoteLine            = typeof quotingQuoteLines.$inferSelect;
 export type NewQuotingQuoteLine         = typeof quotingQuoteLines.$inferInsert;
 export type QuotingWorkflowEvent        = typeof quotingWorkflowEvents.$inferSelect;
 export type NewQuotingWorkflowEvent     = typeof quotingWorkflowEvents.$inferInsert;
+
+// S2 types
+export type QuotingKbEntry              = typeof quotingKbEntries.$inferSelect;
+export type NewQuotingKbEntry           = typeof quotingKbEntries.$inferInsert;

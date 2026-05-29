@@ -852,3 +852,7 @@ export type NewPreLaunchIntent = typeof preLaunchIntents.$inferInsert;
 // (schema.quoting.ts references organizations via a lazy `() => organizations.id`
 // callback in `.references()` — circular import is safe under this order).
 export * from "./schema.quoting";
+
+// ── Solar vertical (Phase S2 onwards) ─────────────────────────────────────────
+// Must be after schema.quoting since solar tables reference quoting tables.
+export * from "./schema.solar";
