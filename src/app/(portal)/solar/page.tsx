@@ -10,6 +10,7 @@ import { Sun, FileText, Users, BookOpen, ChevronRight } from "lucide-react";
 import { getCurrentAccount, hasProductAccess } from "@/lib/app/entitlements";
 import { listQuotes } from "@/lib/quoting-common/data/quotes";
 import { listCustomers } from "@/lib/quoting-common/data/customers";
+import { QuoteMetricsRow } from "@/components/quoting-common/QuoteMetricsRow";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Solar — Översikt" };
@@ -50,6 +51,9 @@ export default async function SolarPage() {
       </div>
 
       <main className="flex-1 px-6 py-6 max-w-4xl w-full space-y-6">
+
+        {/* KPIs */}
+        <QuoteMetricsRow quotes={quotes} />
 
         {/* Summary cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

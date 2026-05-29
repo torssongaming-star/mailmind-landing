@@ -12,6 +12,7 @@ import Link from "next/link";
 import { HardHat, FileText, BookOpen, Users, ChevronRight } from "lucide-react";
 import { getCurrentAccount, hasProductAccess } from "@/lib/app/entitlements";
 import { listQuotes } from "@/lib/quoting-common/data/quotes";
+import { QuoteMetricsRow } from "@/components/quoting-common/QuoteMetricsRow";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Construction — Översikt" };
@@ -47,6 +48,8 @@ export default async function ConstructionPage() {
       </div>
 
       <main className="flex-1 px-6 py-6 max-w-4xl w-full space-y-6">
+        <QuoteMetricsRow quotes={quotes} />
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Link
             href="/construction/quotes"
