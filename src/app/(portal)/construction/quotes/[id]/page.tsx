@@ -8,10 +8,11 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getCurrentAccount, hasProductAccess } from "@/lib/app/entitlements";
 import { hasOrgAdminRole } from "@/lib/app/rbac";
-import { getQuote, listWorkflowEvents } from "@/lib/quoting-common/data/quotes";
+import { getQuote, listWorkflowEvents, listQuoteLines } from "@/lib/quoting-common/data/quotes";
 import { getCustomer } from "@/lib/quoting-common/data/customers";
 import { QuoteStatusBadge } from "@/components/quoting-common/QuoteStatusBadge";
 import { QuoteTimeline } from "@/components/quoting-common/QuoteTimeline";
+import { QuoteLinesEditor } from "@/components/quoting-common/QuoteLinesEditor";
 import { ConstructionQuoteBuilder } from "@/components/construction/ConstructionQuoteBuilder";
 import type { Metadata } from "next";
 
@@ -38,11 +39,13 @@ export default async function ConstructionQuoteDetailPage({ params }: Props) {
   const quote = await getQuote(orgId, id);
   if (!quote) notFound();
 
-  const [customer, events] = await Promise.all([
+  const [customer, events, lines] = await Promise.all([
     quote.customerId ? getCustomer(orgId, quote.customerId) : Promise.resolve(null),
     listWorkflowEvents(orgId, id),
+    listQuoteLines(orgId, id),
   ]);
   const customerName = customer?.name ?? "Kund";
+  const canManage = hasOrgAdminRole(account);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -70,8 +73,11 @@ export default async function ConstructionQuoteDetailPage({ params }: Props) {
           quote={quote}
           customerName={customerName}
           customerEmail={customer?.email ?? null}
-          canManage={hasOrgAdminRole(account)}
+          canManage={canManage}
         />
+        <div className="mt-6">
+          <QuoteLinesEditor quoteId={id} initialLines={lines} canManage={canManage} />
+        </div>
         <div className="mt-6">
           <QuoteTimeline events={events} />
         </div>
