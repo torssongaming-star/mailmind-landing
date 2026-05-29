@@ -856,3 +856,7 @@ export * from "./schema.quoting";
 // ── Solar vertical (Phase S2 onwards) ─────────────────────────────────────────
 // Must be after schema.quoting since solar tables reference quoting tables.
 export * from "./schema.solar";
+
+// ── Construction vertical ─────────────────────────────────────────────────────
+// Must be after schema.quoting since construction tables reference quoting tables.
+export * from "./schema.construction";

@@ -27,16 +27,42 @@ function toCustomer(row: typeof quotingCustomers.$inferSelect): Customer {
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 
+/** True if a customer has been soft-archived (meta.archived flag). */
+export function isArchived(c: Customer): boolean {
+  return c.meta?.archived === true;
+}
+
 /**
- * List all customers for an org, newest first.
+ * List customers for an org, newest first. Archived customers are excluded
+ * unless `includeArchived` is set. Archive is a soft flag on meta.archived —
+ * customers are referenced by quotes (FK), so they are never hard-deleted.
  */
-export async function listCustomers(orgId: string): Promise<Customer[]> {
+export async function listCustomers(
+  orgId: string,
+  opts?: { includeArchived?: boolean },
+): Promise<Customer[]> {
   const rows = await db
     .select()
     .from(quotingCustomers)
     .where(eq(quotingCustomers.organizationId, orgId))
     .orderBy(quotingCustomers.createdAt);
-  return rows.map(toCustomer);
+  const all = rows.map(toCustomer);
+  return opts?.includeArchived ? all : all.filter((c) => !isArchived(c));
+}
+
+/**
+ * Soft-archive (or restore) a customer by toggling meta.archived.
+ * Returns the updated customer, or null if not found in this org.
+ */
+export async function setCustomerArchived(
+  orgId: string,
+  id: string,
+  archived: boolean,
+): Promise<Customer | null> {
+  const existing = await getCustomer(orgId, id);
+  if (!existing) return null;
+  const nextMeta = { ...(existing.meta ?? {}), archived };
+  return updateCustomer(orgId, id, { meta: nextMeta });
 }
 
 /**

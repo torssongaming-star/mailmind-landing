@@ -18,6 +18,7 @@ import { auth } from "@clerk/nextjs/server";
 import { getCurrentAccount, hasProductAccess } from "@/lib/app/entitlements";
 import { ConstructionEstimateInputSchema } from "@/lib/construction/engine/types";
 import { runConstructionEstimate } from "@/lib/construction/engine/estimate";
+import { saveEstimateScenario } from "@/lib/construction/data/scenarios";
 import { getQuote, updateQuote } from "@/lib/quoting-common/data/quotes";
 import { isTerminal } from "@/lib/quoting-common/domain/quote-state";
 
@@ -69,6 +70,9 @@ export async function POST(req: NextRequest) {
   }
 
   const result = runConstructionEstimate(parsed.data);
+
+  // Append a frozen, versioned scenario (audit trail — mirrors solar).
+  await saveEstimateScenario(orgId, quoteId, result.engineVersion, parsed.data, result);
 
   // Vertical-agnostic display figures for the public /q view + document.
   const roiSummary = [

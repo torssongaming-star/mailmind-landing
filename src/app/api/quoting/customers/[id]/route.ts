@@ -1,9 +1,10 @@
 /**
- * GET   /api/quoting/customers/[id]  — fetch one customer (member+)
- * PATCH /api/quoting/customers/[id]  — update customer (member+)
+ * GET    /api/quoting/customers/[id]  — fetch one customer (member+)
+ * PATCH  /api/quoting/customers/[id]  — update customer (member+)
+ * DELETE /api/quoting/customers/[id]  — soft-archive (member+)
  *
- * No DELETE: customers are referenced by quotes (FK). Deletion is intentionally
- * omitted from the MVP to avoid orphaning quotes; archive/merge is future work.
+ * Customers are referenced by quotes (FK), so DELETE soft-archives via
+ * meta.archived rather than hard-deleting. PATCH { archived: false } restores.
  *
  * Lifecycle: auth → account → app-access → zod → service
  */
@@ -12,7 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { getCurrentAccount } from "@/lib/app/entitlements";
-import { getCustomer, updateCustomer } from "@/lib/quoting-common/data/customers";
+import { getCustomer, updateCustomer, setCustomerArchived } from "@/lib/quoting-common/data/customers";
 
 export const runtime = "nodejs";
 
@@ -29,6 +30,8 @@ const PatchBody = z.object({
     postalCode: z.string().optional(),
     country:    z.string().optional(),
   }).nullish(),
+  /** Restore from archive (or archive) without touching other fields. */
+  archived:  z.boolean().optional(),
 });
 
 async function requireAuth(userId: string) {
@@ -65,7 +68,16 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   }
 
   const { id } = await params;
-  const updated = await updateCustomer(check.account.organization!.id, id, {
+  const orgId = check.account.organization!.id;
+
+  // Archive toggle is handled separately so it merges into meta safely.
+  if (parsed.data.archived !== undefined) {
+    const toggled = await setCustomerArchived(orgId, id, parsed.data.archived);
+    if (!toggled) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return NextResponse.json({ customer: toggled });
+  }
+
+  const updated = await updateCustomer(orgId, id, {
     ...(parsed.data.name      !== undefined && { name:      parsed.data.name }),
     ...(parsed.data.orgNumber !== undefined && { orgNumber: parsed.data.orgNumber ?? undefined }),
     ...(parsed.data.email     !== undefined && { email:     parsed.data.email ?? undefined }),
@@ -75,4 +87,20 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   return NextResponse.json({ customer: updated });
+}
+
+// ── DELETE (soft-archive) ───────────────────────────────────────────────────
+
+export async function DELETE(_req: NextRequest, { params }: RouteContext) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const check = await requireAuth(userId);
+  if ("error" in check) return NextResponse.json({ error: check.error }, { status: check.status });
+
+  const { id } = await params;
+  const archived = await setCustomerArchived(check.account.organization!.id, id, true);
+  if (!archived) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  return NextResponse.json({ customer: archived });
 }

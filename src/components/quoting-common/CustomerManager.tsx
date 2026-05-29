@@ -12,7 +12,7 @@
  */
 
 import { useState } from "react";
-import { Plus, Pencil, Users } from "lucide-react";
+import { Plus, Pencil, Users, Archive } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast, ToastContainer } from "@/components/ui/Toast";
 import type { Customer } from "@/lib/quoting-common/domain/types";
@@ -40,7 +40,26 @@ export function CustomerManager({ initialCustomers, vertical }: Props) {
   const [customers, setCustomers] = useState<Customer[]>(initialCustomers);
   const [form, setForm]           = useState<DraftForm | null>(null);
   const [saving, setSaving]       = useState(false);
+  const [archivingId, setArchivingId] = useState<string | null>(null);
   const { toasts, toast, dismiss } = useToast();
+
+  async function handleArchive(id: string) {
+    setArchivingId(id);
+    try {
+      const res = await fetch(`/api/quoting/customers/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({})) as { error?: string };
+        toast.error(json.error ?? "Kunde inte arkivera.");
+        return;
+      }
+      setCustomers((prev) => prev.filter((c) => c.id !== id));
+      toast.success("Kund arkiverad.");
+    } catch {
+      toast.error("Nätverksfel. Försök igen.");
+    } finally {
+      setArchivingId(null);
+    }
+  }
 
   async function handleSave() {
     if (!form) return;
@@ -116,13 +135,24 @@ export function CustomerManager({ initialCustomers, vertical }: Props) {
                   <td className="px-4 py-3 text-white/60 text-xs">{c.email ?? "—"}</td>
                   <td className="px-4 py-3 text-white/60 text-xs">{c.phone ?? "—"}</td>
                   <td className="px-4 py-3 text-right">
-                    <button
-                      onClick={() => setForm({ id: c.id, name: c.name, email: c.email ?? "", phone: c.phone ?? "", orgNumber: c.orgNumber ?? "" })}
-                      className="p-1.5 rounded-md text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors"
-                      aria-label="Redigera"
-                    >
-                      <Pencil size={14} />
-                    </button>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => setForm({ id: c.id, name: c.name, email: c.email ?? "", phone: c.phone ?? "", orgNumber: c.orgNumber ?? "" })}
+                        className="p-1.5 rounded-md text-white/40 hover:text-white hover:bg-white/[0.06] transition-colors"
+                        aria-label="Redigera"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => handleArchive(c.id)}
+                        disabled={archivingId === c.id}
+                        className="p-1.5 rounded-md text-white/40 hover:text-amber-400 hover:bg-amber-500/10 transition-colors disabled:opacity-50"
+                        aria-label="Arkivera"
+                        title="Arkivera kund"
+                      >
+                        <Archive size={14} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
