@@ -27,6 +27,7 @@ import { getLatestScenario } from "@/lib/solar/data/scenarios";
 import { listKbEntries, listCustomerFacingEntries } from "@/lib/quoting-common/data/kb";
 import { runEgressGate } from "@/lib/quoting-common/egress/gate";
 import { canTransition } from "@/lib/quoting-common/domain/quote-state";
+import { createShareToken, isShareConfigured } from "@/lib/quoting-common/sharing/token";
 import { sendEmail } from "@/lib/app/email";
 import { writeAuditLog } from "@/lib/app/audit";
 import type { SolarEngineResult } from "@/lib/solar/engine/types";
@@ -51,8 +52,9 @@ function buildEmail(opts: {
   narrative:    string;
   result:       SolarEngineResult | null;
   validUntil:   string | null;
+  acceptUrl:    string | null;
 }): { subject: string; text: string; html: string } {
-  const { customerName, orgName, quoteNumber, narrative, result, validUntil } = opts;
+  const { customerName, orgName, quoteNumber, narrative, result, validUntil, acceptUrl } = opts;
   const subject = `Offert ${quoteNumber} — Solcellsanläggning från ${orgName}`;
 
   const figures: Array<[string, string]> = result
@@ -73,6 +75,7 @@ function buildEmail(opts: {
     "",
     ...(figures.length ? ["Beräknad avkastning:", ...figures.map(([k, v]) => `  • ${k}: ${v}`), ""] : []),
     validUntil ? `Offerten gäller till och med ${new Date(validUntil).toLocaleDateString("sv-SE")}.` : "",
+    acceptUrl ? `\nSe och acceptera offerten här:\n${acceptUrl}` : "",
     "",
     `Med vänliga hälsningar,`,
     orgName,
@@ -100,6 +103,7 @@ function buildEmail(opts: {
       : ""
   }
   ${validUntil ? `<p style="color:#64748b;font-size:13px;">Offerten gäller till och med ${new Date(validUntil).toLocaleDateString("sv-SE")}.</p>` : ""}
+  ${acceptUrl ? `<p style="margin:24px 0;"><a href="${acceptUrl}" style="display:inline-block;background:#059669;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-weight:600;font-size:14px;">Se och acceptera offerten</a></p>` : ""}
   <p style="margin-top:24px;">Med vänliga hälsningar,<br><strong>${orgName}</strong></p>
 </div>`.trim();
 
@@ -178,6 +182,13 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
     );
   }
 
+  // Build a public signing link if the share feature is configured
+  let acceptUrl: string | null = null;
+  if (isShareConfigured()) {
+    const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://mailmind.se";
+    acceptUrl = `${base.replace(/\/$/, "")}/q/${createShareToken(id)}`;
+  }
+
   // Build + send the email
   const orgName = account.organization.name ?? "Mailmind Solar";
   const email = buildEmail({
@@ -187,6 +198,7 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
     narrative,
     result,
     validUntil:   quote.validUntil,
+    acceptUrl,
   });
 
   const sendResult = await sendEmail({
@@ -202,6 +214,19 @@ export async function POST(_req: NextRequest, { params }: RouteContext) {
       { status: 502 },
     );
   }
+
+  // Persist a vertical-agnostic ROI summary into quote.meta so the public
+  // /q/[token] view can render figures without importing the solar vertical.
+  const roiSummary = result
+    ? [
+        { label: "Årsproduktion (år 1)", value: kwh(result.annualProductionKwhY1) },
+        { label: "Årlig besparing (år 1)", value: sek(result.annualSavingsSekY1) },
+        { label: "ROT-avdrag", value: sek(result.rotDeductionSek) },
+        { label: "Nettokostnad efter ROT", value: sek(result.netSystemCostSek) },
+        { label: "Återbetalningstid", value: `${fmt(result.paybackYears, 1)} år` },
+      ]
+    : [];
+  await updateQuote(orgId, id, { meta: { ...(quote.meta ?? {}), roiSummary } }, account.user.id);
 
   // Advance status (→ ready if needed → sent), append workflow event
   if (viaReady) {

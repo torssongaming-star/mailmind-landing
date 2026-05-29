@@ -105,6 +105,10 @@ const eslintConfig = [
       "src/lib/quoting-common/**",
       "src/components/quoting-common/**",
       "src/app/api/quoting/**",
+      // Public, vertical-agnostic quote surfaces are quoting-aware: they read
+      // quoting-common only (never a specific vertical's lib).
+      "src/app/q/**",
+      "src/app/api/public/quote/**",
     ],
     rules: {
       "no-restricted-imports": ["error", {
