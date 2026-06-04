@@ -38,7 +38,7 @@ export function AnimatedBackground() {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || isMobile) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
@@ -48,7 +48,7 @@ export function AnimatedBackground() {
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      const count = isMobile ? 40 : 150;
+      const count = 150;
 
       particles = Array.from({ length: count }).map(() => ({
         x: Math.random() * canvas.width,
@@ -119,13 +119,13 @@ export function AnimatedBackground() {
       {/* High-performance canvas for particles */}
       <canvas
         ref={canvasRef}
-        className="absolute inset-0 w-full h-full"
+        className="hidden md:block absolute inset-0 w-full h-full"
       />
 
       {/* Floating glowing orbs */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] animate-float-slow" />
-      <div className="absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] animate-float-slower" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#0047ff]/5 rounded-full blur-[150px]" />
+      <div className="hidden md:block absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-[100px] animate-float-slow" />
+      <div className="hidden md:block absolute bottom-1/4 right-1/4 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px] animate-float-slower" />
+      <div className="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-[#0047ff]/5 rounded-full blur-[150px]" />
     </div>
   );
 }
