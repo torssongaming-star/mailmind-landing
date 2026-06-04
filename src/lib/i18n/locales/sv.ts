@@ -16,6 +16,7 @@ export const sv = {
     inbox: "Inkorg",
     allThreads: "Alla trådar",
     connectedInboxes: "Anslutna inkorgar",
+    quotes: "Offerter",
     billing: "Fakturering",
     settings: "Inställningar",
     workspace: "Arbetsyta",

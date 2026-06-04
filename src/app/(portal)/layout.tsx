@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { Sidebar } from "@/components/portal/Sidebar";
 import { SidebarSubscriptionBadge } from "@/components/portal/SidebarSubscriptionBadge";
-import { ProductSwitcher } from "@/components/portal/ProductSwitcher";
 import { CommandPalette } from "@/components/portal/CommandPalette";
 import { ToastProvider } from "@/components/ui/Toast";
 import { siteConfig } from "@/config/site";
+import { auth } from "@clerk/nextjs/server";
+import { getCurrentAccount, hasProductAccess } from "@/lib/app/entitlements";
 
 export const metadata: Metadata = {
   title: {
@@ -21,13 +22,25 @@ export const metadata: Metadata = {
  */
 const quotingNavEnabled = process.env.QUOTING_NAV_ENABLED === "1";
 
-export default function PortalLayout({ children }: { children: React.ReactNode }) {
+export default async function PortalLayout({ children }: { children: React.ReactNode }) {
+  const { userId } = await auth();
+  let hasSolarAccess = false;
+  
+  if (userId) {
+    try {
+      const account = await getCurrentAccount(userId);
+      hasSolarAccess = hasProductAccess(account, "solar");
+    } catch {
+      // Ignorera
+    }
+  }
+
   return (
     <ToastProvider>
       <div className="min-h-screen bg-[#030614]/60 backdrop-blur-[1px]">
         <Sidebar
           subscriptionBadge={<SidebarSubscriptionBadge />}
-          productSwitcher={quotingNavEnabled ? <ProductSwitcher /> : undefined}
+          hasSolarAccess={hasSolarAccess}
         />
         {/* Main content area — offset by sidebar width on desktop; on mobile the
             sticky mobile header inside <Sidebar> sits above this block. */}

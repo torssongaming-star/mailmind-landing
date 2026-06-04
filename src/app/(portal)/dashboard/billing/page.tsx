@@ -4,7 +4,7 @@ import { CheckoutButton } from "@/components/portal/CheckoutButton";
 import { ManageBillingButton } from "@/components/portal/ManageBillingButton";
 import { PLANS } from "@/lib/plans";
 import { getPortalData } from "@/lib/db/queries";
-import { CreditCard, AlertTriangle, CheckCircle2, Database } from "lucide-react";
+import { CreditCard, AlertTriangle, CheckCircle2, Database, FileSignature } from "lucide-react";
 
 import { siteConfig } from "@/config/site";
 
@@ -48,7 +48,8 @@ export default async function BillingPage({
   if (!userId || !user) return null;
 
   // Fetch portal data (returns mock if DB not connected)
-  const { subscription, isMock } = await getPortalData(userId);
+  const { subscription, isMock, products } = await getPortalData(userId);
+  const hasSolarAccess = products?.some((p) => p.productKey === "solar" && (p.status === "active" || p.status === "trialing")) ?? false;
 
   const currentPlanKey = subscription?.plan ?? null;
   const currentPlan = currentPlanKey ? PLANS[currentPlanKey as keyof typeof PLANS] : null;
@@ -186,6 +187,50 @@ export default async function BillingPage({
               Uppgraderingar träder i kraft omedelbart. Nedgraderingar börjar gälla i nästa faktureringsperiod.
             </p>
           )}
+        </div>
+
+        {/* Add-ons */}
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm p-6">
+          <h3 className="text-sm font-semibold text-white mb-5">Tilläggstjänster</h3>
+          <div className="grid sm:grid-cols-2 gap-4">
+            <div className={`relative rounded-xl border p-5 flex flex-col transition-all duration-200 ${
+              hasSolarAccess
+                ? "border-primary/40 bg-primary/[0.06] shadow-[0_4px_20px_-4px_hsl(189_94%_43%/0.25)]"
+                : "border-white/8 bg-white/[0.02] hover:border-white/15 hover:bg-white/[0.04]"
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-base font-semibold text-white flex items-center gap-2">
+                  <FileSignature size={18} className="text-primary" />
+                  Offertverktyg (Solar)
+                </span>
+                {hasSolarAccess && (
+                  <span className="text-[10px] text-primary bg-primary/15 border border-primary/30 px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider">
+                    Aktivt
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-white/70 mb-4 leading-relaxed">
+                Skapa och skicka professionella, datadrivna offerter direkt till kund. Komplett med e-signering och ROI-beräkning.
+              </p>
+              <div className="mt-auto flex items-end justify-between">
+                <div>
+                  <p className="text-xl font-bold text-white tracking-tight tabular-nums">
+                    199 kr
+                    <span className="text-xs text-white/60 font-normal">/mån</span>
+                  </p>
+                </div>
+                {!hasSolarAccess && (
+                  <div className="text-right">
+                    {hasSubscription ? (
+                      <ManageBillingButton label="Lägg till tjänst" className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-[#030614] text-xs font-semibold hover:bg-cyan-300 transition-colors" />
+                    ) : (
+                      <span className="text-xs text-amber-400/80 italic">Kräver aktiv plan</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         <p className="text-xs text-muted-foreground">

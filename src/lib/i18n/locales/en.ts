@@ -18,6 +18,7 @@ export const en: typeof sv = {
     inbox: "Inbox",
     allThreads: "All threads",
     connectedInboxes: "Connected inboxes",
+    quotes: "Quotes",
     billing: "Billing",
     settings: "Settings",
     workspace: "Workspace",

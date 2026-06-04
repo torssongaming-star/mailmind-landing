@@ -9,7 +9,15 @@ import { ExternalLink, Loader2, AlertTriangle } from "lucide-react";
  * Calls POST /api/billing/portal, receives a Stripe Customer Portal URL,
  * and redirects the browser there. Shows loading and error states inline.
  */
-export function ManageBillingButton() {
+export function ManageBillingButton({
+  label = "Manage billing on Stripe",
+  loadingLabel = "Opening portal…",
+  className = "inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 active:bg-cyan-600 transition-colors shadow-[0_0_15px_rgba(6,182,212,0.3)] disabled:opacity-60 disabled:cursor-not-allowed",
+}: {
+  label?: string;
+  loadingLabel?: string;
+  className?: string;
+}) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,16 +48,16 @@ export function ManageBillingButton() {
       <button
         onClick={handleClick}
         disabled={loading}
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-[#030614] text-sm font-semibold hover:bg-cyan-300 active:bg-cyan-600 transition-colors shadow-[0_0_15px_rgba(6,182,212,0.3)] disabled:opacity-60 disabled:cursor-not-allowed"
+        className={className}
       >
         {loading ? (
           <>
             <Loader2 size={14} className="animate-spin" />
-            Opening portal…
+            {loadingLabel}
           </>
         ) : (
           <>
-            Manage billing on Stripe
+            {label}
             <ExternalLink size={14} />
           </>
         )}

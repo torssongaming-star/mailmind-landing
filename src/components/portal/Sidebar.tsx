@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Menu,
   X,
+  FileSignature,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -45,7 +46,7 @@ type NavGroup = {
  
 type NavItem = NavLeaf | NavGroup;
  
-const NAV: NavItem[] = [
+const BASE_NAV: NavItem[] = [
   {
     kind:     "leaf",
     href:     "/app",
@@ -128,19 +129,28 @@ function groupIsActive(group: NavGroup, pathname: string): boolean {
 
 export function Sidebar({
   subscriptionBadge,
-  productSwitcher,
+  hasSolarAccess = false,
 }: {
   /** Pre-rendered server component (e.g. SidebarSubscriptionBadge) inserted
    *  above the support/back-to-site footer. Optional. */
   subscriptionBadge?: React.ReactNode;
-  /** Pre-rendered server component (ProductSwitcher) shown above the nav.
-   *  Only mounted when QUOTING_NAV_ENABLED=1. Optional. */
-  productSwitcher?: React.ReactNode;
+  /** If true, the Quoting tab is visible */
+  hasSolarAccess?: boolean;
 } = {}) {
   const pathname                      = usePathname();
   const { t }                         = useI18n();
   const [supportOpen, setSupportOpen] = useState(false);
   const [mobileOpen, setMobileOpen]   = useState(false);
+
+  const NAV = [...BASE_NAV];
+  if (hasSolarAccess) {
+    NAV.splice(3, 0, {
+      kind: "leaf",
+      href: "/solar",
+      labelKey: "nav.quotes",
+      icon: FileSignature,
+    });
+  }
  
   // Track which groups are manually expanded. Auto-open active group on mount/nav.
   const defaultOpen = () =>
@@ -191,9 +201,6 @@ export function Sidebar({
   // Shared nav body for both desktop sidebar and mobile drawer
   const navBody = (
     <>
-      {/* Product switcher slot — only rendered when QUOTING_NAV_ENABLED=1 */}
-      {productSwitcher}
-
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
         {NAV.map(item => {
