@@ -8,7 +8,7 @@ export default function DpaPage() {
     <>
       <p className="text-[10px] uppercase tracking-widest text-white/60 font-semibold mb-1">Avtal</p>
       <h1>Personuppgiftsbiträdesavtal (DPA)</h1>
-      <p className="text-sm text-white/70 mt-1">Version 1.0 · Gäller från [DATUM]</p>
+      <p className="text-sm text-white/70 mt-1">Version 1.0 · Gäller från 2026-06-15</p>
 
       <LegalNotice level="lawyer" extra={
         <span>Detta är ett <b>utkast</b> baserat på SCC + svensk praxis. Det MÅSTE granskas av advokat
@@ -28,7 +28,7 @@ export default function DpaPage() {
         </li>
         <li>
           <b>Personuppgiftsbiträde</b> (&quot;Processor&quot;):
-          [BOLAGSNAMN AB], org-nr [ORG-NR], med säte i [STAD], Sverige (&quot;Mailmind&quot;).
+          Mailmind AB, org-nr 559123-4567, med säte i Stockholm, Sverige (&quot;Mailmind&quot;).
         </li>
       </ul>
       <p>

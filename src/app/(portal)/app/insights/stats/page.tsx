@@ -9,6 +9,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { BarChart2 } from "lucide-react";
 
 import { getCurrentAccount } from "@/lib/app/entitlements";
 import {
@@ -60,6 +61,22 @@ export default async function StatsPage() {
 
   const draftLimit = account.entitlements?.maxAiDraftsPerMonth ?? 0;
   const draftsThisMonthUsed = account.usage?.aiDraftsUsed ?? 0;
+
+  if (threadStats.total === 0) {
+    return (
+      <main className="max-w-4xl mx-auto p-6 md:p-10 flex flex-col items-center justify-center min-h-[60vh]">
+        <div className="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-4 shadow-[0_0_24px_rgba(255,255,255,0.02)]">
+          <BarChart2 size={28} className="text-white/40" />
+        </div>
+        <div className="text-center space-y-2">
+          <h2 className="text-lg font-bold text-white">Ingen statistik ännu</h2>
+          <p className="text-sm text-white/60 max-w-sm mx-auto leading-relaxed">
+            Här kommer du kunna följa upp svarstider, AI-kvalitet och volymer. Gå till inkorgen och låt AI:n triagera lite mejl för att fylla på!
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="max-w-4xl mx-auto p-6 md:p-10 space-y-8">

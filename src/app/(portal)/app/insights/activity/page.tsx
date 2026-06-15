@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { Activity } from "lucide-react";
 
 import { getCurrentAccount, getAuditLogRetentionDays } from "@/lib/app/entitlements";
 import { getAuditLogs } from "@/lib/db/queries";
@@ -67,8 +68,14 @@ export default async function ActivityPage() {
       </div>
 
       {logs.length === 0 ? (
-        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-10 text-center">
-          <p className="text-sm text-white/70">{t("portal.activity.noActivity")}</p>
+        <div className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 p-12 text-center flex flex-col items-center justify-center">
+          <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-5 shadow-[0_0_24px_rgba(255,255,255,0.02)]">
+            <Activity size={24} className="text-white/40" />
+          </div>
+          <p className="text-sm font-medium text-white/80">{t("portal.activity.noActivity")}</p>
+          <p className="text-xs text-white/50 mt-2 max-w-xs leading-relaxed">
+            När det händer något i systemet – t.ex. när AI:n genererar ett utkast eller ett mejl skickas – dyker det upp här.
+          </p>
         </div>
       ) : (
         <ul className="rounded-2xl border border-white/8 bg-[hsl(var(--surface-elev-1))]/70 backdrop-blur-sm divide-y divide-white/5 overflow-hidden">

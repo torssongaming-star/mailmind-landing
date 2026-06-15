@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 /**
  * Split-pane inbox shell.
@@ -266,10 +266,18 @@ export function InboxShell({
             return (
               <li
                 key={thread.id}
-                onClick={() => setSelectedId(thread.id)}
+                onClick={() => {
+                  if (selectedId !== thread.id && typeof window !== "undefined" && (window as any)._hasUnsavedDraft) {
+                    if (!confirm(t("inbox.thread.unsavedChangesWarning") ?? "Du har osparade ändringar i utkastet. Vill du verkligen byta ärende utan att spara?")) return;
+                  }
+                  setSelectedId(thread.id);
+                }}
                 onKeyDown={e => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
+                    if (selectedId !== thread.id && typeof window !== "undefined" && (window as any)._hasUnsavedDraft) {
+                      if (!confirm(t("inbox.thread.unsavedChangesWarning") ?? "Du har osparade ändringar i utkastet. Vill du verkligen byta ärende utan att spara?")) return;
+                    }
                     setSelectedId(thread.id);
                   }
                 }}

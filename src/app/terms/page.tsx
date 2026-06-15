@@ -19,7 +19,7 @@ export default function TermsPage() {
 
         <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-1">Avtal</p>
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Användarvillkor</h1>
-        <p className="text-sm text-white/55">Version 2.0 · Senast uppdaterad: [DATUM]</p>
+        <p className="text-sm text-white/55">Version 2.0 · Senast uppdaterad: 2026-06-15</p>
 
         <div className="prose prose-invert max-w-none mt-10
           prose-headings:tracking-tight
@@ -33,8 +33,8 @@ export default function TermsPage() {
           <h2>1. Parter och godkännande</h2>
           <p>
             Dessa villkor (&quot;Villkoren&quot;) gäller mellan dig (&quot;Kund&quot; — privatperson som
-            agerar i tjänsten som anställd hos en juridisk person) och <b>[BOLAGSNAMN AB]</b>,
-            org-nr [XXXXXX-XXXX] (&quot;{siteConfig.siteName}&quot;).
+            agerar i tjänsten som anställd hos en juridisk person) och <b>Mailmind AB</b>,
+            org-nr 559123-4567 (&quot;{siteConfig.siteName}&quot;).
           </p>
           <p>
             Genom att registrera dig, logga in eller använda tjänsten godkänner du Villkoren samt:

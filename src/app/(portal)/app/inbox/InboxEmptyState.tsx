@@ -24,8 +24,8 @@ export function InboxEmptyState({ inboxEmail }: Props) {
       </div>
       <div className="space-y-1.5">
         <p className="text-sm font-semibold text-white/80">Inga e-postmeddelanden ännu</p>
-        <p className="text-xs text-white/65 max-w-xs leading-relaxed">
-          Skicka ett testmejl till din inkorg för att se hur Mailmind triagerar det.
+        <p className="text-xs text-white/65 max-w-sm leading-relaxed">
+          Kopiera e-postadressen nedan och skicka ett testmejl från din egen inkorg för att se hur Mailmind triagerar det.
         </p>
       </div>
       {inboxEmail && (

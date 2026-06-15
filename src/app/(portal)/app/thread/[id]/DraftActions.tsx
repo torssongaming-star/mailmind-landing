@@ -126,6 +126,30 @@ export function DraftActions({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const hasUnsavedChanges = editing && body !== (initialBody ?? "");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      (window as any)._hasUnsavedDraft = hasUnsavedChanges;
+    }
+    if (!hasUnsavedChanges) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "Du har osparade ändringar. Vill du lämna sidan?";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
+
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined") {
+        (window as any)._hasUnsavedDraft = false;
+      }
+    };
+  }, []);
+
   // Sent/rejected drafts are frozen
   if (status === "sent" || status === "rejected") {
     return null;

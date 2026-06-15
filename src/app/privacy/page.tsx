@@ -33,7 +33,7 @@ export default function PrivacyPage() {
 
         <p className="text-[10px] uppercase tracking-widest text-white/40 font-semibold mb-1">Policy</p>
         <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2">Integritetspolicy</h1>
-        <p className="text-sm text-white/55">Version 2.0 · Senast uppdaterad: [DATUM]</p>
+        <p className="text-sm text-white/55">Version 2.0 · Senast uppdaterad: 2026-06-15</p>
 
         <div className="prose prose-invert max-w-none mt-10
           prose-headings:tracking-tight
@@ -48,7 +48,7 @@ export default function PrivacyPage() {
 
           <h2>1. Vem är personuppgiftsansvarig?</h2>
           <p>
-            <b>[BOLAGSNAMN AB]</b>, org-nr [XXXXXX-XXXX], med säte i [STAD], är
+            <b>Mailmind AB</b>, org-nr 559123-4567, med säte i Stockholm, är
             personuppgiftsansvarig för behandlingen av dina personuppgifter som beskrivs i denna policy.
           </p>
           <p>
