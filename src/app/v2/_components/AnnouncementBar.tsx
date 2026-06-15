@@ -8,7 +8,7 @@ import { ArrowRight } from "lucide-react";
  */
 export function AnnouncementBar() {
   return (
-    <div className="relative z-50 w-full bg-primary/10 border-b border-primary/20 backdrop-blur-sm">
+    <div className="fixed top-0 inset-x-0 z-50 w-full bg-primary/10 border-b border-primary/20 backdrop-blur-sm">
       <div className="max-w-6xl mx-auto px-6 h-9 flex items-center justify-center gap-3">
         <span className="text-[12px] text-white/75 leading-none">
           Mailmind är i pre-launch — anmäl er nu och säkra prioriterad demo och onboarding vid lansering.
